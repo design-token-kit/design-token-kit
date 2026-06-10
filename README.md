@@ -1,6 +1,6 @@
 # Design Token Kit
 
-- [Описание](#overview)
+- [Overview](#overview)
 - [Build](#build)
 - [Packages](#packages)
 - [Package Documentation](#package-documentation)
