@@ -5,6 +5,7 @@ import { execFileSync } from "node:child_process";
 
 const rootDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const version = process.argv[2];
+const npmExecPath = process.env.npm_execpath;
 
 if (!version) {
     throw new Error("Usage: npm run release:prepare -- <version>");
@@ -68,20 +69,20 @@ function updatePackageJson(filePath, mutate) {
 }
 
 function run(command, args, cwd) {
-    execFileSync(resolveCommand(command), args, {
+    if (command === "npm") {
+        if (!npmExecPath) {
+            throw new Error("npm_execpath is not set. Run this script through npm.");
+        }
+
+        execFileSync(process.execPath, [npmExecPath, ...args], {
+            cwd,
+            stdio: "inherit",
+        });
+        return;
+    }
+
+    execFileSync(command, args, {
         cwd,
         stdio: "inherit",
     });
-}
-
-function resolveCommand(command) {
-    if (process.platform !== "win32") {
-        return command;
-    }
-
-    if (command === "npm") {
-        return "npm.cmd";
-    }
-
-    return command;
 }
