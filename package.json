@@ -11,7 +11,9 @@
         "dist": "npm run build && npm run dist --workspace @design-token-kit/core && npm run dist --workspace @design-token-kit/cli",
         "test": "npm run test --workspace @design-token-kit/core",
         "clean": "node scripts/clean.mjs",
-        "dtokens": "node cli/bin/index.mjs"
+        "dtokens": "node cli/bin/index.mjs",
+        "release:prepare": "node scripts/release-prepare.mjs",
+        "release:publish": "node scripts/release-publish.mjs"
     },
     "engines": {
         "node": ">=18"

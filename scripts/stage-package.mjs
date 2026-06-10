@@ -23,6 +23,8 @@ await rm(distDir, { recursive: true, force: true });
 await mkdir(distDir, { recursive: true });
 
 await cp(path.join(packageDir, "package.json"), path.join(distDir, "package.json"));
+await cp(path.join(packageDir, "README.md"), path.join(distDir, "README.md"));
+await cp(path.join(rootDir, "LICENSE"), path.join(distDir, "LICENSE"));
 
 for (const output of outputs) {
     await cp(path.join(packageDir, output), path.join(distDir, output), { recursive: true });
