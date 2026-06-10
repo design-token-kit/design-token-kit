@@ -1,6 +1,6 @@
 {
     "name": "@design-token-kit/cli",
-    "version": "0.1.0",
+    "version": "0.1.1",
     "description": "CLI for Design Token Kit: validate, convert, showcase.",
     "keywords": [
         "design-tokens",
@@ -41,7 +41,7 @@
         "dist": "node ../scripts/stage-package.mjs cli"
     },
     "dependencies": {
-        "@design-token-kit/core": "0.1.0",
+        "@design-token-kit/core": "0.1.1",
         "commander": "14.0.1"
     },
     "devDependencies": {
