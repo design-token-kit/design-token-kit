@@ -10,13 +10,13 @@
         "css"
     ],
     "license": "Apache-2.0",
-    "homepage": "",
+    "homepage": "https://github.com/design-token-kit/design-token-kit",
     "bugs": {
-        "url": ""
+        "url": "https://github.com/design-token-kit/design-token-kit/issues"
     },
     "repository": {
         "type": "git",
-        "url": ""
+        "url": "git+https://github.com/design-token-kit/design-token-kit.git"
     },
     "type": "module",
     "main": "lib/index.js",

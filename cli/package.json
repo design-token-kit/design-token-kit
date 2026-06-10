@@ -2,7 +2,23 @@
     "name": "@design-token-kit/cli",
     "version": "0.0.0",
     "description": "CLI for Design Token Kit: validate, convert, showcase.",
+    "keywords": [
+        "design-tokens",
+        "dtcg",
+        "hrdt",
+        "tokens",
+        "cli",
+        "css"
+    ],
     "license": "Apache-2.0",
+    "homepage": "https://github.com/design-token-kit/design-token-kit",
+    "bugs": {
+        "url": "https://github.com/design-token-kit/design-token-kit/issues"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/design-token-kit/design-token-kit.git"
+    },
     "type": "module",
     "bin": {
         "dtokens": "bin/index.mjs"
