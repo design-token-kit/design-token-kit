@@ -1,0 +1,70 @@
+{
+    "$schema": "https://www.designtokens.org/schemas/2025.10/format.json",
+    "primitive": {
+        "red": {
+            "$type": "color",
+            "$value": { "colorSpace": "srgb", "components": [1, 0, 0] }
+        },
+        "blue": {
+            "$type": "color",
+            "$value": { "colorSpace": "srgb", "components": [0, 0, 1] }
+        },
+        "spacing": {
+            "$type": "dimension",
+            "$value": { "value": 8, "unit": "px" }
+        }
+    },
+    "broken-ref": {
+        "$type": "color",
+        "$value": "{primitive.missing}"
+    },
+    "broken-extends": {
+        "$extends": "{primitive.missing2}",
+        "bg": {
+            "$type": "color",
+            "$value": { "colorSpace": "srgb", "components": [1, 1, 1] }
+        }
+    },
+    "ref-to-group": {
+        "$type": "color",
+        "$value": "{primitive}"
+    },
+    "type-mismatch": {
+        "$type": "color",
+        "$value": "{primitive.spacing}"
+    },
+    "gradient": {
+        "duplicate-positions": {
+            "$type": "gradient",
+            "$value": [
+                { "color": { "colorSpace": "srgb", "components": [1, 0, 0] }, "position": 0.5 },
+                { "color": { "colorSpace": "srgb", "components": [0, 0, 1] }, "position": 0.5 }
+            ]
+        }
+    },
+    "deprecated-ref": {
+        "old-color": {
+            "$type": "color",
+            "$value": { "colorSpace": "srgb", "components": [1, 0, 0] },
+            "$deprecated": true
+        },
+        "new-alias": {
+            "$type": "color",
+            "$value": "{deprecated-ref.old-color}"
+        }
+    },
+    "self-cycle": {
+        "$type": "color",
+        "$value": "{self-cycle}"
+    },
+    "cycle": {
+        "a": {
+            "$type": "color",
+            "$value": "{cycle.b}"
+        },
+        "b": {
+            "$type": "color",
+            "$value": "{cycle.a}"
+        }
+    }
+}

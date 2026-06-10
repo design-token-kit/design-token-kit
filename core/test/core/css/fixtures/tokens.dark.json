@@ -1,0 +1,8 @@
+{
+  "primitive": {
+    "color": { "slate": { "100": { "$type": "color", "$value": { "colorSpace": "srgb", "components": [0.118, 0.161, 0.231], "alpha": 1 } } } }
+  },
+  "semantic": {
+    "color": { "bg": { "surface": { "$type": "color", "$value": "{primitive.color.slate.100}" } } }
+  }
+}

@@ -1,0 +1,178 @@
+{
+  "$schema": "https://www.designtokens.org/schemas/2025.10/format.json",
+  "primitive": {
+    "color": {
+      "brand-400": {
+        "$type": "color",
+        "$value": {
+          "colorSpace": "srgb",
+          "components": [0.969, 0.388, 0.322],
+          "alpha": 1,
+          "hex": "#f76352"
+        }
+      },
+      "brand-500": {
+        "$type": "color",
+        "$value": {
+          "colorSpace": "srgb",
+          "components": [0.941, 0.275, 0.224],
+          "alpha": 1,
+          "hex": "#f04639"
+        }
+      },
+      "brand-600": {
+        "$type": "color",
+        "$value": {
+          "colorSpace": "srgb",
+          "components": [0.839, 0.192, 0.145],
+          "alpha": 1,
+          "hex": "#d63125"
+        }
+      },
+      "brand-700": {
+        "$type": "color",
+        "$value": {
+          "colorSpace": "srgb",
+          "components": [0.698, 0.133, 0.09],
+          "alpha": 1,
+          "hex": "#b22217"
+        }
+      },
+      "accent-400": {
+        "$type": "color",
+        "$value": {
+          "colorSpace": "srgb",
+          "components": [0.969, 0.549, 0.051],
+          "alpha": 1,
+          "hex": "#f78c0d"
+        }
+      },
+      "accent-500": {
+        "$type": "color",
+        "$value": {
+          "colorSpace": "srgb",
+          "components": [0.918, 0.482, 0.008],
+          "alpha": 1,
+          "hex": "#ea7b02"
+        }
+      },
+      "accent-600": {
+        "$type": "color",
+        "$value": {
+          "colorSpace": "srgb",
+          "components": [0.808, 0.4, 0.004],
+          "alpha": 1,
+          "hex": "#ce6601"
+        }
+      },
+      "success-400": {
+        "$type": "color",
+        "$value": {
+          "colorSpace": "srgb",
+          "components": [0.267, 0.788, 0.561],
+          "alpha": 1,
+          "hex": "#44c98f"
+        }
+      },
+      "success-500": {
+        "$type": "color",
+        "$value": {
+          "colorSpace": "srgb",
+          "components": [0.063, 0.725, 0.506],
+          "alpha": 1,
+          "hex": "#10b981"
+        }
+      },
+      "success-600": {
+        "$type": "color",
+        "$value": {
+          "colorSpace": "srgb",
+          "components": [0.031, 0.569, 0.392],
+          "alpha": 1,
+          "hex": "#089164"
+        }
+      },
+      "warning-400": {
+        "$type": "color",
+        "$value": {
+          "colorSpace": "srgb",
+          "components": [0.976, 0.722, 0.184],
+          "alpha": 1,
+          "hex": "#f9b82f"
+        }
+      },
+      "warning-500": {
+        "$type": "color",
+        "$value": {
+          "colorSpace": "srgb",
+          "components": [0.961, 0.62, 0.043],
+          "alpha": 1,
+          "hex": "#f59e0b"
+        }
+      },
+      "warning-600": {
+        "$type": "color",
+        "$value": {
+          "colorSpace": "srgb",
+          "components": [0.839, 0.518, 0.012],
+          "alpha": 1,
+          "hex": "#d68403"
+        }
+      },
+      "danger-400": {
+        "$type": "color",
+        "$value": {
+          "colorSpace": "srgb",
+          "components": [0.973, 0.435, 0.494],
+          "alpha": 1,
+          "hex": "#f86f7e"
+        }
+      },
+      "danger-500": {
+        "$type": "color",
+        "$value": {
+          "colorSpace": "srgb",
+          "components": [0.957, 0.247, 0.369],
+          "alpha": 1,
+          "hex": "#f43f5e"
+        }
+      },
+      "danger-600": {
+        "$type": "color",
+        "$value": {
+          "colorSpace": "srgb",
+          "components": [0.824, 0.106, 0.275],
+          "alpha": 1,
+          "hex": "#d21b46"
+        }
+      },
+      "info-400": {
+        "$type": "color",
+        "$value": {
+          "colorSpace": "srgb",
+          "components": [0.353, 0.6, 0.976],
+          "alpha": 1,
+          "hex": "#5a99f9"
+        }
+      },
+      "info-500": {
+        "$type": "color",
+        "$value": {
+          "colorSpace": "srgb",
+          "components": [0.169, 0.486, 0.957],
+          "alpha": 1,
+          "hex": "#2b7cf4"
+        }
+      },
+      "info-600": {
+        "$type": "color",
+        "$value": {
+          "colorSpace": "srgb",
+          "components": [0.094, 0.388, 0.839],
+          "alpha": 1,
+          "hex": "#1863d6"
+        }
+      }
+    }
+  }
+}

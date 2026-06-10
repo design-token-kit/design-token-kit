@@ -1,0 +1,18 @@
+/* Set: base */
+:root {
+  --primitive-color-brand-500: #2549f6;
+  --primitive-color-brand-600: #1d39da;
+  --primitive-gradient-brand: linear-gradient(90deg, #2549f6 0%, #1d39da 100%);
+  --semantic-color-text-primary: var(--primitive-color-brand-500);
+}
+
+/* Modifier: theme=dark */
+:root[data-theme="dark"] {
+  --primitive-color-brand-500: #4865f5;
+  --primitive-color-brand-600: #2549f6;
+}
+
+/* Modifier: theme=red */
+:root[data-theme="red"] {
+  --primitive-color-brand-500: #f04639;
+}

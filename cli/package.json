@@ -1,0 +1,32 @@
+{
+    "name": "@design-token-kit/cli",
+    "version": "0.0.0",
+    "description": "CLI for Design Token Kit: validate, convert, showcase.",
+    "license": "Apache-2.0",
+    "type": "module",
+    "bin": {
+        "dtokens": "bin/index.mjs"
+    },
+    "files": [
+        "bin"
+    ],
+    "imports": {
+        "#/*": "./src/*"
+    },
+    "engines": {
+        "node": ">=18"
+    },
+    "scripts": {
+        "build": "tsc --noEmit && tsup",
+        "dist": "node ../scripts/stage-package.mjs cli"
+    },
+    "dependencies": {
+        "@design-token-kit/core": "0.0.0",
+        "commander": "14.0.1"
+    },
+    "devDependencies": {
+        "@types/node": "24.10.1",
+        "tsup": "8.5.1",
+        "typescript": "5.9.3"
+    }
+}

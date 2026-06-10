@@ -1,0 +1,56 @@
+{
+    "name": "@design-token-kit/core",
+    "version": "0.0.0",
+    "description": "Core library for Design Token Kit: validate, convert, showcase.",
+    "keywords": [
+        "design-tokens",
+        "dtcg",
+        "tokens",
+        "validation",
+        "css"
+    ],
+    "license": "Apache-2.0",
+    "homepage": "",
+    "bugs": {
+        "url": ""
+    },
+    "repository": {
+        "type": "git",
+        "url": ""
+    },
+    "type": "module",
+    "main": "lib/index.js",
+    "types": "lib/index.d.ts",
+    "exports": {
+        ".": {
+            "types": "./lib/index.d.ts",
+            "import": "./lib/index.js"
+        }
+    },
+    "imports": {
+        "#/*": "./src/*"
+    },
+    "files": [
+        "lib"
+    ],
+    "engines": {
+        "node": ">=18"
+    },
+    "scripts": {
+        "build": "tsc --noEmit && vite build",
+        "dist": "node ../scripts/stage-package.mjs core",
+        "test": "vitest run"
+    },
+    "dependencies": {
+        "ajv": "8.20.0",
+        "ajv-formats": "3.0.1"
+    },
+    "devDependencies": {
+        "@microsoft/api-extractor": "7.58.7",
+        "@types/node": "24.10.1",
+        "typescript": "5.9.3",
+        "vite": "8.0.10",
+        "vite-plugin-dts": "5.0.1",
+        "vitest": "^4.1.7"
+    }
+}

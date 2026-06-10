@@ -1,0 +1,270 @@
+primitive:
+  color:
+    white: "#ffffff"
+    black: "#000000"
+    overlay-40: "#00000066"
+    slate-100: "#f1f5f9"
+    slate-300: "#cbd5e1"
+    slate-600: "#475569"
+    slate-900: "#0f172a"
+    brand-500: "#2549f6"
+    brand-600: "#1d39da"
+    success-500: "#10b981"
+    warning-500: "#f59e0b"
+    danger-500: "#f43f5e"
+
+  dimension:
+    space-100: 4px
+    space-200: 8px
+    space-400: 16px
+    space-600: 24px
+    space-800: 32px
+    radius-100: 4px
+    radius-200: 8px
+    radius-300: 12px
+    radius-pill: 999px
+    border-width-100: 1px
+    border-width-200: 2px
+    font-size-100: 12px
+    font-size-200: 14px
+    font-size-300: 16px
+    font-size-500: 24px
+    letter-spacing-tight: -0.4px
+    letter-spacing-normal: 0px
+    letter-spacing-wide: 0.4px
+
+  fontFamily:
+    body: [Inter, Arial, sans-serif]
+    display: [Sora, Arial, sans-serif]
+    mono: ["JetBrains Mono", "Courier New", monospace]
+
+  fontWeight:
+    regular: regular
+    medium: 500
+    semibold: 600
+    bold: bold
+
+  duration:
+    none: 0ms
+    fast: 120ms
+    moderate: 200ms
+    slow: 320ms
+
+  cubicBezier:
+    standard: [0.2, 0, 0, 1]
+    emphasized: [0.2, 0.8, 0.2, 1]
+
+  number:
+    line-height-tight: 1.2
+    line-height-normal: 1.5
+    line-height-relaxed: 1.7
+    opacity-disabled: 0.48
+    z-dropdown: 1000
+    z-modal: 1050
+
+  strokeStyle:
+    solid: solid
+    dashed-round:
+      dashArray: [8px, 4px]
+      lineCap: round
+
+  border:
+    subtle:
+      color: "#cbd5e1"
+      width: 1px
+      style: solid
+    focus-ring:
+      color: "#2549f6"
+      width: 2px
+      style:
+        dashArray: [8px, 4px]
+        lineCap: round
+
+  transition:
+    standard:
+      duration: 120ms
+      delay: 0ms
+      timingFunction: [0.2, 0, 0, 1]
+    emphasized:
+      duration: 200ms
+      delay: 0ms
+      timingFunction: [0.2, 0.8, 0.2, 1]
+
+  shadow:
+    surface:
+      color: "#0000001f"
+      offsetX: 0px
+      offsetY: 4px
+      blur: 12px
+      spread: 0px
+    overlay:
+      - color: "#0000001f"
+        offsetX: 0px
+        offsetY: 8px
+        blur: 20px
+        spread: 0px
+      - color: "#00000040"
+        offsetX: 0px
+        offsetY: 16px
+        blur: 32px
+        spread: -8px
+
+  gradient:
+    brand:
+      - color: "#2549f6"
+        position: 0
+      - color: "#1d39da"
+        position: 1
+    attention:
+      - color: "#f59e0b"
+        position: 0
+      - color: "#f43f5e"
+        position: 1
+
+  typography:
+    body-sm:
+      fontFamily: [Inter, Arial, sans-serif]
+      fontSize: 14px
+      fontWeight: regular
+      letterSpacing: 0px
+      lineHeight: 1.5
+    body-md:
+      fontFamily: [Inter, Arial, sans-serif]
+      fontSize: 16px
+      fontWeight: 500
+      letterSpacing: 0px
+      lineHeight: 1.7
+    title-lg:
+      fontFamily: [Sora, Arial, sans-serif]
+      fontSize: 24px
+      fontWeight: bold
+      letterSpacing: -0.4px
+      lineHeight: 1.2
+    code-sm:
+      fontFamily: ["JetBrains Mono", "Courier New", monospace]
+      fontSize: 12px
+      fontWeight: regular
+      letterSpacing: 0.4px
+      lineHeight: 1.5
+
+semantic:
+  color:
+    background-page: "{primitive.color.white}"
+    background-surface: "{primitive.color.white}"
+    background-overlay: "{primitive.color.overlay-40}"
+    text-default: "{primitive.color.slate-900}"
+    text-muted: "{primitive.color.slate-600}"
+    text-inverse: "{primitive.color.white}"
+    border-default: "{primitive.color.slate-300}"
+    border-focus: "{primitive.color.brand-500}"
+    action-primary: "{primitive.color.brand-500}"
+    action-primary-hover: "{primitive.color.brand-600}"
+    status-success: "{primitive.color.success-500}"
+    status-warning: "{primitive.color.warning-500}"
+    status-danger: "{primitive.color.danger-500}"
+
+  space:
+    control-inline: "{primitive.dimension.space-400}"
+    control-block: "{primitive.dimension.space-200}"
+    card-padding: "{primitive.dimension.space-600}"
+    section-gap: "{primitive.dimension.space-800}"
+
+  shape:
+    radius-control: "{primitive.dimension.radius-200}"
+    radius-panel: "{primitive.dimension.radius-300}"
+    radius-pill: "{primitive.dimension.radius-pill}"
+    border-subtle: "{primitive.border.subtle}"
+    border-focus: "{primitive.border.focus-ring}"
+
+  motion:
+    transition-default: "{primitive.transition.standard}"
+    transition-emphasized: "{primitive.transition.emphasized}"
+    shadow-surface: "{primitive.shadow.surface}"
+    shadow-overlay: "{primitive.shadow.overlay}"
+
+  text:
+    body-small: "{primitive.typography.body-sm}"
+    body-default: "{primitive.typography.body-md}"
+    title-primary: "{primitive.typography.title-lg}"
+    code-inline: "{primitive.typography.code-sm}"
+    family-body: "{primitive.fontFamily.body}"
+    weight-strong: "{primitive.fontWeight.semibold}"
+
+  surface:
+    hero-gradient: "{primitive.gradient.brand}"
+    attention-gradient: "{primitive.gradient.attention}"
+
+  layer:
+    dropdown: "{primitive.number.z-dropdown}"
+    modal: "{primitive.number.z-modal}"
+
+component:
+  button:
+    primary:
+      background: "{semantic.color.action-primary}"
+      background-hover: "{semantic.color.action-primary-hover}"
+      text: "{semantic.color.text-inverse}"
+      radius: "{semantic.shape.radius-control}"
+      border: "{semantic.shape.border-subtle}"
+      padding-inline: "{semantic.space.control-inline}"
+      padding-block: "{semantic.space.control-block}"
+      typography: "{semantic.text.body-default}"
+      transition: "{semantic.motion.transition-default}"
+    secondary:
+      background: "{semantic.color.background-surface}"
+      text: "{semantic.color.text-default}"
+      radius: "{semantic.shape.radius-control}"
+      border: "{semantic.shape.border-subtle}"
+      padding-inline: "{semantic.space.control-inline}"
+      padding-block: "{semantic.space.control-block}"
+      typography: "{semantic.text.body-default}"
+      transition: "{semantic.motion.transition-default}"
+
+  input:
+    default:
+      background: "{semantic.color.background-surface}"
+      text: "{semantic.color.text-default}"
+      border: "{semantic.shape.border-subtle}"
+      border-focus: "{semantic.shape.border-focus}"
+      radius: "{semantic.shape.radius-control}"
+      padding-inline: "{semantic.space.control-inline}"
+      padding-block: "{semantic.space.control-block}"
+      typography: "{semantic.text.body-default}"
+
+  card:
+    default:
+      background: "{semantic.color.background-surface}"
+      border: "{semantic.shape.border-subtle}"
+      radius: "{semantic.shape.radius-panel}"
+      padding: "{semantic.space.card-padding}"
+      heading: "{semantic.text.title-primary}"
+      body: "{semantic.text.body-default}"
+      shadow: "{semantic.motion.shadow-surface}"
+
+  badge:
+    success:
+      background: "{semantic.color.status-success}"
+      text: "{semantic.color.text-inverse}"
+      radius: "{semantic.shape.radius-pill}"
+      typography: "{semantic.text.body-small}"
+    warning:
+      background: "{semantic.color.status-warning}"
+      text: "{semantic.color.text-default}"
+      radius: "{semantic.shape.radius-pill}"
+      typography: "{semantic.text.body-small}"
+    danger:
+      background: "{semantic.color.status-danger}"
+      text: "{semantic.color.text-inverse}"
+      radius: "{semantic.shape.radius-pill}"
+      typography: "{semantic.text.body-small}"
+
+  modal:
+    default:
+      overlay: "{semantic.color.background-overlay}"
+      panel-background: "{semantic.color.background-surface}"
+      panel-border: "{semantic.shape.border-subtle}"
+      panel-radius: "{semantic.shape.radius-panel}"
+      title: "{semantic.text.title-primary}"
+      body: "{semantic.text.body-default}"
+      shadow: "{semantic.motion.shadow-overlay}"
+      zIndex: "{semantic.layer.modal}"

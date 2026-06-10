@@ -1,0 +1,533 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://designtokens.local/schemas/hrdt-tokens.json",
+  "title": "HRDT Design Tokens Schema",
+  "description": "JSON Schema for the HRDT token format before conversion to DTCG JSON.",
+  "type": "object",
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "format": "uri-reference",
+      "description": "URI reference to this JSON schema."
+    },
+    "primitive": {
+      "$ref": "#/definitions/primitiveRoot"
+    }
+  },
+  "patternProperties": {
+    "^(?!\\$schema$|primitive$)[^${}.][^{}.]*$": {
+      "$ref": "#/definitions/referenceGroup"
+    }
+  },
+  "additionalProperties": false,
+  "definitions": {
+    "tokenName": {
+      "type": "string",
+      "pattern": "^[^${}.][^{}.]*$"
+    },
+    "reference": {
+      "type": "string",
+      "pattern": "^\\{[^{}]+\\}$"
+    },
+    "dimensionString": {
+      "type": "string",
+      "pattern": "^-?\\d+(?:\\.\\d+)?(?:px|rem)$"
+    },
+    "durationString": {
+      "type": "string",
+      "pattern": "^-?\\d+(?:\\.\\d+)?(?:ms|s)$"
+    },
+    "hexColor": {
+      "type": "string",
+      "pattern": "^#(?:[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$"
+    },
+    "referenceableScalar": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/reference"
+        },
+        {
+          "type": "string"
+        },
+        {
+          "type": "number"
+        },
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "referenceGroup": {
+      "oneOf": [
+        {
+          "$ref": "#/definitions/referenceableScalar"
+        },
+        {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/referenceGroup"
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/referenceGroup"
+          }
+        }
+      ]
+    },
+    "tokenMap": {
+      "type": "object",
+      "propertyNames": {
+        "$ref": "#/definitions/tokenName"
+      }
+    },
+    "primitiveRoot": {
+      "type": "object",
+      "properties": {
+        "color": {
+          "allOf": [
+            {
+              "$ref": "#/definitions/tokenMap"
+            },
+            {
+              "additionalProperties": {
+                "anyOf": [
+                  {
+                    "$ref": "#/definitions/hexColor"
+                  },
+                  {
+                    "$ref": "#/definitions/reference"
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "dimension": {
+          "allOf": [
+            {
+              "$ref": "#/definitions/tokenMap"
+            },
+            {
+              "additionalProperties": {
+                "anyOf": [
+                  {
+                    "$ref": "#/definitions/dimensionString"
+                  },
+                  {
+                    "$ref": "#/definitions/reference"
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "fontFamily": {
+          "allOf": [
+            {
+              "$ref": "#/definitions/tokenMap"
+            },
+            {
+              "additionalProperties": {
+                "anyOf": [
+                  {
+                    "$ref": "#/definitions/fontFamilyValue"
+                  },
+                  {
+                    "$ref": "#/definitions/reference"
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "fontWeight": {
+          "allOf": [
+            {
+              "$ref": "#/definitions/tokenMap"
+            },
+            {
+              "additionalProperties": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "$ref": "#/definitions/reference"
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "duration": {
+          "allOf": [
+            {
+              "$ref": "#/definitions/tokenMap"
+            },
+            {
+              "additionalProperties": {
+                "oneOf": [
+                  {
+                    "$ref": "#/definitions/durationString"
+                  },
+                  {
+                    "$ref": "#/definitions/reference"
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "cubicBezier": {
+          "allOf": [
+            {
+              "$ref": "#/definitions/tokenMap"
+            },
+            {
+              "additionalProperties": {
+                "oneOf": [
+                  {
+                    "$ref": "#/definitions/cubicBezierValue"
+                  },
+                  {
+                    "$ref": "#/definitions/reference"
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "number": {
+          "allOf": [
+            {
+              "$ref": "#/definitions/tokenMap"
+            },
+            {
+              "additionalProperties": {
+                "oneOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "$ref": "#/definitions/reference"
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "strokeStyle": {
+          "allOf": [
+            {
+              "$ref": "#/definitions/tokenMap"
+            },
+            {
+              "additionalProperties": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "$ref": "#/definitions/strokeStyleValue"
+                  },
+                  {
+                    "$ref": "#/definitions/reference"
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "border": {
+          "allOf": [
+            {
+              "$ref": "#/definitions/tokenMap"
+            },
+            {
+              "additionalProperties": {
+                "oneOf": [
+                  {
+                    "$ref": "#/definitions/borderValue"
+                  },
+                  {
+                    "$ref": "#/definitions/reference"
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "transition": {
+          "allOf": [
+            {
+              "$ref": "#/definitions/tokenMap"
+            },
+            {
+              "additionalProperties": {
+                "oneOf": [
+                  {
+                    "$ref": "#/definitions/transitionValue"
+                  },
+                  {
+                    "$ref": "#/definitions/reference"
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "shadow": {
+          "allOf": [
+            {
+              "$ref": "#/definitions/tokenMap"
+            },
+            {
+              "additionalProperties": {
+                "oneOf": [
+                  {
+                    "$ref": "#/definitions/shadowValue"
+                  },
+                  {
+                    "$ref": "#/definitions/reference"
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "gradient": {
+          "allOf": [
+            {
+              "$ref": "#/definitions/tokenMap"
+            },
+            {
+              "additionalProperties": {
+                "oneOf": [
+                  {
+                    "$ref": "#/definitions/gradientValue"
+                  },
+                  {
+                    "$ref": "#/definitions/reference"
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "typography": {
+          "allOf": [
+            {
+              "$ref": "#/definitions/tokenMap"
+            },
+            {
+              "additionalProperties": {
+                "oneOf": [
+                  {
+                    "$ref": "#/definitions/typographyValue"
+                  },
+                  {
+                    "$ref": "#/definitions/reference"
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      },
+      "additionalProperties": false
+    },
+    "fontFamilyValue": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "minItems": 1
+    },
+    "cubicBezierValue": {
+      "type": "array",
+      "items": {
+        "type": "number"
+      },
+      "minItems": 4,
+      "maxItems": 4
+    },
+    "strokeStyleValue": {
+      "type": "object",
+      "properties": {
+        "dashArray": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/dimensionString"
+          },
+          "minItems": 1
+        },
+        "lineCap": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "dashArray",
+        "lineCap"
+      ],
+      "additionalProperties": false
+    },
+    "borderValue": {
+      "type": "object",
+      "properties": {
+        "color": {
+          "$ref": "#/definitions/hexColor"
+        },
+        "width": {
+          "$ref": "#/definitions/dimensionString"
+        },
+        "style": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "$ref": "#/definitions/strokeStyleValue"
+            },
+            {
+              "$ref": "#/definitions/reference"
+            }
+          ]
+        }
+      },
+      "required": [
+        "color",
+        "width",
+        "style"
+      ],
+      "additionalProperties": false
+    },
+    "transitionValue": {
+      "type": "object",
+      "properties": {
+        "duration": {
+          "$ref": "#/definitions/durationString"
+        },
+        "delay": {
+          "$ref": "#/definitions/durationString"
+        },
+        "timingFunction": {
+          "$ref": "#/definitions/cubicBezierValue"
+        }
+      },
+      "required": [
+        "duration",
+        "delay",
+        "timingFunction"
+      ],
+      "additionalProperties": false
+    },
+    "shadowLayer": {
+      "type": "object",
+      "properties": {
+        "color": {
+          "$ref": "#/definitions/hexColor"
+        },
+        "offsetX": {
+          "$ref": "#/definitions/dimensionString"
+        },
+        "offsetY": {
+          "$ref": "#/definitions/dimensionString"
+        },
+        "blur": {
+          "$ref": "#/definitions/dimensionString"
+        },
+        "spread": {
+          "$ref": "#/definitions/dimensionString"
+        }
+      },
+      "required": [
+        "color",
+        "offsetX",
+        "offsetY",
+        "blur",
+        "spread"
+      ],
+      "additionalProperties": false
+    },
+    "shadowValue": {
+      "oneOf": [
+        {
+          "$ref": "#/definitions/shadowLayer"
+        },
+        {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/shadowLayer"
+          },
+          "minItems": 1
+        }
+      ]
+    },
+    "gradientStop": {
+      "type": "object",
+      "properties": {
+        "color": {
+          "$ref": "#/definitions/hexColor"
+        },
+        "position": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "color",
+        "position"
+      ],
+      "additionalProperties": false
+    },
+    "gradientValue": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/gradientStop"
+      },
+      "minItems": 1
+    },
+    "typographyValue": {
+      "type": "object",
+      "properties": {
+        "fontFamily": {
+          "$ref": "#/definitions/fontFamilyValue"
+        },
+        "fontSize": {
+          "$ref": "#/definitions/dimensionString"
+        },
+        "fontWeight": {
+          "oneOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "number"
+            }
+          ]
+        },
+        "letterSpacing": {
+          "$ref": "#/definitions/dimensionString"
+        },
+        "lineHeight": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "fontFamily",
+        "fontSize",
+        "fontWeight",
+        "letterSpacing",
+        "lineHeight"
+      ],
+      "additionalProperties": false
+    }
+  }
+}

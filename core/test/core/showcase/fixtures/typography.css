@@ -1,0 +1,10 @@
+:root {
+  --primitive-typography-body-md-fontFamily-0: Inter;
+  --primitive-typography-body-md-fontFamily-1: Arial;
+  --primitive-typography-body-md-fontFamily-2: sans-serif;
+  --primitive-typography-body-md-fontSize: 16px;
+  --primitive-typography-body-md-fontWeight: 500;
+  --primitive-typography-body-md-letterSpacing: 0px;
+  --primitive-typography-body-md-lineHeight: 1.7;
+  --semantic-text-body-default: var(--primitive-typography-body-md);
+}

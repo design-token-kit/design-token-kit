@@ -1,0 +1,30 @@
+:root {
+  --primitive-color-neutral-900: #111827;
+  --primitive-border-focus-ring: var(--primitive-border-focus-ring-width) var(--primitive-border-focus-ring-style) var(--primitive-border-focus-ring-color);
+  --primitive-border-focus-ring-width: 2px;
+  --primitive-border-focus-ring-style: solid;
+  --primitive-border-focus-ring-color: #2c4df3;
+  --primitive-dimension-radius-md: 8px;
+  --primitive-dimension-space-200: 8px;
+  --primitive-gradient-brand-0-color: #2c4df3;
+  --primitive-gradient-brand-0-position: 0;
+  --primitive-gradient-brand-1-color: #1e3bd6;
+  --primitive-gradient-brand-1-position: 1;
+  --primitive-typography-caption-fontFamily-0: Inter;
+  --primitive-typography-caption-fontFamily-1: Arial;
+  --primitive-typography-caption-fontFamily-2: sans-serif;
+  --primitive-typography-caption-fontSize: 11px;
+  --primitive-typography-caption-fontWeight: regular;
+  --primitive-typography-caption-lineHeight: 1.5;
+  --primitive-typography-caption-letterSpacing: 0px;
+  --component-color-card-bg: var(--primitive-color-neutral-900);
+  --semantic-color-background-surface: var(--component-color-card-bg);
+  --semantic-color-status-danger: var(--primitive-color-missing);
+  --semantic-color-text-primary: var(--primitive-color-neutral-900);
+  --semantic-motion-transition-fast: 150ms ease;
+  --semantic-shape-border-focus: var(--primitive-border-focus-ring);
+  --semantic-shape-radius-md: var(--primitive-dimension-radius-md);
+  --semantic-space-inset-sm: var(--primitive-dimension-space-200);
+  --semantic-surface-brand-gradient: var(--primitive-gradient-brand);
+  --semantic-text-caption: var(--primitive-typography-caption);
+}
