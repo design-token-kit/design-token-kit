@@ -9,8 +9,20 @@ run("npm", ["publish", "--access", "public"], path.join(rootDir, "core", "build"
 run("npm", ["publish", "--access", "public"], path.join(rootDir, "cli", "build", "dist"));
 
 function run(command, args, cwd) {
-    execFileSync(command, args, {
+    execFileSync(resolveCommand(command), args, {
         cwd,
         stdio: "inherit",
     });
+}
+
+function resolveCommand(command) {
+    if (process.platform !== "win32") {
+        return command;
+    }
+
+    if (command === "npm") {
+        return "npm.cmd";
+    }
+
+    return command;
 }
