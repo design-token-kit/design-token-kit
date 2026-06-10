@@ -20,3 +20,4 @@ cli/node_modules/
 .env*
 out/
 logs/
+package-lock.json

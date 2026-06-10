@@ -19,6 +19,10 @@
         "type": "git",
         "url": "git+https://github.com/design-token-kit/design-token-kit.git"
     },
+    "publishConfig": {
+        "access": "public",
+        "registry": "https://registry.npmjs.org/"
+    },
     "type": "module",
     "bin": {
         "dtokens": "bin/index.mjs"
