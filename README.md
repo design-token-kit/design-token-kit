@@ -71,14 +71,22 @@ npm run dist
 
 ## Publish
 
-Release order:
+Release flow:
 
 ```bash
 npm run release:prepare -- 0.1.2
 git push
 git push --tags
-npm run release:publish
 ```
+
+`npm run release:prepare` bumps package versions, runs build and tests, stages
+the publishable package contents, and creates the release commit and `vX.Y.Z`
+tag.
+
+After the tagged commit is pushed, GitHub Actions runs the publish workflow
+([`.github/workflows/publish.yml`](.github/workflows/publish.yml)), which runs
+the build/dist/publish steps and publishes the packages to npm.
+
 Manual build commands are only needed outside a release flow:
 
 ```bash
