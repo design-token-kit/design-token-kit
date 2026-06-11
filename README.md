@@ -28,13 +28,15 @@ Node.js 18 or newer is required.
 
 ## Features
 
-* Validate DTCG JSON tokens against the DTCG schema
-* Validate DTCG JSON tokens semantically
+* Validate DTCG JSON against the DTCG schema (structural validation)
+* Validate token references semantically:
+  * Unresolved reference detection
   * Circular reference detection
-  * Invalid reference detection
-  * Duplicate token name detection
-* Convert between DTCG and HRDT formats
-* Generate CSS from token files (supports themes)
+  * Reference-to-group detection
+  * Type mismatch detection
+  * Deprecated token usage warnings
+* Convert between DTCG JSON and HRDT YAML
+* Generate CSS from token files (build-time, theme support)
 * Generate HTML token showcase page
 
 ## Build
