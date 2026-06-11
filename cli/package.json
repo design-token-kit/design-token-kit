@@ -38,7 +38,8 @@
     },
     "scripts": {
         "build": "tsc --noEmit && tsup",
-        "dist": "node ../scripts/stage-package.mjs cli"
+        "dist": "node ../scripts/stage-package.mjs cli",
+        "test": "exit 0"
     },
     "dependencies": {
         "@design-token-kit/core": "0.2.0",
