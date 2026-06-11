@@ -27,6 +27,7 @@
     "types": "lib/index.d.ts",
     "exports": {
         ".": {
+            "development": "./src/index.ts",
             "types": "./lib/index.d.ts",
             "import": "./lib/index.js"
         }
