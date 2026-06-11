@@ -15,8 +15,8 @@ These rules can later be converted to CSS and other UI formats.
 
 Supported input formats:
 
-- DTCG JSON
-- HRDT YAML
+* DTCG JSON
+* HRDT YAML
 
 HRDT stands for Human-Readable Design Tokens. It is a compact YAML-based token
 format designed to be easier for humans to read and write than raw DTCG JSON.
@@ -25,6 +25,17 @@ HRDT YAML files are automatically converted to DTCG JSON and then passed to the
 standard command pipeline: validation, CSS conversion, and showcase generation.
 
 Node.js 18 or newer is required.
+
+## Features
+
+* Validate DTCG JSON tokens against the DTCG schema
+* Validate DTCG JSON tokens semantically
+  * Circular reference detection
+  * Invalid reference detection
+  * Duplicate token name detection
+* Convert between DTCG and HRDT formats
+* Generate CSS from token files (supports themes)
+* Generate HTML token showcase page
 
 ## Build
 
