@@ -4,7 +4,7 @@ import { writeFile } from "node:fs/promises";
 import { getReader, getWriter } from "./formats";
 
 export const convertCommand = new Command("convert")
-    .description("Convert DTCG JSON or HRDT YAML tokens to DTCG JSON, HRDT YAML, or CSS.")
+    .description("Convert a token file to DTCG JSON, HRDT YAML, or CSS.")
     .argument("<file>", "Path to a token JSON or HRDT file")
     .option("-i, --inform <format>", "Input format override: dtcg, hrdt")
     .option("-f, --outform <format>", "Output format: dtcg, hrdt, css (default: css)")

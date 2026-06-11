@@ -7,7 +7,6 @@ It provides commands to:
 - validate design tokens
 - convert between DTCG JSON, HRDT YAML, and CSS
 - generate HTML showcase pages
-- run round-trip read/write checks
 
 Node.js 18 or newer is required.
 
@@ -32,6 +31,13 @@ Install as a local dependency:
 npm install @design-token-kit/cli
 ```
 
+Show CLI version:
+
+```bash
+dtokens -v
+dtokens --version
+```
+
 ## Commands
 
 ### `validate`
@@ -41,7 +47,6 @@ Validate one or more DTCG JSON or HRDT YAML token files.
 ```bash
 dtokens validate tokens.json
 dtokens validate tokens.yaml
-dtokens validate light.json dark.yaml
 ```
 
 ### `convert`
@@ -55,9 +60,7 @@ Defaults:
 
 ```bash
 dtokens convert tokens.json
-dtokens convert tokens.json --out tokens.css
-dtokens convert tokens.yaml --inform hrdt --outform css
-dtokens convert tokens.yaml --inform hrdt --outform dtcg
+dtokens convert tokens.yaml --inform hrdt --outform css --out ./dist/tokens.css
 dtokens convert tokens.json --outform hrdt
 ```
 
@@ -72,21 +75,7 @@ Options:
 Generate an HTML showcase from token files or CSS.
 
 ```bash
-dtokens showcase tokens.json
-dtokens showcase tokens.css --out showcase.html
-dtokens showcase tokens.json --out showcase.html
-```
-
-### `test`
-
-Load a token file, build the internal model, and print it back in the same or 
-requested format.
-
-```bash
-dtokens test tokens.json
-dtokens test tokens.yaml
-dtokens test tokens.yaml --outform hrdt
-dtokens test tokens.json --outform dtcg
+dtokens showcase tokens.yaml --out ./dist/showcase.html
 ```
 
 ## Supported Formats

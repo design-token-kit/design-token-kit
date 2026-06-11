@@ -24,7 +24,7 @@ function hasErrors(issues: ValidationIssue[]): boolean {
 
 export const validateCommand = new Command("validate")
     .description("Validate DTCG JSON or HRDT YAML token files.")
-    .argument("<sources...>", "Paths to token JSON or HRDT files")
+    .argument("<files...>", "Paths to DTCG JSON or HRDT YAML token files")
     .action(async (sources: string[]) => {
         try {
             const validator = new DtcgTokenValidator()

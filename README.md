@@ -2,6 +2,7 @@
 
 - [Overview](#overview)
 - [Build](#build)
+- [Publish](#publish)
 - [Packages](#packages)
 - [Package Documentation](#package-documentation)
 
@@ -55,10 +56,27 @@ npm run dist
 - `core/build/dist`
 - `cli/build/dist`
 
+## Publish
+
+Release order:
+
+```bash
+npm run release:prepare -- 0.1.2
+git push
+git push --tags
+npm run release:publish
+```
+Manual build commands are only needed outside a release flow:
+
+```bash
+npm run build
+npm run dist
+```
+
 ## Packages
 
 - [`@design-token-kit/core`](core/README.md) - core library for validation, parsing, CSS conversion, and HTML showcase generation
-- [`@design-token-kit/cli`](cli/README.md) - command line interface `dtokens` for validation, conversion, showcase generation, and round-trip checks
+- [`@design-token-kit/cli`](cli/README.md) - command line interface `dtokens` for validation, conversion, and showcase generation
 
 ## Package Documentation
 

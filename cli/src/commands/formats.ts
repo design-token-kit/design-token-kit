@@ -28,10 +28,6 @@ export function getWriter(format?: string): DocumentWriter {
     return writers[toOutputFormat(format)];
 }
 
-export function getRoundTripWriter(format: string | undefined, file: string): DocumentWriter {
-    return writers[toDocumentFormat(format, detectDocumentFormat(file))];
-}
-
 export function getDetectedReader(file: string): DocumentReader {
     return readers[detectDocumentFormat(file)];
 }
