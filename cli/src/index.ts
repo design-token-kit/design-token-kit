@@ -8,21 +8,15 @@ import { showcaseCommand } from "./commands/showcase";
 
 const packageJsonPath = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../package.json");
 const packageJson = JSON.parse(readFileSync(packageJsonPath, "utf8")) as { version: string };
-const versionArgs = new Set(["-v", "--version"]);
-
-if (process.argv.length === 3 && versionArgs.has(process.argv[2])) {
-    console.log(packageJson.version);
-    process.exit(0);
-}
 
 const program = new Command()
     .name("dtokens")
     .description("CLI for DTCG JSON and HRDT YAML: validate, convert, showcase.")
-    .helpCommand(false)
-    .option("-v, --version", "display version")
+    .version(packageJson.version, "-v, --version", "display version")
     .addCommand(validateCommand)
     .addCommand(convertCommand)
     .addCommand(showcaseCommand)
+    .action(() => { program.outputHelp(); })
     .addHelpText("after", ({ command }) => command.name() === "dtokens" ? `
 Examples:
   $ dtokens validate tokens.json

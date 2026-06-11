@@ -5,10 +5,10 @@ import { getReader, getWriter } from "./formats";
 
 export const convertCommand = new Command("convert")
     .description("Convert a token file to DTCG JSON, HRDT YAML, or CSS.")
-    .argument("<file>", "Path to a token JSON or HRDT file")
-    .option("-i, --inform <format>", "Input format override: dtcg, hrdt")
-    .option("-f, --outform <format>", "Output format: dtcg, hrdt, css (default: css)")
-    .option("-o, --out <file>", "Output file")
+    .argument("<file>", "Path to a token file")
+    .option("-i, --inform [format]", "Input format: dtcg, hrdt (default: auto-detect)")
+    .option("-f, --outform [format]", "Output format: dtcg, hrdt, css (default: css)")
+    .option("-o, --out [file]", "Output file (default: stdout)")
     .action(async (file: string, options: { inform?: string; outform?: string; out?: string }) => {
         try {
             const reader = getReader(options.inform);
