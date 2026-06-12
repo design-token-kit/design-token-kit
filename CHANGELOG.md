@@ -1,0 +1,24 @@
+# Changelog
+
+Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
+
+## [Unreleased]
+
+### Added
+
+- Stdin support: all commands accept `-` to read from stdin, or read piped
+  input when no file arguments are given.
+- Multi-document YAML support: HRDT sources may contain multiple YAML documents
+  separated by `---`. The first is the base, subsequent are themes.
+- Exit codes shown in `--help` output for all commands.
+
+
+## [0.2.1] - 2026-06-11
+
+### Added
+
+- Feature list and updated README.
+
+## [0.2.0] - 2026-06-10
+
+- Initial public release with `validate`, `convert`, and `showcase` commands.

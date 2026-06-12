@@ -31,34 +31,37 @@ export class DtcgListLoader {
     /**
      * Validates and loads all sources into a {@link DtcgList}.
      *
+     * @param sources - Paths to token files or {@code "-"} for stdin.
+     * @param forcedFormat - When set, all sources are treated as this
+     *   format instead of auto-detecting from content.
      * @throws TokenSyntaxError when schema validation fails.
      */
-    async load(sources: string[]): Promise<DtcgList> {
+    async load(sources: string[], forcedFormat?: Format): Promise<DtcgList> {
         const sourceList = sources.map((s) => new Source(s));
 
-        const issues = await this.#validate(sourceList);
+        const issues = await this.#validate(sourceList, forcedFormat);
         if (issues.length > 0) {
             throw new TokenSyntaxError(issues);
         }
 
-        const allDocs = await this.#parse(sourceList);
+        const allDocs = await this.#parse(sourceList, forcedFormat);
         return this.#buildDtcgList(allDocs);
     }
 
-    async #validate(sourceList: Source[]): Promise<ValidationIssue[]> {
+    async #validate(sourceList: Source[], forcedFormat?: Format): Promise<ValidationIssue[]> {
         const issues: ValidationIssue[] = [];
         for (const source of sourceList) {
-            const format = await source.getFormat();
+            const format = forcedFormat ?? await source.getFormat();
             const validator = this.#validators.get(format)!;
             issues.push(...await validator.validate([source.getInput()]));
         }
         return issues;
     }
 
-    async #parse(sourceList: Source[]): Promise<Array<{ source: string; doc: Dtcg }>> {
+    async #parse(sourceList: Source[], forcedFormat?: Format): Promise<Array<{ source: string; doc: Dtcg }>> {
         const allDocs = new Array<{ source: string; doc: Dtcg }>();
         for (const source of sourceList) {
-            const format = await source.getFormat();
+            const format = forcedFormat ?? await source.getFormat();
             const parser = this.#parsers.get(format)!;
             for (const doc of await parser(source)) {
                 allDocs.push({ source: source.getInput(), doc });

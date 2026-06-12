@@ -61,7 +61,7 @@ const writers = {
     },
 } satisfies Record<OutputFormat, DocumentWriter>;
 
-function toDocumentFormat(format?: string, fallback = Format.DTCG): DocumentFormat {
+export function toDocumentFormat(format?: string, fallback = Format.DTCG): DocumentFormat {
     const resolved = format ?? fallback;
     if (resolved === Format.DTCG || resolved === Format.HRDT) return resolved;
     throw new Error(`Unknown format "${resolved}". Available: ${Format.DTCG}, ${Format.HRDT}`);
