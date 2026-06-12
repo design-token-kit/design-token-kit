@@ -31,7 +31,7 @@ export class Stdin {
 
     async #read(): Promise<string> {
         if (!this.hasData()) {
-            throw new Error("Cannot read from stdin: no data piped");
+            throw new Error("Cannot read from stdin: no input. Pipe data via '< file' or provide file arguments.");
         }
 
         const chunks: Buffer[] = [];
