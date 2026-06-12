@@ -42,10 +42,10 @@ const GROUP_KEYS = new Set(["$type", "$description", "$extensions", "$deprecated
  */
 export class DtcgJsonReader {
 
-    parse(content: string): Dtcg {
+    parse(content: string, source?: string): Dtcg {
         const raw = JSON.parse(content) as JsonObject;
         const root = this.#parseGroup(raw, undefined);
-        return new Dtcg(root);
+        return new Dtcg(root, source);
     }
 
     #parseGroup(raw: JsonObject, inheritedType: TokenType | undefined): TokenGroup {

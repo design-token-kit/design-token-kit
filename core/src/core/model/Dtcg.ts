@@ -7,15 +7,7 @@ import { ShadowLayer } from "#/core/model/values/ShadowValue";
 import { StrokeStyleObject } from "#/core/model/values/StrokeStyleValue";
 import { TransitionValue } from "#/core/model/values/TransitionValue";
 import { TypographyValue } from "#/core/model/values/TypographyValue";
-
-export type DtcgValidationSeverity = "error" | "warning";
-
-export interface DtcgValidationIssue {
-    /** Dot-separated path to the token or group where the issue was found. */
-    tokenPath: string;
-    severity: DtcgValidationSeverity;
-    message: string;
-}
+import type { IssueSeverity, ValidationIssue } from "#/core/validation/TokenValidator";
 
 /**
  * The root of a DTCG token document, corresponding to a single `.json` file.
@@ -25,16 +17,31 @@ export interface DtcgValidationIssue {
 export class Dtcg {
     readonly #root: TokenGroup;
 
-    constructor(root: TokenGroup) {
+    /**
+     * The origin of this token document.
+     *
+     * Can be a file path ({@code "tokens.json"}), a URL, or
+     * {@code "-"} for stdin.
+     * Used in validation diagnostics as the {@code sourcePath}.
+     */
+    readonly source?: string;
+
+    constructor(root: TokenGroup, source?: string) {
         this.#root = root;
+        this.source = source;
     }
 
-    /** Returns the top-level child token or group with the given name, or undefined. */
+    /**
+     * Returns the top-level child token or group with the given name,
+     * or undefined.
+     */
     get(name: string): TokenGroup | TokenNode<unknown> | undefined {
         return this.#root.get(name);
     }
 
-    /** Returns all top-level child names in insertion order. */
+    /**
+     * Returns all top-level child names in insertion order.
+     */
     keys(): IterableIterator<string> {
         return this.#root.keys();
     }
@@ -55,21 +62,27 @@ export class Dtcg {
      *   Pass the base document when validating a theme file, so that references to tokens
      *   defined in the base are resolved correctly.
      */
-    validate(base?: Dtcg): DtcgValidationIssue[] {
-        const issues: DtcgValidationIssue[] = [];
+    validate(base?: Dtcg): ValidationIssue[] {
+        const issues: ValidationIssue[] = [];
         const seen = new Set<string>();
         this.#validateGroup(this.#root, [], issues, seen, base);
+        for (const issue of issues) {
+            issue.name = "internal";
+            if (this.source !== undefined) {
+                issue.sourcePath = this.source;
+            }
+        }
         return issues;
     }
 
-    #push(issues: DtcgValidationIssue[], seen: Set<string>, severity: DtcgValidationSeverity, tokenPath: string, message: string): void {
+    #push(issues: ValidationIssue[], seen: Set<string>, severity: IssueSeverity, tokenPath: string, message: string): void {
         const key = `${severity}:${tokenPath}:${message}`;
         if (seen.has(key)) return;
         seen.add(key);
-        issues.push({ tokenPath, severity, message });
+        issues.push({ tokenPath, severity, message: message.includes(tokenPath) ? message : `${tokenPath}: ${message}` });
     }
 
-    #validateGroup(group: TokenGroup, path: string[], issues: DtcgValidationIssue[], seen: Set<string>, base?: Dtcg): void {
+    #validateGroup(group: TokenGroup, path: string[], issues: ValidationIssue[], seen: Set<string>, base?: Dtcg): void {
         const groupPath = path.join(".") || "<root>";
 
         if (group.extends instanceof TokenReference) {
@@ -86,7 +99,7 @@ export class Dtcg {
         }
     }
 
-    #validateToken(token: TokenNode<unknown>, path: string[], issues: DtcgValidationIssue[], seen: Set<string>, base?: Dtcg): void {
+    #validateToken(token: TokenNode<unknown>, path: string[], issues: ValidationIssue[], seen: Set<string>, base?: Dtcg): void {
         const tokenPath = path.join(".");
         const visiting = new Set<string>([tokenPath]);
         const value = token.value;
@@ -162,7 +175,7 @@ export class Dtcg {
         }
     }
 
-    #validateShadowLayer(layer: ShadowLayer, tokenPath: string, issues: DtcgValidationIssue[], seen: Set<string>, visiting: Set<string>, base?: Dtcg): void {
+    #validateShadowLayer(layer: ShadowLayer, tokenPath: string, issues: ValidationIssue[], seen: Set<string>, visiting: Set<string>, base?: Dtcg): void {
         this.#checkRefField(layer.color, tokenPath, issues, seen, visiting, base);
         this.#checkRefField(layer.offsetX, tokenPath, issues, seen, visiting, base);
         this.#checkRefField(layer.offsetY, tokenPath, issues, seen, visiting, base);
@@ -170,13 +183,13 @@ export class Dtcg {
         this.#checkRefField(layer.spread, tokenPath, issues, seen, visiting, base);
     }
 
-    #checkRefField(value: unknown, tokenPath: string, issues: DtcgValidationIssue[], seen: Set<string>, visiting: Set<string>, base?: Dtcg): void {
+    #checkRefField(value: unknown, tokenPath: string, issues: ValidationIssue[], seen: Set<string>, visiting: Set<string>, base?: Dtcg): void {
         if (value instanceof TokenReference) {
             this.#checkRef(value, tokenPath, issues, seen, visiting, base);
         }
     }
 
-    #checkRef(ref: TokenReference, tokenPath: string, issues: DtcgValidationIssue[], seen: Set<string>, visiting: Set<string>, base?: Dtcg): void {
+    #checkRef(ref: TokenReference, tokenPath: string, issues: ValidationIssue[], seen: Set<string>, visiting: Set<string>, base?: Dtcg): void {
         const target = this.#resolveRef(ref, base);
         if (!target) {
             this.#push(issues, seen, "error", tokenPath, `references {${ref.value}} which does not exist`);

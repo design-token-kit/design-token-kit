@@ -2,7 +2,6 @@ export type { TokenType } from "#/core/model/TokenType";
 export { TokenReference } from "#/core/model/TokenReference";
 export { TokenNode } from "#/core/model/TokenNode";
 export { TokenGroup } from "#/core/model/TokenGroup";
-export type { DtcgValidationIssue, DtcgValidationSeverity } from "#/core/model/Dtcg";
 export { Dtcg } from "#/core/model/Dtcg";
 export { DtcgList } from "#/core/model/DtcgList";
 export { DtcgJsonReader, DtcgJsonReaderError } from "#/core/io/DtcgJsonReader";

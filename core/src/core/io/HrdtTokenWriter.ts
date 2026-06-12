@@ -111,6 +111,11 @@ export class HrdtTokenWriter {
     }
 
     #serializeColor(color: ColorValue): string {
+        const hex = this.#colorToHex(color);
+        return `"${hex}"`;
+    }
+
+    #colorToHex(color: ColorValue): string {
         if (color.hex) {
             if (color.alpha === 1) return color.hex;
             const alphaHex = Math.round(color.alpha * 255).toString(16).padStart(2, "0");
@@ -230,7 +235,7 @@ export class HrdtTokenWriter {
     }
 
     #serializeColorOrRef(value: ColorValue | TokenReference): string {
-        return value instanceof TokenReference ? value.toString() : this.#serializeColor(value);
+        return value instanceof TokenReference ? value.toString() : this.#colorToHex(value);
     }
 
     #serializeDimensionOrRef(value: DimensionValue | TokenReference): string {

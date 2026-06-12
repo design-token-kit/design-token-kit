@@ -21,9 +21,13 @@ const program = new Command()
 Examples:
   $ dtokens validate tokens.json
   $ dtokens validate tokens.yaml
+  $ dtokens validate tokens.yaml tokens.dark.yaml
+  $ dtokens validate - tokens.dark.yaml < tokens.yaml
   $ dtokens convert tokens.yaml --inform hrdt --outform css --out ./dist/tokens.css
   $ dtokens convert tokens.json --outform hrdt
+  $ dtokens convert --outform css < tokens.yaml
   $ dtokens showcase tokens.yaml --out ./dist/showcase.html
+  $ dtokens showcase - < tokens.yaml
 ` : "");
 
 program.parseAsync(process.argv).catch((error) => {

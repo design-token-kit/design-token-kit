@@ -39,7 +39,7 @@
     "scripts": {
         "build": "tsc --noEmit && tsup",
         "dist": "node ../scripts/stage-package.mjs cli",
-        "test": "exit 0"
+        "test": "vitest run"
     },
     "dependencies": {
         "@design-token-kit/core": "0.2.1",
@@ -48,6 +48,7 @@
     "devDependencies": {
         "@types/node": "24.10.1",
         "tsup": "8.5.1",
-        "typescript": "5.9.3"
+        "typescript": "5.9.3",
+        "vitest": "^4.1.7"
     }
 }

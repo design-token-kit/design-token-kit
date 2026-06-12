@@ -1,4 +1,5 @@
-import { readFile } from "node:fs/promises";
+import { Source } from "#/core/Source";
+import { Format } from "#/core/io/Format";
 import { TokenCssConverter } from "#/core/css/TokenCssConverter";
 import { CssTokenParser } from "#/core/showcase/CssTokenParser";
 import { TokenHtmlShowcase } from "#/core/showcase/TokenHtmlShowcase";
@@ -36,9 +37,9 @@ export class TokenHtmlShowcaseBuilder implements TokenHtmlShowcase {
         }
 
         if (sources.length === 1) {
-            const sourceContent = await readFile(sources[0], "utf8");
-            if (this.#isCssContent(sourceContent)) {
-                return this.#renderCss(sourceContent);
+            const source = new Source(sources[0]);
+            if (await source.getFormat() === Format.CSS) {
+                return this.#renderCss(await source.getContent());
             }
         }
 
@@ -70,9 +71,4 @@ export class TokenHtmlShowcaseBuilder implements TokenHtmlShowcase {
             .join("\n");
     }
 
-    #isCssContent(content: string): boolean {
-        return /(^|\s)--[a-zA-Z0-9_-]+\s*:/.test(content)
-            || /(^|\s):root\b/.test(content)
-            || /(^|\s)@layer\b/.test(content);
-    }
 }

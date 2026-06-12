@@ -1,4 +1,5 @@
 import { readFile } from "node:fs/promises";
+import { parse as parseYaml, parseAllDocuments } from "yaml";
 import { Dtcg } from "#/core/model/Dtcg";
 import { TokenGroup } from "#/core/model/TokenGroup";
 import { TokenNode } from "#/core/model/TokenNode";
@@ -54,12 +55,37 @@ const TOKEN_TYPES = new Set<string>([
 export class HrdtTokenReader {
 
     parseRaw(hrdtContent: string): unknown {
-        return new SimpleHrdtParser(hrdtContent).parse();
+        return parseYaml(hrdtContent);
     }
 
-    parse(hrdtContent: string): Dtcg {
-        const root = this.#parseRoot(new SimpleHrdtParser(hrdtContent).parse());
-        return new Dtcg(root);
+    parse(hrdtContent: string, source?: string): Dtcg {
+        const raw = parseYaml(hrdtContent);
+        if (typeof raw !== "object" || raw === null || Array.isArray(raw)) {
+            throw new HrdtTokenReaderError("YAML root must be an object.");
+        }
+        const root = this.#parseRoot(raw as JsonObject);
+        return new Dtcg(root, source);
+    }
+
+    /**
+     * Parses a YAML string that may contain multiple documents separated by
+     * {@code ---} and returns a {@link Dtcg} for each document.
+     *
+     * If the content contains a single document the result is a single-element
+     * array.
+     */
+    parseAll(hrdtContent: string, source?: string): Dtcg[] {
+        const documents = parseAllDocuments(hrdtContent);
+        if ("length" in documents === false) {
+            throw new HrdtTokenReaderError("Failed to parse YAML document.");
+        }
+        return documents.map((doc) => {
+            const raw = doc.toJS();
+            if (typeof raw !== "object" || raw === null || Array.isArray(raw)) {
+                throw new HrdtTokenReaderError("YAML document root must be an object.");
+            }
+            return new Dtcg(this.#parseRoot(raw as JsonObject), source);
+        });
     }
 
     async parseFile(filePath: string): Promise<Dtcg> {
@@ -310,138 +336,4 @@ export class HrdtTokenReaderError extends Error {
     }
 }
 
-type ParsedHrdtLine = { indent: number; text: string };
 
-class SimpleHrdtParser {
-    readonly #lines: ParsedHrdtLine[];
-    #index = 0;
-
-    constructor(content: string) {
-        this.#lines = content
-            .replace(/^﻿/, "")
-            .split(/\r?\n/g)
-            .map((line) => line.replace(/\s+$/u, ""))
-            .filter((line) => line.trim().length > 0 && !line.trimStart().startsWith("#"))
-            .map((line) => ({
-                indent: line.length - line.trimStart().length,
-                text: line.trimStart(),
-            }));
-    }
-
-    parse(): JsonObject {
-        const result = this.#parseBlock(0);
-        if (typeof result !== "object" || result === null || Array.isArray(result)) {
-            throw new HrdtTokenReaderError("YAML root must be an object.");
-        }
-        return result as JsonObject;
-    }
-
-    #parseBlock(indent: number): JsonValue {
-        const line = this.#current();
-        if (!line || line.indent < indent) return {};
-        return line.text.startsWith("- ") ? this.#parseSequence(indent) : this.#parseMapping(indent);
-    }
-
-    #parseMapping(indent: number): JsonObject {
-        const output: JsonObject = {};
-        while (this.#index < this.#lines.length) {
-            const line = this.#current()!;
-            if (line.indent < indent) break;
-            if (line.indent > indent) throw new HrdtTokenReaderError(`Unexpected indentation near "${line.text}".`);
-            if (line.text.startsWith("- ")) break;
-            const { key, value } = this.#parseKeyValue(line.text);
-            this.#index += 1;
-            output[key] = value === undefined
-                ? this.#parseBlock(this.#nextIndent(indent))
-                : this.#parseScalar(value);
-        }
-        return output;
-    }
-
-    #parseSequence(indent: number): JsonValue[] {
-        const output: JsonValue[] = [];
-        while (this.#index < this.#lines.length) {
-            const line = this.#current()!;
-            if (line.indent < indent) break;
-            if (line.indent !== indent || !line.text.startsWith("- ")) break;
-            const itemText = line.text.slice(2).trim();
-            this.#index += 1;
-            if (itemText.includes(":")) {
-                const { key, value } = this.#parseKeyValue(itemText);
-                const item: JsonObject = {};
-                item[key] = value === undefined
-                    ? this.#parseBlock(this.#nextIndent(indent))
-                    : this.#parseScalar(value);
-                if (this.#current()?.indent === indent + 2 && !this.#current()?.text.startsWith("- ")) {
-                    Object.assign(item, this.#parseMapping(indent + 2));
-                }
-                output.push(item);
-            } else {
-                output.push(this.#parseScalar(itemText));
-            }
-        }
-        return output;
-    }
-
-    #parseKeyValue(text: string): { key: string; value?: string } {
-        const delimiter = text.indexOf(":");
-        if (delimiter < 0) throw new HrdtTokenReaderError(`Expected key-value pair, got "${text}".`);
-        const rawKey = text.slice(0, delimiter).trim();
-        if (!rawKey) throw new HrdtTokenReaderError(`Expected non-empty key in "${text}".`);
-        const value = text.slice(delimiter + 1).trim();
-        const key = (rawKey.startsWith('"') && rawKey.endsWith('"')) || (rawKey.startsWith("'") && rawKey.endsWith("'"))
-            ? this.#unquote(rawKey)
-            : rawKey;
-        return value.length === 0 ? { key } : { key, value };
-    }
-
-    #parseScalar(value: string): JsonValue {
-        if (value.startsWith("[") && value.endsWith("]")) return this.#parseInlineArray(value);
-        if ((value.startsWith('"') && value.endsWith('"')) || (value.startsWith("'") && value.endsWith("'"))) return this.#unquote(value);
-        if (value === "true") return true;
-        if (value === "false") return false;
-        if (value === "null") return null;
-        if (/^-?\d+(?:\.\d+)?$/.test(value)) return Number(value);
-        return value;
-    }
-
-    #parseInlineArray(value: string): JsonValue[] {
-        const inner = value.slice(1, -1).trim();
-        if (!inner) return [];
-        return this.#splitInlineArray(inner).map((item) => this.#parseScalar(item.trim()));
-    }
-
-    #splitInlineArray(value: string): string[] {
-        const items: string[] = [];
-        let current = "";
-        let quote: '"' | "'" | undefined;
-        for (let i = 0; i < value.length; i++) {
-            const char = value[i];
-            if (quote) {
-                current += char;
-                if (char === quote && value[i - 1] !== "\\") quote = undefined;
-                continue;
-            }
-            if (char === '"' || char === "'") { quote = char; current += char; continue; }
-            if (char === ",") { items.push(current); current = ""; continue; }
-            current += char;
-        }
-        items.push(current);
-        return items;
-    }
-
-    #unquote(value: string): string {
-        if (value.startsWith('"')) return JSON.parse(value) as string;
-        return value.slice(1, -1).replace(/''/g, "'");
-    }
-
-    #current(): ParsedHrdtLine | undefined {
-        return this.#lines[this.#index];
-    }
-
-    #nextIndent(currentIndent: number): number {
-        const nextLine = this.#current();
-        if (!nextLine || nextLine.indent <= currentIndent) return currentIndent + 2;
-        return nextLine.indent;
-    }
-}

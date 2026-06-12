@@ -12,7 +12,11 @@
         "esModuleInterop": true,
         "resolveJsonModule": true,
         "noEmit": true,
-        "types": ["node"]
+        "types": ["node"],
+        "baseUrl": ".",
+        "paths": {
+            "#/*": ["src/*"]
+        }
     },
-    "include": ["src", "tsup.config.ts"]
+    "include": ["src", "test", "tsup.config.ts", "vitest.config.ts"]
 }

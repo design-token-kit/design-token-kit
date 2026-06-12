@@ -46,7 +46,7 @@ describe("HrdtTokenWriter", () => {
             const primitive = new TokenGroup({ children: new Map([["color", colors]]) });
             const root = new TokenGroup({ children: new Map([["primitive", primitive]]) });
             const result = write(new Dtcg(root));
-            expect(result).toContain("red: #ff0000");
+            expect(result).toContain('red: "#ff0000"');
         });
 
         it("writes dimension token", () => {

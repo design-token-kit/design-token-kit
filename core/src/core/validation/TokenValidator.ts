@@ -25,10 +25,13 @@ export interface TokenValidator {
  */
 export interface ValidationIssue {
     /** Name of the validator that issued the diagnostic. */
-    name: string;
+    name?: string;
 
     /** Path to the source file. */
-    sourcePath: string;
+    sourcePath?: string;
+
+    /** Dot-separated path to the token or group where the issue was found. */
+    tokenPath?: string;
 
     /** Message text. */
     message: string;

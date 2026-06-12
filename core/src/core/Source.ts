@@ -3,16 +3,20 @@ import { readFile, writeFile } from "node:fs/promises";
 import { randomUUID } from "node:crypto";
 import path from "node:path";
 import { tmpdir } from "node:os";
+import { Format } from "#/core/io/Format";
+import { FormatDetector } from "#/core/io/FormatDetector";
+import { stdin } from "#/core/Stdin";
 
 enum SourceType {
     URL = "url",
     FILE = "file",
     CONTENT = "content",
+    STDIN = "stdin",
 }
 
 /**
  * Data source.
- * Wraps URL, File or content.
+ * Wraps URL, File, stdin ({@code "-"}) or raw content.
  *
  * Allows returning any of these data sources as a file.
  * Used in tool implementations to simplify the interface.
@@ -20,26 +24,33 @@ enum SourceType {
 export class Source {
     readonly #type: SourceType;
     readonly #input: string;
+    #content?: string;
+    #format?: Format;
     #filePath?: string;
 
     constructor(input: string) {
         this.#input = input;
 
-        if (Source.#isHttpUrl(input)) {
+        if (input === "-") {
+            this.#type = SourceType.STDIN;
+        }
+        else if (Source.#isUrl(input)) {
             this.#type = SourceType.URL;
-        } else if (existsSync(input)) {
+        }
+        else if (existsSync(input)) {
             this.#type = SourceType.FILE;
-        } else {
+        }
+        else {
             this.#type = SourceType.CONTENT;
         }
     }
 
-    static #isHttpUrl(value: string): boolean {
+    static #isUrl(value: string): boolean {
         try {
-            const url = new URL(value);
-
-            return url.protocol === "http:" || url.protocol === "https:";
-        } catch {
+            new URL(value);
+            return true;
+        }
+        catch {
             return false;
         }
     }
@@ -52,23 +63,39 @@ export class Source {
         return this.#type;
     }
 
+    async getFormat(): Promise<Format> {
+        if (this.#format === undefined) {
+            this.#format = FormatDetector.detect(await this.getContent());
+        }
+        return this.#format;
+    }
+
     async getContent(): Promise<string> {
-        if (this.#type === SourceType.FILE) {
-            return readFile(this.#input, "utf8");
+        if (this.#content !== undefined) {
+            return this.#content;
+        }
+
+        if (this.#type === SourceType.STDIN) {
+            this.#content = await stdin.get();
+        }
+        else if (this.#type === SourceType.FILE) {
+            this.#content = await readFile(this.#input, "utf8");
         }
         else if (this.#type === SourceType.URL) {
             const response = await fetch(this.#input);
             if (!response.ok) {
                 throw new Error(`Unable to fetch "${this.#input}": HTTP ${response.status}`);
             }
-            return response.text();
+            this.#content = await response.text();
         }
         else if (this.#type === SourceType.CONTENT) { 
-            return this.#input;
+            this.#content = this.#input;
         }
         else {
             throw new Error(`Unsupported source type "${this.#type}: ${this.#input}"`);
         }
+
+        return this.#content;
     }
 
     async getFile(): Promise<string> {
@@ -78,14 +105,8 @@ export class Source {
 
         if (this.#type === SourceType.FILE) {
             this.#filePath = this.#input;
-        } else if (this.#type === SourceType.URL) {
-            const response = await fetch(this.#input);
-            if (!response.ok) {
-                throw new Error(`Unable to fetch "${this.#input}": HTTP ${response.status}`);
-            }
-            this.#filePath = await Source.#writeTemp(await response.text());
         } else {
-            this.#filePath = await Source.#writeTemp(this.#input);
+            this.#filePath = await Source.#writeTemp(await this.getContent());
         }
 
         return this.#filePath;
