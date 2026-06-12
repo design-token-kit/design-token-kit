@@ -12,9 +12,9 @@ describe("showcase", () => {
         const outFile = resolve(outDir, "showcase.html");
         mkdirSync(outDir, { recursive: true });
         try {
-            const result = dtokens(
-                `showcase ${fixturePath("valid.yaml")} --out ${outFile} --no-open`,
-            );
+                const result = dtokens(
+                    `showcase ${fixturePath("valid.yaml")} --out ${outFile}`,
+                );
             expect(result.status).toBe(0);
             expect(existsSync(outFile)).toBe(true);
             const html = readFileSync(outFile, "utf8");

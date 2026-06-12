@@ -11,7 +11,7 @@ export const showcaseCommand = new Command("showcase")
     .description("Create HTML showcase from DTCG JSON, HRDT YAML, or CSS.")
     .argument("[files...]", "Paths to token JSON, HRDT, or CSS files (reads from stdin when omitted)")
     .option("-o, --out <file>", "Output HTML file name or path")
-    .option("--no-open", "Do not open the generated HTML in browser")
+    .option("--open", "Open the generated HTML in browser (only with --out)")
     .addHelpText("after", "\nExit status:\n  0  success\n  1  showcase failed")
     .action(async (files: string[], options: { out?: string; open?: boolean }) => {
         try {
@@ -23,7 +23,7 @@ export const showcaseCommand = new Command("showcase")
                 const targetFile = resolveOutputPath(options.out);
                 await writeFile(targetFile, html);
                 console.log(`Saved HTML to: ${targetFile}`);
-                if (options.open !== false) {
+                if (options.open) {
                     openFile(targetFile);
                 }
             } else {
