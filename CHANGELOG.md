@@ -4,6 +4,14 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.3.1] - 2026-06-13
+
+### Fixed
+
+- Fixed `showcase` input handling for stdin and Windows file paths.
+
+## [0.3.0] - 2026-06-12
+
 ### Added
 
 - Stdin support: all commands accept `-` to read from stdin, or read piped

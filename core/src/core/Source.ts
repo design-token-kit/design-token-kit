@@ -34,11 +34,11 @@ export class Source {
         if (input === "-") {
             this.#type = SourceType.STDIN;
         }
-        else if (Source.#isUrl(input)) {
-            this.#type = SourceType.URL;
-        }
         else if (existsSync(input)) {
             this.#type = SourceType.FILE;
+        }
+        else if (Source.#isUrl(input)) {
+            this.#type = SourceType.URL;
         }
         else {
             this.#type = SourceType.CONTENT;

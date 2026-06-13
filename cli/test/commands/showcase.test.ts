@@ -12,9 +12,9 @@ describe("showcase", () => {
         const outFile = resolve(outDir, "showcase.html");
         mkdirSync(outDir, { recursive: true });
         try {
-                const result = dtokens(
-                    `showcase ${fixturePath("valid.yaml")} --out ${outFile}`,
-                );
+            const result = dtokens(
+                `showcase ${fixturePath("valid.yaml")} --out ${outFile}`,
+            );
             expect(result.status).toBe(0);
             expect(existsSync(outFile)).toBe(true);
             const html = readFileSync(outFile, "utf8");
@@ -22,6 +22,13 @@ describe("showcase", () => {
         } finally {
             rmSync(outDir, { recursive: true, force: true });
         }
+    });
+
+    it("generates HTML from stdin", () => {
+        const content = readFileSync(fixturePath("valid.yaml"), "utf8");
+        const result = dtokens("showcase -", content);
+        expect(result.status).toBe(0);
+        expect(result.stdout).toContain("<!DOCTYPE html>");
     });
 
     it("fails with exit code 1 for invalid file", () => {

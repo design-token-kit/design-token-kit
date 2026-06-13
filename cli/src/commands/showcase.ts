@@ -3,7 +3,7 @@ import { writeFile } from "node:fs/promises";
 import { spawn } from "node:child_process";
 import path from "node:path";
 import { tmpdir } from "node:os";
-import { Source, createTokenHtmlShowcase } from "@design-token-kit/core";
+import { createTokenHtmlShowcase } from "@design-token-kit/core";
 
 const EXIT_FAILURE = 1;
 
@@ -16,9 +16,8 @@ export const showcaseCommand = new Command("showcase")
     .action(async (files: string[], options: { out?: string; open?: boolean }) => {
         try {
             const showcase = createTokenHtmlShowcase();
-            const sources = (files.length > 0 ? files : ["-"]).map((f) => new Source(f));
-            const filePaths = await Promise.all(sources.map((s) => s.getFile()));
-            const html = await showcase.showcase(filePaths);
+            const sources = files.length > 0 ? files : ["-"];
+            const html = await showcase.showcase(sources);
             if (options.out) {
                 const targetFile = resolveOutputPath(options.out);
                 await writeFile(targetFile, html);
