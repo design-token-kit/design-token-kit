@@ -21,6 +21,8 @@ tokens into CSS custom properties, and renders static HTML showcases.
 * **Source abstraction** - local files, stdin, URLs, and raw token
   content strings
 
+Node.js 18 or newer is required.
+
 ## Install
 
 ```bash

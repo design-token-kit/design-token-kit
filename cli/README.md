@@ -19,6 +19,8 @@ validating, converting, and previewing design tokens from the terminal.
 * **Source abstraction** - local files, stdin, URLs, and raw token
   content strings
 
+Node.js 18 or newer is required.
+
 ## Install
 
 Run without installing:
@@ -100,9 +102,9 @@ Convert token documents between DTCG JSON and HRDT YAML.
 
 | Option | Description |
 | --- | --- |
-| `-i, --inform <format>` | Input format: `dtcg`, `hrdt` |
-| `-f, --outform <format>` | Output format: `dtcg`, `hrdt`, `css` |
-| `-o, --out <file>` | Output file, defaults to stdout |
+| `-i, --inform [format]` | Input format: `dtcg`, `hrdt` |
+| `-f, --outform [format]` | Output format: `dtcg`, `hrdt`, `css` |
+| `-o, --out [file]` | Output file, defaults to stdout |
 
 ### showcase
 
