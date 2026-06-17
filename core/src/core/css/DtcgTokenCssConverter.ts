@@ -87,6 +87,39 @@ function shadowLayerToCss(layer: ShadowLayer): string {
     return `${inset}${dimensionOrRefToCss(layer.offsetX)} ${dimensionOrRefToCss(layer.offsetY)} ${dimensionOrRefToCss(layer.blur)} ${dimensionOrRefToCss(layer.spread)} ${layer.color instanceof TokenReference ? refToCssVar(layer.color) : colorToCss(layer.color)}`;
 }
 
+function typographyToCss(value: TypographyValue): string {
+    const fontFamily = value.fontFamily instanceof TokenReference
+        ? refToCssVar(value.fontFamily)
+        : Array.isArray(value.fontFamily)
+            ? value.fontFamily
+                .map((item) => item instanceof TokenReference ? refToCssVar(item) : `"${item}"`)
+                .join(", ")
+            : `"${value.fontFamily}"`;
+    const fontWeight = value.fontWeight instanceof TokenReference
+        ? refToCssVar(value.fontWeight)
+        : String(value.fontWeight);
+    const lineHeight = value.lineHeight instanceof TokenReference
+        ? refToCssVar(value.lineHeight)
+        : String(value.lineHeight);
+
+    return `${fontWeight} ${dimensionOrRefToCss(value.fontSize)}/${lineHeight} ${fontFamily}`;
+}
+
+function gradientToCss(value: Array<GradientStop | TokenReference>): string {
+    const stops = value.map((stop) => {
+        if (stop instanceof TokenReference) return refToCssVar(stop);
+
+        const color = stop.color instanceof TokenReference ? refToCssVar(stop.color) : colorToCss(stop.color);
+        const position = stop.position instanceof TokenReference
+            ? `calc(${refToCssVar(stop.position)} * 100%)`
+            : `${stop.position * 100}%`;
+
+        return `${color} ${position}`;
+    });
+
+    return `linear-gradient(180deg, ${stops.join(", ")})`;
+}
+
 function tokenValueToCss(value: unknown): string | undefined {
     if (value instanceof TokenReference) return refToCssVar(value);
     if (value instanceof ColorValue) return colorToCss(value);
@@ -116,7 +149,7 @@ function tokenValueToCss(value: unknown): string | undefined {
         if (value[0] instanceof GradientStop || (value[0] instanceof TokenReference && !(value[0] instanceof ShadowLayer))) {
             if (value.every((item) => item instanceof GradientStop || item instanceof TokenReference)) {
                 const isGradient = value.some((item) => item instanceof GradientStop);
-                if (isGradient) return undefined;
+                if (isGradient) return gradientToCss(value);
             }
         }
         if (value[0] instanceof ShadowLayer || value[0] instanceof TokenReference) {
@@ -130,7 +163,7 @@ function tokenValueToCss(value: unknown): string | undefined {
         ).join(", ");
     }
 
-    if (value instanceof TypographyValue) return undefined;
+    if (value instanceof TypographyValue) return typographyToCss(value);
 
     return undefined;
 }

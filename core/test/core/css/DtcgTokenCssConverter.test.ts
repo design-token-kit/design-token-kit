@@ -49,6 +49,16 @@ describe("DtcgTokenCssConverter", () => {
         expect(css).toContain("--semantic-color-bg-surface: var(--primitive-color-white)");
     });
 
+    it("converts typography tokens to CSS custom properties", () => {
+        expect(css).toContain('--primitive-typography-body: 500 16px/1.5 "Inter", "Arial", "sans-serif"');
+        expect(css).toContain("--semantic-text-body: var(--primitive-typography-body)");
+    });
+
+    it("converts gradient tokens to CSS custom properties", () => {
+        expect(css).toContain("--primitive-gradient-brand: linear-gradient(180deg, #10a5a5 0%, color(srgb 0.118 0.161 0.231) 100%)");
+        expect(css).toContain("--semantic-surface-brand: var(--primitive-gradient-brand)");
+    });
+
     it("overrides dark theme values", () => {
         expect(css).toContain("--semantic-color-bg-surface: var(--primitive-color-white)");
         expect(css).toContain("--semantic-color-bg-surface: var(--primitive-color-slate-100)");
