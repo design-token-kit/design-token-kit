@@ -8,13 +8,13 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Changed
 
-- Updated showcase font cards: adjusted preview block sizing, font sorting,
+- #29 Updated showcase font cards: adjusted preview block sizing, font sorting,
   and semantic text wrapping for better readability.
 - Added README links to the HRDT YAML article in the root, CLI, and core docs.
 
 ### Fixed
 
-- Fixed CSS generation for composite `typography` and `gradient` tokens so
+- #30 Fixed CSS generation for composite `typography` and `gradient` tokens so
   semantic aliases reference generated CSS variables instead of missing ones.
 
 ## [0.3.2] - 2026-06-16
