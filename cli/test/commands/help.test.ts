@@ -19,6 +19,12 @@ describe("help", () => {
         expect(result.stdout).toContain("Exit status:");
         expect(result.stdout).toContain("showcase failed");
     });
+
+    it("shows exit codes in stats help", () => {
+        const result = dtokens("stats --help");
+        expect(result.stdout).toContain("Exit status:");
+        expect(result.stdout).toContain("stats failed");
+    });
 });
 
 describe("exit codes", () => {
@@ -34,6 +40,11 @@ describe("exit codes", () => {
 
     it("returns 1 on conversion failure", () => {
         const result = dtokens("convert - --outform css", "bad");
+        expect(result.status).toBe(1);
+    });
+
+    it("returns 1 on stats failure", () => {
+        const result = dtokens("stats -", "bad");
         expect(result.status).toBe(1);
     });
 });

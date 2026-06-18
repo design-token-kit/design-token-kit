@@ -220,12 +220,15 @@ export class Dtcg {
     #resolveRef(ref: TokenReference, base?: Dtcg): TokenGroup | TokenNode<unknown> | undefined {
         const parts = ref.value.split(".");
         let node: TokenGroup | TokenNode<unknown> | undefined = this.#root.get(parts[0]);
+        if (node === undefined && base !== undefined) {
+            return base.#resolveRef(ref);
+        }
         for (let i = 1; i < parts.length; i++) {
             if (!(node instanceof TokenGroup)) return undefined;
             node = node.get(parts[i]);
-        }
-        if (node === undefined && base !== undefined) {
-            return base.#resolveRef(ref);
+            if (node === undefined && base !== undefined) {
+                return base.#resolveRef(ref);
+            }
         }
         return node;
     }

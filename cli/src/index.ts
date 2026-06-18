@@ -5,6 +5,7 @@ import { fileURLToPath } from "node:url";
 import { validateCommand } from "./commands/validate";
 import { convertCommand } from "./commands/convert";
 import { showcaseCommand } from "./commands/showcase";
+import { statsCommand } from "./commands/stats";
 
 const packageJsonPath = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../package.json");
 const packageJson = JSON.parse(readFileSync(packageJsonPath, "utf8")) as { version: string };
@@ -16,6 +17,7 @@ const program = new Command()
     .addCommand(validateCommand)
     .addCommand(convertCommand)
     .addCommand(showcaseCommand)
+    .addCommand(statsCommand)
     .action(() => { program.outputHelp(); })
     .addHelpText("after", ({ command }) => command.name() === "dtokens" ? `
 Examples:
@@ -28,6 +30,10 @@ Examples:
   $ dtokens convert --outform css < tokens.yaml
   $ dtokens showcase tokens.yaml --out ./dist/showcase.html
   $ dtokens showcase - < tokens.yaml
+  $ dtokens stats tokens.yaml
+  $ dtokens stats - < tokens.yaml
+  $ dtokens stats tokens.yaml --out ./dist/stats.html
+  $ dtokens stats tokens.yaml --out ./dist/stats.html --open
 ` : "");
 
 program.parseAsync(process.argv).catch((error) => {

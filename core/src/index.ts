@@ -5,15 +5,21 @@ export type {
 } from "#/core/validation/TokenValidator";
 export type { TokenCssConverter } from "#/core/css/TokenCssConverter";
 export type { TokenHtmlShowcase } from "#/core/showcase/TokenHtmlShowcase";
+export type { TokenStats } from "#/core/stats/TokenStats";
 
 export { DtcgTokenCssConverter } from "#/core/css/DtcgTokenCssConverter";
 export { TokenHtmlShowcaseBuilder } from "#/core/showcase/TokenHtmlShowcaseBuilder";
+export { TokenStatsBuilder } from "#/core/stats/TokenStatsBuilder";
+export { TokenStatsCalculator } from "#/core/stats/TokenStatsCalculator";
+export { TokenStatsHtmlRenderer } from "#/core/stats/TokenStatsHtmlRenderer";
 export { DtcgSchemaValidator } from "#/core/validation/dtcg/DtcgSchemaValidator";
 export { HrdtTokenValidator } from "#/core/validation/hrdt/HrdtTokenValidator";
 export { DtcgTokenValidator } from "#/core/validation/DtcgTokenValidator";
 
 import { DtcgTokenCssConverter } from "#/core/css/DtcgTokenCssConverter";
 import type { TokenCssConverter } from "#/core/css/TokenCssConverter";
+import { TokenStatsBuilder } from "#/core/stats/TokenStatsBuilder";
+import type { TokenStats } from "#/core/stats/TokenStats";
 import { DtcgTokenValidator } from "#/core/validation/DtcgTokenValidator";
 import { TokenHtmlShowcaseBuilder } from "#/core/showcase/TokenHtmlShowcaseBuilder";
 import type { TokenHtmlShowcase } from "#/core/showcase/TokenHtmlShowcase";
@@ -27,6 +33,10 @@ export function createTokenHtmlShowcase(): TokenHtmlShowcase {
         new DtcgTokenValidator(),
         new DtcgTokenCssConverter(),
     );
+}
+
+export function createTokenStats(): TokenStats {
+    return new TokenStatsBuilder();
 }
 export { DesignToken, DesignTokens } from "#/core/DesignToken";
 

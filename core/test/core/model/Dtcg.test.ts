@@ -21,6 +21,7 @@ import { ShadowLayer } from "#/core/model/values/ShadowValue";
 import { GradientStop } from "#/core/model/values/GradientValue";
 import { TypographyValue } from "#/core/model/values/TypographyValue";
 import type { TokenNode } from "#/core/model/TokenNode";
+import { DtcgList } from "#/core/model/DtcgList";
 
 function makeColor(alpha = 1): ColorValue {
     return new ColorValue("srgb", [1, 0, 0], alpha);
@@ -226,6 +227,37 @@ describe("Dtcg", () => {
             const token = new ColorToken(new ColorValue("srgb", [1, 0, 0]));
             const root = new TokenGroup({ children: new Map([["red", token]]) });
             expect(new Dtcg(root).validate()).toEqual([]);
+        });
+
+        it("resolves theme references against the base document", () => {
+            const base = new Dtcg(new TokenGroup({
+                children: new Map([
+                    ["primitive", new TokenGroup({
+                        children: new Map([
+                            ["color", new TokenGroup({
+                                children: new Map([
+                                    ["white", new ColorToken(makeColor())],
+                                ]),
+                            })],
+                        ]),
+                    })],
+                ]),
+            }));
+            const theme = new Dtcg(new TokenGroup({
+                children: new Map([
+                    ["semantic", new TokenGroup({
+                        children: new Map([
+                            ["text", new TokenGroup({
+                                children: new Map([
+                                    ["default", new AliasToken(new TokenReference("primitive.color.white"))],
+                                ]),
+                            })],
+                        ]),
+                    })],
+                ]),
+            }));
+
+            expect(new DtcgList(base, new Map([["dark", theme]])).validate()).toEqual([]);
         });
     });
 });
