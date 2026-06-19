@@ -2,6 +2,7 @@ import { Command } from "commander";
 import { readFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { checkCommand } from "./commands/check";
 import { validateCommand } from "./commands/validate";
 import { convertCommand } from "./commands/convert";
 import { showcaseCommand } from "./commands/showcase";
@@ -11,24 +12,31 @@ const packageJson = JSON.parse(readFileSync(packageJsonPath, "utf8")) as { versi
 
 const program = new Command()
     .name("dtokens")
-    .description("CLI for DTCG JSON and HRDT YAML: validate, convert, showcase.")
+    .description("CLI for DTCG JSON and HRDT YAML: check, convert, showcase.")
     .version(packageJson.version, "-v, --version", "display version")
+    .addCommand(checkCommand)
     .addCommand(validateCommand)
     .addCommand(convertCommand)
     .addCommand(showcaseCommand)
-    .action(() => { program.outputHelp(); })
     .addHelpText("after", ({ command }) => command.name() === "dtokens" ? `
 Examples:
-  $ dtokens validate tokens.json
-  $ dtokens validate tokens.yaml
-  $ dtokens validate tokens.yaml tokens.dark.yaml
-  $ dtokens validate - tokens.dark.yaml < tokens.yaml
+  $ dtokens check tokens.json
+  $ dtokens check tokens.yaml tokens.dark.yaml
+  $ dtokens check - tokens.dark.yaml < tokens.yaml
+  $ dtokens check tokens.json --scope schema
+  $ dtokens check tokens.json --scope lint
+  $ dtokens check tokens.json --scope lint --checks layer-reference
   $ dtokens convert tokens.yaml --inform hrdt --outform css --out ./dist/tokens.css
   $ dtokens convert tokens.json --outform hrdt
   $ dtokens convert --outform css < tokens.yaml
   $ dtokens showcase tokens.yaml --out ./dist/showcase.html
   $ dtokens showcase - < tokens.yaml
 ` : "");
+
+if (process.argv.length <= 2) {
+    program.outputHelp();
+    process.exit(0);
+}
 
 program.parseAsync(process.argv).catch((error) => {
     console.error(error instanceof Error ? error.message : error);

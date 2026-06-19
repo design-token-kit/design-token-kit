@@ -8,6 +8,17 @@ describe("help", () => {
         expect(result.stdout).toContain("validation errors found");
     });
 
+    it("shows exit codes in check help", () => {
+        const result = dtokens("check --help");
+        expect(result.stdout).toContain("Exit status:");
+        expect(result.stdout).toContain("issues found");
+    });
+
+    it("documents the scope option in check help", () => {
+        const result = dtokens("check --help");
+        expect(result.stdout).toContain("--scope");
+    });
+
     it("shows exit codes in convert help", () => {
         const result = dtokens("convert --help");
         expect(result.stdout).toContain("Exit status:");
@@ -18,6 +29,18 @@ describe("help", () => {
         const result = dtokens("showcase --help");
         expect(result.stdout).toContain("Exit status:");
         expect(result.stdout).toContain("showcase failed");
+    });
+});
+
+describe("unknown command", () => {
+    it("fails with a non-zero exit code", () => {
+        const result = dtokens(`lint ${fixturePath("valid.json")}`);
+        expect(result.status).not.toBe(0);
+    });
+
+    it("reports the unknown command", () => {
+        const result = dtokens("lint -");
+        expect(result.stderr).toContain("unknown command");
     });
 });
 

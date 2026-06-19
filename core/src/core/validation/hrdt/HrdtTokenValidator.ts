@@ -3,12 +3,10 @@ import addFormats from "ajv-formats";
 import { readFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
-import { Source } from "#/core/Source";
+import { Source } from "#/core/io/Source";
 import { HrdtTokenReader } from "#/core/io/HrdtTokenReader";
-import {
-    ValidationIssue,
-    TokenValidator,
-} from "#/core/validation/TokenValidator";
+import { TokenValidator } from "#/core/validation/TokenValidator";
+import type { CheckIssue } from "#/core/check/CheckIssue";
 
 type AjvFormatsPlugin = (ajv: Ajv) => Ajv;
 
@@ -19,9 +17,7 @@ const SCHEMA_ID = "https://designtokens.local/schemas/hrdt-tokens.json";
  * Accepts HRDT sources only.
  */
 export class HrdtTokenValidator implements TokenValidator {
-    readonly name = "hrdt";
-
-    async validate(sources: string[]): Promise<ValidationIssue[]> {
+    async validate(sources: string[]): Promise<CheckIssue[]> {
         const ajv = await this.#createAjv();
 
         const validator = ajv.getSchema(SCHEMA_ID);
@@ -29,7 +25,7 @@ export class HrdtTokenValidator implements TokenValidator {
             throw new Error(`AJV schema "${SCHEMA_ID}" was not loaded.`);
         }
 
-        const issues: ValidationIssue[] = [];
+        const issues: CheckIssue[] = [];
         for (const source of sources) {
             const content = await new Source(source).getContent();
             const sourceObj = new HrdtTokenReader().parseRaw(content);
@@ -39,7 +35,7 @@ export class HrdtTokenValidator implements TokenValidator {
             }
             const errors = validator.errors ?? [];
             for (const error of errors) {
-                issues.push(this.#toValidationIssue(source, error));
+                issues.push(this.#toCheckIssue(source, error));
             }
         }
 
@@ -60,11 +56,11 @@ export class HrdtTokenValidator implements TokenValidator {
         return ajv;
     }
 
-    #toValidationIssue(sourcePath: string, error: ErrorObject): ValidationIssue {
+    #toCheckIssue(sourcePath: string, error: ErrorObject): CheckIssue {
         const instancePath = error.instancePath || "/";
         const message = error.message ?? "Validation error.";
         return {
-            name: this.name,
+            id: "schema",
             sourcePath,
             severity: "error",
             message: `${instancePath}: ${message}`,

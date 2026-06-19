@@ -3,6 +3,7 @@ import { DtcgList } from "#/core/model/DtcgList";
 import { DtcgListLoader } from "#/core/io/DtcgListLoader";
 import { TokenGroup } from "#/core/model/TokenGroup";
 import { TokenNode } from "#/core/model/TokenNode";
+import { TokenPath } from "#/core/model/TokenPath";
 import { TokenReference } from "#/core/model/TokenReference";
 import { ColorValue } from "#/core/model/values/ColorValue";
 import { CubicBezierValue } from "#/core/model/values/CubicBezierValue";
@@ -135,16 +136,16 @@ function tokenValueToCss(value: unknown): string | undefined {
     return undefined;
 }
 
-function collectDeclarations(group: TokenGroup, path: string[]): Array<[string, string]> {
+function collectDeclarations(group: TokenGroup, path: TokenPath): Array<[string, string]> {
     const result: Array<[string, string]> = [];
     for (const [key, child] of group.entries()) {
-        const childPath = [...path, key];
+        const childPath = path.child(key);
         if (child instanceof TokenGroup) {
             result.push(...collectDeclarations(child, childPath));
         } else if (child instanceof TokenNode) {
             const css = tokenValueToCss(child.value);
             if (css !== undefined) {
-                result.push([tokenPathToCssVar(childPath.join(".")), css]);
+                result.push([tokenPathToCssVar(childPath.toString()), css]);
             }
         }
     }
@@ -155,10 +156,10 @@ function collectFromDoc(doc: Dtcg): Array<[string, string]> {
     const result: Array<[string, string]> = [];
     for (const [key, child] of doc.entries()) {
         if (child instanceof TokenGroup) {
-            result.push(...collectDeclarations(child, [key]));
+            result.push(...collectDeclarations(child, TokenPath.of(key)));
         } else if (child instanceof TokenNode) {
             const css = tokenValueToCss(child.value);
-            if (css !== undefined) result.push([tokenPathToCssVar(key), css]);
+            if (css !== undefined) result.push([tokenPathToCssVar(TokenPath.of(key).toString()), css]);
         }
     }
     return result;

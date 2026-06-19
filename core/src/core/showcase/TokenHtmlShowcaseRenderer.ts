@@ -1,3 +1,4 @@
+import { TokenPath } from "#/core/model/TokenPath";
 import { TOKEN_HTML_SHOWCASE_CSS } from "#/core/showcase/TokenHtmlShowcaseStyles";
 import {
     BorderTokenAggregator,
@@ -439,7 +440,7 @@ ${this.renderTokens(visibleScopes, visibleThemes, parsed.entries)}
         const grouped = new Map<string, TokenEntry[]>();
 
         for (const token of this.dedupeTokens(tokens)) {
-            const parts = this.cssVariableToTokenPath(token.name).split(".");
+            const parts = this.cssVariableToTokenPath(token.name).segments();
             if (parts[0] !== "semantic") {
                 continue;
             }
@@ -531,7 +532,7 @@ ${this.renderTokens(visibleScopes, visibleThemes, parsed.entries)}
         const uniqueRefs = [...new Set(refs)];
         const items = uniqueRefs
             .map((ref) => {
-                const tokenPath = this.cssVariableToTokenPath(ref);
+                const tokenPath = this.cssVariableToTokenPath(ref).toString();
                 return `<span><code>${this.esc(this.getCompositePartName(ref))}</code><a class="semantic-role__ref" href="#${this.esc(this.tokenId(ref))}" title="${this.esc(tokenPath)}">${this.esc(tokenPath)}</a></span>`;
             })
             .join("");
@@ -572,7 +573,7 @@ ${this.renderTokens(visibleScopes, visibleThemes, parsed.entries)}
 
     private getSemanticWarnings(directRefs: string[], unresolvedRefs: string[]): string[] {
         const warnings: string[] = [];
-        if (directRefs.some((ref) => this.cssVariableToTokenPath(ref).startsWith("component."))) {
+        if (directRefs.some((ref) => this.cssVariableToTokenPath(ref).head() === "component")) {
             warnings.push("warning: references component token");
         }
         if (unresolvedRefs.length > 0) {
@@ -754,11 +755,11 @@ ${this.renderTokens(visibleScopes, visibleThemes, parsed.entries)}
         return result;
     }
 
-    private cssVariableToTokenPath(name: string): string {
-        return name.replace(/^--/, "").replace(/-/g, ".");
+    private cssVariableToTokenPath(name: string): TokenPath {
+        return TokenPath.parse(name.replace(/^--/, "").replace(/-/g, "."));
     }
 
-    private getSemanticGroupKey(parts: string[]): string {
+    private getSemanticGroupKey(parts: readonly string[]): string {
         const prefix = parts.slice(1, 3).join(".");
         if (TokenHtmlShowcaseRenderer.#SEMANTIC_GROUP_TITLES.has(prefix)) {
             return prefix;
@@ -772,10 +773,10 @@ ${this.renderTokens(visibleScopes, visibleThemes, parsed.entries)}
         return "other";
     }
 
-    private getSemanticRoleName(path: string): string {
-        const parts = path.split(".");
+    private getSemanticRoleName(path: TokenPath): string {
+        const parts = path.segments();
         if (parts[0] !== "semantic") {
-            return path;
+            return path.toString();
         }
         if (parts[1] === "color" || parts[1] === "space" || parts[1] === "shape") {
             return parts.slice(2).join(".");

@@ -1,0 +1,42 @@
+{
+  "$schema": "https://www.designtokens.org/schemas/2025.10/format.json",
+  "primitive": {
+    "color": {
+      "brand-500": {
+        "$type": "color",
+        "$value": {
+          "colorSpace": "srgb",
+          "components": [0.145, 0.286, 0.965],
+          "alpha": 1,
+          "hex": "#2549f6"
+        }
+      }
+    }
+  },
+  "semantic": {
+    "color": {
+      "action-primary": {
+        "$value": "{primitive.color.brand-500}"
+      },
+      "raw-text": {
+        "$type": "color",
+        "$value": {
+          "colorSpace": "srgb",
+          "components": [0, 0, 0],
+          "alpha": 1,
+          "hex": "#000000"
+        }
+      }
+    }
+  },
+  "component": {
+    "button": {
+      "background": {
+        "$value": "{primitive.color.brand-500}"
+      },
+      "text": {
+        "$value": "{semantic.color.action-primary}"
+      }
+    }
+  }
+}

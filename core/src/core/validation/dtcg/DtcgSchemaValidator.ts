@@ -3,11 +3,9 @@ import addFormats from "ajv-formats";
 import { readFile, readdir } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
-import { Source } from "#/core/Source";
-import {
-    ValidationIssue,
-    TokenValidator,
-} from "#/core/validation/TokenValidator";
+import { Source } from "#/core/io/Source";
+import { TokenValidator } from "#/core/validation/TokenValidator";
+import type { CheckIssue } from "#/core/check/CheckIssue";
 
 type AjvFormatsPlugin = (ajv: Ajv) => Ajv;
 
@@ -18,9 +16,7 @@ const FORMAT_SCHEMA_ID = "https://www.designtokens.org/schemas/2025.10/format.js
  * Accepts DTCG JSON sources only.
  */
 export class DtcgSchemaValidator implements TokenValidator {
-    readonly name = "dtcg";
-
-    async validate(sources: string[]): Promise<ValidationIssue[]> {
+    async validate(sources: string[]): Promise<CheckIssue[]> {
         const ajv = await this.#createAjv();
 
         const validator = ajv.getSchema(FORMAT_SCHEMA_ID);
@@ -28,7 +24,7 @@ export class DtcgSchemaValidator implements TokenValidator {
             throw new Error(`AJV schema "${FORMAT_SCHEMA_ID}" was not loaded.`);
         }
 
-        const issues: ValidationIssue[] = [];
+        const issues: CheckIssue[] = [];
         for (const source of sources) {
             const content = await new Source(source).getContent();
             const sourceJson = JSON.parse(content) as unknown;
@@ -38,7 +34,7 @@ export class DtcgSchemaValidator implements TokenValidator {
             }
             const errors = validator.errors ?? [];
             for (const error of errors) {
-                issues.push(this.#toValidationIssue(source, error));
+                issues.push(this.#toCheckIssue(source, error));
             }
         }
 
@@ -61,11 +57,11 @@ export class DtcgSchemaValidator implements TokenValidator {
         return ajv;
     }
 
-    #toValidationIssue(sourcePath: string, error: ErrorObject): ValidationIssue {
+    #toCheckIssue(sourcePath: string, error: ErrorObject): CheckIssue {
         const instancePath = error.instancePath || "/";
         const message = error.message ?? "Validation error.";
         return {
-            name: this.name,
+            id: "schema",
             sourcePath,
             severity: "error",
             message: `${instancePath}: ${message}`,

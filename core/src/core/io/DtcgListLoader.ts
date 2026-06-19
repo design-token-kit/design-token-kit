@@ -1,4 +1,4 @@
-import { Source } from "#/core/Source";
+import { Source } from "#/core/io/Source";
 import { DtcgJsonReader } from "#/core/io/DtcgJsonReader";
 import { DtcgList } from "#/core/model/DtcgList";
 import { Format } from "#/core/io/Format";
@@ -6,7 +6,8 @@ import { HrdtTokenReader } from "#/core/io/HrdtTokenReader";
 import { DtcgSchemaValidator } from "#/core/validation/dtcg/DtcgSchemaValidator";
 import { HrdtTokenValidator } from "#/core/validation/hrdt/HrdtTokenValidator";
 import type { Dtcg } from "#/core/model/Dtcg";
-import type { TokenValidator, ValidationIssue } from "#/core/validation/TokenValidator";
+import type { TokenValidator } from "#/core/validation/TokenValidator";
+import type { CheckIssue } from "#/core/check/CheckIssue";
 
 /**
  * Loads and validates token sources, assembling a {@link DtcgList}.
@@ -48,8 +49,8 @@ export class DtcgListLoader {
         return this.#buildDtcgList(allDocs);
     }
 
-    async #validate(sourceList: Source[], forcedFormat?: Format): Promise<ValidationIssue[]> {
-        const issues: ValidationIssue[] = [];
+    async #validate(sourceList: Source[], forcedFormat?: Format): Promise<CheckIssue[]> {
+        const issues: CheckIssue[] = [];
         for (const source of sourceList) {
             const format = forcedFormat ?? await source.getFormat();
             const validator = this.#validators.get(format)!;
@@ -88,9 +89,9 @@ export class DtcgListLoader {
  * The {@link issues} field contains individual validation diagnostics.
  */
 export class TokenSyntaxError extends Error {
-    readonly issues: ValidationIssue[];
+    readonly issues: CheckIssue[];
 
-    constructor(issues: ValidationIssue[]) {
+    constructor(issues: CheckIssue[]) {
         super("Schema validation failed");
         this.name = "TokenSyntaxError";
         this.issues = issues;
@@ -98,7 +99,7 @@ export class TokenSyntaxError extends Error {
 
     formatIssues(): string {
         return this.issues
-            .map((i) => `[${i.name}] ${i.sourcePath} - ${i.message}`)
+            .map((i) => `[${i.id}] ${i.sourcePath} - ${i.message}`)
             .join("\n");
     }
 }

@@ -5,7 +5,7 @@ import path from "node:path";
 import { tmpdir } from "node:os";
 import { Format } from "#/core/io/Format";
 import { FormatDetector } from "#/core/io/FormatDetector";
-import { stdin } from "#/core/Stdin";
+import { stdin } from "#/core/io/Stdin";
 
 enum SourceType {
     URL = "url",

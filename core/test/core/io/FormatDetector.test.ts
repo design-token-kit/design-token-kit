@@ -41,11 +41,11 @@ describe("FormatDetector", () => {
             expect(FormatDetector.detect("@layer base { }")).toBe(Format.CSS);
         });
 
-        it("returns DTCG over HRDT — JSON starts with {", () => {
+        it("returns DTCG over HRDT - JSON starts with {", () => {
             expect(FormatDetector.detect('{"primitive":{}}')).toBe(Format.DTCG);
         });
 
-        it("returns CSS over HRDT — CSS patterns take priority", () => {
+        it("returns CSS over HRDT - CSS patterns take priority", () => {
             expect(FormatDetector.detect("some-value: 16px\n--color: red;")).toBe(Format.CSS);
         });
 

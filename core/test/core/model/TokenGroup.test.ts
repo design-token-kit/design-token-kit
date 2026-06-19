@@ -1,10 +1,16 @@
 import { describe, it, expect } from "vitest";
 import { TokenGroup } from "#/core/model/TokenGroup";
+import { TokenPath } from "#/core/model/TokenPath";
+import { TokenNode } from "#/core/model/TokenNode";
 import { ColorToken } from "#/core/model/tokens/ColorToken";
 import { ColorValue } from "#/core/model/values/ColorValue";
 
 function makeColorToken() {
     return new ColorToken(new ColorValue("srgb", [1, 0, 0]));
+}
+
+function children(entries: Array<[string, TokenGroup | TokenNode<unknown>]>): Map<string, TokenGroup | TokenNode<unknown>> {
+    return new Map(entries);
 }
 
 describe("TokenGroup", () => {
@@ -59,5 +65,47 @@ describe("TokenGroup", () => {
         const inner = new TokenGroup({ children: new Map([["red", makeColorToken()]]) });
         const outer = new TokenGroup({ children: new Map([["primitive", inner]]) });
         expect(outer.get("primitive")).toBe(inner);
+    });
+
+    describe("walk", () => {
+        it("visits the group itself first, then children pre-order", () => {
+            const inner = new TokenGroup({ children: new Map([["red", makeColorToken()]]) });
+            const root = new TokenGroup({ children: children([["primitive", inner], ["semantic", makeColorToken()]]) });
+
+            const paths: string[] = [];
+            root.walk((_node, path) => paths.push(path.toString()));
+
+            expect(paths).toEqual(["", "primitive", "primitive.red", "semantic"]);
+        });
+
+        it("descends into nested groups depth-first", () => {
+            const leaf = new TokenGroup({ children: new Map([["bg", makeColorToken()]]) });
+            const mid = new TokenGroup({ children: new Map([["button", leaf]]) });
+            const root = new TokenGroup({ children: children([["component", mid], ["other", makeColorToken()]]) });
+
+            const paths: string[] = [];
+            root.walk((_node, path) => paths.push(path.toString()), TokenPath.root());
+
+            expect(paths).toEqual(["", "component", "component.button", "component.button.bg", "other"]);
+        });
+
+        it("passes each node with its path", () => {
+            const token = makeColorToken();
+            const root = new TokenGroup({ children: new Map([["red", token]]) });
+
+            const visited: Array<[string, unknown]> = [];
+            root.walk((node, path) => visited.push([path.toString(), node]));
+
+            expect(visited).toEqual([["", root], ["red", token]]);
+        });
+
+        it("starts paths from the given base path", () => {
+            const root = new TokenGroup({ children: new Map([["red", makeColorToken()]]) });
+
+            const paths: string[] = [];
+            root.walk((_node, path) => paths.push(path.toString()), TokenPath.of("theme"));
+
+            expect(paths).toEqual(["theme", "theme.red"]);
+        });
     });
 });

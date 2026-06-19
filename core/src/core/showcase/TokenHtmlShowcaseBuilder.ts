@@ -1,10 +1,11 @@
-import { Source } from "#/core/Source";
+import { Source } from "#/core/io/Source";
 import { Format } from "#/core/io/Format";
 import { TokenCssConverter } from "#/core/css/TokenCssConverter";
 import { CssTokenParser } from "#/core/showcase/CssTokenParser";
 import { TokenHtmlShowcase } from "#/core/showcase/TokenHtmlShowcase";
 import { TokenHtmlShowcaseRenderer } from "#/core/showcase/TokenHtmlShowcaseRenderer";
-import { TokenValidator, ValidationIssue } from "#/core/validation/TokenValidator";
+import { TokenValidator } from "#/core/validation/TokenValidator";
+import type { CheckIssue } from "#/core/check/CheckIssue";
 
 /**
  * Builds an HTML showcase from JSON tokens or ready CSS.
@@ -49,7 +50,7 @@ export class TokenHtmlShowcaseBuilder implements TokenHtmlShowcase {
     async #showcaseFromSources(sources: string[]): Promise<string> {
         const issues = await this.#validator.validate(sources);
         if (this.#hasValidationErrors(issues)) {
-            throw new Error(this.#formatValidationIssues(issues));
+            throw new Error(this.#formatCheckIssues(issues));
         }
 
         const cssString = await this.#converter.convert(sources);
@@ -60,14 +61,14 @@ export class TokenHtmlShowcaseBuilder implements TokenHtmlShowcase {
         return this.#renderer.renderPage(this.#parser.parse(cssString));
     }
 
-    #hasValidationErrors(issues: ValidationIssue[]): boolean {
+    #hasValidationErrors(issues: CheckIssue[]): boolean {
         return issues.some((issue) => issue.severity === "error");
     }
 
-    #formatValidationIssues(issues: ValidationIssue[]): string {
+    #formatCheckIssues(issues: CheckIssue[]): string {
         return issues
             .filter((issue) => issue.severity === "error")
-            .map((issue) => `[${issue.name}] ${issue.sourcePath} - ${issue.message}`)
+            .map((issue) => `[${issue.id}] ${issue.sourcePath} - ${issue.message}`)
             .join("\n");
     }
 

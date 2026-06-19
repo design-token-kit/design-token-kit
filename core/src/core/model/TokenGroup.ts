@@ -1,6 +1,15 @@
 import { TokenNode } from "#/core/model/TokenNode";
 import { TokenReference } from "#/core/model/TokenReference";
 import { TokenType } from "#/core/model/TokenType";
+import { TokenPath } from "#/core/model/TokenPath";
+
+/**
+ * Callback invoked once per node reached while walking a group tree.
+ *
+ * The node is either a {@link TokenGroup} or a token; the path locates it
+ * within the document.
+ */
+export type NodeVisitor = (node: TokenGroup | TokenNode<unknown>, path: TokenPath) => void;
 
 /**
  * A named container for tokens and nested groups.
@@ -59,6 +68,27 @@ export class TokenGroup {
     /** Returns all child entries as [name, node] pairs in insertion order. */
     entries(): IterableIterator<[string, TokenGroup | TokenNode<unknown>]> {
         return this.#children.entries();
+    }
+
+    /**
+     * Walks this group and all descendants depth-first in pre-order, invoking
+     * {@link visit} for this group first, then for each child in insertion
+     * order, descending into nested groups.
+     *
+     * @param visit - Callback invoked for every visited node.
+     * @param path - Path locating this group; children extend it by name.
+     *   Defaults to the root path.
+     */
+    walk(visit: NodeVisitor, path: TokenPath = TokenPath.root()): void {
+        visit(this, path);
+        for (const [name, child] of this.#children) {
+            const childPath = path.child(name);
+            if (child instanceof TokenGroup) {
+                child.walk(visit, childPath);
+            } else {
+                visit(child, childPath);
+            }
+        }
     }
 
     /** Returns true if this group contains a child with the given name. */

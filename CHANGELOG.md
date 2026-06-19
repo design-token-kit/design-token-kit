@@ -4,6 +4,24 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+
+- Lint: enforce token architecture conventions. Current checks:
+  - `layer-reference`: a token may only reference the adjacent lower layer
+    (e.g. `component` -> `semantic`, `semantic` -> `primitive`).
+  - `raw-value-usage`: only the lowest layer (e.g. `primitive`) may hold raw
+    values. Higher layers must reference instead.
+
+  Usage: `dtokens check --scope lint`.
+
+- New `check` command unifying validation and linting. `--scope` selects what to
+  check: `schema`, `validate` (default), or `lint`.
+
+### Deprecated
+
+- The `validate` command is deprecated. Use `check` (or `check --scope validate`).
+
+
 ## [0.3.1] - 2026-06-13
 
 ### Fixed

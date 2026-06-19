@@ -1,7 +1,4 @@
-/**
- * Severity level of a diagnostic.
- */
-export type IssueSeverity = "error" | "warning";
+import type { CheckIssue } from "#/core/check/CheckIssue";
 
 /**
  * Design tokens validator.
@@ -17,34 +14,5 @@ export interface TokenValidator {
      * @param sources - Array of paths to token files in DTCG JSON format
      * @returns Collection of validation diagnostics
      */
-    validate(sources: string[]): Promise<ValidationIssue[]>;
-}
-
-/**
- * A single validation diagnostic from a validator.
- */
-export interface ValidationIssue {
-    /** Name of the validator that issued the diagnostic. */
-    name?: string;
-
-    /** Path to the source file. */
-    sourcePath?: string;
-
-    /** Dot-separated path to the token or group where the issue was found. */
-    tokenPath?: string;
-
-    /** Message text. */
-    message: string;
-
-    /** Severity level. */
-    severity: IssueSeverity;
-
-    /** Line number (if available). */
-    line?: number;
-
-    /** Column number (if available). */
-    column?: number;
-
-    /** Raw data for debugging. */
-    raw?: unknown;
+    validate(sources: string[]): Promise<CheckIssue[]>;
 }
