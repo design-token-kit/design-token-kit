@@ -11,4 +11,16 @@ describe("Source", () => {
             readFileSync(filePath, "utf8"),
         );
     });
+
+    it("throws when the file does not exist", () => {
+        expect(() => new Source("core/tokens/valid1.yaml")).toThrow(
+            'File not found: "core/tokens/valid1.yaml"',
+        );
+    });
+
+    it("returns content without the prefix for a content: source", async () => {
+        const source = new Source("content:key: value");
+
+        await expect(source.getContent()).resolves.toBe("key: value");
+    });
 });

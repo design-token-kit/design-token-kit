@@ -7,6 +7,8 @@ import { Format } from "#/core/io/Format";
 import { FormatDetector } from "#/core/io/FormatDetector";
 import { stdin } from "#/core/io/Stdin";
 
+const CONTENT_PREFIX = "content:";
+
 enum SourceType {
     URL = "url",
     FILE = "file",
@@ -17,6 +19,10 @@ enum SourceType {
 /**
  * Data source.
  * Wraps URL, File, stdin ({@code "-"}) or raw content.
+ *
+ * Raw content must be prefixed with {@code "content:"} to distinguish it
+ * from a file path. A non-existent file path that lacks the prefix throws
+ * an error.
  *
  * Allows returning any of these data sources as a file.
  * Used in tool implementations to simplify the interface.
@@ -37,11 +43,14 @@ export class Source {
         else if (existsSync(input)) {
             this.#type = SourceType.FILE;
         }
+        else if (input.startsWith(CONTENT_PREFIX)) {
+            this.#type = SourceType.CONTENT;
+        }
         else if (Source.#isUrl(input)) {
             this.#type = SourceType.URL;
         }
         else {
-            this.#type = SourceType.CONTENT;
+            throw new Error(`File not found: "${input}"`);
         }
     }
 
@@ -88,8 +97,8 @@ export class Source {
             }
             this.#content = await response.text();
         }
-        else if (this.#type === SourceType.CONTENT) { 
-            this.#content = this.#input;
+        else if (this.#type === SourceType.CONTENT) {
+            this.#content = this.#input.slice(CONTENT_PREFIX.length);
         }
         else {
             throw new Error(`Unsupported source type "${this.#type}: ${this.#input}"`);

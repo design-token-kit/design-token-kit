@@ -34,7 +34,7 @@ export const checkCommand = new Command("check")
             console.log("Check passed.");
         }
         catch (error) {
-            console.error("Check error:", (error as Error).message);
+            console.error("Check failed:", (error as Error).message);
             process.exit(EXIT_FAILURE);
         }
     });
