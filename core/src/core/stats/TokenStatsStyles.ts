@@ -1,4 +1,3 @@
-/** CSS styles for the statistics HTML page. */
 export const TOKEN_STATS_CSS = `
 .stats-shell {
     display: flex;
@@ -22,13 +21,6 @@ export const TOKEN_STATS_CSS = `
     gap: 0.375rem;
 }
 
-.stats-card__eyebrow {
-    color: #64748b;
-    font-size: 0.6875rem;
-    font-weight: 700;
-    text-transform: uppercase;
-}
-
 .stats-card__value {
     color: #0f172a;
     font-size: 2rem;
@@ -38,7 +30,7 @@ export const TOKEN_STATS_CSS = `
 
 .stats-card__name {
     color: #334155;
-    font-size: 0.875rem;
+    font-size: 1rem;
     font-weight: 700;
 }
 

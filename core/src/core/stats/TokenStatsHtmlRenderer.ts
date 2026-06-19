@@ -42,9 +42,8 @@ ${stats.flatMap((stat) => this.#renderBreakdowns(stat)).join("\n")}
 </html>`;
     }
 
-    /** Renders a single statistic as an HTML card. */
     #renderStat(stat: TokenStat): string {
-        return `<article class="stats-card"><div class="stats-card__eyebrow">Metric</div><div class="stats-card__value">${this.#formatStatValue(stat)}</div><div class="stats-card__name">${this.#esc(stat.label)}</div>${stat.description ? `<p class="stats-card__description">${this.#esc(stat.description)}</p>` : ""}</article>`;
+        return `<article class="stats-card"><div class="stats-card__name">${this.#esc(stat.label)}</div><div class="stats-card__value">${this.#formatStatValue(stat)}</div>${stat.description ? `<p class="stats-card__description">${this.#esc(stat.description)}</p>` : ""}</article>`;
     }
 
     #renderBreakdowns(stat: TokenStat): string[] {
@@ -82,7 +81,6 @@ ${stats.flatMap((stat) => this.#renderBreakdowns(stat)).join("\n")}
         return `${stat.value} - ${stat.percentage.toFixed(1)}%`;
     }
 
-    /** HTML-escapes a string for safe interpolation. */
     #esc(str: string): string {
         return str
             .replace(/&/g, "&amp;")

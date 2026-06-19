@@ -3,6 +3,12 @@ import type { TokenStats } from "#/core/stats/TokenStats";
 import { TokenStatsCalculator, type TokenStat } from "#/core/stats/TokenStatsCalculator";
 import type { ValidationIssue } from "#/core/validation/TokenValidator";
 
+/**
+ * Builds a text stats report from token sources.
+ *
+ * Loads and validates sources, computes stats and renders
+ * the final CLI-friendly text output.
+ */
 export class TokenStatsBuilder implements TokenStats {
     readonly #loader: DtcgListLoader;
     readonly #calculator: TokenStatsCalculator;
@@ -16,7 +22,7 @@ export class TokenStatsBuilder implements TokenStats {
     }
 
     async stats(sources: string[]): Promise<string> {
-        return this.#render(await this.collect(sources));
+        return this.#buildReport(await this.collect(sources));
     }
 
     async collect(sources: string[]): Promise<TokenStat[]> {
@@ -39,12 +45,12 @@ export class TokenStatsBuilder implements TokenStats {
         }
     }
 
-    #render(stats: readonly TokenStat[]): string {
+    #buildReport(stats: readonly TokenStat[]): string {
         const lines: string[] = ["Token Overview", ""];
         const summaryWidth = Math.max(...stats.map((stat) => stat.label.length));
 
         for (const stat of stats) {
-            lines.push(`${stat.label}:${" ".repeat(summaryWidth - stat.label.length + 1)}${this.#formatStatValue(stat)}`);
+            lines.push(`${stat.label}:${" ".repeat(summaryWidth - stat.label.length + 1)}${this.#formatSummaryValue(stat)}`);
         }
 
         const breakdowns = stats.flatMap((stat) => stat.breakdowns ?? []);
@@ -103,7 +109,7 @@ export class TokenStatsBuilder implements TokenStats {
         return `${item.value} - ${item.percentage.toFixed(1)}%`;
     }
 
-    #formatStatValue(stat: { value: number; percentage?: number }): string {
+    #formatSummaryValue(stat: { value: number; percentage?: number }): string {
         if (stat.percentage === undefined) {
             return String(stat.value);
         }

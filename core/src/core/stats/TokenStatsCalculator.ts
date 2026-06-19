@@ -26,28 +26,19 @@ export type TokenStat = {
 };
 
 /**
- * Computes token statistics from a parsed DTCG document list.
- *
- * @remarks
- * Counts base document statistics and optional per-theme breakdowns.
+ * Computes stats from a parsed DTCG document list.
  */
 export class TokenStatsCalculator {
-    /**
-     * Computes statistics for the given document list.
-     *
-     * @param list - Parsed DTCG document list with one or more themes.
-     * @returns Array of statistic entries with optional breakdowns.
-     */
     calculate(list: DtcgList): TokenStat[] {
         const totalTokens = this.countTotalTokens(list.base);
-        const themesBreakdown = this.collectThemes(list);
-        const tokenBreakdown = [...list.themes.entries()].map(([name, document]) => ({
+        const themeListBreakdown = this.collectThemes(list);
+        const tokensByThemeBreakdown  = [...list.themes.entries()].map(([name, document]) => ({
             label: name,
             value: this.countTotalTokens(document),
             percentage: totalTokens === 0 ? 0 : (this.countTotalTokens(document) / totalTokens) * 100,
         }));
-        const namespaceBreakdown = this.countTokensByNamespace(list.base, totalTokens);
-        const primitiveTypeBreakdown = this.countPrimitiveTokensByType(list.base);
+        const tokensByNamespaceBreakdown = this.countTokensByNamespace(list.base, totalTokens);
+        const primitiveTokensByTypeBreakdown = this.countPrimitiveTokensByType(list.base);
         const referencedTokens = this.countReferencedTokens(list.base);
         const directValueTokens = this.countDirectValueTokens(list.base);
 
@@ -57,10 +48,16 @@ export class TokenStatsCalculator {
                 value: totalTokens,
                 description: "Counts all token nodes, including aliases and $root tokens. Groups are excluded.",
                 breakdowns: [
-                    ...(namespaceBreakdown.length > 0 ? [{ label: "Tokens by namespace", items: namespaceBreakdown }] : []),
-                    ...(primitiveTypeBreakdown.length > 0 ? [{ label: "Primitive tokens by type", items: primitiveTypeBreakdown }] : []),
-                    ...(themesBreakdown.items.length > 0 ? [themesBreakdown] : []),
-                    ...(tokenBreakdown.length > 0 ? [{ label: "Tokens by theme", items: tokenBreakdown }] : []),
+                    ...(tokensByNamespaceBreakdown.length > 0 ? [{
+                        label: "Tokens by namespace",
+                        items: tokensByNamespaceBreakdown
+                    }] : []),
+                    ...(primitiveTokensByTypeBreakdown.length > 0 ? [{
+                        label: "Primitive tokens by type",
+                        items: primitiveTokensByTypeBreakdown
+                    }] : []),
+                    ...(themeListBreakdown.items.length > 0 ? [themeListBreakdown] : []),
+                    ...(tokensByThemeBreakdown .length > 0 ? [{ label: "Tokens by theme", items: tokensByThemeBreakdown  }] : []),
                 ],
             },
             {
@@ -123,12 +120,6 @@ export class TokenStatsCalculator {
         }));
     }
 
-    /**
-     * Counts all token nodes (including aliases and `$root`) in a document.
-     *
-     * @param document - Parsed DTCG document.
-     * @returns Total number of token nodes.
-     */
     countTotalTokens(document: Dtcg): number {
         let count = 0;
         for (const [, node] of document.entries()) {
@@ -153,7 +144,6 @@ export class TokenStatsCalculator {
         return count;
     }
 
-    /** Recursively counts tokens in a group or leaf node. */
     #countTokensInNode(node: TokenGroup | TokenNode<unknown>): number {
         if (node instanceof TokenGroup) {
             let count = node.root !== undefined ? 1 : 0;
