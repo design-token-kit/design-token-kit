@@ -84,7 +84,7 @@ body {
 
 .stats-card__value {
     color: var(--stats-text);
-    font-size: 1rem;
+    font-size: 1.5rem;
     font-weight: 400;
     line-height: 1;
 }
@@ -231,6 +231,10 @@ body {
     width: 0.875rem;
     height: 0.875rem;
     display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+    line-height: 0;
     color: #4f83e8;
 }
 
@@ -378,8 +382,9 @@ body {
 }
 
 .stats-icon--dot {
-    width: 1.25rem;
-    height: 1.25rem;
+    width: 0.875rem;
+    height: 0.875rem;
+    display: block;
 }
 
 .stats-icon-badge--total-tokens,
