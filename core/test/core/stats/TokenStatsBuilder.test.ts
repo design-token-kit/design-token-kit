@@ -117,6 +117,46 @@ component:
         expect(stats[2]?.value).toBe(2);
     });
 
+    it("uses tokens by type for flat documents without layers", async () => {
+        const stats = await createStatsBuilder().collect([JSON.stringify({
+            "$schema": "https://www.designtokens.org/schemas/2025.10/format.json",
+            "color-white": {
+                "$type": "color",
+                "$value": {
+                    "colorSpace": "srgb",
+                    "components": [1, 1, 1],
+                    "alpha": 1,
+                    "hex": "#ffffff",
+                },
+            },
+            "color-text-primary": {
+                "$type": "color",
+                "$value": "{color-white}",
+            },
+            "space-md": {
+                "$type": "dimension",
+                "$value": {
+                    "value": 16,
+                    "unit": "px",
+                },
+            },
+            "button-padding": {
+                "$type": "dimension",
+                "$value": "{space-md}",
+            },
+        })]);
+
+        expect(stats[0]?.breakdowns?.[0]).toEqual({
+            label: "Tokens by type",
+            items: [
+                { label: "color", value: 2, percentage: 50 },
+                { label: "dimension", value: 2, percentage: 50 },
+            ],
+        });
+        expect(stats[0]?.breakdowns?.find((breakdown) => breakdown.label === "Tokens by namespace")).toBeUndefined();
+        expect(stats[0]?.breakdowns?.find((breakdown) => breakdown.label === "Primitive tokens by type")).toBeUndefined();
+    });
+
     it("returns per-theme breakdown when theme sources are provided", async () => {
         const base = createTempTokenFile("tokens.yaml", `
 primitive:

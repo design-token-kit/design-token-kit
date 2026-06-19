@@ -38,7 +38,15 @@ export class TokenStatsCalculator {
             percentage: totalTokens === 0 ? 0 : (this.countTotalTokens(document) / totalTokens) * 100,
         }));
         const tokensByNamespaceBreakdown = this.countTokensByNamespace(list.base, totalTokens);
-        const primitiveTokensByTypeBreakdown = this.countPrimitiveTokensByType(list.base);
+        const tokensByTypeBreakdown = tokensByNamespaceBreakdown.length > 0
+            ? {
+                label: "Primitive tokens by type",
+                items: this.countPrimitiveTokensByType(list.base),
+            }
+            : {
+                label: "Tokens by type",
+                items: this.countTokensByType(list.base),
+            };
         const referencedTokens = this.countReferencedTokens(list.base);
         const directValueTokens = this.countDirectValueTokens(list.base);
 
@@ -52,9 +60,9 @@ export class TokenStatsCalculator {
                         label: "Tokens by namespace",
                         items: tokensByNamespaceBreakdown
                     }] : []),
-                    ...(primitiveTokensByTypeBreakdown.length > 0 ? [{
-                        label: "Primitive tokens by type",
-                        items: primitiveTokensByTypeBreakdown
+                    ...(tokensByTypeBreakdown.items.length > 0 ? [{
+                        label: tokensByTypeBreakdown.label,
+                        items: tokensByTypeBreakdown.items
                     }] : []),
                     ...(themeListBreakdown.items.length > 0 ? [themeListBreakdown] : []),
                     ...(tokensByThemeBreakdown .length > 0 ? [{ label: "Tokens by theme", items: tokensByThemeBreakdown  }] : []),
@@ -76,9 +84,17 @@ export class TokenStatsCalculator {
     }
 
     countTokensByNamespace(document: Dtcg, totalTokens?: number): TokenStatBreakdownItem[] {
+        const namespaces = ["primitive", "semantic", "component"]
+            .map((name) => [name, document.get(name)] as const)
+            .filter((entry): entry is readonly [string, TokenGroup | TokenNode<unknown>] => entry[1] !== undefined);
+
+        if (namespaces.length === 0) {
+            return [];
+        }
+
         const breakdown: TokenStatBreakdownItem[] = [];
 
-        for (const [name, node] of document.entries()) {
+        for (const [name, node] of namespaces) {
             const value = this.#countTokensInNode(node);
             if (value > 0) {
                 breakdown.push({
@@ -103,21 +119,24 @@ export class TokenStatsCalculator {
     }
 
     countPrimitiveTokensByType(document: Dtcg): TokenStatBreakdownItem[] {
-        const counts = new Map<TokenType | "unknown", number>();
         const primitive = document.get("primitive");
+        return primitive === undefined ? [] : this.countTokensInNodeByType(primitive);
+    }
 
-        if (primitive === undefined) {
-            return [];
+    countTokensByType(document: Dtcg): TokenStatBreakdownItem[] {
+        const counts = new Map<TokenType | "unknown", number>();
+
+        for (const [, node] of document.entries()) {
+            this.#collectTokenTypes(node, counts);
         }
 
-        this.#collectTokenTypes(primitive, counts);
+        return this.#formatTypeBreakdown(counts);
+    }
 
-        const total = [...counts.values()].reduce((sum, value) => sum + value, 0);
-        return [...counts.entries()].map(([label, value]) => ({
-            label,
-            value,
-            percentage: total === 0 ? 0 : (value / total) * 100,
-        }));
+    countTokensInNodeByType(node: TokenGroup | TokenNode<unknown>): TokenStatBreakdownItem[] {
+        const counts = new Map<TokenType | "unknown", number>();
+        this.#collectTokenTypes(node, counts);
+        return this.#formatTypeBreakdown(counts);
     }
 
     countTotalTokens(document: Dtcg): number {
@@ -198,6 +217,15 @@ export class TokenStatsCalculator {
     #addTokenType(node: TokenNode<unknown>, counts: Map<TokenType | "unknown", number>): void {
         const type = node.type ?? "unknown";
         counts.set(type, (counts.get(type) ?? 0) + 1);
+    }
+
+    #formatTypeBreakdown(counts: Map<TokenType | "unknown", number>): TokenStatBreakdownItem[] {
+        const total = [...counts.values()].reduce((sum, value) => sum + value, 0);
+        return [...counts.entries()].map(([label, value]) => ({
+            label,
+            value,
+            percentage: total === 0 ? 0 : (value / total) * 100,
+        }));
     }
 
     #isReferenceToken(node: TokenNode<unknown>): number {
