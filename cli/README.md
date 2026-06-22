@@ -4,7 +4,7 @@ Command line interface for Design Token Kit.
 
 It provides commands to:
 
-- validate design tokens
+- check design tokens (schema, model correctness, architecture)
 - convert between DTCG JSON, HRDT YAML, and CSS
 - generate HTML showcase pages
 
@@ -15,14 +15,14 @@ Node.js 18 or newer is required.
 Run without installation:
 
 ```bash
-npx @design-token-kit/cli validate tokens.json
+npx @design-token-kit/cli check tokens.json
 ```
 
 Install globally:
 
 ```bash
 npm install -g @design-token-kit/cli
-dtokens validate tokens.json
+dtokens check tokens.json
 ```
 
 Install as a local dependency:
@@ -40,13 +40,59 @@ dtokens --version
 
 ## Commands
 
+### `check`
+
+Check one or more DTCG JSON or HRDT YAML token files.
+
+```bash
+dtokens check tokens.json
+dtokens check tokens.yaml tokens.dark.yaml
+dtokens check - tokens.dark.yaml < tokens.yaml
+```
+
+The check runs as a fail-fast pipeline of stages.
+A file must pass schema before its model is checked, and pass the model
+before its architecture is checked.
+The `--scope` option selects how deep the pipeline runs.
+
+Options:
+
+- `--scope <scope>`: how deep to check, `schema`, `validate`, or `lint`.
+  Each scope includes the previous one.
+  Defaults to `validate`.
+- `--layers <names>`: comma-separated layer order, lowest first.
+  Defaults to `primitive,semantic,component`.
+- `--checks <ids>`: comma-separated allow-list of active check ids.
+  When omitted, all checks for the selected scope run.
+
+Scopes:
+
+- `schema`: load and validate against the DTCG schema only.
+- `validate`: schema plus model-correctness checks.
+- `lint`: schema, model-correctness, and architecture checks.
+
+Run `dtokens check --help` to list the available check ids with their
+scope, severity, and description.
+
+Exit status:
+
+- `0`: success
+- `1`: unexpected error
+- `2`: issues found
+
+```bash
+dtokens check tokens.json --scope schema
+dtokens check tokens.json --scope lint
+dtokens check tokens.json --scope lint --checks layer-reference
+```
+
 ### `validate`
 
-Validate one or more DTCG JSON or HRDT YAML token files.
+Deprecated.
+Use `check --scope validate` instead.
 
 ```bash
 dtokens validate tokens.json
-dtokens validate tokens.yaml
 ```
 
 ### `convert`
