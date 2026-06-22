@@ -4,6 +4,24 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-06-22
+
+### Added
+
+- Add Design System Metrics #3 New `stats` command for token statistics from 
+DTCG JSON and HRDT YAML sources.
+  - Text report to stdout.
+  - HTML report with `--out`.
+  - Browser open support with `--open` when used together with `--out`.
+
+### Fixed
+
+- `showcase --open` now requires `--out`.
+- `convert` now validates token model correctness before conversion and fails on
+  model-invalid sources instead of producing output.
+
+## [1.0.0] - 2026-06-22
+
 ### Added
 
 - Lint: enforce token architecture conventions. Current checks:
