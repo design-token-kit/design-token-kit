@@ -1,13 +1,25 @@
 # @design-token-kit/core
 
-Core library for Design Token Kit.
+The core package of Design Token Kit provides the runtime foundation
+for working with [DTCG 2025.10 design tokens][dtcg]. It defines the
+typed token model, performs schema and semantic validation, converts
+tokens into CSS custom properties, and renders static HTML showcases.
 
-It provides:
+## Features
 
-- design token validation
-- DTCG JSON and HRDT YAML parsing
-- conversion of token documents to CSS
-- HTML showcase generation
+* **DTCG 2025.10 validation** - schema validation for DTCG JSON token
+  documents
+* **Semantic checks** - unresolved references, circular references,
+  group references, type mismatches, and deprecated token usage
+* **HRDT YAML support** - a compact, human-readable alternative to
+  DTCG JSON
+* **Token format conversion** - read and write DTCG JSON and HRDT YAML
+* **CSS generation** - base and theme token sets rendered as CSS
+  custom properties
+* **Static showcase** - HTML showcase generation from token sources or
+  existing CSS
+* **Source abstraction** - local files, stdin, URLs, and raw token
+  content strings
 
 Node.js 18 or newer is required.
 
@@ -17,41 +29,158 @@ Node.js 18 or newer is required.
 npm install @design-token-kit/core
 ```
 
-## What It Does
-
-- validates DTCG token documents against schema and semantic rules
-- reads DTCG JSON into the internal `Dtcg` model
-- reads HRDT YAML into the same internal `Dtcg` model
-- writes DTCG JSON and HRDT YAML
-- converts token documents to CSS custom properties
-- builds an HTML showcase page from token files or CSS
-
-## Main Exports
-
-Use these entry points for common tasks:
-
-- `DtcgTokenValidator` for validating token files
-- `DtcgJsonReader` and `HrdtTokenReader` for reading token documents
-- `DtcgJsonWriter` and `HrdtTokenWriter` for writing token documents
-- `DtcgTokenCssConverter` or `createTokenCssConverter()` for CSS conversion
-- `TokenHtmlShowcaseBuilder` or `createTokenHtmlShowcase()` for HTML showcase generation
-- `DtcgSchemaValidator` for schema-only validation
-
-## Basic Usage
+## Quick Start
 
 ```ts
 import {
+  DtcgListLoader,
   DtcgTokenValidator,
-  DtcgJsonReader,
   DtcgTokenCssConverter,
+  createTokenHtmlShowcase,
 } from "@design-token-kit/core";
 
-const validator = new DtcgTokenValidator();
-const issues = await validator.validate(["./tokens.json"]);
+const sources = ["./tokens.json", "./tokens.dark.yaml"];
 
-const reader = new DtcgJsonReader();
-const doc = reader.parse(`{}`);
+const issues = await new DtcgTokenValidator().validate(sources);
+if (issues.some((issue) => issue.severity === "error")) {
+  console.error(issues);
+  process.exit(1);
+}
 
-const css = new DtcgTokenCssConverter().convertDocument(doc);
+const list = await new DtcgListLoader().load(sources);
+const css = new DtcgTokenCssConverter().convertList(list);
+const html = await createTokenHtmlShowcase().showcase(sources);
+
 console.log(css);
+console.log(html.slice(0, 120));
 ```
+
+## Input Formats
+
+### DTCG JSON
+
+Use DTCG JSON token documents as the canonical source format for
+validation, conversion, and showcase generation.
+
+### HRDT YAML
+
+Use HRDT YAML for a more compact, human-readable authoring format. HRDT
+documents are parsed into the same internal `Dtcg` model as DTCG JSON.
+
+### Base and theme sources
+
+When multiple token sources are provided, the first source is treated
+as the base token set and the remaining sources are treated as theme
+overrides.
+
+### CSS input for showcase
+
+For showcase generation, a single CSS source can be rendered directly
+without going through token validation.
+
+## Output Formats
+
+### CSS custom properties
+
+Generate token sets as CSS variables with a `:root` block for base
+tokens and `:root[data-theme="<theme>"]` blocks for theme overrides.
+
+### HTML showcase
+
+Render a static HTML preview from DTCG JSON, HRDT YAML, or existing
+CSS custom properties.
+
+### Serialized token documents
+
+Convert token documents between DTCG JSON and HRDT YAML, or write a
+parsed document back to either source format.
+
+## Main APIs
+
+* `DtcgTokenValidator` - validate DTCG JSON and HRDT YAML token sources
+* `DtcgListLoader` - load base and theme sources into a `DtcgList`
+* `DtcgJsonReader` / `HrdtTokenReader` - parse supported token formats
+* `DtcgJsonWriter` / `HrdtTokenWriter` - export token documents
+* `DtcgTokenCssConverter` - generate CSS custom properties from tokens
+* `createTokenHtmlShowcase()` - generate an HTML preview from token
+  sources or CSS
+
+## Validation
+
+Use `DtcgTokenValidator` when you want the full validation pass:
+
+- DTCG schema checks
+- HRDT schema checks
+- semantic checks on the resolved token graph
+
+```ts
+import { DtcgTokenValidator } from "@design-token-kit/core";
+
+const issues = await new DtcgTokenValidator().validate([
+  "./tokens.json",
+  "./tokens.dark.json",
+]);
+
+for (const issue of issues) {
+  console.log(
+    issue.severity,
+    issue.sourcePath,
+    issue.tokenPath,
+    issue.message,
+  );
+}
+```
+
+Use `DtcgSchemaValidator` when you only need DTCG schema validation
+without semantic checks.
+
+## Document Conversion
+
+Use readers and writers to convert token documents between DTCG JSON
+and HRDT YAML.
+
+```ts
+import {
+  DtcgJsonReader,
+  HrdtTokenWriter,
+} from "@design-token-kit/core";
+
+const doc = new DtcgJsonReader().parse(jsonString);
+const yaml = new HrdtTokenWriter().write(doc);
+```
+
+## CSS Conversion
+
+`DtcgTokenCssConverter` emits:
+
+- base tokens under `:root`
+- theme overrides under `:root[data-theme="<theme>"]`
+- aliases as `var(--token-name)`
+
+```ts
+import { DtcgTokenCssConverter } from "@design-token-kit/core";
+
+const css = await new DtcgTokenCssConverter().convert([
+  "./tokens.json",
+  "./tokens.dark.json",
+]);
+```
+
+When you already have a parsed document or a prepared `DtcgList`, use
+`convertDocument()` or `convertList()` instead of reloading sources.
+
+## HTML Showcase
+
+Use `createTokenHtmlShowcase()` for the default pipeline or
+`TokenHtmlShowcaseBuilder` when you want to inject your own validator,
+converter, parser, or renderer.
+
+```ts
+import { createTokenHtmlShowcase } from "@design-token-kit/core";
+
+const html = await createTokenHtmlShowcase().showcase([
+  "./tokens.yaml",
+]);
+```
+
+[dtcg]: https://www.designtokens.org/

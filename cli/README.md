@@ -1,18 +1,30 @@
 # @design-token-kit/cli
 
-Command line interface for Design Token Kit.
+The CLI package of Design Token Kit provides the `dtokens` command for
+checking, converting, and previewing design tokens from the terminal.
 
-It provides commands to:
+## Features
 
-- check design tokens (schema, model correctness, lint)
-- convert between DTCG JSON, HRDT YAML, and CSS
-- generate HTML showcase pages
+* **DTCG 2025.10 check** - schema, model correctness, and lint checks
+  for DTCG JSON token documents
+* **Model checks** - unresolved references, circular references,
+  group references, type mismatches, and deprecated token usage
+* **Lint checks** - cross-layer reference and raw value placement rules
+* **HRDT YAML support** - a compact, human-readable alternative to
+  DTCG JSON
+* **Token format conversion** - read and write DTCG JSON and HRDT YAML
+* **CSS generation** - base and theme token sets rendered as CSS
+  custom properties
+* **Static showcase** - HTML showcase generation from token sources or
+  existing CSS
+* **Source abstraction** - local files, stdin, URLs, and raw token
+  content strings
 
 Node.js 18 or newer is required.
 
 ## Install
 
-Run without installation:
+Run without installing:
 
 ```bash
 npx @design-token-kit/cli check tokens.json
@@ -25,24 +37,95 @@ npm install -g @design-token-kit/cli
 dtokens check tokens.json
 ```
 
-Install as a local dependency:
+Install locally:
 
 ```bash
 npm install @design-token-kit/cli
 ```
 
-Show CLI version:
+## Quick Start
 
 ```bash
-dtokens -v
-dtokens --version
+dtokens check tokens.json
+dtokens convert tokens.yaml --inform hrdt --outform css --out ./tokens.css
+dtokens showcase tokens.json --out ./showcase.html --open
 ```
+
+## Input Formats
+
+### DTCG JSON
+
+Use DTCG JSON token documents as the canonical source format for
+validation, conversion, CSS generation, and showcase generation.
+
+### HRDT YAML
+
+Use HRDT YAML as a compact, human-readable alternative to DTCG JSON.
+
+### Base and theme sources
+
+When multiple token sources are provided, the first source is treated
+as the base token set and the remaining sources are treated as theme
+overrides.
+
+### Stdin
+
+Pass `-` or omit source arguments to read from standard input.
+
+## Output Formats
+
+### CSS custom properties
+
+Generate CSS variables from token sources. Base tokens are emitted
+under `:root`; theme overrides are emitted under
+`:root[data-theme="<theme>"]`.
+
+### HTML showcase
+
+Generate a static HTML preview from DTCG JSON, HRDT YAML, or existing
+CSS custom properties.
+
+### Serialized token documents
+
+Convert token documents between DTCG JSON and HRDT YAML.
 
 ## Commands
 
-### `check`
+| Command | Description |
+| --- | --- |
+| `check [options] [files...]` | Check DTCG JSON or HRDT YAML token files: schema, model correctness, lint. |
+| `validate [files...]` | Deprecated. Use `check --scope validate`. |
+| `convert [options] [files...]` | Convert a token file to DTCG JSON, HRDT YAML, or CSS. |
+| `showcase [options] [files...]` | Create HTML showcase from DTCG JSON, HRDT YAML, or CSS. |
 
-Check one or more DTCG JSON or HRDT YAML token files.
+## Options
+
+### check
+
+| Option | Description |
+| --- | --- |
+| `--scope <scope>` | How deep to check: `schema`, `validate`, `lint`. Each includes the previous. Defaults to `validate`. |
+| `--layers <names>` | Comma-separated layer order, lowest first. Defaults to `primitive,semantic,component`. |
+| `--checks <ids>` | Comma-separated allow-list of active check ids. Defaults to all. |
+
+### convert
+
+| Option | Description |
+| --- | --- |
+| `-i, --inform [format]` | Input format: `dtcg`, `hrdt` |
+| `-f, --outform [format]` | Output format: `dtcg`, `hrdt`, `css` |
+| `-o, --out [file]` | Output file, defaults to stdout |
+
+### showcase
+
+| Option | Description |
+| --- | --- |
+| `-o, --out <file>` | Output HTML file name or path |
+| `--open` | Open the generated HTML in browser, only with `--out` |
+
+## Checking
+
+Check one or more DTCG JSON or HRDT YAML token sources.
 
 ```bash
 dtokens check tokens.json
@@ -54,16 +137,6 @@ The check runs as a fail-fast pipeline of stages.
 A file must pass schema before its model is checked, and pass the model
 before it is linted.
 The `--scope` option selects how deep the pipeline runs.
-
-Options:
-
-- `--scope <scope>`: how deep to check, `schema`, `validate`, or `lint`.
-  Each scope includes the previous one.
-  Defaults to `validate`.
-- `--layers <names>`: comma-separated layer order, lowest first.
-  Defaults to `primitive,semantic,component`.
-- `--checks <ids>`: comma-separated allow-list of active check ids.
-  When omitted, all checks for the selected scope run.
 
 Scopes:
 
@@ -86,42 +159,43 @@ dtokens check tokens.json --scope lint
 dtokens check tokens.json --scope lint --checks layer-reference
 ```
 
-### `validate`
+## Document Conversion
 
-Deprecated.
-Use `check --scope validate` instead.
+Convert token documents between DTCG JSON and HRDT YAML.
 
 ```bash
-dtokens validate tokens.json
+dtokens convert tokens.json --outform hrdt
+dtokens convert tokens.yaml --inform hrdt --outform dtcg
 ```
 
-### `convert`
+Use `--out` to write the result to a file instead of stdout.
 
-Convert a token file to DTCG JSON, HRDT YAML, or CSS.
+```bash
+dtokens convert tokens.json --outform hrdt --out tokens.yaml
+```
 
-Defaults:
+Multiple input sources are only supported when `--outform css`.
 
-- `--inform` defaults to `dtcg`
-- `--outform` defaults to `css`
+## CSS Conversion
+
+Convert a base token set and optional theme overrides to CSS custom
+properties.
 
 ```bash
 dtokens convert tokens.json
-dtokens convert tokens.yaml --inform hrdt --outform css --out ./dist/tokens.css
-dtokens convert tokens.json --outform hrdt
+dtokens convert tokens.yaml --inform hrdt --outform css
+dtokens convert tokens.json tokens.dark.json --out ./tokens.css
 ```
 
-Options:
+## HTML Showcase
 
-- `--inform <format>`: input format override, `dtcg` or `hrdt`
-- `--outform <format>`: output format, `dtcg`, `hrdt`, or `css`
-- `--out <file>`: write output to a file instead of stdout
-
-### `showcase`
-
-Generate an HTML showcase from token files or CSS.
+Generate an HTML showcase from token sources or from a single CSS
+source.
 
 ```bash
-dtokens showcase tokens.yaml --out ./dist/showcase.html
+dtokens showcase tokens.yaml --out ./showcase.html
+dtokens showcase tokens.css --out ./showcase.html
+dtokens showcase - < tokens.yaml
 ```
 
 ## Supported Formats

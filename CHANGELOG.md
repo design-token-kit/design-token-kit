@@ -21,6 +21,12 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 - The `validate` command is deprecated. Use `check` (or `check --scope validate`).
 
+## [0.3.2] - 2026-06-16
+
+### Changed
+
+- Updated package README files for `@design-token-kit/core` and
+  `@design-token-kit/cli`.
 
 ## [0.3.1] - 2026-06-13
 
