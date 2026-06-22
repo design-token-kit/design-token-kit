@@ -325,7 +325,7 @@ body {
 }
 
 .token-list.token-list--font {
-    grid-template-columns: repeat(5, minmax(0, 1fr));
+    grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 
 .token-item {
@@ -416,13 +416,14 @@ body {
     border-radius: 6px;
     padding: 0.7rem;
     background: #f8fafc;
-    height: 128px;
+    height: 176px;
     overflow: hidden;
     display: -webkit-box;
     -webkit-box-orient: vertical;
     -webkit-line-clamp: 6;
     text-overflow: ellipsis;
     overflow-wrap: anywhere;
+    word-break: break-word;
 }
 
 .font-preview--grid {
@@ -431,6 +432,30 @@ body {
         linear-gradient(to right, rgba(148, 163, 184, 0.18) 1px, transparent 1px),
         linear-gradient(to bottom, rgba(148, 163, 184, 0.18) 1px, transparent 1px);
     background-size: 12px 12px;
+}
+
+.font-preview--font-size {
+    height: 300px;
+}
+
+.font-preview--font-size.font-preview--xl {
+    -webkit-line-clamp: 3;
+    line-clamp: 3;
+}
+
+.font-preview--font-size.font-preview--2xl {
+    -webkit-line-clamp: 3;
+    line-clamp: 3;
+}
+
+.font-preview--font-size.font-preview--3xl {
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+}
+
+.font-preview--font-size.font-preview--4xl {
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
 }
 
 .token-item--font-card {
@@ -452,6 +477,7 @@ body {
 .token-meta span {
     display: flex;
     align-items: flex-start;
+    flex-wrap: wrap;
     gap: 0.25rem;
     min-width: 0;
 }
@@ -470,7 +496,9 @@ body {
     padding: 0;
     display: inline-block;
     min-width: 0;
+    white-space: normal;
     overflow-wrap: anywhere;
+    word-break: break-word;
 }
 
 .spacing-visual {
@@ -892,9 +920,9 @@ body {
 
 .semantic-role__meta--resolved code {
     min-width: 0;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    white-space: normal;
+    overflow-wrap: anywhere;
+    word-break: break-word;
 }
 
 .semantic-role__parts {
@@ -933,9 +961,9 @@ body {
     color: #2c4df3;
     text-decoration: none;
     min-width: 0;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    white-space: normal;
+    overflow-wrap: anywhere;
+    word-break: break-word;
 }
 
 .semantic-role__ref:hover {

@@ -241,11 +241,50 @@ export class FontCollectionAggregator {
             result.push({
                 key,
                 title: titles.get(key) ?? key,
-                entries: [...entries].sort((left, right) => left.name.localeCompare(right.name)),
+                entries: [...entries].sort((left, right) => this.compareCollectionEntries(key, left, right)),
             });
         }
 
         return result;
+    }
+
+    private compareCollectionEntries(key: string, left: TokenEntry, right: TokenEntry): number {
+        if (
+            key === "font-size"
+            || key === "font-weight"
+            || key === "line-height"
+            || key === "letter-spacing"
+        ) {
+            const leftValue = this.parseComparableNumber(left.value);
+            const rightValue = this.parseComparableNumber(right.value);
+
+            if (leftValue !== null && rightValue !== null && leftValue !== rightValue) {
+                return leftValue - rightValue;
+            }
+        }
+
+        return left.name.localeCompare(right.name);
+    }
+
+    private parseComparableNumber(value: string): number | null {
+        const normalized = value.trim().toLowerCase();
+        const match = normalized.match(/^(-?\d*\.?\d+)(px|rem|em|%)?$/);
+        if (!match) {
+            return null;
+        }
+
+        const amount = Number(match[1]);
+        const unit = match[2] ?? "";
+
+        if (unit === "rem" || unit === "em") {
+            return amount * 16;
+        }
+
+        if (unit === "%") {
+            return amount / 100;
+        }
+
+        return amount;
     }
 
     private getFontCollectionKey(name: string): string | null {

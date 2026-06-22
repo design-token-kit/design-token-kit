@@ -7,11 +7,11 @@ tokens into CSS custom properties, and renders static HTML showcases.
 
 ## Features
 
-* **DTCG 2025.10 validation** - schema validation for DTCG JSON token
+* **[DTCG 2025.10 validation][dtcg]** - schema validation for DTCG JSON token
   documents
 * **Semantic checks** - unresolved references, circular references,
   group references, type mismatches, and deprecated token usage
-* **HRDT YAML support** - a compact, human-readable alternative to
+* **[HRDT YAML support][hrdt]** - a compact, human-readable alternative to
   DTCG JSON
 * **Token format conversion** - read and write DTCG JSON and HRDT YAML
 * **CSS generation** - base and theme token sets rendered as CSS
@@ -184,3 +184,4 @@ const html = await createTokenHtmlShowcase().showcase([
 ```
 
 [dtcg]: https://www.designtokens.org/
+[hrdt]:https://medium.com/@bychinskidm/how-we-made-design-token-kit-an-npm-tool-for-design-tokens-fccf36bd2c65#6821

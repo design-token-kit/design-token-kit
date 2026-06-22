@@ -19,8 +19,8 @@ See the specification at https://www.designtokens.org.
 
 Supported input formats:
 
-* DTCG JSON
-* HRDT YAML
+* [DTCG JSON][dtcg]
+* [HRDT YAML][hrdt]
 
 DTCG JSON is the standard format defined by the Design Tokens Community Group.
 
@@ -115,3 +115,7 @@ npm run dist
 
 - Core library usage and main exports: [`core/README.md`](core/README.md)
 - CLI installation, commands, and options: [`cli/README.md`](cli/README.md)
+
+
+[dtcg]: https://www.designtokens.org/
+[hrdt]:https://medium.com/@bychinskidm/how-we-made-design-token-kit-an-npm-tool-for-design-tokens-fccf36bd2c65#6821

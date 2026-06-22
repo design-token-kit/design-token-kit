@@ -5,12 +5,13 @@ checking, converting, and previewing design tokens from the terminal.
 
 ## Features
 
-* **DTCG 2025.10 check** - schema, model correctness, and lint checks for DTCG
-  JSON token documents
+* **[DTCG 2025.10 check][dtcg]** - schema, model correctness, and lint
+  checks for DTCG JSON token documents
 * **Model checks** - unresolved references, circular references, group
   references, type mismatches, and deprecated token usage
 * **Lint checks** - cross-layer reference and raw value placement rules
-* **HRDT YAML support** - a compact, human-readable alternative to DTCG JSON
+* **[HRDT YAML support][hrdt]** - a compact, human-readable alternative
+  to DTCG JSON
 * **Token format conversion** - read and write DTCG JSON and HRDT YAML
 * **CSS generation** - base and theme token sets rendered as CSS custom
   properties
@@ -204,3 +205,6 @@ dtokens showcase - < tokens.yaml
 
 The `dtcg` format follows the specification published by the
 Design Tokens Community Group at https://www.designtokens.org.
+
+[dtcg]: https://www.designtokens.org/
+[hrdt]: https://medium.com/@bychinskidm/how-we-made-design-token-kit-an-npm-tool-for-design-tokens-fccf36bd2c65#6821

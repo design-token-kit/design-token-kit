@@ -30,6 +30,7 @@ type FontVariantCard = {
     name: string;
     value: string;
     previewStyle?: string;
+    previewClassName?: string;
     metaLabel: string;
 };
 
@@ -960,6 +961,7 @@ ${this.renderTokens(visibleScopes, visibleThemes, parsed.entries)}
             name: title,
             value: entry.value,
             previewStyle: this.getFontVariantPreviewStyle(key, entry.value),
+            previewClassName: this.getFontVariantPreviewClassName(key, entry.value),
             metaLabel,
         };
     }
@@ -1009,9 +1011,44 @@ ${this.renderTokens(visibleScopes, visibleThemes, parsed.entries)}
         return base.join(";");
     }
 
+    private getFontVariantPreviewClassName(key: string, value: string): string {
+        if (key !== "font-size") {
+            return "";
+        }
+
+        const tier = this.getFontSizePreviewTier(value);
+        return tier ? ` font-preview--font-size font-preview--${tier}` : " font-preview--font-size";
+    }
+
+    private getFontSizePreviewTier(value: string): string {
+        const normalized = value.trim().toLowerCase();
+        const match = normalized.match(/^(-?\d*\.?\d+)(px|rem)$/);
+        if (!match) {
+            return "";
+        }
+
+        const amount = Number(match[1]);
+        const pixels = match[2] === "rem" ? amount * 16 : amount;
+
+        if (pixels >= 48) {
+            return "4xl";
+        }
+        if (pixels >= 36) {
+            return "3xl";
+        }
+        if (pixels >= 28) {
+            return "2xl";
+        }
+        if (pixels >= 22) {
+            return "xl";
+        }
+
+        return "";
+    }
+
     private renderFontVariantCard(card: FontVariantCard): string {
         const badge = this.renderGroupBadge("fonts");
-        return `<div class="token-item token-item--font-card">${badge}<div class="font-preview font-preview--grid" style="${card.previewStyle ?? ""}">${this.esc(TokenHtmlShowcaseRenderer.#FONT_PREVIEW_TEXT)}</div><span class="token-name token-name--font-card">${this.esc(card.name)}</span><div class="token-meta"><span><b>${this.esc(card.metaLabel)}:</b> <span class="token-meta-value">${this.esc(card.value)}</span></span></div></div>\n`;
+        return `<div class="token-item token-item--font-card">${badge}<div class="font-preview font-preview--grid${card.previewClassName ?? ""}" style="${card.previewStyle ?? ""}">${this.esc(TokenHtmlShowcaseRenderer.#FONT_PREVIEW_TEXT)}</div><span class="token-name token-name--font-card">${this.esc(card.name)}</span><div class="token-meta"><span><b>${this.esc(card.metaLabel)}:</b> <span class="token-meta-value">${this.esc(card.value)}</span></span></div></div>\n`;
     }
 
     private renderBorderItem(item: BorderTokenInfo): string {
