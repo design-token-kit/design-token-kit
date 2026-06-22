@@ -38,7 +38,7 @@ Node.js 18 or newer is required.
   * Type mismatch detection
   * Gradient duplicate stop detection
   * Deprecated token usage warnings
-* Lint token architecture:
+* Lint tokens:
   * Cross-layer reference rules (layer-reference)
   * Raw value placement rules (raw-value-usage)
 * Select active checks by id and list available checks

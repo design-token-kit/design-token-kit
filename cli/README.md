@@ -4,7 +4,7 @@ Command line interface for Design Token Kit.
 
 It provides commands to:
 
-- check design tokens (schema, model correctness, architecture)
+- check design tokens (schema, model correctness, lint)
 - convert between DTCG JSON, HRDT YAML, and CSS
 - generate HTML showcase pages
 
@@ -52,7 +52,7 @@ dtokens check - tokens.dark.yaml < tokens.yaml
 
 The check runs as a fail-fast pipeline of stages.
 A file must pass schema before its model is checked, and pass the model
-before its architecture is checked.
+before it is linted.
 The `--scope` option selects how deep the pipeline runs.
 
 Options:
@@ -69,7 +69,7 @@ Scopes:
 
 - `schema`: load and validate against the DTCG schema only.
 - `validate`: schema plus model-correctness checks.
-- `lint`: schema, model-correctness, and architecture checks.
+- `lint`: model-correctness plus lint checks.
 
 Run `dtokens check --help` to list the available check ids with their
 scope, severity, and description.
