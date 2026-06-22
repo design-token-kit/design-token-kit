@@ -47,9 +47,8 @@ Node.js 18 or newer is required.
 * Lint tokens:
   * Cross-layer reference rules (layer-reference)
   * Raw value placement rules (raw-value-usage)
-* Select active checks by id and list available checks
 * Convert between DTCG JSON and HRDT YAML
-* Generate CSS from token files (build-time, theme support)
+* Generate CSS from token files (theme support)
 * Generate HTML token showcase page
 
 ## Build
