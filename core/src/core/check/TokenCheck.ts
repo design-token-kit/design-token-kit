@@ -14,6 +14,8 @@ import type { CheckContext } from "#/core/check/CheckContext";
 export abstract class TokenCheck implements Check {
     abstract readonly id: string;
 
+    abstract readonly description: string;
+
     abstract readonly defaultSeverity: IssueSeverity;
 
     check(node: TokenGroup | TokenNode<unknown>, path: TokenPath, ctx: CheckContext): CheckIssue[] {

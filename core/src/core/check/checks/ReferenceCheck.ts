@@ -15,6 +15,7 @@ import type { CheckContext } from "#/core/check/CheckContext";
  */
 export class ReferenceCheck implements Check {
     readonly id = "bad-reference";
+    readonly description = "References to missing or invalid targets, groups used as tokens, cycles, and deprecated targets.";
     readonly defaultSeverity: IssueSeverity = "error";
 
     check(node: TokenGroup | TokenNode<unknown>, path: TokenPath, ctx: CheckContext): CheckIssue[] {

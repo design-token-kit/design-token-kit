@@ -18,6 +18,11 @@ export interface Check {
     readonly id: string;
 
     /**
+     * One-line, human-readable summary of what this check enforces.
+     */
+    readonly description: string;
+
+    /**
      * Severity applied to issues this check emits.
      */
     readonly defaultSeverity: IssueSeverity;

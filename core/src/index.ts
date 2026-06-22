@@ -8,7 +8,8 @@ export { TokenHtmlShowcaseBuilder } from "#/core/showcase/TokenHtmlShowcaseBuild
 export { DtcgSchemaValidator } from "#/core/validation/dtcg/DtcgSchemaValidator";
 export { HrdtTokenValidator } from "#/core/validation/hrdt/HrdtTokenValidator";
 export { DtcgChecker } from "#/core/validation/DtcgChecker";
-export type { CheckerOptions, CheckScope } from "#/core/validation/DtcgChecker";
+export type { CheckerOptions, CheckSelectionWarning, CheckSelectionProblem } from "#/core/validation/DtcgChecker";
+export { CheckScope } from "#/core/check/CheckScope";
 
 export { CheckRunner } from "#/core/check/CheckRunner";
 export type { Check } from "#/core/check/Check";
@@ -17,7 +18,8 @@ export type { CheckContext, ResolvedRef } from "#/core/check/CheckContext";
 export { ReferenceCheck } from "#/core/check/checks/ReferenceCheck";
 export { TypeMismatchCheck } from "#/core/check/checks/TypeMismatchCheck";
 export { GradientStopCheck } from "#/core/check/checks/GradientStopCheck";
-export { validationChecks, lintingChecks } from "#/core/check/checks/Checks";
+export { validationChecks, lintingChecks, listChecks } from "#/core/check/checks/Checks";
+export type { CheckInfo } from "#/core/check/checks/Checks";
 export { TokenLayers } from "#/core/check/TokenLayers";
 export { LayerReferenceCheck } from "#/core/check/checks/LayerReferenceCheck";
 export { RawValueUsageCheck } from "#/core/check/checks/RawValueUsageCheck";

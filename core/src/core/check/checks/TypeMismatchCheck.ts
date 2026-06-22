@@ -13,6 +13,7 @@ import { TokenCheck } from "#/core/check/TokenCheck";
  */
 export class TypeMismatchCheck extends TokenCheck {
     readonly id = "type-mismatch";
+    readonly description = "Alias token whose declared type differs from the token it resolves to.";
     readonly defaultSeverity: IssueSeverity = "error";
 
     protected checkToken(token: TokenNode<unknown>, path: TokenPath, ctx: CheckContext): CheckIssue[] {

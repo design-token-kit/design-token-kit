@@ -12,6 +12,7 @@ import { TokenCheck } from "#/core/check/TokenCheck";
  */
 export class GradientStopCheck extends TokenCheck {
     readonly id = "gradient-duplicate-stop";
+    readonly description = "Gradient that repeats a stop position.";
     readonly defaultSeverity: IssueSeverity = "error";
 
     protected checkToken(token: TokenNode<unknown>, path: TokenPath): CheckIssue[] {

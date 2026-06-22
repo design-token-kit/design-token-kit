@@ -4,23 +4,39 @@ import type { TokenValidator } from "#/core/validation/TokenValidator";
 import type { CheckIssue } from "#/core/check/CheckIssue";
 import type { Check } from "#/core/check/Check";
 import { CheckRunner } from "#/core/check/CheckRunner";
+import { CheckScope } from "#/core/check/CheckScope";
 import { TokenLayers } from "#/core/check/TokenLayers";
-import { validationChecks, lintingChecks } from "#/core/check/checks/Checks";
+import { validationChecks, lintingChecks, listChecks } from "#/core/check/checks/Checks";
+import type { CheckInfo } from "#/core/check/checks/Checks";
 
 /**
- * How deep the {@link DtcgChecker} pipeline runs.
+ * Reason a requested check id will not run.
  *
- * - {@code "schema"}: load and schema-validate only.
- * - {@code "validate"}: schema plus model-correctness checks.
- * - {@code "lint"}: schema, model-correctness, and architecture checks.
+ * - {@code "inactive"}: the check exists but its scope is deeper than the
+ *   configured scope.
+ * - {@code "unknown"}: no check declares that id.
  */
-export type CheckScope = "schema" | "validate" | "lint";
+export type CheckSelectionProblem = "inactive" | "unknown";
+
+/**
+ * A requested check id that will not run, with the reason.
+ */
+export interface CheckSelectionWarning {
+    /** The requested id, as given in the allow-list. */
+    readonly id: string;
+
+    /** Why the id will not run. */
+    readonly problem: CheckSelectionProblem;
+
+    /** For {@code "inactive"}, the scope at which the check would run. */
+    readonly requiredScope?: CheckScope;
+}
 
 /**
  * Options controlling the {@link DtcgChecker} pipeline.
  */
 export interface CheckerOptions {
-    /** How deep to run. Defaults to {@code "validate"}. */
+    /** How deep to run. Defaults to {@link CheckScope.VALIDATE}. */
     scope?: CheckScope;
 
     /**
@@ -51,7 +67,7 @@ export class DtcgChecker implements TokenValidator {
     readonly #allowList?: string[];
 
     constructor(options: CheckerOptions = {}) {
-        this.#scope = options.scope ?? "validate";
+        this.#scope = options.scope ?? CheckScope.VALIDATE;
         this.#layers = options.layers !== undefined && options.layers.length > 0
             ? new TokenLayers(options.layers)
             : TokenLayers.default();
@@ -74,15 +90,46 @@ export class DtcgChecker implements TokenValidator {
             throw error;
         }
 
-        if (this.#scope === "schema") {
+        const issues: CheckIssue[] = [];
+        if (this.#scope.includes(CheckScope.VALIDATE)) {
+            issues.push(...this.#run(validationChecks(), list));
+        }
+        if (!hasErrors(issues) && this.#scope.includes(CheckScope.LINT)) {
+            issues.push(...this.#run(lintingChecks(), list));
+        }
+        return issues;
+    }
+
+    /**
+     * Reports requested check ids that will not run under the current scope.
+     *
+     * A check is inactive when it exists but its scope is deeper than the
+     * configured scope, and unknown when no check declares that id. Returns an
+     * empty array when no allow-list was given.
+     */
+    checkSelectionWarnings(): CheckSelectionWarning[] {
+        if (this.#allowList === undefined || this.#allowList.length === 0) {
             return [];
         }
-
-        const modelIssues = this.#run(validationChecks(), list);
-        if (this.#scope === "validate" || hasErrors(modelIssues)) {
-            return modelIssues;
+        const byId = new Map(listChecks().map((info) => [info.id, info]));
+        const warnings: CheckSelectionWarning[] = [];
+        for (const id of this.#allowList) {
+            const warning = this.#selectionWarning(id, byId.get(id));
+            if (warning !== undefined) {
+                warnings.push(warning);
+            }
         }
-        return [...modelIssues, ...this.#run(lintingChecks(), list)];
+        return warnings;
+    }
+
+    #selectionWarning(id: string, info: CheckInfo | undefined): CheckSelectionWarning | undefined {
+        if (info === undefined) {
+            return { id, problem: "unknown" };
+        }
+        if (!this.#scope.includes(info.scope)) {
+            return { id, problem: "inactive", requiredScope: info.scope };
+        }
+        return undefined;
     }
 
     #run(checks: Check[], list: DtcgList): CheckIssue[] {

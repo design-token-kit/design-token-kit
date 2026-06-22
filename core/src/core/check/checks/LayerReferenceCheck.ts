@@ -18,6 +18,7 @@ import { TokenCheck } from "#/core/check/TokenCheck";
  */
 export class LayerReferenceCheck extends TokenCheck {
     readonly id = "layer-reference";
+    readonly description = "Cross-layer reference that is not from a layer to its adjacent lower layer.";
     readonly defaultSeverity: IssueSeverity = "error";
 
     protected checkToken(token: TokenNode<unknown>, path: TokenPath, ctx: CheckContext): CheckIssue[] {

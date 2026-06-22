@@ -48,6 +48,28 @@ describe("check", () => {
         });
     });
 
+    describe("--scope validation", () => {
+        it("rejects an unknown scope with exit code 1", () => {
+            const result = dtokens(`check ${fixturePath("valid.json")} --scope validation1`);
+            expect(result.status).toBe(1);
+            expect(result.stderr).toContain("'validation1' is invalid");
+        });
+    });
+
+    describe("--checks selection warnings", () => {
+        it("warns that a lint check is inactive at the default scope", () => {
+            const result = dtokens(`check ${fixturePath("arch-violation.json")} --checks layer-reference`);
+            expect(result.status).toBe(0);
+            expect(result.stderr).toContain("check 'layer-reference' requires --scope lint");
+        });
+
+        it("warns about an unknown check id", () => {
+            const result = dtokens(`check ${fixturePath("valid.json")} --checks foo`);
+            expect(result.status).toBe(0);
+            expect(result.stderr).toContain("unknown check 'foo'");
+        });
+    });
+
     it("reads from stdin when no files specified", () => {
         const content = readFileSync(fixturePath("valid.yaml"), "utf8");
         const result = dtokens("check", content);

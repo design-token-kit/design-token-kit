@@ -1,5 +1,5 @@
 import { Command } from "commander";
-import { DtcgChecker } from "@design-token-kit/core";
+import { DtcgChecker, CheckScope } from "@design-token-kit/core";
 import { hasErrors, printIssues } from "./issues";
 
 const EXIT_VALIDATION_ERROR = 2;
@@ -13,7 +13,7 @@ export const validateCommand = new Command("validate")
         console.error("Warning: 'validate' is deprecated. Use 'check --scope validate'.");
         try {
             const sources = files.length > 0 ? files : ["-"];
-            const issues = await new DtcgChecker({ scope: "validate" }).validate(sources);
+            const issues = await new DtcgChecker({ scope: CheckScope.VALIDATE }).validate(sources);
             printIssues(issues);
             if (hasErrors(issues)) {
                 process.exit(EXIT_VALIDATION_ERROR);

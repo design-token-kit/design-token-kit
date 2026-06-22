@@ -13,6 +13,7 @@ import { TokenCheck } from "#/core/check/TokenCheck";
  */
 export class RawValueUsageCheck extends TokenCheck {
     readonly id = "raw-value-usage";
+    readonly description = "Raw (non-reference) value defined above the lowest layer.";
     readonly defaultSeverity: IssueSeverity = "error";
 
     protected checkToken(token: TokenNode<unknown>, path: TokenPath, ctx: CheckContext): CheckIssue[] {
