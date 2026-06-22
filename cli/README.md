@@ -5,20 +5,19 @@ checking, converting, and previewing design tokens from the terminal.
 
 ## Features
 
-* **DTCG 2025.10 check** - schema, model correctness, and lint checks
-  for DTCG JSON token documents
-* **Model checks** - unresolved references, circular references,
-  group references, type mismatches, and deprecated token usage
+* **DTCG 2025.10 check** - schema, model correctness, and lint checks for DTCG
+  JSON token documents
+* **Model checks** - unresolved references, circular references, group
+  references, type mismatches, and deprecated token usage
 * **Lint checks** - cross-layer reference and raw value placement rules
-* **HRDT YAML support** - a compact, human-readable alternative to
-  DTCG JSON
+* **HRDT YAML support** - a compact, human-readable alternative to DTCG JSON
 * **Token format conversion** - read and write DTCG JSON and HRDT YAML
-* **CSS generation** - base and theme token sets rendered as CSS
-  custom properties
-* **Static showcase** - HTML showcase generation from token sources or
-  existing CSS
-* **Source abstraction** - local files, stdin, URLs, and raw token
-  content strings
+* **CSS generation** - base and theme token sets rendered as CSS custom
+  properties
+* **Static showcase** - HTML showcase generation from token sources or existing
+  CSS
+* **Source abstraction** - local files, stdin, URLs, and raw token content
+  strings
 
 Node.js 18 or newer is required.
 
@@ -76,9 +75,9 @@ Pass `-` or omit source arguments to read from standard input.
 
 ### CSS custom properties
 
-Generate CSS variables from token sources. Base tokens are emitted
-under `:root`; theme overrides are emitted under
-`:root[data-theme="<theme>"]`.
+Generate CSS variables from token sources.
+Base tokens are emitted under `:root`.
+Theme overrides are emitted under `:root[data-theme="<theme>"]`.
 
 ### HTML showcase
 
@@ -91,37 +90,36 @@ Convert token documents between DTCG JSON and HRDT YAML.
 
 ## Commands
 
-| Command | Description |
-| --- | --- |
-| `check [options] [files...]` | Check DTCG JSON or HRDT YAML token files: schema, model correctness, lint. |
-| `validate [files...]` | Deprecated. Use `check --scope validate`. |
-| `convert [options] [files...]` | Convert a token file to DTCG JSON, HRDT YAML, or CSS. |
-| `showcase [options] [files...]` | Create HTML showcase from DTCG JSON, HRDT YAML, or CSS. |
+- `check [options] [files...]` - check DTCG JSON or HRDT YAML token
+  files: schema, model correctness, lint.
+- `validate [files...]` - deprecated, use `check --scope validate`.
+- `convert [options] [files...]` - convert a token file to DTCG JSON,
+  HRDT YAML, or CSS.
+- `showcase [options] [files...]` - create HTML showcase from DTCG JSON,
+  HRDT YAML, or CSS.
 
 ## Options
 
 ### check
 
-| Option | Description |
-| --- | --- |
-| `--scope <scope>` | How deep to check: `schema`, `validate`, `lint`. Each includes the previous. Defaults to `validate`. |
-| `--layers <names>` | Comma-separated layer order, lowest first. Defaults to `primitive,semantic,component`. |
-| `--checks <ids>` | Comma-separated allow-list of active check ids. Defaults to all. |
+- `--scope <scope>` - how deep to check: `schema`, `validate`, `lint`.
+  Each includes the previous.
+  Defaults to `validate`.
+- `--layers <names>` - comma-separated layer order, lowest first.
+  Defaults to `primitive,semantic,component`.
+- `--checks <ids>` - comma-separated allow-list of active check ids.
+  Defaults to all.
 
 ### convert
 
-| Option | Description |
-| --- | --- |
-| `-i, --inform [format]` | Input format: `dtcg`, `hrdt` |
-| `-f, --outform [format]` | Output format: `dtcg`, `hrdt`, `css` |
-| `-o, --out [file]` | Output file, defaults to stdout |
+- `-i, --inform [format]` - input format: `dtcg`, `hrdt`.
+- `-f, --outform [format]` - output format: `dtcg`, `hrdt`, `css`.
+- `-o, --out [file]` - output file, defaults to stdout.
 
 ### showcase
 
-| Option | Description |
-| --- | --- |
-| `-o, --out <file>` | Output HTML file name or path |
-| `--open` | Open the generated HTML in browser, only with `--out` |
+- `-o, --out <file>` - output HTML file name or path.
+- `--open` - open the generated HTML in browser, only with `--out`.
 
 ## Checking
 
