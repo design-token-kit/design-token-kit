@@ -13,7 +13,7 @@ const packageJson = JSON.parse(readFileSync(packageJsonPath, "utf8")) as { versi
 
 const program = new Command()
     .name("dtokens")
-    .description("CLI for DTCG JSON and HRDT YAML: check, convert, showcase.")
+    .description("CLI for DTCG JSON and HRDT YAML: check, convert, showcase, stats.")
     .version(packageJson.version, "-v, --version", "display version")
     .addCommand(checkCommand)
     .addCommand(validateCommand)
@@ -35,7 +35,6 @@ Examples:
   $ dtokens showcase - < tokens.yaml
   $ dtokens stats tokens.yaml
   $ dtokens stats - < tokens.yaml
-  $ dtokens stats tokens.yaml --out ./dist/stats.html
   $ dtokens stats tokens.yaml --out ./dist/stats.html --open
 ` : "");
 
