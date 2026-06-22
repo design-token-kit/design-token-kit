@@ -1,6 +1,6 @@
 {
     "name": "@design-token-kit/cli",
-    "version": "1.0.0",
+    "version": "1.1.0",
     "description": "CLI for Design Token Kit: validate, convert, showcase.",
     "keywords": [
         "design-tokens",
@@ -42,7 +42,7 @@
         "test": "vitest run"
     },
     "dependencies": {
-        "@design-token-kit/core": "1.0.0",
+        "@design-token-kit/core": "1.1.0",
         "commander": "14.0.1"
     },
     "devDependencies": {
