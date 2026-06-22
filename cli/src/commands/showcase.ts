@@ -17,6 +17,11 @@ export const showcaseCommand = new Command("showcase")
         try {
             const showcase = createTokenHtmlShowcase();
             const sources = files.length > 0 ? files : ["-"];
+
+            if (options.open && !options.out) {
+                throw new Error("Option --open requires --out");
+            }
+
             const html = await showcase.showcase(sources);
             if (options.out) {
                 const targetFile = resolveOutputPath(options.out);

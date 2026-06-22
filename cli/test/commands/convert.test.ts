@@ -34,6 +34,13 @@ describe("convert", () => {
         expect(result.stderr).toContain("Conversion failed");
     });
 
+    it("fails with exit code 1 for model-invalid input", () => {
+        const result = dtokens(`convert ${fixturePath("invalid-values.json")} --outform css`);
+        expect(result.status).toBe(1);
+        expect(result.stderr).toContain("[bad-reference] error");
+        expect(result.stderr).toContain("Conversion failed");
+    });
+
     it("reads from stdin when no file specified", () => {
         const content = readFileSync(fixturePath("valid.yaml"), "utf8");
         const result = dtokens("convert --outform css", content);

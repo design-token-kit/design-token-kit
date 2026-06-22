@@ -36,4 +36,11 @@ describe("showcase", () => {
         expect(result.status).toBe(1);
         expect(result.stderr).toContain("Showcase failed");
     });
+
+    it("--open requires --out", () => {
+        const result = dtokens(`showcase ${fixturePath("valid.yaml")} --open`);
+        expect(result.status).toBe(1);
+        expect(result.stderr).toContain("Showcase failed");
+        expect(result.stderr).toContain("Option --open requires --out");
+    });
 });
