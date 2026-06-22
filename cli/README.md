@@ -129,3 +129,6 @@ dtokens showcase tokens.yaml --out ./dist/showcase.html
 - `dtcg` - Design Tokens Community Group JSON format
 - `hrdt` - Human-Readable Design Tokens YAML format
 - `css` - CSS custom properties output
+
+The `dtcg` format follows the specification published by the
+Design Tokens Community Group at https://www.designtokens.org.

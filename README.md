@@ -13,10 +13,16 @@ The project provides tools for working with design tokens.
 Design tokens use a format where design rules are stored in a machine-readable way.
 These rules can later be converted to CSS and other UI formats.
 
+The project implements the design token format defined by the
+Design Tokens Community Group (DTCG).
+See the specification at https://www.designtokens.org.
+
 Supported input formats:
 
 * DTCG JSON
 * HRDT YAML
+
+DTCG JSON is the standard format defined by the Design Tokens Community Group.
 
 HRDT stands for Human-Readable Design Tokens. It is a compact YAML-based token
 format designed to be easier for humans to read and write than raw DTCG JSON.
