@@ -90,36 +90,36 @@ Convert token documents between DTCG JSON and HRDT YAML.
 
 ## Commands
 
-- `check [options] [files...]` - check DTCG JSON or HRDT YAML token
+* `check [options] [files...]` - check DTCG JSON or HRDT YAML token
   files: schema, model correctness, lint.
-- `validate [files...]` - deprecated, use `check --scope validate`.
-- `convert [options] [files...]` - convert a token file to DTCG JSON,
+* `validate [files...]` - deprecated, use `check --scope validate`.
+* `convert [options] [files...]` - convert a token file to DTCG JSON,
   HRDT YAML, or CSS.
-- `showcase [options] [files...]` - create HTML showcase from DTCG JSON,
+* `showcase [options] [files...]` - create HTML showcase from DTCG JSON,
   HRDT YAML, or CSS.
 
 ## Options
 
 ### check
 
-- `--scope <scope>` - how deep to check: `schema`, `validate`, `lint`.
+* `--scope <scope>` - how deep to check: `schema`, `validate`, `lint`.
   Each includes the previous.
   Defaults to `validate`.
-- `--layers <names>` - comma-separated layer order, lowest first.
+* `--layers <names>` - comma-separated layer order, lowest first.
   Defaults to `primitive,semantic,component`.
-- `--checks <ids>` - comma-separated allow-list of active check ids.
+* `--checks <ids>` - comma-separated allow-list of active check ids.
   Defaults to all.
 
 ### convert
 
-- `-i, --inform [format]` - input format: `dtcg`, `hrdt`.
-- `-f, --outform [format]` - output format: `dtcg`, `hrdt`, `css`.
-- `-o, --out [file]` - output file, defaults to stdout.
+* `-i, --inform [format]` - input format: `dtcg`, `hrdt`.
+* `-f, --outform [format]` - output format: `dtcg`, `hrdt`, `css`.
+* `-o, --out [file]` - output file, defaults to stdout.
 
 ### showcase
 
-- `-o, --out <file>` - output HTML file name or path.
-- `--open` - open the generated HTML in browser, only with `--out`.
+* `-o, --out <file>` - output HTML file name or path.
+* `--open` - open the generated HTML in browser, only with `--out`.
 
 ## Checking
 
@@ -138,18 +138,18 @@ The `--scope` option selects how deep the pipeline runs.
 
 Scopes:
 
-- `schema`: load and validate against the DTCG schema only.
-- `validate`: schema plus model-correctness checks.
-- `lint`: model-correctness plus lint checks.
+* `schema`: load and validate against the DTCG schema only.
+* `validate`: schema plus model-correctness checks.
+* `lint`: model-correctness plus lint checks.
 
 Run `dtokens check --help` to list the available check ids with their
 scope, severity, and description.
 
 Exit status:
 
-- `0`: success
-- `1`: unexpected error
-- `2`: issues found
+* `0`: success
+* `1`: unexpected error
+* `2`: issues found
 
 ```bash
 dtokens check tokens.json --scope schema
@@ -198,9 +198,9 @@ dtokens showcase - < tokens.yaml
 
 ## Supported Formats
 
-- `dtcg` - Design Tokens Community Group JSON format
-- `hrdt` - Human-Readable Design Tokens YAML format
-- `css` - CSS custom properties output
+* `dtcg` - Design Tokens Community Group JSON format
+* `hrdt` - Human-Readable Design Tokens YAML format
+* `css` - CSS custom properties output
 
 The `dtcg` format follows the specification published by the
 Design Tokens Community Group at https://www.designtokens.org.
