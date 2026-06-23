@@ -1,6 +1,4 @@
 import { describe, it, expect } from "vitest";
-import { readFile } from "node:fs/promises";
-import { resolve } from "node:path";
 import { HrdtTokenReader } from "#/core/io/HrdtTokenReader";
 import { HrdtTokenWriter } from "#/core/io/HrdtTokenWriter";
 import { Dtcg } from "#/core/model/Dtcg";
@@ -12,29 +10,39 @@ import { NumberToken } from "#/core/model/tokens/NumberToken";
 import { ColorValue } from "#/core/model/values/ColorValue";
 import { DimensionValue } from "#/core/model/values/DimensionValue";
 
-const TOKENS_DIR = resolve(__dirname, "../../../tokens");
+// A small but representative HRDT document: the three layers plus an alias,
+// enough to exercise reader <-> writer round-trips.
+const SAMPLE: string = `
+primitive:
+  color:
+    white: "#ffffff"
+    brand-500: "#2549f6"
+  dimension:
+    space-100: 4px
+semantic:
+  color:
+    background-page: "{primitive.color.white}"
+component:
+  button:
+    primary:
+      background: "{semantic.color.background-page}"
+`;
 
 function write(doc: Dtcg): string {
     return new HrdtTokenWriter().write(doc);
 }
 
-async function roundTrip(name: string): Promise<Dtcg> {
-    const content = await readFile(resolve(TOKENS_DIR, name), "utf8");
-    const doc = new HrdtTokenReader().parse(content);
-    return new HrdtTokenReader().parse(write(doc));
-}
-
 describe("HrdtTokenWriter", () => {
-    describe("round-trip with valid.yaml", () => {
-        it("produces output readable by HrdtTokenReader", async () => {
-            const content = await readFile(resolve(TOKENS_DIR, "valid.yaml"), "utf8");
-            const doc = new HrdtTokenReader().parse(content);
+    // Round-trip: reader and writer agree on a representative document.
+    describe("round-trip", () => {
+        it("produces output readable by HrdtTokenReader", () => {
+            const doc = new HrdtTokenReader().parse(SAMPLE);
             const written = new HrdtTokenWriter().write(doc);
             expect(() => new HrdtTokenReader().parse(written)).not.toThrow();
         });
 
-        it("preserves top-level group keys", async () => {
-            const doc = await roundTrip("valid.yaml");
+        it("preserves top-level group keys", () => {
+            const doc = new HrdtTokenReader().parse(write(new HrdtTokenReader().parse(SAMPLE)));
             expect([...doc.keys()]).toEqual(["primitive", "semantic", "component"]);
         });
     });

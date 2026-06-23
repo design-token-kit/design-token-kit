@@ -1,20 +1,12 @@
 import { describe, expect, it } from "vitest";
 import { readFileSync } from "node:fs";
-import { resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 import { Source } from "#/core/io/Source";
 
 describe("Source", () => {
-    it("reads an existing absolute file path", async () => {
-        const filePath = resolve(__dirname, "../../../tokens/valid.yaml");
-
-        await expect(new Source(filePath).getContent()).resolves.toBe(
-            readFileSync(filePath, "utf8"),
-        );
-    });
-
     it("throws when the file does not exist", () => {
-        expect(() => new Source("core/tokens/valid1.yaml")).toThrow(
-            'File not found: "core/tokens/valid1.yaml"',
+        expect(() => new Source("no/such/file.yaml")).toThrow(
+            'File not found: "no/such/file.yaml"',
         );
     });
 
@@ -22,5 +14,15 @@ describe("Source", () => {
         const source = new Source("content:key: value");
 
         await expect(source.getContent()).resolves.toBe("key: value");
+    });
+
+    // Reads an actual file from disk; the file lives next to this test as
+    // Source.test.yaml (paired by name).
+    it("reads an existing absolute file path", async () => {
+        const filePath = fileURLToPath(new URL("Source.test.yaml", import.meta.url));
+
+        await expect(new Source(filePath).getContent()).resolves.toBe(
+            readFileSync(filePath, "utf8"),
+        );
     });
 });

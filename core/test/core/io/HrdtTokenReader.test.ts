@@ -1,6 +1,4 @@
 import { describe, it, expect } from "vitest";
-import { readFile } from "node:fs/promises";
-import { resolve } from "node:path";
 import { HrdtTokenReader, HrdtTokenReaderError } from "#/core/io/HrdtTokenReader";
 import { Dtcg } from "#/core/model/Dtcg";
 import { TokenGroup } from "#/core/model/TokenGroup";
@@ -11,10 +9,8 @@ import { DimensionToken } from "#/core/model/tokens/DimensionToken";
 import { ColorValue } from "#/core/model/values/ColorValue";
 import { DimensionValue } from "#/core/model/values/DimensionValue";
 
-const TOKENS_DIR = resolve(__dirname, "../../../tokens");
-
-async function loadFixture(name: string): Promise<Dtcg> {
-    return new HrdtTokenReader().parse(await readFile(resolve(TOKENS_DIR, name), "utf8"));
+function parse(yaml: string): Dtcg {
+    return new HrdtTokenReader().parse(yaml);
 }
 
 function getGroup(doc: Dtcg, ...path: string[]): TokenGroup {
@@ -27,19 +23,34 @@ function getGroup(doc: Dtcg, ...path: string[]): TokenGroup {
 
 describe("HrdtTokenReader", () => {
     describe("document structure", () => {
-        it("parses top-level groups", async () => {
-            const doc = await loadFixture("valid.yaml");
+        it("parses top-level groups", () => {
+            const doc = parse(`
+primitive:
+  color:
+    white: "#ffffff"
+semantic:
+  color:
+    bg: "{primitive.color.white}"
+`);
             expect([...doc.keys()]).toContain("primitive");
             expect([...doc.keys()]).toContain("semantic");
         });
 
-        it("returns Dtcg instance", async () => {
-            const doc = await loadFixture("valid.yaml");
+        it("returns Dtcg instance", () => {
+            const doc = parse(`
+primitive:
+  color:
+    white: "#ffffff"
+`);
             expect(doc).toBeInstanceOf(Dtcg);
         });
 
-        it("parses nested group structure", async () => {
-            const doc = await loadFixture("valid.yaml");
+        it("parses nested group structure", () => {
+            const doc = parse(`
+primitive:
+  color:
+    white: "#ffffff"
+`);
             const primitive = doc.get("primitive");
             expect(primitive).toBeInstanceOf(TokenGroup);
             const color = (primitive as TokenGroup).get("color");
@@ -48,8 +59,12 @@ describe("HrdtTokenReader", () => {
     });
 
     describe("tokens", () => {
-        it("parses color hex to ColorToken", async () => {
-            const doc = await loadFixture("valid.yaml");
+        it("parses color hex to ColorToken", () => {
+            const doc = parse(`
+primitive:
+  color:
+    white: "#ffffff"
+`);
             const token = getGroup(doc, "primitive", "color").get("white") as ColorToken;
             const value = token.value as ColorValue;
             expect(token).toBeInstanceOf(ColorToken);
@@ -57,8 +72,12 @@ describe("HrdtTokenReader", () => {
             expect(value.alpha).toBe(1);
         });
 
-        it("parses dimension token", async () => {
-            const doc = await loadFixture("valid.yaml");
+        it("parses dimension token", () => {
+            const doc = parse(`
+primitive:
+  dimension:
+    space-100: 4px
+`);
             const token = getGroup(doc, "primitive", "dimension").get("space-100") as DimensionToken;
             const value = token.value as DimensionValue;
             expect(token).toBeInstanceOf(DimensionToken);
@@ -66,8 +85,15 @@ describe("HrdtTokenReader", () => {
             expect(value.unit).toBe("px");
         });
 
-        it("parses semantic alias as TokenReference", async () => {
-            const doc = await loadFixture("valid.yaml");
+        it("parses semantic alias as TokenReference", () => {
+            const doc = parse(`
+primitive:
+  color:
+    white: "#ffffff"
+semantic:
+  color:
+    background-page: "{primitive.color.white}"
+`);
             const token = getGroup(doc, "semantic", "color").get("background-page") as TokenNode<unknown>;
             expect(token.isAlias()).toBe(true);
             expect((token.value as TokenReference).value).toBe("primitive.color.white");

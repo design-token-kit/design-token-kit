@@ -11,8 +11,8 @@ describe("check", () => {
         expect(result.stdout).toContain("Check passed.");
     });
 
-    it("defaults to the validate scope: ignores architecture violations", async () => {
-        const result = await run(checkCommand, fixturePath("arch-violation.json"));
+    it("defaults to the validate scope: ignores lint violations", async () => {
+        const result = await run(checkCommand, fixturePath("invalid-lint.json"));
         expect(result.status).toBe(0);
     });
 
@@ -30,15 +30,15 @@ describe("check", () => {
     });
 
     describe("--scope lint", () => {
-        it("reports architecture violations with exit code 2", async () => {
-            const result = await run(checkCommand, fixturePath("arch-violation.json"), "--scope", "lint");
+        it("reports lint violations with exit code 2", async () => {
+            const result = await run(checkCommand, fixturePath("invalid-lint.json"), "--scope", "lint");
             expect(result.status).toBe(2);
             expect(result.stderr).toContain("[layer-reference]");
             expect(result.stderr).toContain("[raw-value-usage]");
         });
 
         it("honours the checks allow-list", async () => {
-            const result = await run(checkCommand, fixturePath("arch-violation.json"), "--scope", "lint", "--checks", "layer-reference");
+            const result = await run(checkCommand, fixturePath("invalid-lint.json"), "--scope", "lint", "--checks", "layer-reference");
             expect(result.status).toBe(2);
             expect(result.stderr).toContain("[layer-reference]");
             expect(result.stderr).not.toContain("[raw-value-usage]");
@@ -55,7 +55,7 @@ describe("check", () => {
 
     describe("--checks selection warnings", () => {
         it("warns that a lint check is inactive at the default scope", async () => {
-            const result = await run(checkCommand, fixturePath("arch-violation.json"), "--checks", "layer-reference");
+            const result = await run(checkCommand, fixturePath("invalid-lint.json"), "--checks", "layer-reference");
             expect(result.status).toBe(0);
             expect(result.stderr).toContain("check 'layer-reference' requires --scope lint");
         });

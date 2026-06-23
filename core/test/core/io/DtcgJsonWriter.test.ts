@@ -1,6 +1,4 @@
 import { describe, it, expect } from "vitest";
-import { readFile } from "node:fs/promises";
-import { resolve } from "node:path";
 import { DtcgJsonReader } from "#/core/io/DtcgJsonReader";
 import { DtcgJsonWriter } from "#/core/io/DtcgJsonWriter";
 import { Dtcg } from "#/core/model/Dtcg";
@@ -12,30 +10,38 @@ import { NumberToken } from "#/core/model/tokens/NumberToken";
 import { ColorValue } from "#/core/model/values/ColorValue";
 import { DimensionValue } from "#/core/model/values/DimensionValue";
 
-const TOKENS_DIR = resolve(__dirname, "../../../tokens");
+// A small but representative DTCG document: three layers, a couple of token
+// types, and an alias - enough to exercise reader <-> writer round-trips.
+const SAMPLE = `{
+    "$schema": "https://www.designtokens.org/schemas/2025.10/format.json",
+    "primitive": {
+        "color": { "$type": "color", "white": { "$value": { "colorSpace": "srgb", "components": [1, 1, 1], "hex": "#ffffff" } } },
+        "dimension": { "$type": "dimension", "space-100": { "$value": { "value": 4, "unit": "px" } } }
+    },
+    "semantic": {
+        "color": { "$type": "color", "background-page": { "$value": "{primitive.color.white}" } }
+    },
+    "component": {
+        "button": { "primary": { "$type": "color", "background": { "$value": "{semantic.color.background-page}" } } }
+    }
+}`;
 
 function write(doc: Dtcg): Record<string, unknown> {
     return JSON.parse(new DtcgJsonWriter().write(doc)) as Record<string, unknown>;
 }
 
-async function roundTrip(name: string): Promise<{ original: unknown; written: unknown }> {
-    const content = await readFile(resolve(TOKENS_DIR, name), "utf8");
-    const doc = new DtcgJsonReader().parse(content);
-    const written = write(doc);
-    return { original: JSON.parse(content), written };
-}
-
 describe("DtcgJsonWriter", () => {
-    describe("round-trip with valid.json", () => {
-        it("produces output readable by DtcgJsonReader", async () => {
-            const content = await readFile(resolve(TOKENS_DIR, "valid.json"), "utf8");
-            const doc = new DtcgJsonReader().parse(content);
+    // Round-trip: reader and writer agree on a representative document.
+    describe("round-trip", () => {
+        it("produces output readable by DtcgJsonReader", () => {
+            const doc = new DtcgJsonReader().parse(SAMPLE);
             const written = new DtcgJsonWriter().write(doc);
             expect(() => new DtcgJsonReader().parse(written)).not.toThrow();
         });
 
-        it("preserves top-level group keys", async () => {
-            const { original, written } = await roundTrip("valid.json");
+        it("preserves top-level group keys", () => {
+            const original = JSON.parse(SAMPLE);
+            const written = write(new DtcgJsonReader().parse(SAMPLE));
             const originalKeys = Object.keys(original as object).filter(k => !k.startsWith("$"));
             const writtenKeys = Object.keys(written as object).filter(k => !k.startsWith("$"));
             expect(writtenKeys).toEqual(originalKeys);

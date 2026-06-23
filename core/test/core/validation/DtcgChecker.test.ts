@@ -1,71 +1,78 @@
 import { describe, it, expect } from "vitest";
-import { resolve } from "node:path";
 import { DtcgChecker } from "#/core/validation/DtcgChecker";
 import { CheckScope } from "#/core/check/CheckScope";
 
-function fixture(name: string): string {
-    return resolve(__dirname, "../../../tokens", name);
+// Wraps a document as a `content:` source, so the checker runs straight from a
+// string with no file on disk.
+function source(doc: object): string {
+    return "content:" + JSON.stringify({ "$schema": "", ...doc });
 }
-
-const VALID = fixture("valid.json");
-const INVALID_SCHEMA = fixture("invalid-schema.json");
-const INVALID_VALUES = fixture("invalid-values.json");
-const ARCH_VIOLATION = fixture("arch-violation.json");
 
 function ids(issues: { id: string }[]): string[] {
     return [...new Set(issues.map((i) => i.id))];
 }
 
+// Each document below carries exactly ONE defect, named and commented, so a
+// failing check points to an obvious cause.
+
+// Model defect: passes schema, fails model checks.
+const ALIAS_TO_MISSING_TOKEN: string = source({
+    primitive: { red: { "$type": "color", "$value": { colorSpace: "srgb", components: [1, 0, 0] } } },
+    // bad-reference: alias target {primitive.missing} does not exist.
+    broken: { "$type": "color", "$value": "{primitive.missing}" },
+});
+
+// Lint defect: passes schema and model, fails lint checks.
+const LINT_VIOLATIONS: string = source({
+    primitive: { color: { "$type": "color", brand: { "$value": { colorSpace: "srgb", components: [0, 0, 1] } } } },
+    // raw-value-usage: only primitive may hold a raw value; semantic must alias.
+    semantic: { color: { raw: { "$type": "color", "$value": { colorSpace: "srgb", components: [0, 0, 0] } } } },
+    // layer-reference: component must go through semantic, not straight to primitive.
+    component: { btn: { "$value": "{primitive.color.brand}" } },
+});
+
+// Schema defect: fails at the schema stage, before model checks run.
+const SCHEMA_INVALID_COLOR: string = source({
+    // schema: a color $value must be an object, not a number.
+    primitive: { bad: { "$type": "color", "$value": 42 } },
+});
+
+// No defect: passes schema, model and lint.
+const VALID: string = source({
+    primitive: { color: { "$type": "color", brand: { "$value": { colorSpace: "srgb", components: [0, 0, 1] } } } },
+    semantic: { color: { action: { "$type": "color", "$value": "{primitive.color.brand}" } } },
+});
+
 describe("DtcgChecker", () => {
-    describe("scope: schema", () => {
-        it("returns no issues for a schema-valid file", async () => {
-            const issues = await new DtcgChecker({ scope: CheckScope.SCHEMA }).validate([VALID]);
+    describe("scope gating", () => {
+        it("schema scope skips model checks", async () => {
+            const issues = await new DtcgChecker({ scope: CheckScope.SCHEMA }).validate([ALIAS_TO_MISSING_TOKEN]);
             expect(issues).toEqual([]);
         });
 
-        it("reports schema issues for a schema-invalid file", async () => {
-            const issues = await new DtcgChecker({ scope: CheckScope.SCHEMA }).validate([INVALID_SCHEMA]);
-            expect(issues.length).toBeGreaterThan(0);
-            expect(issues.some((i) => i.id === "schema")).toBe(true);
-        });
-
-        it("does not run model checks, even when the model is broken", async () => {
-            const issues = await new DtcgChecker({ scope: CheckScope.SCHEMA }).validate([INVALID_VALUES]);
-            expect(issues).toEqual([]);
-        });
-    });
-
-    describe("scope: validate", () => {
-        it("reports model issues for a schema-valid but model-broken file", async () => {
-            const issues = await new DtcgChecker({ scope: CheckScope.VALIDATE }).validate([INVALID_VALUES]);
+        it("validate scope runs model checks", async () => {
+            const issues = await new DtcgChecker({ scope: CheckScope.VALIDATE }).validate([ALIAS_TO_MISSING_TOKEN]);
             expect(ids(issues)).toContain("bad-reference");
         });
 
-        it("does not run architecture checks", async () => {
-            const issues = await new DtcgChecker({ scope: CheckScope.VALIDATE }).validate([ARCH_VIOLATION]);
+        it("validate scope skips lint checks", async () => {
+            const issues = await new DtcgChecker({ scope: CheckScope.VALIDATE }).validate([LINT_VIOLATIONS]);
             expect(ids(issues)).not.toContain("layer-reference");
             expect(ids(issues)).not.toContain("raw-value-usage");
         });
 
-        it("returns no issues for a fully valid file", async () => {
-            const issues = await new DtcgChecker({ scope: CheckScope.VALIDATE }).validate([VALID]);
-            expect(issues).toEqual([]);
-        });
-
         it("defaults to the validate scope", async () => {
-            const issues = await new DtcgChecker().validate([ARCH_VIOLATION]);
+            const issues = await new DtcgChecker().validate([LINT_VIOLATIONS]);
             expect(ids(issues)).not.toContain("layer-reference");
         });
-    });
 
-    describe("scope: lint", () => {
-        it("reports architecture issues on top of model checks", async () => {
-            const issues = await new DtcgChecker({ scope: CheckScope.LINT }).validate([ARCH_VIOLATION]);
+        it("lint scope runs lint checks", async () => {
+            const issues = await new DtcgChecker({ scope: CheckScope.LINT }).validate([LINT_VIOLATIONS]);
             expect(ids(issues)).toContain("layer-reference");
             expect(ids(issues)).toContain("raw-value-usage");
         });
 
-        it("returns no issues for a fully valid file", async () => {
+        it("returns no issues for a valid document at lint scope", async () => {
             const issues = await new DtcgChecker({ scope: CheckScope.LINT }).validate([VALID]);
             expect(issues).toEqual([]);
         });
@@ -73,12 +80,13 @@ describe("DtcgChecker", () => {
 
     describe("fail-fast", () => {
         it("stops at the schema stage and skips model checks", async () => {
-            const issues = await new DtcgChecker({ scope: CheckScope.LINT }).validate([INVALID_SCHEMA]);
+            const issues = await new DtcgChecker({ scope: CheckScope.LINT }).validate([SCHEMA_INVALID_COLOR]);
             expect(issues.every((i) => i.id === "schema")).toBe(true);
+            expect(issues.length).toBeGreaterThan(0);
         });
 
-        it("stops at the model stage and skips architecture checks", async () => {
-            const issues = await new DtcgChecker({ scope: CheckScope.LINT }).validate([INVALID_VALUES]);
+        it("stops at the model stage and skips lint checks", async () => {
+            const issues = await new DtcgChecker({ scope: CheckScope.LINT }).validate([ALIAS_TO_MISSING_TOKEN]);
             expect(ids(issues)).toContain("bad-reference");
             expect(ids(issues)).not.toContain("layer-reference");
             expect(ids(issues)).not.toContain("raw-value-usage");
@@ -87,7 +95,7 @@ describe("DtcgChecker", () => {
 
     describe("checks allow-list", () => {
         it("runs only the listed checks", async () => {
-            const issues = await new DtcgChecker({ scope: CheckScope.LINT, checks: ["layer-reference"] }).validate([ARCH_VIOLATION]);
+            const issues = await new DtcgChecker({ scope: CheckScope.LINT, checks: ["layer-reference"] }).validate([LINT_VIOLATIONS]);
             expect(ids(issues)).toEqual(["layer-reference"]);
         });
     });
@@ -127,6 +135,15 @@ describe("DtcgChecker", () => {
                 { id: "layer-reference", problem: "inactive", requiredScope: CheckScope.LINT },
                 { id: "foo", problem: "unknown" },
             ]);
+        });
+    });
+
+    // One end-to-end pass: a valid document goes through the full pipeline
+    // (load -> schema -> model -> lint) and comes out clean.
+    describe("integration", () => {
+        it("a valid document passes the whole pipeline", async () => {
+            const issues = await new DtcgChecker({ scope: CheckScope.LINT }).validate([VALID]);
+            expect(issues).toEqual([]);
         });
     });
 });
