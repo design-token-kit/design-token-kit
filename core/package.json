@@ -45,7 +45,8 @@
         "build": "tsc --noEmit && vite build",
         "dist": "node ../scripts/stage-package.mjs core",
         "test": "vitest run",
-        "test:coverage": "vitest run --coverage"
+        "test:coverage": "vitest run --coverage",
+        "test:coverage:v8": "vitest run --coverage --coverage.provider=v8"
     },
     "dependencies": {
         "ajv": "8.20.0",
@@ -55,6 +56,7 @@
     "devDependencies": {
         "@microsoft/api-extractor": "7.58.7",
         "@types/node": "24.10.1",
+        "@vitest/coverage-istanbul": "4.1.7",
         "@vitest/coverage-v8": "4.1.7",
         "typescript": "5.9.3",
         "vite": "8.0.10",

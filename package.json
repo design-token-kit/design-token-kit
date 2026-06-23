@@ -11,6 +11,7 @@
         "dist": "npm run build && npm run dist --workspaces",
         "test": "npm run test --workspaces",
         "test:coverage": "npm run test:coverage --workspaces",
+        "test:coverage:v8": "npm run test:coverage:v8 --workspaces",
         "clean": "node scripts/clean.mjs",
         "dtokens": "node --import tsx --conditions development cli/src/index.ts",
         "release:prepare": "node scripts/release-prepare.mjs",

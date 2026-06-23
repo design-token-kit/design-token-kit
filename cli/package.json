@@ -40,7 +40,8 @@
         "build": "tsc --noEmit && tsup",
         "dist": "node ../scripts/stage-package.mjs cli",
         "test": "vitest run",
-        "test:coverage": "vitest run --coverage"
+        "test:coverage": "vitest run --coverage",
+        "test:coverage:v8": "vitest run --coverage --coverage.provider=v8"
     },
     "dependencies": {
         "@design-token-kit/core": "1.1.0",
@@ -48,6 +49,7 @@
     },
     "devDependencies": {
         "@types/node": "24.10.1",
+        "@vitest/coverage-istanbul": "4.1.7",
         "@vitest/coverage-v8": "4.1.7",
         "tsup": "8.5.1",
         "typescript": "5.9.3",
