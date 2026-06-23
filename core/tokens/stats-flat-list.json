@@ -1,0 +1,91 @@
+{
+  "$schema": "https://www.designtokens.org/schemas/2025.10/format.json",
+  "color-white": {
+    "$type": "color",
+    "$value": {
+      "colorSpace": "srgb",
+      "components": [
+        1,
+        1,
+        1
+      ],
+      "alpha": 1,
+      "hex": "#ffffff"
+    }
+  },
+  "color-black": {
+    "$type": "color",
+    "$value": {
+      "colorSpace": "srgb",
+      "components": [
+        0,
+        0,
+        0
+      ],
+      "alpha": 1,
+      "hex": "#000000"
+    }
+  },
+  "color-brand-primary": {
+    "$type": "color",
+    "$value": {
+      "colorSpace": "srgb",
+      "components": [
+        0.173,
+        0.302,
+        0.953
+      ],
+      "alpha": 1,
+      "hex": "#2c4df3"
+    }
+  },
+  "color-background": {
+    "$type": "color",
+    "$value": "{color-white}"
+  },
+  "color-text-primary": {
+    "$type": "color",
+    "$value": "{color-black}"
+  },
+  "color-action-primary": {
+    "$type": "color",
+    "$value": "{color-brand-primary}"
+  },
+  "space-sm": {
+    "$type": "dimension",
+    "$value": {
+      "value": 8,
+      "unit": "px"
+    }
+  },
+  "space-md": {
+    "$type": "dimension",
+    "$value": {
+      "value": 16,
+      "unit": "px"
+    }
+  },
+  "radius-md": {
+    "$type": "dimension",
+    "$value": {
+      "value": 8,
+      "unit": "px"
+    }
+  },
+  "button-background": {
+    "$type": "color",
+    "$value": "{color-action-primary}"
+  },
+  "button-text": {
+    "$type": "color",
+    "$value": "{color-white}"
+  },
+  "button-radius": {
+    "$type": "dimension",
+    "$value": "{radius-md}"
+  },
+  "button-padding": {
+    "$type": "dimension",
+    "$value": "{space-md}"
+  }
+}

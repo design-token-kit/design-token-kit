@@ -23,6 +23,13 @@ describe("convert", () => {
         expect(result.stdout).toContain("--primitive-color-white");
     });
 
+    it("fails with exit code 1 for model-invalid input", async () => {
+        const result = await run(convertCommand, fixturePath("invalid-values.json"), "--outform", "css");
+        expect(result.status).toBe(1);
+        expect(result.stderr).toContain("[bad-reference] error");
+        expect(result.stderr).toContain("Conversion failed");
+    });
+
     it("writes output to file when --out specified", async () => {
         const outDir = resolve(tmpdir(), `dtokens-test-${randomUUID()}`);
         const outFile = resolve(outDir, "tokens.css");

@@ -17,6 +17,7 @@ checking, converting, and previewing design tokens from the terminal.
   properties
 * **Static showcase** - HTML showcase generation from token sources or existing
   CSS
+* **Token stats** - text and HTML reports with token counts and breakdowns
 * **Source abstraction** - local files, stdin, URLs, and raw token content
   strings
 
@@ -49,6 +50,7 @@ npm install @design-token-kit/cli
 dtokens check tokens.json
 dtokens convert tokens.yaml --inform hrdt --outform css --out ./tokens.css
 dtokens showcase tokens.json --out ./showcase.html --open
+dtokens stats tokens.json --out ./stats.html
 ```
 
 ## Input Formats
@@ -85,6 +87,11 @@ Theme overrides are emitted under `:root[data-theme="<theme>"]`.
 Generate a static HTML preview from DTCG JSON, HRDT YAML, or existing
 CSS custom properties.
 
+### Token statistics
+
+Generate a text report to stdout or an HTML stats page from token
+sources.
+
 ### Serialized token documents
 
 Convert token documents between DTCG JSON and HRDT YAML.
@@ -98,6 +105,8 @@ Convert token documents between DTCG JSON and HRDT YAML.
   HRDT YAML, or CSS.
 * `showcase [options] [files...]` - create HTML showcase from DTCG JSON,
   HRDT YAML, or CSS.
+* `stats [options] [files...]` - generate token statistics from DTCG JSON
+  or HRDT YAML sources.
 
 ## Options
 
@@ -118,6 +127,11 @@ Convert token documents between DTCG JSON and HRDT YAML.
 * `-o, --out [file]` - output file, defaults to stdout.
 
 ### showcase
+
+* `-o, --out <file>` - output HTML file name or path.
+* `--open` - open the generated HTML in browser, only with `--out`.
+
+### stats
 
 * `-o, --out <file>` - output HTML file name or path.
 * `--open` - open the generated HTML in browser, only with `--out`.
@@ -195,6 +209,16 @@ source.
 dtokens showcase tokens.yaml --out ./showcase.html
 dtokens showcase tokens.css --out ./showcase.html
 dtokens showcase - < tokens.yaml
+```
+
+## Token Statistics
+
+Generate token statistics from token sources.
+
+```bash
+dtokens stats tokens.yaml
+dtokens stats - < tokens.yaml
+dtokens stats tokens.yaml --out ./stats.html --open
 ```
 
 ## Supported Formats

@@ -2,8 +2,10 @@ import { describe, it, expect } from "vitest";
 import { Dtcg } from "#/core/model/Dtcg";
 import { TokenGroup } from "#/core/model/TokenGroup";
 import { ColorToken } from "#/core/model/tokens/ColorToken";
+import { AliasToken } from "#/core/model/tokens/AliasToken";
 import { ColorValue } from "#/core/model/values/ColorValue";
 import type { TokenNode } from "#/core/model/TokenNode";
+import { TokenReference } from "#/core/model/TokenReference";
 
 function makeColor(alpha = 1): ColorValue {
     return new ColorValue("srgb", [1, 0, 0], alpha);
@@ -43,6 +45,38 @@ describe("Dtcg", () => {
             doc.walk((_node, path) => paths.push(path.toString()));
 
             expect(paths).toEqual(["", "primitive", "primitive.red"]);
+        });
+
+        it("resolves theme references against the base document", () => {
+            const base = new Dtcg(new TokenGroup({
+                children: new Map([
+                    ["primitive", new TokenGroup({
+                        children: new Map([
+                            ["color", new TokenGroup({
+                                children: new Map([
+                                    ["white", new ColorToken(makeColor())],
+                                ]),
+                            })],
+                        ]),
+                    })],
+                ]),
+            }));
+            const theme = new Dtcg(new TokenGroup({
+                children: new Map([
+                    ["semantic", new TokenGroup({
+                        children: new Map([
+                            ["text", new TokenGroup({
+                                children: new Map([
+                                    ["default", new AliasToken(new TokenReference("primitive.color.white"))],
+                                ]),
+                            })],
+                        ]),
+                    })],
+                ]),
+            }));
+
+            const ref = new TokenReference("primitive.color.white");
+            expect(theme.resolveChain(ref, base)).toBe(base.resolveChain(ref));
         });
     });
 });

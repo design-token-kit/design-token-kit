@@ -28,7 +28,8 @@ HRDT stands for Human-Readable Design Tokens. It is a compact YAML-based token
 format designed to be easier for humans to read and write than raw DTCG JSON.
 
 HRDT YAML files are automatically converted to DTCG JSON and then passed to the
-standard command pipeline: checking, CSS conversion, and showcase generation.
+standard command pipeline: checking, CSS conversion, showcase generation, and
+statistics reporting.
 
 Node.js 18 or newer is required.
 
@@ -50,6 +51,7 @@ Node.js 18 or newer is required.
 * Convert between DTCG JSON and HRDT YAML
 * Generate CSS from token files (theme support)
 * Generate HTML token showcase page
+* Generate token statistics as text or HTML
 
 ## Build
 
@@ -108,8 +110,8 @@ npm run dist
 
 ## Packages
 
-- [`@design-token-kit/core`](core/README.md) - core library for validation, parsing, CSS conversion, and HTML showcase generation
-- [`@design-token-kit/cli`](cli/README.md) - command line interface `dtokens` for checking, conversion, and showcase generation
+- [`@design-token-kit/core`](core/README.md) - core library for validation, parsing, CSS conversion, HTML showcase generation, and token statistics
+- [`@design-token-kit/cli`](cli/README.md) - command line interface `dtokens` for checking, conversion, showcase generation, and token statistics
 
 ## Package Documentation
 

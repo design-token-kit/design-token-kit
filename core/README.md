@@ -3,7 +3,8 @@
 The core package of Design Token Kit provides the runtime foundation
 for working with [DTCG 2025.10 design tokens][dtcg]. It defines the
 typed token model, performs schema and semantic validation, converts
-tokens into CSS custom properties, and renders static HTML showcases.
+tokens into CSS custom properties, renders static HTML showcases, and
+builds token statistics reports.
 
 ## Features
 
@@ -18,6 +19,7 @@ tokens into CSS custom properties, and renders static HTML showcases.
   custom properties
 * **Static showcase** - HTML showcase generation from token sources or
   existing CSS
+* **Token stats** - text and HTML statistics reports for token sources
 * **Source abstraction** - local files, stdin, URLs, and raw token
   content strings
 
@@ -37,6 +39,7 @@ import {
   DtcgTokenValidator,
   DtcgTokenCssConverter,
   createTokenHtmlShowcase,
+  createTokenStats,
 } from "@design-token-kit/core";
 
 const sources = ["./tokens.json", "./tokens.dark.yaml"];
@@ -50,9 +53,11 @@ if (issues.some((issue) => issue.severity === "error")) {
 const list = await new DtcgListLoader().load(sources);
 const css = new DtcgTokenCssConverter().convertList(list);
 const html = await createTokenHtmlShowcase().showcase(sources);
+const stats = await createTokenStats().stats(sources);
 
 console.log(css);
 console.log(html.slice(0, 120));
+console.log(stats);
 ```
 
 ## Input Formats
@@ -90,6 +95,11 @@ tokens and `:root[data-theme="<theme>"]` blocks for theme overrides.
 Render a static HTML preview from DTCG JSON, HRDT YAML, or existing
 CSS custom properties.
 
+### Token statistics
+
+Build a text report or collect data for an HTML stats page from token
+sources.
+
 ### Serialized token documents
 
 Convert token documents between DTCG JSON and HRDT YAML, or write a
@@ -104,6 +114,7 @@ parsed document back to either source format.
 * `DtcgTokenCssConverter` - generate CSS custom properties from tokens
 * `createTokenHtmlShowcase()` - generate an HTML preview from token
   sources or CSS
+* `createTokenStats()` - generate token statistics reports
 
 ## Validation
 
@@ -179,6 +190,20 @@ converter, parser, or renderer.
 import { createTokenHtmlShowcase } from "@design-token-kit/core";
 
 const html = await createTokenHtmlShowcase().showcase([
+  "./tokens.yaml",
+]);
+```
+
+## Token Statistics
+
+Use `createTokenStats()` for the default text report or
+`TokenStatsBuilder` / `TokenStatsHtmlRenderer` when you want to collect
+data and render your own HTML page.
+
+```ts
+import { createTokenStats } from "@design-token-kit/core";
+
+const stats = await createTokenStats().stats([
   "./tokens.yaml",
 ]);
 ```

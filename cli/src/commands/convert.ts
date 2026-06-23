@@ -1,7 +1,8 @@
 import { Command } from "commander";
-import { DtcgList, DtcgListLoader, DtcgTokenCssConverter, Format as CoreFormat } from "@design-token-kit/core";
+import { DtcgChecker, DtcgList, DtcgListLoader, DtcgTokenCssConverter, Format as CoreFormat } from "@design-token-kit/core";
 import { writeFile } from "node:fs/promises";
 import { Format, getWriter, toDocumentFormat } from "./formats";
+import { hasErrors, printIssues } from "./issues";
 
 const EXIT_FAILURE = 1;
 
@@ -24,6 +25,14 @@ export const convertCommand = new Command("convert")
             const forcedFormat = options.inform !== undefined
                 ? toDocumentFormat(options.inform) as unknown as CoreFormat
                 : undefined;
+            if (forcedFormat === undefined) {
+                const sources = files.length > 0 ? files : ["-"];
+                const issues = await new DtcgChecker().validate(sources);
+                printIssues(issues);
+                if (hasErrors(issues)) {
+                    throw new Error("Token validation failed");
+                }
+            }
             const list: DtcgList = await loadSources(files, forcedFormat);
             const output = convertList(list, outform);
             await writeOutput(output, options.out);
