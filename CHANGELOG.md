@@ -4,6 +4,12 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Fixed
+
+- Fixed CSS color serialization for native color spaces such as `hsl`, `hwb`,
+  `lab`, `lch`, `oklab`, and `oklch`; the converter now emits native CSS
+  functions instead of invalid `color(...)` output.
+
 ## [1.1.0] - 2026-06-22
 
 ### Added

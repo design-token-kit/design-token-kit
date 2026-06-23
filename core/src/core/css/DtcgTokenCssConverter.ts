@@ -15,6 +15,7 @@ import { TransitionValue } from "#/core/model/values/TransitionValue";
 import { ShadowLayer } from "#/core/model/values/ShadowValue";
 import { GradientStop } from "#/core/model/values/GradientValue";
 import { TypographyValue } from "#/core/model/values/TypographyValue";
+import { ColorCssSerializer } from "#/core/css/ColorCssSerializer";
 import type { TokenCssConverter } from "#/core/css/TokenCssConverter";
 
 /**
@@ -61,11 +62,10 @@ function refToCssVar(ref: TokenReference): string {
     return `var(${tokenPathToCssVar(ref.value)})`;
 }
 
+const colorCssSerializer = new ColorCssSerializer();
+
 function colorToCss(color: ColorValue): string {
-    if (color.hex && color.alpha === 1) return color.hex;
-    const components = color.components.map((c) => (c === "none" ? "none" : String(c))).join(" ");
-    const alpha = color.alpha !== 1 ? ` / ${color.alpha}` : "";
-    return `color(${color.colorSpace} ${components}${alpha})`;
+    return colorCssSerializer.serialize(color);
 }
 
 function dimensionOrRefToCss(value: DimensionValue | TokenReference): string {
