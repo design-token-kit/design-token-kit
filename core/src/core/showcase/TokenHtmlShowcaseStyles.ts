@@ -325,7 +325,7 @@ body {
 }
 
 .token-list.token-list--font {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
 .token-item {
@@ -416,7 +416,7 @@ body {
     border-radius: 6px;
     padding: 0.7rem;
     background: #f8fafc;
-    height: 176px;
+    height: 340px;
     overflow: hidden;
     display: -webkit-box;
     -webkit-box-orient: vertical;
@@ -435,7 +435,7 @@ body {
 }
 
 .font-preview--font-size {
-    height: 300px;
+    height: 340px;
 }
 
 .font-preview--font-size.font-preview--xl {
@@ -836,7 +836,7 @@ body {
 
 .semantic-group {
     display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 0.75rem;
     min-width: 0;
 }

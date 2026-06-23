@@ -1384,7 +1384,7 @@ ${this.renderTokens(visibleScopes, visibleThemes, parsed.entries)}
                 styleParts.push(`font:${this.esc(value)}`);
             }
 
-            preview = `<div class="font-preview" style="${styleParts.join(";")}">${this.esc(TokenHtmlShowcaseRenderer.#FONT_PREVIEW_TEXT)}</div>`;
+            preview = `<div class="font-preview font-preview--grid" style="${styleParts.join(";")}">${this.esc(TokenHtmlShowcaseRenderer.#FONT_PREVIEW_TEXT)}</div>`;
             details = `<div class="token-meta"><span><b>value:</b> <span class="token-meta-value">${this.esc(value)}</span></span></div>`;
         } else if (group === "radius") {
             return this.renderRadiusItem(name, value);
