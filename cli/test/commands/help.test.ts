@@ -1,6 +1,11 @@
 import { describe, it, expect } from "vitest";
 import { dtokens, fixturePath } from "./_shared";
 
+// Subprocess only: help text, unknown-command handling and OS exit codes
+// exercise argv parsing and the assembled `program` in index.ts, which cannot
+// be reproduced by invoking a single command in-process.
+describe("integration", () => {
+
 describe("help", () => {
     it("shows exit codes in validate help", () => {
         const result = dtokens("validate --help");
@@ -59,4 +64,6 @@ describe("exit codes", () => {
         const result = dtokens("convert - --outform css", "bad");
         expect(result.status).toBe(1);
     });
+});
+
 });

@@ -20,4 +20,5 @@ cli/node_modules/
 .env*
 out/
 logs/
+coverage/
 package-lock.json
