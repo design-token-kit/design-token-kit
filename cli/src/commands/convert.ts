@@ -1,7 +1,7 @@
 import { Command } from "commander";
-import { DtcgChecker, DtcgList, DtcgListLoader, DtcgTokenCssConverter, Format as CoreFormat } from "@design-token-kit/core";
+import { DtcgChecker, DtcgList, DtcgListLoader, DtcgTokenCssConverter, Format } from "@design-token-kit/core";
 import { writeFile } from "node:fs/promises";
-import { Format, getWriter, toDocumentFormat } from "./formats";
+import { getWriter, toDocumentFormat } from "./formats";
 import { hasErrors, printIssues } from "./issues";
 
 const EXIT_FAILURE = 1;
@@ -23,7 +23,7 @@ export const convertCommand = new Command("convert")
         try {
             const outform = options.outform ?? Format.CSS;
             const forcedFormat = options.inform !== undefined
-                ? toDocumentFormat(options.inform) as unknown as CoreFormat
+                ? toDocumentFormat(options.inform)
                 : undefined;
             if (forcedFormat === undefined) {
                 const sources = files.length > 0 ? files : ["-"];
@@ -42,7 +42,7 @@ export const convertCommand = new Command("convert")
         }
     });
 
-async function loadSources(files: string[], forcedFormat?: CoreFormat): Promise<DtcgList> {
+async function loadSources(files: string[], forcedFormat?: Format): Promise<DtcgList> {
     const sources = files.length > 0 ? files : ["-"];
     return new DtcgListLoader().load(sources, forcedFormat);
 }

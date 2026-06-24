@@ -3,27 +3,17 @@ import {
     DtcgTokenCssConverter,
     DtcgJsonReader,
     DtcgJsonWriter,
+    Format,
     HrdtTokenReader,
     HrdtTokenWriter,
     DesignMdReader,
     DesignMdWriter,
 } from "@design-token-kit/core";
 
-export enum Format {
-    DTCG = "dtcg",
-    HRDT = "hrdt",
-    DESIGN_MD = "design-md",
-    CSS = "css",
-}
+export { Format };
 
 export type DocumentFormat = Format.DTCG | Format.HRDT | Format.DESIGN_MD;
 export type OutputFormat = Format;
-
-export function detectDocumentFormat(file: string): DocumentFormat {
-    if (/\.design\.md$/i.test(file) || /\.md$/i.test(file)) return Format.DESIGN_MD;
-    if (/\.(ya?ml)$/i.test(file)) return Format.HRDT;
-    return Format.DTCG;
-}
 
 export function getReader(format?: string): DocumentReader {
     return readers[toDocumentFormat(format)];
@@ -31,10 +21,6 @@ export function getReader(format?: string): DocumentReader {
 
 export function getWriter(format?: string): DocumentWriter {
     return writers[toOutputFormat(format)];
-}
-
-export function getDetectedReader(file: string): DocumentReader {
-    return readers[detectDocumentFormat(file)];
 }
 
 interface DocumentReader {
