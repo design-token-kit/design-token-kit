@@ -262,7 +262,7 @@ spacing:
             expect(obj["colors"]).toBeDefined();
         });
 
-        it("returns empty object-like for content without frontmatter", () => {
+        it("returns null for content without frontmatter", () => {
             const raw = new DesignMdReader().parseRaw("just some markdown");
             expect(raw).toBeNull();
         });

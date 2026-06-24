@@ -1,4 +1,9 @@
-import { parseDocument } from "yaml";
+import { parse as parseYaml } from "yaml";
+import { unified } from "unified";
+import remarkParse from "remark-parse";
+import remarkFrontmatter from "remark-frontmatter";
+import { visit } from "unist-util-visit";
+import type { Root, Yaml } from "mdast";
 import { Dtcg } from "#/core/model/Dtcg";
 import { TokenGroup } from "#/core/model/TokenGroup";
 import { TokenNode } from "#/core/model/TokenNode";
@@ -16,94 +21,6 @@ type JsonPrimitive = string | number | boolean | null;
 type JsonValue = JsonPrimitive | JsonObject | JsonValue[];
 type JsonObject = { [key: string]: JsonValue };
 
-const DIMENSION_RE = /^(-?\d+(?:\.\d+)?)(px|em|rem)$/;
-const REFERENCE_RE = /^\{[^{}]+\}$/;
-const HEX_RE = /^#([0-9a-fA-F]{3,8})$/;
-const RGB_RE = /^rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)(?:\s*,\s*([\d.]+))?\s*\)$/;
-const HSL_RE = /^hsla?\(\s*(-?[\d.]+)\s*,?\s*(-?[\d.]+)%\s*,?\s*(-?[\d.]+)%(?:\s*,?\s*([\d.]+))?\s*\)$/;
-const HWB_RE = /^hwb\(\s*(-?[\d.]+)\s+(-?[\d.]+)%\s+(-?[\d.]+)%(?:\s*\/\s*([\d.]+))?\s*\)$/;
-const LAB_RE = /^lab\(\s*(-?[\d.]+)%?\s+(-?[\d.]+)\s+(-?[\d.]+)(?:\s*\/\s*([\d.]+))?\s*\)$/;
-const LCH_RE = /^lch\(\s*(-?[\d.]+)%?\s+(-?[\d.]+)\s+(-?[\d.]+)(?:\s*\/\s*([\d.]+))?\s*\)$/;
-const OKLAB_RE = /^oklab\(\s*(-?[\d.]+)%?\s+(-?[\d.]+)\s+(-?[\d.]+)(?:\s*\/\s*([\d.]+))?\s*\)$/;
-const OKLCH_RE = /^oklch\(\s*(-?[\d.]+)%?\s+(-?[\d.]+)\s+(-?[\d.]+)(?:\s*\/\s*([\d.]+))?\s*\)$/;
-
-const NAMED_COLORS: Record<string, [number, number, number, string]> = {
-    transparent: [0, 0, 0, "000000"],
-    red: [255, 0, 0, "ff0000"],
-    green: [0, 128, 0, "008000"],
-    blue: [0, 0, 255, "0000ff"],
-    white: [255, 255, 255, "ffffff"],
-    black: [0, 0, 0, "000000"],
-    gray: [128, 128, 128, "808080"],
-    grey: [128, 128, 128, "808080"],
-    silver: [192, 192, 192, "c0c0c0"],
-    yellow: [255, 255, 0, "ffff00"],
-    orange: [255, 165, 0, "ffa500"],
-    purple: [128, 0, 128, "800080"],
-    pink: [255, 192, 203, "ffc0cb"],
-    brown: [165, 42, 42, "a52a2a"],
-    cyan: [0, 255, 255, "00ffff"],
-    magenta: [255, 0, 255, "ff00ff"],
-    lime: [0, 255, 0, "00ff00"],
-    navy: [0, 0, 128, "000080"],
-    teal: [0, 128, 128, "008080"],
-    olive: [128, 128, 0, "808000"],
-    maroon: [128, 0, 0, "800000"],
-    coral: [255, 127, 80, "ff7f50"],
-    salmon: [250, 128, 114, "fa8072"],
-    tomato: [255, 99, 71, "ff6347"],
-    gold: [255, 215, 0, "ffd700"],
-    violet: [238, 130, 238, "ee82ee"],
-    indigo: [75, 0, 130, "4b0082"],
-    turquoise: [64, 224, 208, "40e0d0"],
-    crimson: [220, 20, 60, "dc143c"],
-    beige: [245, 245, 220, "f5f5dc"],
-    ivory: [255, 255, 240, "fffff0"],
-    snow: [255, 250, 250, "fffafa"],
-    linen: [250, 240, 230, "faf0e6"],
-    khaki: [240, 230, 140, "f0e68c"],
-    plum: [221, 160, 221, "dda0dd"],
-    orchid: [218, 112, 214, "da70d6"],
-    sienna: [160, 82, 45, "a0522d"],
-    peru: [205, 133, 63, "cd853f"],
-    tan: [210, 180, 140, "d2b48c"],
-    wheat: [245, 222, 179, "f5deb3"],
-    mintcream: [245, 255, 250, "f5fffa"],
-    lavender: [230, 230, 250, "e6e6fa"],
-    azure: [240, 255, 255, "f0ffff"],
-    cornflowerblue: [100, 149, 237, "6495ed"],
-    lightblue: [173, 216, 230, "add8e6"],
-    lightgreen: [144, 238, 144, "90ee90"],
-    lightpink: [255, 182, 193, "ffb6c1"],
-    lightyellow: [255, 255, 224, "ffffe0"],
-    lightgray: [211, 211, 211, "d3d3d3"],
-    lightgrey: [211, 211, 211, "d3d3d3"],
-    darkgray: [169, 169, 169, "a9a9a9"],
-    darkgrey: [169, 169, 169, "a9a9a9"],
-    darkblue: [0, 0, 139, "00008b"],
-    darkgreen: [0, 100, 0, "006400"],
-    darkred: [139, 0, 0, "8b0000"],
-    darkorange: [255, 140, 0, "ff8c00"],
-    darkviolet: [148, 0, 211, "9400d3"],
-    dimgray: [105, 105, 105, "696969"],
-    dimgrey: [105, 105, 105, "696969"],
-    slategray: [112, 128, 144, "708090"],
-    slategrey: [112, 128, 144, "708090"],
-};
-
-type ComponentPropertyType = "color" | "dimension" | "typography";
-
-const COMPONENT_PROPERTY_TYPES: Record<string, ComponentPropertyType> = {
-    backgroundColor: "color",
-    textColor: "color",
-    typography: "typography",
-    rounded: "dimension",
-    padding: "dimension",
-    size: "dimension",
-    height: "dimension",
-    width: "dimension",
-};
-
 /**
  * Reads a DESIGN.md markdown file and parses its YAML frontmatter into
  * a {@link Dtcg} model.
@@ -119,19 +36,63 @@ export class DesignMdReader {
      * without converting to the Dtcg model. Used by schema validators.
      */
     parseRaw(content: string): unknown {
-        return parseDocument(content).toJS();
+        const blocks = this.#extractYamlBlocks(content);
+        if (blocks.length === 0) return null;
+        return Object.assign({}, ...blocks.map((b) => parseYaml(b)));
     }
 
     /**
      * Parses full DESIGN.md content into a {@link Dtcg} document.
      */
     parse(content: string, source?: string): Dtcg {
-        const raw = parseDocument(content).toJS();
+        const raw = this.parseRaw(content);
         if (typeof raw !== "object" || raw === null || Array.isArray(raw)) {
             return new Dtcg(new TokenGroup({}), source);
         }
         const root = this.#parseRoot(raw as JsonObject);
         return new Dtcg(root, source);
+    }
+
+    /**
+     * Returns `true` when the content looks like a DESIGN.md file.
+     *
+     * DESIGN.md files contain YAML frontmatter between {@code ---} delimiters
+     * followed by markdown prose with {@code ##} section headings.
+     */
+    static isDesignMd(content: string): boolean {
+        if (!content.trimStart().startsWith("---")) return false;
+
+        const processor = unified()
+            .use(remarkParse)
+            .use(remarkFrontmatter, ["yaml"]);
+        const ast = processor.parse(content) as Root;
+
+        let hasFrontmatter = false;
+        let hasHeading = false;
+        visit(ast, (node) => {
+            if (node.type === "yaml") {
+                hasFrontmatter = true;
+            }
+            if (node.type === "heading") {
+                hasHeading = true;
+            }
+        });
+
+        return hasFrontmatter && hasHeading;
+    }
+
+    #extractYamlBlocks(content: string): string[] {
+        const processor = unified()
+            .use(remarkParse)
+            .use(remarkFrontmatter, ["yaml"]);
+        const ast = processor.parse(content) as Root;
+        const blocks: string[] = [];
+        visit(ast, (node) => {
+            if (node.type === "yaml") {
+                blocks.push((node as Yaml).value);
+            }
+        });
+        return blocks;
     }
 
     #parseRoot(raw: JsonObject): TokenGroup {
@@ -483,3 +444,91 @@ export class DesignMdReaderError extends Error {
         this.name = "DesignMdReaderError";
     }
 }
+
+const DIMENSION_RE = /^(-?\d+(?:\.\d+)?)(px|em|rem)$/;
+const REFERENCE_RE = /^\{[^{}]+\}$/;
+const HEX_RE = /^#([0-9a-fA-F]{3,8})$/;
+const RGB_RE = /^rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)(?:\s*,\s*([\d.]+))?\s*\)$/;
+const HSL_RE = /^hsla?\(\s*(-?[\d.]+)\s*,?\s*(-?[\d.]+)%\s*,?\s*(-?[\d.]+)%(?:\s*,?\s*([\d.]+))?\s*\)$/;
+const HWB_RE = /^hwb\(\s*(-?[\d.]+)\s+(-?[\d.]+)%\s+(-?[\d.]+)%(?:\s*\/\s*([\d.]+))?\s*\)$/;
+const LAB_RE = /^lab\(\s*(-?[\d.]+)%?\s+(-?[\d.]+)\s+(-?[\d.]+)(?:\s*\/\s*([\d.]+))?\s*\)$/;
+const LCH_RE = /^lch\(\s*(-?[\d.]+)%?\s+(-?[\d.]+)\s+(-?[\d.]+)(?:\s*\/\s*([\d.]+))?\s*\)$/;
+const OKLAB_RE = /^oklab\(\s*(-?[\d.]+)%?\s+(-?[\d.]+)\s+(-?[\d.]+)(?:\s*\/\s*([\d.]+))?\s*\)$/;
+const OKLCH_RE = /^oklch\(\s*(-?[\d.]+)%?\s+(-?[\d.]+)\s+(-?[\d.]+)(?:\s*\/\s*([\d.]+))?\s*\)$/;
+
+const NAMED_COLORS: Record<string, [number, number, number, string]> = {
+    transparent: [0, 0, 0, "000000"],
+    red: [255, 0, 0, "ff0000"],
+    green: [0, 128, 0, "008000"],
+    blue: [0, 0, 255, "0000ff"],
+    white: [255, 255, 255, "ffffff"],
+    black: [0, 0, 0, "000000"],
+    gray: [128, 128, 128, "808080"],
+    grey: [128, 128, 128, "808080"],
+    silver: [192, 192, 192, "c0c0c0"],
+    yellow: [255, 255, 0, "ffff00"],
+    orange: [255, 165, 0, "ffa500"],
+    purple: [128, 0, 128, "800080"],
+    pink: [255, 192, 203, "ffc0cb"],
+    brown: [165, 42, 42, "a52a2a"],
+    cyan: [0, 255, 255, "00ffff"],
+    magenta: [255, 0, 255, "ff00ff"],
+    lime: [0, 255, 0, "00ff00"],
+    navy: [0, 0, 128, "000080"],
+    teal: [0, 128, 128, "008080"],
+    olive: [128, 128, 0, "808000"],
+    maroon: [128, 0, 0, "800000"],
+    coral: [255, 127, 80, "ff7f50"],
+    salmon: [250, 128, 114, "fa8072"],
+    tomato: [255, 99, 71, "ff6347"],
+    gold: [255, 215, 0, "ffd700"],
+    violet: [238, 130, 238, "ee82ee"],
+    indigo: [75, 0, 130, "4b0082"],
+    turquoise: [64, 224, 208, "40e0d0"],
+    crimson: [220, 20, 60, "dc143c"],
+    beige: [245, 245, 220, "f5f5dc"],
+    ivory: [255, 255, 240, "fffff0"],
+    snow: [255, 250, 250, "fffafa"],
+    linen: [250, 240, 230, "faf0e6"],
+    khaki: [240, 230, 140, "f0e68c"],
+    plum: [221, 160, 221, "dda0dd"],
+    orchid: [218, 112, 214, "da70d6"],
+    sienna: [160, 82, 45, "a0522d"],
+    peru: [205, 133, 63, "cd853f"],
+    tan: [210, 180, 140, "d2b48c"],
+    wheat: [245, 222, 179, "f5deb3"],
+    mintcream: [245, 255, 250, "f5fffa"],
+    lavender: [230, 230, 250, "e6e6fa"],
+    azure: [240, 255, 255, "f0ffff"],
+    cornflowerblue: [100, 149, 237, "6495ed"],
+    lightblue: [173, 216, 230, "add8e6"],
+    lightgreen: [144, 238, 144, "90ee90"],
+    lightpink: [255, 182, 193, "ffb6c1"],
+    lightyellow: [255, 255, 224, "ffffe0"],
+    lightgray: [211, 211, 211, "d3d3d3"],
+    lightgrey: [211, 211, 211, "d3d3d3"],
+    darkgray: [169, 169, 169, "a9a9a9"],
+    darkgrey: [169, 169, 169, "a9a9a9"],
+    darkblue: [0, 0, 139, "00008b"],
+    darkgreen: [0, 100, 0, "006400"],
+    darkred: [139, 0, 0, "8b0000"],
+    darkorange: [255, 140, 0, "ff8c00"],
+    darkviolet: [148, 0, 211, "9400d3"],
+    dimgray: [105, 105, 105, "696969"],
+    dimgrey: [105, 105, 105, "696969"],
+    slategray: [112, 128, 144, "708090"],
+    slategrey: [112, 128, 144, "708090"],
+};
+
+type ComponentPropertyType = "color" | "dimension" | "typography";
+
+const COMPONENT_PROPERTY_TYPES: Record<string, ComponentPropertyType> = {
+    backgroundColor: "color",
+    textColor: "color",
+    typography: "typography",
+    rounded: "dimension",
+    padding: "dimension",
+    size: "dimension",
+    height: "dimension",
+    width: "dimension",
+};

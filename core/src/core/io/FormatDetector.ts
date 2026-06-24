@@ -1,5 +1,5 @@
 import { Format } from "#/core/io/Format";
-import { parseAllDocuments } from "yaml";
+import { DesignMdReader } from "#/core/io/DesignMdReader";
 
 /**
  * Detects the token format from raw content by inspecting the content
@@ -76,26 +76,10 @@ export class FormatDetector {
     /**
      * Returns `true` when the content looks like a DESIGN.md file.
      *
-     * DESIGN.md files start with a YAML frontmatter block ({@code ---})
-     * followed by a closing {@code ---} delimiter and markdown prose.
-     *
-     * Multi-doc YAML that also uses {@code ---} separators is excluded:
-     * the content after the closing {@code ---} must not parse as a valid
-     * YAML document.
+     * Delegates to {@link DesignMdReader.isDesignMd}.
      */
     static isDesignMd(content: string): boolean {
-        if (!content.trimStart().startsWith("---")) return false;
-
-        const documents = parseAllDocuments(content);
-        const validDocs = documents.filter((d) => !("empty" in d));
-        if (validDocs.length < 2) return false;
-
-        const frontmatter = validDocs[0].toJS();
-        if (frontmatter === null || typeof frontmatter !== "object" || Array.isArray(frontmatter)) return false;
-        if (!["colors", "typography", "rounded", "spacing", "components"].some((k) => k in frontmatter)) return false;
-
-        const prose = validDocs[1].toJS();
-        return prose !== null && (typeof prose !== "object" || Array.isArray(prose));
+        return DesignMdReader.isDesignMd(content);
     }
 
     /**

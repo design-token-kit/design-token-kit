@@ -1,6 +1,8 @@
 import {
     Dtcg,
+    DtcgList,
     DtcgTokenCssConverter,
+    DtcgToDesignMdMapper,
     DtcgJsonReader,
     DtcgJsonWriter,
     Format,
@@ -51,7 +53,12 @@ const writers = {
         write: (doc) => new HrdtTokenWriter().write(doc),
     },
     [Format.DESIGN_MD]: {
-        write: (doc) => new DesignMdWriter().write(doc),
+        write: (doc) => {
+            // DTCG tree (primitive/semantic/component) must be flattened
+            // to DESIGN.md layout (colors/typography/rounded/spacing/components)
+            const mapped = new DtcgToDesignMdMapper().map(new DtcgList(doc));
+            return new DesignMdWriter().write(mapped.base);
+        },
     },
     [Format.CSS]: {
         write: (doc) => new DtcgTokenCssConverter().convertDocument(doc),
