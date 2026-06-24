@@ -1,4 +1,4 @@
-import { parse as parseYaml } from "yaml";
+import { parseDocument } from "yaml";
 import { Dtcg } from "#/core/model/Dtcg";
 import { TokenGroup } from "#/core/model/TokenGroup";
 import { TokenNode } from "#/core/model/TokenNode";
@@ -119,37 +119,19 @@ export class DesignMdReader {
      * without converting to the Dtcg model. Used by schema validators.
      */
     parseRaw(content: string): unknown {
-        const yamlContent = this.#extractFrontmatter(content);
-        return parseYaml(yamlContent);
+        return parseDocument(content).toJS();
     }
 
     /**
      * Parses full DESIGN.md content into a {@link Dtcg} document.
      */
     parse(content: string, source?: string): Dtcg {
-        const yamlContent = this.#extractFrontmatter(content);
-        if (!yamlContent) {
-            return new Dtcg(new TokenGroup({}), source);
-        }
-        const raw = parseYaml(yamlContent);
+        const raw = parseDocument(content).toJS();
         if (typeof raw !== "object" || raw === null || Array.isArray(raw)) {
-            throw new DesignMdReaderError("YAML frontmatter root must be an object.");
+            return new Dtcg(new TokenGroup({}), source);
         }
         const root = this.#parseRoot(raw as JsonObject);
         return new Dtcg(root, source);
-    }
-
-    #extractFrontmatter(content: string): string {
-        const trimmed = content.trimStart();
-        if (!trimmed.startsWith("---")) {
-            return "";
-        }
-        const afterStart = trimmed.slice(3);
-        const closeMatch = afterStart.match(/^([\s\S]*?)\n---/);
-        if (!closeMatch) {
-            return "";
-        }
-        return closeMatch[1];
     }
 
     #parseRoot(raw: JsonObject): TokenGroup {

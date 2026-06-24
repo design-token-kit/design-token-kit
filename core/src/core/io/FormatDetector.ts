@@ -1,4 +1,5 @@
 import { Format } from "#/core/io/Format";
+import { parseAllDocuments } from "yaml";
 
 /**
  * Detects the token format from raw content by inspecting the content
@@ -78,25 +79,23 @@ export class FormatDetector {
      * DESIGN.md files start with a YAML frontmatter block ({@code ---})
      * followed by a closing {@code ---} delimiter and markdown prose.
      *
-     * Multi-doc YAML that also uses {@code ---} separators is excluded by
-     * checking that the content after the closing {@code ---} does not start
-     * with a YAML key-value pattern.
+     * Multi-doc YAML that also uses {@code ---} separators is excluded:
+     * the content after the closing {@code ---} must not parse as a valid
+     * YAML document.
      */
     static isDesignMd(content: string): boolean {
-        if (!content.startsWith("---")) return false;
+        if (!content.trimStart().startsWith("---")) return false;
 
-        const afterStart = content.slice(3);
-        const closeMatch = afterStart.match(/\n---/);
-        if (!closeMatch) return false;
+        const documents = parseAllDocuments(content);
+        const validDocs = documents.filter((d) => !("empty" in d));
+        if (validDocs.length < 2) return false;
 
-        const afterFrontmatter = content.slice(3 + closeMatch.index! + 4).trimStart();
-        if (afterFrontmatter.length === 0) return false;
+        const frontmatter = validDocs[0].toJS();
+        if (frontmatter === null || typeof frontmatter !== "object" || Array.isArray(frontmatter)) return false;
+        if (!["colors", "typography", "rounded", "spacing", "components"].some((k) => k in frontmatter)) return false;
 
-        if (afterFrontmatter.startsWith("---")) return false;
-
-        if (/^\w[\w-]*\s*:/.test(afterFrontmatter)) return false;
-
-        return true;
+        const prose = validDocs[1].toJS();
+        return prose !== null && (typeof prose !== "object" || Array.isArray(prose));
     }
 
     /**
