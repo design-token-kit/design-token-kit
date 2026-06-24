@@ -5,8 +5,7 @@ import { resolve } from "node:path";
 import { tmpdir } from "node:os";
 import { randomUUID } from "node:crypto";
 import { showcaseCommand } from "#/commands/showcase";
-import { run } from "./_run";
-import { dtokens, fixturePath } from "./_shared";
+import { run, dtokens } from "./_run";
 
 describe("showcase", () => {
     it("generates HTML for valid file", async () => {
@@ -14,7 +13,7 @@ describe("showcase", () => {
         const outFile = resolve(outDir, "showcase.html");
         mkdirSync(outDir, { recursive: true });
         try {
-            const result = await run(showcaseCommand, fixturePath("valid.yaml"), "--out", outFile);
+            const result = await run(showcaseCommand, resolve(__dirname, "valid.yaml"), "--out", outFile);
             expect(result.status).toBe(0);
             expect(existsSync(outFile)).toBe(true);
             const html = readFileSync(outFile, "utf8");
@@ -27,7 +26,7 @@ describe("showcase", () => {
     // Subprocess: real stdin piping cannot be faked in-process.
     describe("integration", () => {
         it("generates HTML from stdin", () => {
-            const content = readFileSync(fixturePath("valid.yaml"), "utf8");
+            const content = readFileSync(resolve(__dirname, "valid.yaml"), "utf8");
             const result = dtokens("showcase -", content);
             expect(result.status).toBe(0);
             expect(result.stdout).toContain("<!DOCTYPE html>");
@@ -41,7 +40,7 @@ describe("showcase", () => {
     });
 
     it("--open requires --out", () => {
-        const result = dtokens(`showcase ${fixturePath("valid.yaml")} --open`);
+        const result = dtokens(`showcase ${resolve(__dirname, "valid.yaml")} --open`);
         expect(result.status).toBe(1);
         expect(result.stderr).toContain("Showcase failed");
         expect(result.stderr).toContain("Option --open requires --out");

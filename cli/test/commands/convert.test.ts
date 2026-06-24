@@ -5,26 +5,25 @@ import { resolve } from "node:path";
 import { tmpdir } from "node:os";
 import { randomUUID } from "node:crypto";
 import { convertCommand } from "#/commands/convert";
-import { run } from "./_run";
-import { dtokens, fixturePath } from "./_shared";
+import { run, dtokens } from "./_run";
 
 describe("convert", () => {
     it("converts DTCG JSON to CSS", async () => {
-        const result = await run(convertCommand, fixturePath("valid.json"), "--outform", "css");
+        const result = await run(convertCommand, resolve(__dirname, "valid.json"), "--outform", "css");
         expect(result.status).toBe(0);
         expect(result.stdout).toContain(":root {");
         expect(result.stdout).toContain("--primitive-color-white");
     });
 
     it("converts HRDT YAML to CSS", async () => {
-        const result = await run(convertCommand, fixturePath("valid.yaml"), "--outform", "css");
+        const result = await run(convertCommand, resolve(__dirname, "valid.yaml"), "--outform", "css");
         expect(result.status).toBe(0);
         expect(result.stdout).toContain(":root {");
         expect(result.stdout).toContain("--primitive-color-white");
     });
 
     it("fails with exit code 1 for model-invalid input", async () => {
-        const result = await run(convertCommand, fixturePath("invalid-values.json"), "--outform", "css");
+        const result = await run(convertCommand, resolve(__dirname, "invalid-values.json"), "--outform", "css");
         expect(result.status).toBe(1);
         expect(result.stderr).toContain("[bad-reference] error");
         expect(result.stderr).toContain("Conversion failed");
@@ -37,7 +36,7 @@ describe("convert", () => {
         try {
             const result = await run(
                 convertCommand,
-                fixturePath("valid.json"),
+                resolve(__dirname, "valid.json"),
                 "--outform",
                 "css",
                 "--out",
@@ -54,7 +53,7 @@ describe("convert", () => {
     // Subprocess: real stdin piping cannot be faked in-process.
     describe("integration", () => {
         it("converts from stdin", () => {
-            const content = readFileSync(fixturePath("valid.yaml"), "utf8");
+            const content = readFileSync(resolve(__dirname, "valid.yaml"), "utf8");
             const result = dtokens("convert - --outform css", content);
             expect(result.status).toBe(0);
             expect(result.stdout).toContain(":root {");
@@ -67,7 +66,7 @@ describe("convert", () => {
         });
 
         it("reads from stdin when no file specified", () => {
-            const content = readFileSync(fixturePath("valid.yaml"), "utf8");
+            const content = readFileSync(resolve(__dirname, "valid.yaml"), "utf8");
             const result = dtokens("convert --outform css", content);
             expect(result.status).toBe(0);
             expect(result.stdout).toContain(":root {");

@@ -1,9 +1,7 @@
 import { describe, it, expect } from "vitest";
-import { dtokens, fixturePath } from "./_shared";
+import { resolve } from "node:path";
+import { dtokens } from "./_run";
 
-// Subprocess only: help text, unknown-command handling and OS exit codes
-// exercise argv parsing and the assembled `program` in index.ts, which cannot
-// be reproduced by invoking a single command in-process.
 describe("integration", () => {
 
 describe("help", () => {
@@ -45,7 +43,7 @@ describe("help", () => {
 
 describe("unknown command", () => {
     it("fails with a non-zero exit code", () => {
-        const result = dtokens(`lint ${fixturePath("valid.json")}`);
+        const result = dtokens(`lint ${resolve(__dirname, "valid.json")}`);
         expect(result.status).not.toBe(0);
     });
 
@@ -57,7 +55,7 @@ describe("unknown command", () => {
 
 describe("exit codes", () => {
     it("returns 0 on success", () => {
-        const result = dtokens(`validate ${fixturePath("valid.json")}`);
+        const result = dtokens(`validate ${resolve(__dirname, "valid.json")}`);
         expect(result.status).toBe(0);
     });
 

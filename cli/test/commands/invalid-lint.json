@@ -1,0 +1,19 @@
+{
+  "$schema": "https://www.designtokens.org/schemas/2025.10/format.json",
+  "$description": "Lint violations for 'check --scope lint'. Triggers: [layer-reference] — component->primitive, skipping semantic; [raw-value-usage] — raw value at semantic level. Used by: check.",
+  "primitive": {
+    "color": {
+      "brand": {"$type":"color","$value":{"colorSpace":"srgb","components":[0.145,0.286,0.965],"alpha":1,"hex":"#2549f6"}}
+    }
+  },
+  "semantic": {
+    "color": {
+      "raw": {"$type":"color","$value":{"colorSpace":"srgb","components":[0,0,0],"alpha":1,"hex":"#000000"}}
+    }
+  },
+  "component": {
+    "button": {
+      "bg": {"$value":"{primitive.color.brand}"}
+    }
+  }
+}

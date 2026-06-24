@@ -1,25 +1,7 @@
+import { spawnSync } from "node:child_process";
+import { resolve } from "node:path";
 import { vi } from "vitest";
 import type { Command } from "commander";
-
-/**
- * Result of running a command in-process, mirroring the shape returned by the
- * subprocess helper in {@link ./_shared}.
- */
-export interface RunResult {
-    stdout: string;
-    stderr: string;
-    status: number;
-}
-
-/**
- * Raised to unwind a command's {@code process.exit()} without terminating the
- * test runner. Caught inside {@link run}.
- */
-class ExitSignal extends Error {
-    constructor(readonly code: number) {
-        super(`process.exit(${code})`);
-    }
-}
 
 /**
  * Runs a commander command in the current process so its code is covered.
@@ -31,17 +13,13 @@ class ExitSignal extends Error {
  * (0 when the command returns normally).
  *
  * Use this for command logic. For end-to-end behaviour that needs a real
- * process (argv parsing, OS exit codes, real stdin), use the subprocess helper
- * in {@link ./_shared} instead.
+ * process (argv parsing, OS exit codes, real stdin), use {@link dtokens}
+ * instead.
  */
 export async function run(command: Command, ...args: string[]): Promise<RunResult> {
     const out: string[] = [];
     const err: string[] = [];
     let status = 0;
-    // A real process.exit() never returns, so nothing runs after the first
-    // call. We model that by latching the first exit code and ignoring any
-    // output or further exits a command emits while unwinding (e.g. a catch
-    // block that logs and re-exits after an inner process.exit threw).
     let exited = false;
 
     const log = vi.spyOn(console, "log").mockImplementation((...a) => { if (!exited) out.push(a.join(" ")); });
@@ -73,4 +51,63 @@ export async function run(command: Command, ...args: string[]): Promise<RunResul
     }
 
     return { stdout: out.join("\n"), stderr: err.join("\n"), status };
+}
+
+/**
+ * Result of running a command, shared by both {@link run} (in-process)
+ * and {@link dtokens} (subprocess).
+ */
+export interface RunResult {
+    stdout: string;
+    stderr: string;
+    status: number;
+}
+
+/**
+ * Runs the CLI entry point in a subprocess.
+ *
+ * Use this for tests that need a real process: argv parsing, OS exit codes,
+ * real stdin piping. For command logic that can be tested in-process,
+ * use {@link run} instead.
+ *
+ * @param args  Single string (split on whitespace) or pre-split array.
+ * @param input Text to pipe to stdin.
+ */
+export function dtokens(args: string | string[], input?: string): RunResult {
+    const argv = typeof args === "string" ? args.split(/\s+/).filter(Boolean) : args;
+    const result = spawnSync(
+        "node",
+        ["--import", "tsx", "--conditions", "development", CLI_ENTRY, ...argv],
+        {
+            cwd: resolve(__dirname, "../../.."),
+            encoding: "utf8",
+            env: { ...process.env },
+            input,
+        },
+    );
+    return {
+        stdout: result.stdout ?? "",
+        stderr: result.stderr ?? "",
+        status: result.status ?? 1,
+    };
+}
+
+// ---------------------------------------------------------------------------
+// Private helpers
+// ---------------------------------------------------------------------------
+
+const CLI_ENTRY = resolve(__dirname, "../../src/index.ts");
+
+/**
+ * Raised to unwind a command's {@code process.exit()} without terminating the
+ * test runner. Caught inside {@link run}.
+ *
+ * A real {@code process.exit()} never returns, so we throw this signal to
+ * unwind the stack. Nothing after the first exit call runs (modelled by
+ * the {@code exited} latch in {@link run}).
+ */
+class ExitSignal extends Error {
+    constructor(readonly code: number) {
+        super(`process.exit(${code})`);
+    }
 }

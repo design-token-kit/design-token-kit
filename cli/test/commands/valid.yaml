@@ -1,0 +1,9 @@
+# Shared requisite — minimal valid HRDT YAML input.
+#
+# Used by: validate, check, convert, showcase, stats.
+# Tests that reference this file do NOT check its content — they
+# only need "a valid token file" as background input to exercise
+# command logic.
+primitive:
+  color:
+    white: "#ffffff"

@@ -1,44 +1,44 @@
 import { describe, it, expect } from "vitest";
 import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 import { checkCommand } from "#/commands/check";
-import { run } from "./_run";
-import { dtokens, fixturePath } from "./_shared";
+import { run, dtokens } from "./_run";
 
 describe("check", () => {
     it("passes for a fully valid file (default scope)", async () => {
-        const result = await run(checkCommand, fixturePath("valid.json"));
+        const result = await run(checkCommand, resolve(__dirname, "valid.json"));
         expect(result.status).toBe(0);
         expect(result.stdout).toContain("Check passed.");
     });
 
     it("defaults to the validate scope: ignores lint violations", async () => {
-        const result = await run(checkCommand, fixturePath("invalid-lint.json"));
+        const result = await run(checkCommand, resolve(__dirname, "invalid-lint.json"));
         expect(result.status).toBe(0);
     });
 
     it("reports model errors with exit code 2", async () => {
-        const result = await run(checkCommand, fixturePath("invalid-values.json"));
+        const result = await run(checkCommand, resolve(__dirname, "invalid-values.json"));
         expect(result.status).toBe(2);
         expect(result.stderr).toContain("[bad-reference]");
     });
 
     describe("--scope schema", () => {
         it("passes a schema-valid but model-broken file", async () => {
-            const result = await run(checkCommand, fixturePath("invalid-values.json"), "--scope", "schema");
+            const result = await run(checkCommand, resolve(__dirname, "invalid-values.json"), "--scope", "schema");
             expect(result.status).toBe(0);
         });
     });
 
     describe("--scope lint", () => {
         it("reports lint violations with exit code 2", async () => {
-            const result = await run(checkCommand, fixturePath("invalid-lint.json"), "--scope", "lint");
+            const result = await run(checkCommand, resolve(__dirname, "invalid-lint.json"), "--scope", "lint");
             expect(result.status).toBe(2);
             expect(result.stderr).toContain("[layer-reference]");
             expect(result.stderr).toContain("[raw-value-usage]");
         });
 
         it("honours the checks allow-list", async () => {
-            const result = await run(checkCommand, fixturePath("invalid-lint.json"), "--scope", "lint", "--checks", "layer-reference");
+            const result = await run(checkCommand, resolve(__dirname, "invalid-lint.json"), "--scope", "lint", "--checks", "layer-reference");
             expect(result.status).toBe(2);
             expect(result.stderr).toContain("[layer-reference]");
             expect(result.stderr).not.toContain("[raw-value-usage]");
@@ -47,7 +47,7 @@ describe("check", () => {
 
     describe("--scope validation", () => {
         it("rejects an unknown scope with exit code 1", async () => {
-            const result = await run(checkCommand, fixturePath("valid.json"), "--scope", "validation1");
+            const result = await run(checkCommand, resolve(__dirname, "valid.json"), "--scope", "validation1");
             expect(result.status).toBe(1);
             expect(result.stderr).toContain("'validation1' is invalid");
         });
@@ -55,13 +55,13 @@ describe("check", () => {
 
     describe("--checks selection warnings", () => {
         it("warns that a lint check is inactive at the default scope", async () => {
-            const result = await run(checkCommand, fixturePath("invalid-lint.json"), "--checks", "layer-reference");
+            const result = await run(checkCommand, resolve(__dirname, "invalid-lint.json"), "--checks", "layer-reference");
             expect(result.status).toBe(0);
             expect(result.stderr).toContain("check 'layer-reference' requires --scope lint");
         });
 
         it("warns about an unknown check id", async () => {
-            const result = await run(checkCommand, fixturePath("valid.json"), "--checks", "foo");
+            const result = await run(checkCommand, resolve(__dirname, "valid.json"), "--checks", "foo");
             expect(result.status).toBe(0);
             expect(result.stderr).toContain("unknown check 'foo'");
         });
@@ -75,7 +75,7 @@ describe("check", () => {
         });
 
         it("reads from stdin when no files specified", () => {
-            const content = readFileSync(fixturePath("valid.yaml"), "utf8");
+            const content = readFileSync(resolve(__dirname, "valid.yaml"), "utf8");
             const result = dtokens("check", content);
             expect(result.status).toBe(0);
             expect(result.stdout).toContain("Check passed.");

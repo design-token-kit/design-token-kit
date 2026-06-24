@@ -1,0 +1,5 @@
+{
+  "$schema": "https://www.designtokens.org/schemas/2025.10/format.json",
+  "$description": "Model validation failure — unresolved alias triggers [bad-reference]. Used by: check, convert.",
+  "broken": {"$type":"color","$value":"{nonexistent.token}"}
+}
