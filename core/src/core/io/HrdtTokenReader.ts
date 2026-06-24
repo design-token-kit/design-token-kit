@@ -34,7 +34,7 @@ type JsonPrimitive = string | number | boolean | null;
 type JsonValue = JsonPrimitive | JsonObject | JsonValue[];
 type JsonObject = { [key: string]: JsonValue };
 
-const DIMENSION_RE = /^(-?\d+(?:\.\d+)?)(px|rem)$/;
+const DIMENSION_RE = /^(-?\d+(?:\.\d+)?)(px|rem|em)$/;
 const DURATION_RE = /^(-?\d+(?:\.\d+)?)(ms|s)$/;
 const HEX_RE = /^#([0-9a-fA-F]{6}|[0-9a-fA-F]{8})$/;
 const REFERENCE_RE = /^\{[^{}]+\}$/;
@@ -166,6 +166,25 @@ export class HrdtTokenReader {
     #parseReferenceToken(value: JsonValue): TokenNode<unknown> {
         if (typeof value === "string" && REFERENCE_RE.test(value)) {
             return new AliasToken(new TokenReference(value.slice(1, -1)));
+        }
+        return this.#autoDetectToken(value);
+    }
+
+    /**
+     * When a non-reference value appears outside the {@code primitive}
+     * group (e.g. during cross-format roundtrips), infer its type from
+     * the value pattern.
+     */
+    #autoDetectToken(value: JsonValue): TokenNode<unknown> {
+        if (typeof value === "string") {
+            if (HEX_RE.test(value)) return new ColorToken(this.#parseColor(value));
+            if (DIMENSION_RE.test(value)) return new DimensionToken(this.#parseDimension(value));
+            if (DURATION_RE.test(value)) return new DurationToken(this.#parseDuration(value));
+            return new FontFamilyToken(value);
+        }
+        if (typeof value === "number") return new NumberToken(value);
+        if (Array.isArray(value) && value.every((v) => typeof v === "string")) {
+            return new FontFamilyToken(value as string[]);
         }
         throw new HrdtTokenReaderError(`Expected a reference in non-primitive group, got: ${JSON.stringify(value)}`);
     }

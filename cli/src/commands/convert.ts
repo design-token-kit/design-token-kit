@@ -13,10 +13,10 @@ type ConvertOptions = {
 };
 
 export const convertCommand = new Command("convert")
-    .description("Convert a token file to DTCG JSON, HRDT YAML, or CSS.")
+    .description("Convert a token file to DTCG JSON, HRDT YAML, DESIGN.md, or CSS.")
     .argument("[files...]", "Paths to token files (reads from stdin when omitted or '-')")
-    .option("-i, --inform [format]", "Input format: dtcg, hrdt (force all files to this format)")
-    .option("-f, --outform [format]", "Output format: dtcg, hrdt, css (default: css)")
+    .option("-i, --inform [format]", "Input format: dtcg, hrdt, design-md (force all files to this format)")
+    .option("-f, --outform [format]", "Output format: dtcg, hrdt, design-md, css (default: css)")
     .option("-o, --out [file]", "Output file (default: stdout)")
     .addHelpText("after", "\nExit status:\n  0  success\n  1  conversion failed")
     .action(async (files: string[], options: ConvertOptions) => {

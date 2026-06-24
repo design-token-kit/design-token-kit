@@ -82,9 +82,20 @@ export class HrdtTokenWriter {
                 lines.push(`${this.#indent(depth)}${key}:`);
                 this.#writeReferenceGroup(child, lines, depth + 1);
             } else {
-                const value = (child as TokenNode<unknown>).value;
-                const ref = value instanceof TokenReference ? value.toString() : String(value);
-                lines.push(`${this.#indent(depth)}${key}: "${ref}"`);
+                const serialized = this.#serializePrimitiveToken(child);
+                if (typeof serialized === "string" && !serialized.includes("\n")) {
+                    lines.push(`${this.#indent(depth)}${key}: ${serialized}`);
+                } else if (typeof serialized === "string") {
+                    lines.push(`${this.#indent(depth)}${key}:`);
+                    for (const subLine of serialized.split("\n")) {
+                        lines.push(`${this.#indent(depth + 1)}${subLine}`);
+                    }
+                } else {
+                    lines.push(`${this.#indent(depth)}${key}:`);
+                    for (const subLine of serialized) {
+                        lines.push(`${this.#indent(depth + 1)}${subLine}`);
+                    }
+                }
             }
         }
     }

@@ -5,6 +5,7 @@ import { cp } from "node:fs/promises";
 
 const HRDT_SCHEMA_SOURCE_DIR = path.resolve(__dirname, "src/core/validation/hrdt/schemas");
 const DTCG_SCHEMA_SOURCE_DIR = path.resolve(__dirname, "src/core/validation/dtcg/schemas");
+const DESIGN_MD_SCHEMA_SOURCE_DIR = path.resolve(__dirname, "src/core/validation/design-md/schemas");
 
 function copySchemas(outDir: string): Plugin {
     return {
@@ -14,6 +15,7 @@ function copySchemas(outDir: string): Plugin {
             const destDir = path.resolve(__dirname, outDir, "schemas");
             await cp(HRDT_SCHEMA_SOURCE_DIR, destDir, { recursive: true });
             await cp(DTCG_SCHEMA_SOURCE_DIR, destDir, { recursive: true });
+            await cp(DESIGN_MD_SCHEMA_SOURCE_DIR, destDir, { recursive: true });
         },
     };
 }

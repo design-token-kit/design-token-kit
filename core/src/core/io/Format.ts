@@ -16,6 +16,13 @@ export enum Format {
     HRDT = "hrdt",
 
     /**
+     * DESIGN.md markdown token format.
+     *
+     * @see https://github.com/google-labs-code/design.md
+     */
+    DESIGN_MD = "design-md",
+
+    /**
      * CSS custom properties.
      */
     CSS = "css",

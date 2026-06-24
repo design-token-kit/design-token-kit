@@ -53,6 +53,21 @@ describe("FormatDetector", () => {
             const content = "\uFEFFprimitive:\n  color:\n    white: \"#ffffff\"";
             expect(FormatDetector.detect(content)).toBe(Format.HRDT);
         });
+
+        it("returns DESIGN_MD for content with YAML frontmatter and markdown body", () => {
+            const content = "---\nname: Test\n---\n\n## Overview\n";
+            expect(FormatDetector.detect(content)).toBe(Format.DESIGN_MD);
+        });
+
+        it("returns HRDT for content starting with --- but no closing ---", () => {
+            const content = "---\nprimitive:\n  color:\n    white: \"#ffffff\"";
+            expect(FormatDetector.detect(content)).toBe(Format.HRDT);
+        });
+
+        it("returns HRDT for content starting with --- with closing --- but no prose after", () => {
+            const content = "---\nname: Test\n---";
+            expect(FormatDetector.detect(content)).toBe(Format.HRDT);
+        });
     });
 
     describe("isDtcg", () => {
@@ -104,6 +119,56 @@ describe("FormatDetector", () => {
 
         it("returns false for JSON content", () => {
             expect(FormatDetector.isCss('{"key": "value"}')).toBe(false);
+        });
+    });
+
+    describe("isDesignMd", () => {
+        it("returns true for content with YAML frontmatter and markdown body", () => {
+            expect(FormatDetector.isDesignMd("---\nname: Test\n---\n\n## Overview\nText.")).toBe(true);
+        });
+
+        it("returns false for content without --- prefix", () => {
+            expect(FormatDetector.isDesignMd("name: Test\n")).toBe(false);
+        });
+
+        it("returns false for content with only opening ---", () => {
+            expect(FormatDetector.isDesignMd("---\nname: Test\n")).toBe(false);
+        });
+
+        it("returns false for HRDT YAML that starts with ---", () => {
+            expect(FormatDetector.isDesignMd("---\nprimitive:\n  color:\n    white: \"#ffffff\"")).toBe(false);
+        });
+
+        it("returns false for multi-doc YAML with --- separator", () => {
+            const content = "---\nprimitive:\n  color:\n    white: \"#ffffff\"\n---\nsemantic:\n  color:\n    bg: \"{primitive.color.white}\"";
+            expect(FormatDetector.isDesignMd(content)).toBe(false);
+        });
+    });
+
+    describe("detectWithContentAndFilename", () => {
+        it("returns DESIGN_MD for .md file with YAML frontmatter", () => {
+            const content = "---\nname: Test\n---";
+            expect(FormatDetector.detectWithContentAndFilename(content, "DESIGN.md")).toBe(Format.DESIGN_MD);
+        });
+
+        it("returns DESIGN_MD for .design.md file", () => {
+            const content = "---\nname: Test\n---";
+            expect(FormatDetector.detectWithContentAndFilename(content, "tokens.design.md")).toBe(Format.DESIGN_MD);
+        });
+
+        it("returns HRDT for .yaml file", () => {
+            const content = "---\nprimitive:\n  color:\n    white: \"#ffffff\"";
+            expect(FormatDetector.detectWithContentAndFilename(content, "tokens.yaml")).toBe(Format.HRDT);
+        });
+
+        it("returns HRDT for .yml file", () => {
+            const content = "---\nprimitive:\n  color:\n    white: \"#ffffff\"";
+            expect(FormatDetector.detectWithContentAndFilename(content, "tokens.yml")).toBe(Format.HRDT);
+        });
+
+        it("uses content detection when filename is undefined", () => {
+            const content = "---\nname: Test\n---\n\n## Overview\n";
+            expect(FormatDetector.detectWithContentAndFilename(content)).toBe(Format.DESIGN_MD);
         });
     });
 });

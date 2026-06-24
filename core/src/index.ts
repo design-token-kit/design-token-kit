@@ -68,5 +68,7 @@ export { DtcgJsonReader, DtcgJsonReaderError } from "#/core/io/DtcgJsonReader";
 export { DtcgJsonWriter } from "#/core/io/DtcgJsonWriter";
 export { HrdtTokenReader, HrdtTokenReaderError } from "#/core/io/HrdtTokenReader";
 export { HrdtTokenWriter } from "#/core/io/HrdtTokenWriter";
+export { DesignMdReader, DesignMdReaderError } from "#/core/io/DesignMdReader";
+export { DesignMdWriter } from "#/core/io/DesignMdWriter";
 export { FormatDetector } from "#/core/io/FormatDetector";
 export { Format } from "#/core/io/Format";

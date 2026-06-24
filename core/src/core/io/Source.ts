@@ -74,7 +74,9 @@ export class Source {
 
     async getFormat(): Promise<Format> {
         if (this.#format === undefined) {
-            this.#format = FormatDetector.detect(await this.getContent());
+            const content = await this.getContent();
+            const filename = this.#type === SourceType.FILE ? this.#input : undefined;
+            this.#format = FormatDetector.detectWithContentAndFilename(content, filename);
         }
         return this.#format;
     }

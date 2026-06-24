@@ -50,7 +50,7 @@ export class DtcgTokenCssConverter implements TokenCssConverter {
             if (block) blocks.push(block);
         }
 
-        return blocks.join("\n\n");
+        return blocks.join("\n\n") + (blocks.length > 0 ? "\n" : "");
     }
 }
 

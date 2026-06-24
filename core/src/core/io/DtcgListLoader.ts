@@ -3,8 +3,10 @@ import { DtcgJsonReader } from "#/core/io/DtcgJsonReader";
 import { DtcgList } from "#/core/model/DtcgList";
 import { Format } from "#/core/io/Format";
 import { HrdtTokenReader } from "#/core/io/HrdtTokenReader";
+import { DesignMdReader } from "#/core/io/DesignMdReader";
 import { DtcgSchemaValidator } from "#/core/validation/dtcg/DtcgSchemaValidator";
 import { HrdtTokenValidator } from "#/core/validation/hrdt/HrdtTokenValidator";
+import { DesignMdTokenValidator } from "#/core/validation/design-md/DesignMdTokenValidator";
 import type { Dtcg } from "#/core/model/Dtcg";
 import type { TokenValidator } from "#/core/validation/TokenValidator";
 import type { CheckIssue } from "#/core/check/CheckIssue";
@@ -22,11 +24,13 @@ export class DtcgListLoader {
     readonly #validators = new Map<Format, TokenValidator>([
         [Format.HRDT, new HrdtTokenValidator()],
         [Format.DTCG, new DtcgSchemaValidator()],
+        [Format.DESIGN_MD, new DesignMdTokenValidator()],
     ]);
 
     readonly #parsers = new Map<Format, (source: Source) => Promise<Dtcg[]>>([
         [Format.HRDT, async (source) => new HrdtTokenReader().parseAll(await source.getContent(), source.getInput())],
         [Format.DTCG, async (source) => [new DtcgJsonReader().parse(await source.getContent(), source.getInput())]],
+        [Format.DESIGN_MD, async (source) => [new DesignMdReader().parse(await source.getContent(), source.getInput())]],
     ]);
 
     /**
@@ -109,7 +113,7 @@ function extractThemeName(source: string, index?: number): string {
         return index !== undefined ? `stdin-${index + 1}` : "stdin";
     }
     const fileName = source.split("/").at(-1)?.split("\\").at(-1) ?? source;
-    const withoutExt = fileName.replace(/\.(json|ya?ml)$/i, "");
+    const withoutExt = fileName.replace(/\.(json|ya?ml|design\.md|md)$/i, "");
     const dotIndex = withoutExt.lastIndexOf(".");
     return dotIndex > 0 ? withoutExt.slice(dotIndex + 1) : withoutExt;
 }

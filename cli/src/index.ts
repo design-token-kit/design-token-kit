@@ -13,7 +13,7 @@ const packageJson = JSON.parse(readFileSync(packageJsonPath, "utf8")) as { versi
 
 const program = new Command()
     .name("dtokens")
-    .description("CLI for DTCG JSON and HRDT YAML: check, convert, showcase, stats.")
+    .description("CLI for design tokens: check, convert, showcase, stats. Supports DTCG JSON, HRDT YAML, and DESIGN.md.")
     .version(packageJson.version, "-v, --version", "display version")
     .addCommand(checkCommand)
     .addCommand(validateCommand)
@@ -30,6 +30,7 @@ Examples:
   $ dtokens check tokens.json --scope lint --checks layer-reference
   $ dtokens convert tokens.yaml --inform hrdt --outform css --out ./dist/tokens.css
   $ dtokens convert tokens.json --outform hrdt
+  $ dtokens convert tokens.yaml --outform design-md
   $ dtokens convert --outform css < tokens.yaml
   $ dtokens showcase tokens.yaml --out ./dist/showcase.html
   $ dtokens showcase - < tokens.yaml

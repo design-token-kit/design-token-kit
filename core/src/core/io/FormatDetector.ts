@@ -5,7 +5,7 @@ import { Format } from "#/core/io/Format";
  * structure rather than relying on file extensions.
  *
  * Supported formats: {@link Format.DTCG} (JSON), {@link Format.HRDT} (YAML),
- * and {@link Format.CSS}.
+ * {@link Format.DESIGN_MD} (DESIGN.md markdown), and {@link Format.CSS}.
  */
 export class FormatDetector {
 
@@ -16,6 +16,8 @@ export class FormatDetector {
      * - If content starts with `{` and is valid JSON it is treated as DTCG.
      * - If content contains CSS-specific patterns (`:root`, custom properties,
      *   `@layer`) it is treated as CSS.
+     * - If content starts with `---` (YAML frontmatter) followed by markdown
+     *   prose it is treated as DESIGN.md.
      * - Otherwise it is treated as HRDT.
      */
     static detect(content: string): Format {
@@ -31,6 +33,10 @@ export class FormatDetector {
 
         if (FormatDetector.isCss(trimmed)) {
             return Format.CSS;
+        }
+
+        if (FormatDetector.isDesignMd(trimmed)) {
+            return Format.DESIGN_MD;
         }
 
         return Format.HRDT;
@@ -64,5 +70,55 @@ export class FormatDetector {
         return /(^|\s)--[a-zA-Z0-9_-]+\s*:/.test(content)
             || /(^|\s):root\b/.test(content)
             || /(^|\s)@layer\b/.test(content);
+    }
+
+    /**
+     * Returns `true` when the content looks like a DESIGN.md file.
+     *
+     * DESIGN.md files start with a YAML frontmatter block ({@code ---})
+     * followed by a closing {@code ---} delimiter and markdown prose.
+     *
+     * Multi-doc YAML that also uses {@code ---} separators is excluded by
+     * checking that the content after the closing {@code ---} does not start
+     * with a YAML key-value pattern.
+     */
+    static isDesignMd(content: string): boolean {
+        if (!content.startsWith("---")) return false;
+
+        const afterStart = content.slice(3);
+        const closeMatch = afterStart.match(/\n---/);
+        if (!closeMatch) return false;
+
+        const afterFrontmatter = content.slice(3 + closeMatch.index! + 4).trimStart();
+        if (afterFrontmatter.length === 0) return false;
+
+        if (afterFrontmatter.startsWith("---")) return false;
+
+        if (/^\w[\w-]*\s*:/.test(afterFrontmatter)) return false;
+
+        return true;
+    }
+
+    /**
+     * Detects format from content with an optional filename hint for
+     * disambiguating DESIGN.md from HRDT YAML when both start with
+     * {@code ---}.
+     *
+     * When the filename ends with {@code .md} and the content starts with
+     * {@code ---}, the format is resolved as DESIGN.md even when the content
+     * alone would be ambiguous.
+     */
+    static detectWithContentAndFilename(content: string, filename?: string): Format {
+        const trimmed = content.trimStart();
+        const contentStartsWithDash = trimmed.startsWith("---");
+
+        if (contentStartsWithDash && filename && /\.md$/i.test(filename)) {
+            return Format.DESIGN_MD;
+        }
+        if (contentStartsWithDash && filename && /\.(ya?ml)$/i.test(filename)) {
+            return Format.HRDT;
+        }
+
+        return this.detect(content);
     }
 }

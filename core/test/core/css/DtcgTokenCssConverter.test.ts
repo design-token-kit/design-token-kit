@@ -121,4 +121,8 @@ describe("DtcgTokenCssConverter", () => {
         expect(css).toContain("--semantic-color-bg-surface: var(--primitive-color-white)");
         expect(css).toContain("--semantic-color-bg-surface: var(--primitive-color-slate-100)");
     });
+
+    it("ends with trailing newline", () => {
+        expect(css.endsWith("\n")).toBe(true);
+    });
 });

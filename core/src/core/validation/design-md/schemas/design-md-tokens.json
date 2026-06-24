@@ -1,0 +1,160 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://designtokens.local/schemas/design-md-tokens.json",
+  "title": "DESIGN.md Frontmatter Schema",
+  "description": "JSON Schema for the YAML frontmatter of a DESIGN.md file.",
+  "type": "object",
+  "properties": {
+    "version": {
+      "type": "string"
+    },
+    "name": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string"
+    },
+    "colors": {
+      "$ref": "#/definitions/tokenMap"
+    },
+    "typography": {
+      "$ref": "#/definitions/typographyMap"
+    },
+    "rounded": {
+      "$ref": "#/definitions/tokenMap"
+    },
+    "spacing": {
+      "$ref": "#/definitions/tokenMap"
+    },
+    "components": {
+      "$ref": "#/definitions/componentsMap"
+    }
+  },
+  "additionalProperties": false,
+  "definitions": {
+    "tokenName": {
+      "type": "string",
+      "pattern": "^[^${}.][^{}.]*$"
+    },
+    "reference": {
+      "type": "string",
+      "pattern": "^\\{[^{}]+\\}$"
+    },
+    "scalarValue": {
+      "anyOf": [
+        { "type": "string" },
+        { "type": "number" },
+        { "type": "boolean" }
+      ]
+    },
+    "tokenMap": {
+      "type": "object",
+      "propertyNames": {
+        "$ref": "#/definitions/tokenName"
+      },
+      "additionalProperties": {
+        "$ref": "#/definitions/scalarValue"
+      }
+    },
+    "dimensionString": {
+      "type": "string",
+      "pattern": "^-?\\d+(?:\\.\\d+)?(?:px|em|rem)$"
+    },
+    "typographyValue": {
+      "type": "object",
+      "properties": {
+        "fontFamily": {
+          "anyOf": [
+            { "type": "string" },
+            { "type": "array", "items": { "type": "string" } }
+          ]
+        },
+        "fontSize": {
+          "anyOf": [
+            { "$ref": "#/definitions/dimensionString" },
+            { "$ref": "#/definitions/reference" }
+          ]
+        },
+        "fontWeight": {
+          "anyOf": [
+            { "type": "number" },
+            { "type": "string" }
+          ]
+        },
+        "lineHeight": {
+          "anyOf": [
+            { "type": "number" },
+            { "$ref": "#/definitions/dimensionString" },
+            { "$ref": "#/definitions/reference" }
+          ]
+        },
+        "letterSpacing": {
+          "anyOf": [
+            { "$ref": "#/definitions/dimensionString" },
+            { "$ref": "#/definitions/reference" }
+          ]
+        },
+        "fontFeature": {
+          "type": "string"
+        },
+        "fontVariation": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
+    "typographyMap": {
+      "type": "object",
+      "propertyNames": {
+        "$ref": "#/definitions/tokenName"
+      },
+      "additionalProperties": {
+        "anyOf": [
+          { "$ref": "#/definitions/typographyValue" },
+          { "$ref": "#/definitions/reference" }
+        ]
+      }
+    },
+    "componentProperties": {
+      "type": "object",
+      "properties": {
+        "backgroundColor": {
+          "$ref": "#/definitions/scalarValue"
+        },
+        "textColor": {
+          "$ref": "#/definitions/scalarValue"
+        },
+        "typography": {
+          "$ref": "#/definitions/scalarValue"
+        },
+        "rounded": {
+          "$ref": "#/definitions/scalarValue"
+        },
+        "padding": {
+          "$ref": "#/definitions/scalarValue"
+        },
+        "size": {
+          "$ref": "#/definitions/scalarValue"
+        },
+        "height": {
+          "$ref": "#/definitions/scalarValue"
+        },
+        "width": {
+          "$ref": "#/definitions/scalarValue"
+        }
+      },
+      "additionalProperties": {
+        "$ref": "#/definitions/scalarValue"
+      }
+    },
+    "componentsMap": {
+      "type": "object",
+      "propertyNames": {
+        "$ref": "#/definitions/tokenName"
+      },
+      "additionalProperties": {
+        "$ref": "#/definitions/componentProperties"
+      }
+    }
+  }
+}
