@@ -4,18 +4,37 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+<<<<<<< HEAD
 ### Added
 
 - New `check --schema <path>` option to select the DTCG JSON Schema.
   Accepts a directory path or a built-in resource name. Built-in schemas:
   - `2025.10` (default) — original DTCG 2025.10, units `px` and `rem`
   - `2025.10-design.md` — adds `em` unit for DESIGN.md compatibility
+=======
+## [1.1.1] - 2026-06-24
+
+### Changed
+
+- Updated the HTML showcase layout for font and semantic token sections:
+  font previews now use three-column grids and taller preview blocks for better
+  readability.
+>>>>>>> 2b59ec391291443628a0fac012d8f270e10d63b9
 
 ### Fixed
 
 - Fixed CSS color serialization for native color spaces such as `hsl`, `hwb`,
   `lab`, `lch`, `oklab`, and `oklch`; the converter now emits native CSS
   functions instead of invalid `color(...)` output.
+
+### Internal
+
+- Added coverage scripts and Istanbul coverage configuration for CLI and core
+  packages.
+- Moved reusable example token files from `core/tokens` to top-level
+  `examples`.
+- Decoupled CLI and core tests from shared token fixtures by adding smaller
+  focused fixtures and in-process command test helpers.
 
 ## [1.1.0] - 2026-06-22
 
