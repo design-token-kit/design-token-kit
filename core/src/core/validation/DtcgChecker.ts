@@ -1,5 +1,6 @@
 import { DtcgList } from "#/core/model/DtcgList";
 import { DtcgListLoader, TokenSyntaxError } from "#/core/io/DtcgListLoader";
+import { Format } from "#/core/io/Format";
 import type { TokenValidator } from "#/core/validation/TokenValidator";
 import type { CheckIssue } from "#/core/check/CheckIssue";
 import type { Check } from "#/core/check/Check";
@@ -56,6 +57,12 @@ export interface CheckerOptions {
      * Defaults to "2025.10-ext".
      */
     schema?: string;
+
+    /**
+     * Force all sources to this format instead of auto-detecting from content.
+     * When set, the format detector is skipped.
+     */
+    inform?: Format;
 }
 
 /**
@@ -71,6 +78,7 @@ export class DtcgChecker implements TokenValidator {
     readonly #scope: CheckScope;
     readonly #layers: TokenLayers;
     readonly #allowList?: string[];
+    readonly #inform?: Format;
 
     constructor(options: CheckerOptions = {}) {
         this.#loader = new DtcgListLoader(options.schema);
@@ -79,6 +87,7 @@ export class DtcgChecker implements TokenValidator {
             ? new TokenLayers(options.layers)
             : TokenLayers.default();
         this.#allowList = options.checks;
+        this.#inform = options.inform;
     }
 
     /**
@@ -89,7 +98,7 @@ export class DtcgChecker implements TokenValidator {
     async validate(sources: string[]): Promise<CheckIssue[]> {
         let list: DtcgList;
         try {
-            list = await this.#loader.load(sources);
+            list = await this.#loader.load(sources, this.#inform);
         } catch (error) {
             if (error instanceof TokenSyntaxError) {
                 return error.issues;

@@ -6,6 +6,7 @@ import {
     type CheckInfo,
     type CheckSelectionWarning,
 } from "@design-token-kit/core";
+import { toDocumentFormat } from "./formats";
 import { hasErrors, printIssues } from "./issues";
 
 const EXIT_ISSUES = 2;
@@ -16,6 +17,7 @@ interface CheckOptions {
     layers?: string;
     checks?: string;
     schema?: string;
+    inform?: string;
 }
 
 export const checkCommand = new Command("check")
@@ -29,6 +31,7 @@ export const checkCommand = new Command("check")
     .option("--layers <names>", "Comma-separated layer order, lowest first", "primitive,semantic,component")
     .option("--checks <ids>", "Comma-separated allow-list of active check ids (default: all). See 'Available checks' below.")
     .option("--schema <path>", "DTCG JSON Schema: directory path or built-in resource (2025.10, 2025.10-design.md)", "2025.10")
+    .option("-i, --inform [format]", "Input format: dtcg, hrdt, design-md (default: auto-detect)")
     .addHelpText("after", formatAvailableChecks(listChecks()))
     .addHelpText("after", "\nExit status:\n  0  success\n  1  unexpected error\n  2  issues found")
     .action(async (files: string[], options: CheckOptions) => {
@@ -39,6 +42,7 @@ export const checkCommand = new Command("check")
                 layers: splitList(options.layers),
                 checks: splitList(options.checks),
                 schema: options.schema,
+                inform: options.inform !== undefined ? toDocumentFormat(options.inform) : undefined,
             });
             printSelectionWarnings(checker.checkSelectionWarnings());
             const issues = await checker.validate(sources);
