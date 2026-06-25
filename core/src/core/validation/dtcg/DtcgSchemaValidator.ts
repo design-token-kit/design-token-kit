@@ -10,12 +10,19 @@ import type { CheckIssue } from "#/core/check/CheckIssue";
 type AjvFormatsPlugin = (ajv: Ajv) => Ajv;
 
 const FORMAT_SCHEMA_ID = "https://www.designtokens.org/schemas/2025.10/format.json";
+const DEFAULT_SCHEMA = "2025.10-ext";
 
 /**
  * Validates DTCG JSON sources against the official DTCG JSON Schema.
  * Accepts DTCG JSON sources only.
  */
 export class DtcgSchemaValidator implements TokenValidator {
+    readonly #schemaVersion: string;
+
+    constructor(schemaVersion?: string) {
+        this.#schemaVersion = schemaVersion ?? DEFAULT_SCHEMA;
+    }
+
     async validate(sources: string[]): Promise<CheckIssue[]> {
         const ajv = await this.#createAjv();
 
@@ -43,7 +50,7 @@ export class DtcgSchemaValidator implements TokenValidator {
 
     async #createAjv(): Promise<Ajv> {
         const moduleDir = path.dirname(fileURLToPath(import.meta.url));
-        const schemaDir = path.resolve(moduleDir, "schemas/2025.10");
+        const schemaDir = path.resolve(moduleDir, `schemas/${this.#schemaVersion}`);
 
         const ajv = new Ajv({ allErrors: true, strict: false });
         (addFormats as AjvFormatsPlugin)(ajv);

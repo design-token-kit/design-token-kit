@@ -21,17 +21,21 @@ import type { CheckIssue } from "#/core/check/CheckIssue";
  */
 export class DtcgListLoader {
 
-    readonly #validators = new Map<Format, TokenValidator>([
-        [Format.HRDT, new HrdtTokenValidator()],
-        [Format.DTCG, new DtcgSchemaValidator()],
-        [Format.DESIGN_MD, new DesignMdTokenValidator()],
-    ]);
+    readonly #validators: Map<Format, TokenValidator>;
 
     readonly #parsers = new Map<Format, (source: Source) => Promise<Dtcg[]>>([
         [Format.HRDT, async (source) => new HrdtTokenReader().parseAll(await source.getContent(), source.getInput())],
         [Format.DTCG, async (source) => [new DtcgJsonReader().parse(await source.getContent(), source.getInput())]],
         [Format.DESIGN_MD, async (source) => [new DesignMdReader().parse(await source.getContent(), source.getInput())]],
     ]);
+
+    constructor(schemaVersion?: string) {
+        this.#validators = new Map<Format, TokenValidator>([
+            [Format.HRDT, new HrdtTokenValidator()],
+            [Format.DTCG, new DtcgSchemaValidator(schemaVersion)],
+            [Format.DESIGN_MD, new DesignMdTokenValidator()],
+        ]);
+    }
 
     /**
      * Validates and loads all sources into a {@link DtcgList}.

@@ -15,6 +15,7 @@ interface CheckOptions {
     scope?: string;
     layers?: string;
     checks?: string;
+    schema?: string;
 }
 
 export const checkCommand = new Command("check")
@@ -27,6 +28,7 @@ export const checkCommand = new Command("check")
     )
     .option("--layers <names>", "Comma-separated layer order, lowest first", "primitive,semantic,component")
     .option("--checks <ids>", "Comma-separated allow-list of active check ids (default: all). See 'Available checks' below.")
+    .option("--schema <version>", "DTCG JSON Schema version: 2025.10 or 2025.10-ext", "2025.10-ext")
     .addHelpText("after", formatAvailableChecks(listChecks()))
     .addHelpText("after", "\nExit status:\n  0  success\n  1  unexpected error\n  2  issues found")
     .action(async (files: string[], options: CheckOptions) => {
@@ -36,6 +38,7 @@ export const checkCommand = new Command("check")
                 scope: CheckScope.fromName(options.scope ?? CheckScope.VALIDATE.name),
                 layers: splitList(options.layers),
                 checks: splitList(options.checks),
+                schema: options.schema,
             });
             printSelectionWarnings(checker.checkSelectionWarnings());
             const issues = await checker.validate(sources);

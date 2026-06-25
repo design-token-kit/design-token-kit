@@ -1,0 +1,36 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://www.designtokens.org/schemas/2025.10/format/values/dimension.json",
+  "title": "Dimension Value",
+  "description": "Value schema for dimension type tokens. Represents an amount of distance in a single dimension in the UI, such as a position, width, height, radius, or thickness.",
+  "type": "object",
+  "properties": {
+    "value": {
+      "description": "An integer or floating-point value representing the numeric value.",
+      "oneOf": [
+        {
+          "type": "number"
+        },
+        {
+          "$ref": "../../format.json#/definitions/jsonPointerReferenceObject"
+        }
+      ]
+    },
+    "unit": {
+      "description": "Unit of distance. Supported values: 'px' (idealized pixel, equivalent to dp on Android and pt on iOS), 'rem' (multiple of system's default font size), 'em' (added for DESIGN.md compatibility).",
+      "oneOf": [
+        {
+          "$comment": "DESIGN.md extension: added 'em'. DESIGN.md spec allows px, em, and rem (spec-config.yaml:28). Original DTCG schema only allows px and rem.",
+          "type": "string",
+          "enum": ["px", "em", "rem"]
+        },
+        {
+          "$ref": "../../format.json#/definitions/jsonPointerReferenceObject"
+        }
+      ]
+    }
+  },
+  "required": ["value", "unit"],
+  "additionalProperties": false
+}
+

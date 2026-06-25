@@ -4,6 +4,12 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+
+- New `check --schema <version>` option to select the DTCG JSON Schema version.
+  Supports `2025.10` (original) and `2025.10-ext` (default, includes `em` unit
+  for DESIGN.md compatibility).
+
 ### Fixed
 
 - Fixed CSS color serialization for native color spaces such as `hsl`, `hwb`,

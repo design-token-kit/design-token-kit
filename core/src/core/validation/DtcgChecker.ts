@@ -50,6 +50,12 @@ export interface CheckerOptions {
      * selected scope run.
      */
     checks?: string[];
+
+    /**
+     * DTCG JSON Schema version directory (e.g. "2025.10" or "2025.10-ext").
+     * Defaults to "2025.10-ext".
+     */
+    schema?: string;
 }
 
 /**
@@ -61,12 +67,13 @@ export interface CheckerOptions {
  * architecture is checked. Each stage is gated by {@link CheckScope}.
  */
 export class DtcgChecker implements TokenValidator {
-    readonly #loader = new DtcgListLoader();
+    readonly #loader: DtcgListLoader;
     readonly #scope: CheckScope;
     readonly #layers: TokenLayers;
     readonly #allowList?: string[];
 
     constructor(options: CheckerOptions = {}) {
+        this.#loader = new DtcgListLoader(options.schema);
         this.#scope = options.scope ?? CheckScope.VALIDATE;
         this.#layers = options.layers !== undefined && options.layers.length > 0
             ? new TokenLayers(options.layers)
