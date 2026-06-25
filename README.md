@@ -19,13 +19,19 @@ See the specification at https://www.designtokens.org.
 
 Supported input formats:
 
-* [DTCG JSON][dtcg]
-* [HRDT YAML][hrdt]
+* DTCG JSON
+* HRDT YAML
+* DESIGN.md
 
 DTCG JSON is the standard format defined by the Design Tokens Community Group.
 
 HRDT stands for Human-Readable Design Tokens. It is a compact YAML-based token
 format designed to be easier for humans to read and write than raw DTCG JSON.
+
+DESIGN.md is a markdown-based format with YAML frontmatter, designed for
+human-centric design system documentation. Supported for reading and conversion
+to DTCG JSON. DTCG token trees can be converted to DESIGN.md via
+`--outform design-md`.
 
 HRDT YAML files are automatically converted to DTCG JSON and then passed to the
 standard command pipeline: checking, CSS conversion, showcase generation, and
@@ -48,7 +54,7 @@ Node.js 18 or newer is required.
 * Lint tokens:
   * Cross-layer reference rules (layer-reference)
   * Raw value placement rules (raw-value-usage)
-* Convert between DTCG JSON and HRDT YAML
+* Convert between DTCG JSON, HRDT YAML, and DESIGN.md
 * Generate CSS from token files (theme support)
 * Generate HTML token showcase page
 * Generate token statistics as text or HTML
@@ -118,6 +124,9 @@ npm run dist
 - Core library usage and main exports: [`core/README.md`](core/README.md)
 - CLI installation, commands, and options: [`cli/README.md`](cli/README.md)
 
+## Supported Formats
 
-[dtcg]: https://www.designtokens.org/
-[hrdt]:https://medium.com/@bychinskidm/how-we-made-design-token-kit-an-npm-tool-for-design-tokens-fccf36bd2c65#6821
+- [DTCG](https://www.designtokens.org/) — Design Tokens Community Group JSON
+- [HRDT](https://medium.com/@bychinskidm/how-we-made-design-token-kit-an-npm-tool-for-design-tokens-fccf36bd2c65#6821) — Human-Readable Design Tokens YAML
+- [DESIGN.md](https://github.com/google-labs-code/design.md) — Markdown-based format with YAML frontmatter
+

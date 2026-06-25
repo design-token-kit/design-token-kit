@@ -12,7 +12,11 @@ checking, converting, and previewing design tokens from the terminal.
 * **Lint checks** - cross-layer reference and raw value placement rules
 * **[HRDT YAML support][hrdt]** - a compact, human-readable alternative
   to DTCG JSON
-* **Token format conversion** - read and write DTCG JSON and HRDT YAML
+* **[DESIGN.md support][designmd]** -
+  read and write design tokens in a markdown-based format with YAML
+  frontmatter
+* **Token format conversion** - read and write DTCG JSON, HRDT YAML, and
+  DESIGN.md
 * **CSS generation** - base and theme token sets rendered as CSS custom
   properties
 * **Static showcase** - HTML showcase generation from token sources or existing
@@ -49,6 +53,8 @@ npm install @design-token-kit/cli
 ```bash
 dtokens check tokens.json
 dtokens convert tokens.yaml --inform hrdt --outform css --out ./tokens.css
+dtokens convert tokens.json --outform design-md
+dtokens convert DESIGN.md --inform design-md --outform dtcg
 dtokens showcase tokens.json --out ./showcase.html --open
 dtokens stats tokens.json --out ./stats.html
 ```
@@ -63,6 +69,12 @@ validation, conversion, CSS generation, and showcase generation.
 ### HRDT YAML
 
 Use HRDT YAML as a compact, human-readable alternative to DTCG JSON.
+
+### DESIGN.md
+
+Use DESIGN.md to read and write design tokens in a markdown-based
+format with YAML frontmatter. Ideal for human-centric documentation
+alongside machine-readable token definitions.
 
 ### Base and theme sources
 
@@ -98,11 +110,11 @@ Convert token documents between DTCG JSON and HRDT YAML.
 
 ## Commands
 
-* `check [options] [files...]` - check DTCG JSON or HRDT YAML token
-  files: schema, model correctness, lint.
+* `check [options] [files...]` - check DTCG JSON, HRDT YAML, or DESIGN.md
+  token files: schema, model correctness, lint.
 * `validate [files...]` - deprecated, use `check --scope validate`.
 * `convert [options] [files...]` - convert a token file to DTCG JSON,
-  HRDT YAML, or CSS.
+  HRDT YAML, DESIGN.md, or CSS.
 * `showcase [options] [files...]` - create HTML showcase from DTCG JSON,
   HRDT YAML, or CSS.
 * `stats [options] [files...]` - generate token statistics from DTCG JSON
@@ -119,11 +131,17 @@ Convert token documents between DTCG JSON and HRDT YAML.
   Defaults to `primitive,semantic,component`.
 * `--checks <ids>` - comma-separated allow-list of active check ids.
   Defaults to all.
+* `--schema <path>` - DTCG JSON Schema: directory path or built-in resource
+  (`2025.10`, `2025.10-design.md`). Defaults to `2025.10`.
+* `-i, --inform [format]` - input format: `dtcg`, `hrdt`, `design-md`
+  (default: auto-detect).
 
 ### convert
 
-* `-i, --inform [format]` - input format: `dtcg`, `hrdt`.
-* `-f, --outform [format]` - output format: `dtcg`, `hrdt`, `css`.
+* `-i, --inform [format]` - input format: `dtcg`, `hrdt`, `design-md`
+  (default: auto-detect).
+* `-f, --outform [format]` - output format: `dtcg`, `hrdt`, `design-md`,
+  `css`. Defaults to `css`.
 * `-o, --out [file]` - output file, defaults to stdout.
 
 ### showcase
@@ -144,6 +162,8 @@ Check one or more DTCG JSON or HRDT YAML token sources.
 dtokens check tokens.json
 dtokens check tokens.yaml tokens.dark.yaml
 dtokens check - tokens.dark.yaml < tokens.yaml
+dtokens check DESIGN.md --inform design-md
+dtokens check tokens.json --schema 2025.10-design.md
 ```
 
 The check runs as a fail-fast pipeline of stages.
@@ -170,15 +190,18 @@ Exit status:
 dtokens check tokens.json --scope schema
 dtokens check tokens.json --scope lint
 dtokens check tokens.json --scope lint --checks layer-reference
+dtokens check DESIGN.md --inform design-md --scope validate
 ```
 
 ## Document Conversion
 
-Convert token documents between DTCG JSON and HRDT YAML.
+Convert token documents between DTCG JSON, HRDT YAML, and DESIGN.md.
 
 ```bash
 dtokens convert tokens.json --outform hrdt
 dtokens convert tokens.yaml --inform hrdt --outform dtcg
+dtokens convert tokens.json --outform design-md
+dtokens convert DESIGN.md --inform design-md --outform dtcg
 ```
 
 Use `--out` to write the result to a file instead of stdout.
@@ -223,12 +246,10 @@ dtokens stats tokens.yaml --out ./stats.html --open
 
 ## Supported Formats
 
-* `dtcg` - Design Tokens Community Group JSON format
-* `hrdt` - Human-Readable Design Tokens YAML format
+* `dtcg` - [DTCG JSON](https://www.designtokens.org/) (schema: `2025.10`, extended: `2025.10-design-md`)
+* `hrdt` - [HRDT YAML](https://medium.com/@bychinskidm/how-we-made-design-token-kit-an-npm-tool-for-design-tokens-fccf36bd2c65#6821)
+* `design-md` - [DESIGN.md](https://github.com/google-labs-code/design.md) markdown format
 * `css` - CSS custom properties output
 
 The `dtcg` format follows the specification published by the
 Design Tokens Community Group at https://www.designtokens.org.
-
-[dtcg]: https://www.designtokens.org/
-[hrdt]: https://medium.com/@bychinskidm/how-we-made-design-token-kit-an-npm-tool-for-design-tokens-fccf36bd2c65#6821

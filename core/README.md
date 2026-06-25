@@ -1,10 +1,10 @@
 # @design-token-kit/core
 
 The core package of Design Token Kit provides the runtime foundation
-for working with [DTCG 2025.10 design tokens][dtcg]. It defines the
-typed token model, performs schema and semantic validation, converts
-tokens into CSS custom properties, renders static HTML showcases, and
-builds token statistics reports.
+for working with [DTCG 2025.10 design tokens][dtcg] and [DESIGN.md][designmd].
+It defines the typed token model, performs schema and semantic validation,
+converts tokens into CSS custom properties, renders static HTML showcases,
+and builds token statistics reports.
 
 ## Features
 
@@ -14,7 +14,10 @@ builds token statistics reports.
   group references, type mismatches, and deprecated token usage
 * **[HRDT YAML support][hrdt]** - a compact, human-readable alternative to
   DTCG JSON
-* **Token format conversion** - read and write DTCG JSON and HRDT YAML
+* **[DESIGN.md support][designmd]** -
+  read and write the markdown-based format with YAML frontmatter
+* **Token format conversion** - read and write DTCG JSON, HRDT YAML, and
+  DESIGN.md
 * **CSS generation** - base and theme token sets rendered as CSS
   custom properties
 * **Static showcase** - HTML showcase generation from token sources or
@@ -72,6 +75,14 @@ validation, conversion, and showcase generation.
 Use HRDT YAML for a more compact, human-readable authoring format. HRDT
 documents are parsed into the same internal `Dtcg` model as DTCG JSON.
 
+### DESIGN.md
+
+Read DESIGN.md files using `DesignMdReader`. The YAML frontmatter is
+parsed into the internal `Dtcg` model. `DtcgToDesignMdMapper` flattens
+DTCG token trees (`primitive`/`semantic`/`component`) into the flat
+DESIGN.md layout (`colors`/`typography`/`rounded`/`spacing`/`components`).
+Write DESIGN.md output with `DesignMdWriter`.
+
 ### Base and theme sources
 
 When multiple token sources are provided, the first source is treated
@@ -102,15 +113,16 @@ sources.
 
 ### Serialized token documents
 
-Convert token documents between DTCG JSON and HRDT YAML, or write a
-parsed document back to either source format.
+Convert token documents between DTCG JSON, HRDT YAML, and DESIGN.md, or
+write a parsed document back to any supported source format.
 
 ## Main APIs
 
 * `DtcgTokenValidator` - validate DTCG JSON and HRDT YAML token sources
 * `DtcgListLoader` - load base and theme sources into a `DtcgList`
-* `DtcgJsonReader` / `HrdtTokenReader` - parse supported token formats
-* `DtcgJsonWriter` / `HrdtTokenWriter` - export token documents
+* `DtcgJsonReader` / `HrdtTokenReader` / `DesignMdReader` - parse supported token formats
+* `DtcgJsonWriter` / `HrdtTokenWriter` / `DesignMdWriter` - export token documents
+* `DtcgToDesignMdMapper` - map DTCG tree to flat DESIGN.md layout
 * `DtcgTokenCssConverter` - generate CSS custom properties from tokens
 * `createTokenHtmlShowcase()` - generate an HTML preview from token
   sources or CSS
@@ -208,5 +220,8 @@ const stats = await createTokenStats().stats([
 ]);
 ```
 
+## Links
+
 [dtcg]: https://www.designtokens.org/
 [hrdt]:https://medium.com/@bychinskidm/how-we-made-design-token-kit-an-npm-tool-for-design-tokens-fccf36bd2c65#6821
+[designmd]: https://github.com/google-labs-code/design.md
