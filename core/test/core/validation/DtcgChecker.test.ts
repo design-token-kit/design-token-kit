@@ -31,6 +31,12 @@ const LINT_VIOLATIONS: string = source({
     component: { btn: { "$value": "{primitive.color.brand}" } },
 });
 
+// Lint warning: passes schema and model, reports an empty named group.
+const EMPTY_GROUP: string = source({
+    // empty-group: the group has no tokens or child groups.
+    semantic: {},
+});
+
 // Schema defect: fails at the schema stage, before model checks run.
 const SCHEMA_INVALID_COLOR: string = source({
     // schema: a color $value must be an object, not a number.
@@ -70,6 +76,12 @@ describe("DtcgChecker", () => {
             const issues = await new DtcgChecker({ scope: CheckScope.LINT }).validate([LINT_VIOLATIONS]);
             expect(ids(issues)).toContain("layer-reference");
             expect(ids(issues)).toContain("raw-value-usage");
+        });
+
+        it("lint scope reports empty groups as warnings", async () => {
+            const issues = await new DtcgChecker({ scope: CheckScope.LINT }).validate([EMPTY_GROUP]);
+            expect(ids(issues)).toContain("empty-group");
+            expect(issues.find((issue) => issue.id === "empty-group")?.severity).toBe("warning");
         });
 
         it("returns no issues for a valid document at lint scope", async () => {

@@ -12,6 +12,8 @@ builds token statistics reports.
   documents
 * **Semantic checks** - unresolved references, circular references,
   group references, type mismatches, and deprecated token usage
+* **Lint checks** - cross-layer references, raw value placement, and empty
+  groups
 * **[HRDT YAML support][hrdt]** - a compact, human-readable alternative to
   DTCG JSON
 * **Token format conversion** - read and write DTCG JSON and HRDT YAML

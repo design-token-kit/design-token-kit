@@ -6,6 +6,7 @@ import { TypeMismatchCheck } from "#/core/check/checks/TypeMismatchCheck";
 import { GradientStopCheck } from "#/core/check/checks/GradientStopCheck";
 import { LayerReferenceCheck } from "#/core/check/checks/LayerReferenceCheck";
 import { RawValueUsageCheck } from "#/core/check/checks/RawValueUsageCheck";
+import { EmptyGroupCheck } from "#/core/check/checks/EmptyGroupCheck";
 
 /**
  * Describes one selectable check for discovery and documentation purposes.
@@ -39,7 +40,7 @@ export function validationChecks(): Check[] {
  * Returns the checks that enforce architecture-layering constraints.
  */
 export function lintingChecks(): Check[] {
-    return [new LayerReferenceCheck(), new RawValueUsageCheck()];
+    return [new LayerReferenceCheck(), new RawValueUsageCheck(), new EmptyGroupCheck()];
 }
 
 /**
