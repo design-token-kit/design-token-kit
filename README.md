@@ -49,6 +49,7 @@ Node.js 18 or newer is required.
   * Cross-layer reference rules (layer-reference)
   * Raw value placement rules (raw-value-usage)
   * Empty group detection (empty-group)
+  * Missing token description detection (missing-description)
 * Convert between DTCG JSON and HRDT YAML
 * Generate CSS from token files (theme support)
 * Generate HTML token showcase page
