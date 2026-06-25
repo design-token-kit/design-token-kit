@@ -1,5 +1,6 @@
 import Ajv, { ErrorObject } from "ajv";
 import addFormats from "ajv-formats";
+import { existsSync } from "node:fs";
 import { readFile, readdir } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
@@ -10,7 +11,7 @@ import type { CheckIssue } from "#/core/check/CheckIssue";
 type AjvFormatsPlugin = (ajv: Ajv) => Ajv;
 
 const FORMAT_SCHEMA_ID = "https://www.designtokens.org/schemas/2025.10/format.json";
-const DEFAULT_SCHEMA = "2025.10-ext";
+const DEFAULT_SCHEMA = "2025.10";
 
 /**
  * Validates DTCG JSON sources against the official DTCG JSON Schema.
@@ -49,8 +50,7 @@ export class DtcgSchemaValidator implements TokenValidator {
     }
 
     async #createAjv(): Promise<Ajv> {
-        const moduleDir = path.dirname(fileURLToPath(import.meta.url));
-        const schemaDir = path.resolve(moduleDir, `schemas/${this.#schemaVersion}`);
+        const schemaDir = this.#resolveSchemaDir();
 
         const ajv = new Ajv({ allErrors: true, strict: false });
         (addFormats as AjvFormatsPlugin)(ajv);
@@ -62,6 +62,14 @@ export class DtcgSchemaValidator implements TokenValidator {
         }
 
         return ajv;
+    }
+
+    #resolveSchemaDir(): string {
+        if (path.isAbsolute(this.#schemaVersion) || existsSync(this.#schemaVersion)) {
+            return this.#schemaVersion;
+        }
+        const moduleDir = path.dirname(fileURLToPath(import.meta.url));
+        return path.resolve(moduleDir, `schemas/${this.#schemaVersion}`);
     }
 
     #toCheckIssue(sourcePath: string, error: ErrorObject): CheckIssue {

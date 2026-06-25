@@ -28,7 +28,7 @@ export const checkCommand = new Command("check")
     )
     .option("--layers <names>", "Comma-separated layer order, lowest first", "primitive,semantic,component")
     .option("--checks <ids>", "Comma-separated allow-list of active check ids (default: all). See 'Available checks' below.")
-    .option("--schema <version>", "DTCG JSON Schema version: 2025.10 or 2025.10-ext", "2025.10-ext")
+    .option("--schema <path>", "DTCG JSON Schema: directory path or built-in resource (2025.10, 2025.10-design.md)", "2025.10")
     .addHelpText("after", formatAvailableChecks(listChecks()))
     .addHelpText("after", "\nExit status:\n  0  success\n  1  unexpected error\n  2  issues found")
     .action(async (files: string[], options: CheckOptions) => {

@@ -6,9 +6,10 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
-- New `check --schema <version>` option to select the DTCG JSON Schema version.
-  Supports `2025.10` (original) and `2025.10-ext` (default, includes `em` unit
-  for DESIGN.md compatibility).
+- New `check --schema <path>` option to select the DTCG JSON Schema.
+  Accepts a directory path or a built-in resource name. Built-in schemas:
+  - `2025.10` (default) — original DTCG 2025.10, units `px` and `rem`
+  - `2025.10-design.md` — adds `em` unit for DESIGN.md compatibility
 
 ### Fixed
 
