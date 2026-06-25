@@ -8,9 +8,12 @@ import { DimensionToken } from "#/core/model/tokens/DimensionToken";
 import { NumberToken } from "#/core/model/tokens/NumberToken";
 import { TypographyToken } from "#/core/model/tokens/TypographyToken";
 import { FontFamilyToken } from "#/core/model/tokens/FontFamilyToken";
+import { FontWeightToken } from "#/core/model/tokens/FontWeightToken";
 import { AliasToken } from "#/core/model/tokens/AliasToken";
 
 type SectionName = "colors" | "typography" | "rounded" | "spacing" | "components";
+
+const UNSUPPORTED = new Set(["border", "fontFamily", "fontWeight", "shadow", "transition", "gradient", "cubicBezier", "strokeStyle", "duration"]);
 
 /**
  * Maps a {@link DtcgList} in DTCG tree form ({@code primitive}, {@code semantic},
@@ -47,6 +50,7 @@ class TokenCollector {
     readonly #tokens = new Map<SectionName, Map<string, TokenNode<unknown>>>();
     readonly #components = new Map<string, TokenGroup>();
     readonly #pathMap = new Map<string, string>();
+    readonly #removed = new Set<string>();
 
     walk(group: TokenGroup, parentPath: string): void {
         for (const [name, child] of group.entries()) {
@@ -68,7 +72,7 @@ class TokenCollector {
         const children = new Map<string, TokenGroup | TokenNode<unknown>>();
         for (const [section, tokens] of this.#tokens) {
             if (tokens.size === 0) continue;
-            children.set(section, new TokenGroup({ children: this.#remapTokens(tokens) }));
+            children.set(section, new TokenGroup({ children: this.#remapTokens(tokens, section) }));
         }
         if (this.#components.size > 0) {
             children.set("components", new TokenGroup({ children: this.#remapComponents() }));
@@ -80,10 +84,15 @@ class TokenCollector {
         });
     }
 
-    #remapTokens(tokens: Map<string, TokenNode<unknown>>): Map<string, TokenGroup | TokenNode<unknown>> {
+    #remapTokens(tokens: Map<string, TokenNode<unknown>>, section: SectionName): Map<string, TokenGroup | TokenNode<unknown>> {
         const remapped = new Map<string, TokenGroup | TokenNode<unknown>>();
         for (const [name, token] of tokens) {
-            remapped.set(name, this.#remapToken(token));
+            const t = this.#remapToken(token);
+            if (t !== undefined) {
+                remapped.set(name, t);
+            } else {
+                this.#removed.add(`${section}.${name}`);
+            }
         }
         return remapped;
     }
@@ -102,17 +111,33 @@ class TokenCollector {
             if (child instanceof TokenGroup) {
                 remapped.set(name, this.#remapComponent(child));
             } else {
-                remapped.set(name, this.#remapToken(child as TokenNode<unknown>));
+                const t = this.#remapComponentProperty(child as TokenNode<unknown>);
+                if (t !== undefined) {
+                    remapped.set(name, t);
+                }
             }
         }
         return new TokenGroup({ children: remapped });
     }
 
-    #remapToken(token: TokenNode<unknown>): TokenNode<unknown> {
+    #remapComponentProperty(token: TokenNode<unknown>): TokenNode<unknown> | undefined {
+        const remapped = this.#remapToken(token);
+        if (remapped === undefined) return undefined;
+        const value = remapped.value;
+        if (value instanceof TokenReference && this.#removed.has(value.value)) {
+            return undefined;
+        }
+        return remapped;
+    }
+
+    #remapToken(token: TokenNode<unknown>): TokenNode<unknown> | undefined {
         const value = token.value;
         if (!(value instanceof TokenReference)) return token;
         const mapped = this.#pathMap.get(value.value);
-        if (!mapped) return token;
+        if (!mapped) {
+            console.warn(`warning: removing reference to ${value.value} — target not mapped`);
+            return undefined;
+        }
         return this.#cloneWithRef(token, new TokenReference(mapped));
     }
 
@@ -122,6 +147,7 @@ class TokenCollector {
         if (token instanceof TypographyToken) return new TypographyToken(ref);
         if (token instanceof NumberToken) return new NumberToken(ref as unknown as number);
         if (token instanceof FontFamilyToken) return new FontFamilyToken(ref as unknown as string);
+        if (token instanceof FontWeightToken) return new FontWeightToken(ref);
         if (token instanceof AliasToken) return new AliasToken(ref);
         return token;
     }
@@ -132,6 +158,11 @@ class TokenCollector {
         if (root !== "primitive" && root !== "semantic") return;
 
         const typeName = parts[1];
+
+        if (UNSUPPORTED.has(typeName)) {
+            console.warn(`warning: skipping ${path} — type not supported in DESIGN.md`);
+            return;
+        }
 
         switch (typeName) {
             case "color":
@@ -155,7 +186,8 @@ class TokenCollector {
                 break;
             case "shape":
             case "space":
-            case "motion": {
+            case "motion":
+            case "layer": {
                 const section = this.#dimensionSection(name);
                 this.#add(section, name, token);
                 this.#pathMap.set(path, `${section}.${name}`);
@@ -187,6 +219,10 @@ class TokenCollector {
     #add(section: SectionName, name: string, token: TokenNode<unknown>): void {
         if (!this.#tokens.has(section)) {
             this.#tokens.set(section, new Map());
+        }
+        const existing = this.#tokens.get(section)!.get(name);
+        if (existing !== undefined && token.value instanceof TokenReference) {
+            return;
         }
         this.#tokens.get(section)!.set(name, token);
     }

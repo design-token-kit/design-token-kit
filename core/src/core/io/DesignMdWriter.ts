@@ -6,6 +6,7 @@ import { AliasToken } from "#/core/model/tokens/AliasToken";
 import { ColorToken } from "#/core/model/tokens/ColorToken";
 import { DimensionToken } from "#/core/model/tokens/DimensionToken";
 import { FontFamilyToken } from "#/core/model/tokens/FontFamilyToken";
+import { FontWeightToken } from "#/core/model/tokens/FontWeightToken";
 import { NumberToken } from "#/core/model/tokens/NumberToken";
 import { TypographyToken } from "#/core/model/tokens/TypographyToken";
 import { ColorValue } from "#/core/model/values/ColorValue";
@@ -205,6 +206,9 @@ export class DesignMdWriter {
         }
         if (token instanceof FontFamilyToken) {
             return this.#serializeFontFamilyOrRef(value);
+        }
+        if (token instanceof FontWeightToken) {
+            return String(value);
         }
         if (token instanceof TypographyToken) {
             return undefined;

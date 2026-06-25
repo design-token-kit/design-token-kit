@@ -150,7 +150,7 @@ export class DesignMdReader {
         const children = new Map<string, TokenGroup | TokenNode<unknown>>();
         for (const [name, value] of Object.entries(raw)) {
             if (typeof value === "string" && REFERENCE_RE.test(value)) {
-                children.set(name, new DimensionToken(new TokenReference(value.slice(1, -1))));
+                children.set(name, new AliasToken(new TokenReference(value.slice(1, -1))));
             } else if (typeof value === "string") {
                 children.set(name, new DimensionToken(this.#parseDimension(value)));
             }
@@ -162,7 +162,7 @@ export class DesignMdReader {
         const children = new Map<string, TokenGroup | TokenNode<unknown>>();
         for (const [name, value] of Object.entries(raw)) {
             if (typeof value === "string" && REFERENCE_RE.test(value)) {
-                children.set(name, new DimensionToken(new TokenReference(value.slice(1, -1))));
+                children.set(name, new AliasToken(new TokenReference(value.slice(1, -1))));
             } else if (typeof value === "string") {
                 children.set(name, new DimensionToken(this.#parseDimension(value)));
             } else if (typeof value === "number") {
