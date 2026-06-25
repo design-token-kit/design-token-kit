@@ -6,6 +6,11 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- Google DESIGN.md format support. Read, write, and validate design tokens in
+  the DESIGN.md format. Convert between DTCG JSON and DESIGN.md formats via
+  `convert --to design.md` and `convert --from design.md`.
+- New `check --inform <format>` option to explicitly specify the input format
+  (e.g. `--inform design.md`). When omitted, the format is auto-detected.
 - New `check --schema <path>` option to select the DTCG JSON Schema.
   Accepts a directory path or a built-in resource name. Built-in schemas:
   - `2025.10` (default) — original DTCG 2025.10, units `px` and `rem`
