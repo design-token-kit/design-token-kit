@@ -31,6 +31,20 @@ const LINT_VIOLATIONS: string = source({
     component: { btn: { "$value": "{primitive.color.brand}" } },
 });
 
+// Lint warning: passes schema and model, reports an empty named group.
+const EMPTY_GROUP: string = source({
+    // empty-group: the group has no tokens or child groups.
+    semantic: {},
+});
+
+// Lint warning: passes schema and model, reports a token missing $description.
+const MISSING_DESCRIPTION: string = source({
+    primitive: {
+        // missing-description: the token has no $description.
+        red: { "$type": "color", "$value": { colorSpace: "srgb", components: [1, 0, 0] } },
+    },
+});
+
 // Schema defect: fails at the schema stage, before model checks run.
 const SCHEMA_INVALID_COLOR: string = source({
     // schema: a color $value must be an object, not a number.
@@ -39,8 +53,8 @@ const SCHEMA_INVALID_COLOR: string = source({
 
 // No defect: passes schema, model and lint.
 const VALID: string = source({
-    primitive: { color: { "$type": "color", brand: { "$value": { colorSpace: "srgb", components: [0, 0, 1] } } } },
-    semantic: { color: { action: { "$type": "color", "$value": "{primitive.color.brand}" } } },
+    primitive: { color: { "$type": "color", brand: { "$description": "Brand color.", "$value": { colorSpace: "srgb", components: [0, 0, 1] } } } },
+    semantic: { color: { action: { "$description": "Action color.", "$type": "color", "$value": "{primitive.color.brand}" } } },
 });
 
 describe("DtcgChecker", () => {
@@ -70,6 +84,18 @@ describe("DtcgChecker", () => {
             const issues = await new DtcgChecker({ scope: CheckScope.LINT }).validate([LINT_VIOLATIONS]);
             expect(ids(issues)).toContain("layer-reference");
             expect(ids(issues)).toContain("raw-value-usage");
+        });
+
+        it("lint scope reports empty groups as warnings", async () => {
+            const issues = await new DtcgChecker({ scope: CheckScope.LINT }).validate([EMPTY_GROUP]);
+            expect(ids(issues)).toContain("empty-group");
+            expect(issues.find((issue) => issue.id === "empty-group")?.severity).toBe("warning");
+        });
+
+        it("lint scope reports missing token descriptions as warnings", async () => {
+            const issues = await new DtcgChecker({ scope: CheckScope.LINT }).validate([MISSING_DESCRIPTION]);
+            expect(ids(issues)).toContain("missing-description");
+            expect(issues.find((issue) => issue.id === "missing-description")?.severity).toBe("warning");
         });
 
         it("returns no issues for a valid document at lint scope", async () => {
