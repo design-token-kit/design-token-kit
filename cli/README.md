@@ -9,7 +9,8 @@ checking, converting, and previewing design tokens from the terminal.
   checks for DTCG JSON token documents
 * **Model checks** - unresolved references, circular references, group
   references, type mismatches, and deprecated token usage
-* **Lint checks** - cross-layer reference and raw value placement rules
+* **Lint checks** - cross-layer reference, raw value placement, empty group,
+  and missing token description rules
 * **[HRDT YAML support][hrdt]** - a compact, human-readable alternative
   to DTCG JSON
 * **[DESIGN.md support][designmd]** -
