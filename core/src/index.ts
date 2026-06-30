@@ -26,6 +26,7 @@ export { validationChecks, lintingChecks, listChecks } from "#/core/check/checks
 export type { CheckInfo } from "#/core/check/checks/Checks";
 export { TokenLayers } from "#/core/check/TokenLayers";
 export { LayerReferenceCheck } from "#/core/check/checks/LayerReferenceCheck";
+export { RootLayerCheck } from "#/core/check/checks/RootLayerCheck";
 export { RawValueUsageCheck } from "#/core/check/checks/RawValueUsageCheck";
 export { EmptyGroupCheck } from "#/core/check/checks/EmptyGroupCheck";
 export { MissingDescriptionCheck } from "#/core/check/checks/MissingDescriptionCheck";

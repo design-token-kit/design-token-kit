@@ -37,6 +37,12 @@ describe("check", () => {
             expect(result.stderr).toContain("[raw-value-usage]");
         });
 
+        it("reports root-layer violations with exit code 2", async () => {
+            const result = await run(checkCommand, resolve(__dirname, "invalid-root-layer.json"), "--scope", "lint");
+            expect(result.status).toBe(2);
+            expect(result.stderr).toContain("[root-layer]");
+        });
+
         it("honours the checks allow-list", async () => {
             const result = await run(checkCommand, resolve(__dirname, "invalid-lint.json"), "--scope", "lint", "--checks", "layer-reference");
             expect(result.status).toBe(2);

@@ -52,6 +52,7 @@ Node.js 18 or newer is required.
   * Gradient duplicate stop detection
   * Deprecated token usage warnings
 * Lint tokens:
+  * Root layer naming rules (root-layer)
   * Cross-layer reference rules (layer-reference)
   * Raw value placement rules (raw-value-usage)
   * Empty group detection (empty-group)

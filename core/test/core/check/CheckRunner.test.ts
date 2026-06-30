@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import { CheckRunner } from "#/core/check/CheckRunner";
 import { TokenLayers } from "#/core/check/TokenLayers";
 import { LayerReferenceCheck } from "#/core/check/checks/LayerReferenceCheck";
+import { RootLayerCheck } from "#/core/check/checks/RootLayerCheck";
 import { RawValueUsageCheck } from "#/core/check/checks/RawValueUsageCheck";
 import { validationChecks } from "#/core/check/checks/Checks";
 import { Dtcg } from "#/core/model/Dtcg";
@@ -43,7 +44,7 @@ function doc(children: Record<string, TokenGroup | TokenNode<unknown>>, source?:
 
 function runAll(d: Dtcg) {
     const runner = new CheckRunner(
-        [new LayerReferenceCheck(), new RawValueUsageCheck()],
+        [new RootLayerCheck(), new LayerReferenceCheck(), new RawValueUsageCheck()],
         TokenLayers.default(),
     );
     return runner.runList(new DtcgList(d));
@@ -115,7 +116,7 @@ describe("CheckRunner", () => {
         const base = doc({ primitive: group({ red: new ColorToken(color()) }) }, "base.json");
         const theme = doc({ component: group({ button: alias("primitive.red") }) }, "tokens.dark.json");
         const runner = new CheckRunner(
-            [new LayerReferenceCheck(), new RawValueUsageCheck()],
+            [new RootLayerCheck(), new LayerReferenceCheck(), new RawValueUsageCheck()],
             TokenLayers.default(),
         );
         const issues = runner.runList(new DtcgList(base, new Map([["dark", theme]])));
@@ -135,6 +136,18 @@ describe("CheckRunner", () => {
         const issues = runner.runList(new DtcgList(d));
         expect(issues.every((i) => i.id === "layer-reference")).toBe(true);
         expect(issues.some((i) => i.id === "raw-value-usage")).toBe(false);
+    });
+
+    it("flags paths outside the configured root layers", () => {
+        const d = doc({
+            color: group({ brand: new ColorToken(color()) }),
+        });
+        const runner = new CheckRunner([new RootLayerCheck()], TokenLayers.default());
+        const issues = runner.runList(new DtcgList(d));
+        expect(issues).toHaveLength(2);
+        expect(issues[0].id).toBe("root-layer");
+        expect(issues[0].tokenPath?.toString()).toBe("color");
+        expect(issues[1].tokenPath?.toString()).toBe("color.brand");
     });
 });
 
