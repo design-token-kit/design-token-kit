@@ -39,16 +39,6 @@
         }
       }
     }
-  },
-  "cycle": {
-    "a": {
-      "$type": "number",
-      "$value": "{cycle.b}"
-    },
-    "b": {
-      "$type": "number",
-      "$value": "{cycle.a}"
-    }
   }
 }
 
