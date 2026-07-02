@@ -1,0 +1,15 @@
+{
+  "$schema": "https://www.designtokens.org/schemas/2025.10/format.json",
+  "$description": "Lint violation for 'check --scope lint'. Triggers: [root-layer] - path starts outside configured layers. Used by: check.",
+  "color": {
+    "brand": {
+      "$type": "color",
+      "$value": {
+        "colorSpace": "srgb",
+        "components": [0.145, 0.286, 0.965],
+        "alpha": 1,
+        "hex": "#2549f6"
+      }
+    }
+  }
+}

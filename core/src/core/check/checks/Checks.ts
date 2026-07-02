@@ -5,6 +5,7 @@ import { ReferenceCheck } from "#/core/check/checks/ReferenceCheck";
 import { TypeMismatchCheck } from "#/core/check/checks/TypeMismatchCheck";
 import { GradientStopCheck } from "#/core/check/checks/GradientStopCheck";
 import { LayerReferenceCheck } from "#/core/check/checks/LayerReferenceCheck";
+import { RootLayerCheck } from "#/core/check/checks/RootLayerCheck";
 import { RawValueUsageCheck } from "#/core/check/checks/RawValueUsageCheck";
 import { EmptyGroupCheck } from "#/core/check/checks/EmptyGroupCheck";
 import { MissingDescriptionCheck } from "#/core/check/checks/MissingDescriptionCheck";
@@ -41,7 +42,7 @@ export function validationChecks(): Check[] {
  * Returns the checks that enforce architecture-layering constraints.
  */
 export function lintingChecks(): Check[] {
-    return [new LayerReferenceCheck(), new RawValueUsageCheck(), new EmptyGroupCheck(), new MissingDescriptionCheck()];
+    return [new RootLayerCheck(), new LayerReferenceCheck(), new RawValueUsageCheck(), new EmptyGroupCheck(), new MissingDescriptionCheck()];
 }
 
 /**
