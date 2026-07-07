@@ -1,8 +1,8 @@
 # Design Token Kit: Give Your LLM a Design Language, Not a Screenshot
 
-![AI-Ready](https://img.shields.io/badge/AI-Ready-111827?style=flat-square)
-![DTCG Native](https://img.shields.io/badge/DTCG-Native-2563eb?style=flat-square)
-![DESIGN.md Compatible](https://img.shields.io/badge/DESIGN.md-Compatible-059669?style=flat-square)
+[![AI-Ready](https://img.shields.io/badge/AI-Ready-111827?style=flat-square)](#why-tokens-first)
+[![DTCG Native](https://img.shields.io/badge/DTCG-Native-2563eb?style=flat-square)](https://www.designtokens.org/)
+[![DESIGN.md Compatible](https://img.shields.io/badge/DESIGN.md-Compatible-059669?style=flat-square)](https://github.com/google-labs-code/design.md)
 
 Stop teaching AI to guess pixels. Teach it to think in design tokens. Validate, 
 convert, and showcase DTCG tokens for consistent, AI-native design systems
