@@ -57,6 +57,20 @@ const VALID: string = source({
     semantic: { color: { action: { "$description": "Action color.", "$type": "color", "$value": "{primitive.color.brand}" } } },
 });
 
+const INVALID_TAILWIND_NAMESPACE: string = source({
+    layout: {
+        desktop: {
+            "$type": "dimension",
+            "$value": { "value": 1920, "unit": "px" },
+            "$extensions": {
+                "design-token-kit": {
+                    "tailwindNamespace": "spacing",
+                },
+            },
+        },
+    },
+});
+
 describe("DtcgChecker", () => {
     describe("scope gating", () => {
         it("schema scope skips model checks", async () => {
@@ -67,6 +81,12 @@ describe("DtcgChecker", () => {
         it("validate scope runs model checks", async () => {
             const issues = await new DtcgChecker({ scope: CheckScope.VALIDATE }).validate([ALIAS_TO_MISSING_TOKEN]);
             expect(ids(issues)).toContain("bad-reference");
+        });
+
+        it("validate scope reports unsupported tailwind namespace markers as warnings", async () => {
+            const issues = await new DtcgChecker({ scope: CheckScope.VALIDATE }).validate([INVALID_TAILWIND_NAMESPACE]);
+            expect(ids(issues)).toContain("bad-tailwind-namespace");
+            expect(issues.find((issue) => issue.id === "bad-tailwind-namespace")?.severity).toBe("warning");
         });
 
         it("validate scope skips lint checks", async () => {

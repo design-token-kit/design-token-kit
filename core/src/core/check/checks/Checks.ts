@@ -9,6 +9,7 @@ import { RootLayerCheck } from "#/core/check/checks/RootLayerCheck";
 import { RawValueUsageCheck } from "#/core/check/checks/RawValueUsageCheck";
 import { EmptyGroupCheck } from "#/core/check/checks/EmptyGroupCheck";
 import { MissingDescriptionCheck } from "#/core/check/checks/MissingDescriptionCheck";
+import { TailwindNamespaceCheck } from "#/core/check/checks/TailwindNamespaceCheck";
 
 /**
  * Describes one selectable check for discovery and documentation purposes.
@@ -35,7 +36,7 @@ export interface CheckInfo {
  * token emits its reference diagnostics before any type-mismatch diagnostic.
  */
 export function validationChecks(): Check[] {
-    return [new ReferenceCheck(), new TypeMismatchCheck(), new GradientStopCheck()];
+    return [new ReferenceCheck(), new TypeMismatchCheck(), new GradientStopCheck(), new TailwindNamespaceCheck()];
 }
 
 /**

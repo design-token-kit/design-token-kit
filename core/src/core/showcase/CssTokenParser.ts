@@ -33,13 +33,15 @@ export class CssTokenParser {
         let currentSet: string | undefined;
         let pendingThemeName: string | undefined;
         let currentThemeName: string | undefined;
-        let insideRootBlock = false;
+        let insideBlock = false;
+        let collectCurrentBlock = false;
+        let sawTailwindThemeBlock = false;
         const blockLines: string[] = [];
 
         for (const line of cssString.split(/\r?\n/g)) {
             const trimmed = line.trim();
 
-            if (!insideRootBlock && trimmed.startsWith("/* Set:")) {
+            if (!insideBlock && trimmed.startsWith("/* Set:")) {
                 currentSet = trimmed
                     .replace("/* Set:", "")
                     .replace("*/", "")
@@ -48,7 +50,7 @@ export class CssTokenParser {
                 continue;
             }
 
-            if (!insideRootBlock && trimmed.startsWith("/* Modifier:")) {
+            if (!insideBlock && trimmed.startsWith("/* Modifier:")) {
                 const modifierName = this.extractModifierThemeName(trimmed);
                 pendingThemeName = modifierName
                     ? (currentSet ? `${currentSet}.${modifierName}` : modifierName)
@@ -56,33 +58,50 @@ export class CssTokenParser {
                 continue;
             }
 
-            if (!insideRootBlock && trimmed.startsWith(":root") && trimmed.endsWith("{")) {
-                insideRootBlock = true;
-                currentThemeName = pendingThemeName ?? currentSet;
+            if (!insideBlock && trimmed.endsWith("{")) {
+                const selector = trimmed.slice(0, -1).trim();
+                const selectorThemeName = this.extractSelectorThemeName(selector);
+
+                if (selector === "@theme") {
+                    sawTailwindThemeBlock = true;
+                    insideBlock = true;
+                    collectCurrentBlock = true;
+                    currentThemeName = undefined;
+                } else {
+                    insideBlock = true;
+                    currentThemeName = pendingThemeName ?? currentSet ?? selectorThemeName;
+                    collectCurrentBlock = currentThemeName !== undefined || !sawTailwindThemeBlock && selector.startsWith(":root");
+                }
+
                 blockLines.length = 0;
                 pendingThemeName = undefined;
                 continue;
             }
 
-            if (insideRootBlock) {
+            if (insideBlock) {
                 if (trimmed === "}") {
-                    insideRootBlock = false;
-                    const blockEntries = this.extractBlockEntries(blockLines.join("\n"), currentThemeName);
-                    entries.push(...blockEntries);
+                    insideBlock = false;
+                    if (collectCurrentBlock) {
+                        const blockEntries = this.extractBlockEntries(blockLines.join("\n"), currentThemeName);
+                        entries.push(...blockEntries);
 
-                    if (currentThemeName && blockEntries.length > 0) {
-                        if (!themeMap.has(currentThemeName)) {
-                            themeMap.set(currentThemeName, []);
+                        if (currentThemeName && blockEntries.length > 0) {
+                            if (!themeMap.has(currentThemeName)) {
+                                themeMap.set(currentThemeName, []);
+                            }
+                            themeMap.get(currentThemeName)!.push(...blockEntries);
                         }
-                        themeMap.get(currentThemeName)!.push(...blockEntries);
                     }
 
                     currentThemeName = undefined;
+                    collectCurrentBlock = false;
                     blockLines.length = 0;
                     continue;
                 }
 
-                blockLines.push(line);
+                if (collectCurrentBlock) {
+                    blockLines.push(line);
+                }
             }
         }
 
@@ -96,6 +115,11 @@ export class CssTokenParser {
 
     private extractModifierThemeName(annotationValue: string): string | undefined {
         const match = annotationValue.match(/theme\s*=\s*([a-zA-Z0-9_-]+)/);
+        return match?.[1];
+    }
+
+    private extractSelectorThemeName(selector: string): string | undefined {
+        const match = selector.match(/\[(?:data-)?theme\s*=\s*["']?([a-zA-Z0-9_-]+)["']?\]/);
         return match?.[1];
     }
 

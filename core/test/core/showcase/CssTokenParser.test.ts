@@ -4,6 +4,26 @@ import { fileURLToPath } from "node:url";
 import { CssTokenParser } from "#/core/showcase/CssTokenParser";
 
 const fixturesDir = fileURLToPath(new URL("fixtures", import.meta.url));
+const tailwindCss = `@import 'tailwindcss';
+
+@theme {
+  --color-primitive-white: #ffffff;
+  --spacing-md: 16px;
+}
+
+:root {
+  --color-primitive-white: #ffffff;
+  --spacing-md: 16px;
+}
+
+[data-theme='dark'] {
+  --color-primitive-white: #111111;
+}
+
+:host([data-theme='contrast']) {
+  --color-primitive-white: #000000;
+}
+`;
 
 function fixture(name: string): string {
     return readFileSync(`${fixturesDir}/${name}`, "utf-8");
@@ -121,6 +141,39 @@ describe("CssTokenParser", () => {
             // base block + dark modifier + red modifier each have brand-500
             const occurrences = allNames.filter((n) => n === "--primitive-color-brand-500");
             expect(occurrences.length).toBeGreaterThanOrEqual(3);
+        });
+    });
+
+    describe("tailwind v4 css", () => {
+        it("extracts base tokens from @theme", () => {
+            const result = parser.parse(tailwindCss);
+            expect(result.entries.some((e) => e.name === "--color-primitive-white" && e.themeName === undefined)).toBe(true);
+            expect(result.entries.some((e) => e.name === "--spacing-md" && e.themeName === undefined)).toBe(true);
+        });
+
+        it("does not duplicate base tokens from the :root mirror block", () => {
+            const result = parser.parse(tailwindCss);
+            const baseEntries = result.entries.filter((e) => e.name === "--color-primitive-white" && e.themeName === undefined);
+            expect(baseEntries).toHaveLength(1);
+        });
+
+        it("extracts theme overrides from data-theme selectors", () => {
+            const result = parser.parse(tailwindCss);
+            const dark = result.entries.find((e) => e.name === "--color-primitive-white" && e.themeName === "dark");
+            expect(dark?.value).toBe("#111111");
+        });
+
+        it("extracts theme overrides from host data-theme selectors", () => {
+            const result = parser.parse(tailwindCss);
+            const contrast = result.entries.find((e) => e.name === "--color-primitive-white" && e.themeName === "contrast");
+            expect(contrast?.value).toBe("#000000");
+        });
+
+        it("groups tailwind theme overrides in the themes array", () => {
+            const result = parser.parse(tailwindCss);
+            const themeNames = result.themes.map((t) => t.name);
+            expect(themeNames).toContain("dark");
+            expect(themeNames).toContain("contrast");
         });
     });
 });

@@ -151,6 +151,11 @@ describe("TokenGroupClassifier", () => {
             expect(result.has("gradients")).toBe(true);
         });
 
+        it("classifies background-image gradient values into gradients", () => {
+            const result = classifier.groupTokens([token("--background-image-brand", "linear-gradient(#fff, #000)")]);
+            expect(result.has("gradients")).toBe(true);
+        });
+
         it("classifies radius into radius group", () => {
             const result = classifier.groupTokens([token("--primitive-dimension-radius-md", "8px")]);
             expect(result.has("radius")).toBe(true);

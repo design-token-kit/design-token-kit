@@ -58,9 +58,21 @@ Node.js 18 or newer is required.
   * Empty group detection (empty-group)
   * Missing token description detection (missing-description)
 * Convert between DTCG JSON, HRDT YAML, and DESIGN.md
-* Generate CSS from token files (theme support)
+* Generate CSS from token files, including Tailwind CSS v4 `@theme` output
 * Generate HTML token showcase page
 * Generate token statistics as text or HTML
+
+For Tailwind CSS v4 output, Design Token Kit also defines a Tailwind-specific
+mapping for `dimension` tokens: breakpoint values may be marked explicitly via
+`$extensions["design-token-kit"].tailwindNamespace = "breakpoint"` or inferred
+from breakpoint-like paths such as `breakpoint.*` and `screens.*`. Currently,
+`"breakpoint"` is the only supported explicit Tailwind namespace value.
+
+Tailwind CSS v4 gradient tokens are emitted in the `--background-image-*`
+namespace so they can be used as Tailwind background-image theme variables.
+
+Tailwind CSS v4 transition tokens are flattened into `--duration-*` and
+`--ease-*` variables derived from DTCG `transition` values.
 
 ## Build
 

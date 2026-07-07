@@ -130,7 +130,7 @@ export class TokenGroupClassifier {
             return "shadows";
         }
 
-        if (lowerName.includes("gradient")) {
+        if (lowerName.includes("gradient") || lowerValue.includes("gradient(")) {
             return "gradients";
         }
 

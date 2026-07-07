@@ -1,10 +1,14 @@
 export type { IssueSeverity, CheckIssue } from "#/core/check/CheckIssue";
 export type { TokenValidator } from "#/core/validation/TokenValidator";
+export type { ColorCssSerializerOptions } from "#/core/css/ColorCssSerializer";
 export type { TokenCssConverter } from "#/core/css/TokenCssConverter";
+export type { DtcgTailwindCssConverterOptions } from "#/core/css/DtcgTailwindCssConverter";
+export type { TokenTailwindConverter } from "#/core/css/TokenTailwindConverter";
 export type { TokenHtmlShowcase } from "#/core/showcase/TokenHtmlShowcase";
 export type { TokenStats } from "#/core/stats/TokenStats";
 
 export { DtcgTokenCssConverter } from "#/core/css/DtcgTokenCssConverter";
+export { DtcgTailwindCssConverter } from "#/core/css/DtcgTailwindCssConverter";
 export { TokenHtmlShowcaseBuilder } from "#/core/showcase/TokenHtmlShowcaseBuilder";
 export { TokenStatsBuilder } from "#/core/stats/TokenStatsBuilder";
 export { TokenStatsCalculator } from "#/core/stats/TokenStatsCalculator";
@@ -30,9 +34,13 @@ export { RootLayerCheck } from "#/core/check/checks/RootLayerCheck";
 export { RawValueUsageCheck } from "#/core/check/checks/RawValueUsageCheck";
 export { EmptyGroupCheck } from "#/core/check/checks/EmptyGroupCheck";
 export { MissingDescriptionCheck } from "#/core/check/checks/MissingDescriptionCheck";
+export { TailwindNamespaceCheck } from "#/core/check/checks/TailwindNamespaceCheck";
 
 import { DtcgTokenCssConverter } from "#/core/css/DtcgTokenCssConverter";
+import { DtcgTailwindCssConverter } from "#/core/css/DtcgTailwindCssConverter";
 import type { TokenCssConverter } from "#/core/css/TokenCssConverter";
+import type { DtcgTailwindCssConverterOptions } from "#/core/css/DtcgTailwindCssConverter";
+import type { TokenTailwindConverter } from "#/core/css/TokenTailwindConverter";
 import { DtcgChecker } from "#/core/validation/DtcgChecker";
 import { TokenStatsBuilder } from "#/core/stats/TokenStatsBuilder";
 import type { TokenStats } from "#/core/stats/TokenStats";
@@ -41,6 +49,10 @@ import type { TokenHtmlShowcase } from "#/core/showcase/TokenHtmlShowcase";
 
 export function createTokenCssConverter(): TokenCssConverter {
     return new DtcgTokenCssConverter();
+}
+
+export function createTailwindCssConverter(options?: DtcgTailwindCssConverterOptions): TokenTailwindConverter {
+    return new DtcgTailwindCssConverter(options);
 }
 
 export function createTokenHtmlShowcase(): TokenHtmlShowcase {

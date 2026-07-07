@@ -22,6 +22,43 @@ describe("convert", () => {
         expect(result.stdout).toContain("--primitive-color-white");
     });
 
+    it("converts DTCG JSON to Tailwind CSS v4 theme output", async () => {
+        const result = await run(convertCommand, resolve(__dirname, "valid.json"), "--outform", "tailwind-v4");
+        expect(result.status).toBe(0);
+        expect(result.stdout).toContain("@import 'tailwindcss';");
+        expect(result.stdout).toContain("@theme {");
+        expect(result.stdout).toContain("--color-primitive-white");
+    });
+
+    it("supports tailwind selector options", async () => {
+        const result = await run(
+            convertCommand,
+            resolve(__dirname, "valid.json"),
+            "--outform",
+            "tailwind-v4",
+            "--base-selector",
+            ":host",
+            "--theme-selector",
+            ":host([data-theme='{theme}'])",
+        );
+        expect(result.status).toBe(0);
+        expect(result.stdout).toContain(":host {");
+    });
+
+    it("resolves {theme} in custom tailwind theme selectors", async () => {
+        const result = await run(
+            convertCommand,
+            resolve(__dirname, "../../../core/test/core/css/fixtures/tokens.json"),
+            resolve(__dirname, "../../../core/test/core/css/fixtures/tokens.dark.json"),
+            "--outform",
+            "tailwind-v4",
+            "--theme-selector",
+            ":host([data-theme='{theme}'])",
+        );
+        expect(result.status).toBe(0);
+        expect(result.stdout).toContain(":host([data-theme='dark']) {");
+    });
+
     it("fails with exit code 1 for model-invalid input", async () => {
         const result = await run(convertCommand, resolve(__dirname, "invalid-values.json"), "--outform", "css");
         expect(result.status).toBe(1);

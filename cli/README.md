@@ -19,7 +19,7 @@ checking, converting, and previewing design tokens from the terminal.
 * **Token format conversion** - read and write DTCG JSON, HRDT YAML, and
   DESIGN.md
 * **CSS generation** - base and theme token sets rendered as CSS custom
-  properties
+  properties or Tailwind CSS v4 theme variables
 * **Static showcase** - HTML showcase generation from token sources or existing
   CSS
 * **Token stats** - text and HTML reports with token counts and breakdowns
@@ -54,6 +54,7 @@ npm install @design-token-kit/cli
 ```bash
 dtokens check tokens.json
 dtokens convert tokens.yaml --inform hrdt --outform css --out ./tokens.css
+dtokens convert tokens.json --outform tailwind-v4 --out ./tokens.tailwind.css
 dtokens convert tokens.json --outform design-md
 dtokens convert DESIGN.md --inform design-md --outform dtcg
 dtokens showcase tokens.json --out ./showcase.html --open
@@ -98,7 +99,9 @@ Theme overrides are emitted under `:root[data-theme="<theme>"]`.
 ### HTML showcase
 
 Generate a static HTML preview from DTCG JSON, HRDT YAML, or existing
-CSS custom properties.
+CSS custom properties. Existing CSS input may be either classic `:root`
+output or Tailwind CSS v4 output with `@theme` and theme override
+selectors.
 
 ### Token statistics
 
@@ -142,7 +145,11 @@ Convert token documents between DTCG JSON and HRDT YAML.
 * `-i, --inform [format]` - input format: `dtcg`, `hrdt`, `design-md`
   (default: auto-detect).
 * `-f, --outform [format]` - output format: `dtcg`, `hrdt`, `design-md`,
-  `css`. Defaults to `css`.
+  `css`, `tailwind-v4`. Defaults to `css`.
+* `--base-selector [selector]` - tailwind-v4 only: selector for mirrored base
+  custom properties. Defaults to `:root`.
+* `--theme-selector [template]` - tailwind-v4 only: selector template for
+  theme overrides, with `{theme}` placeholder.
 * `-o, --out [file]` - output file, defaults to stdout.
 
 ### showcase
@@ -211,7 +218,8 @@ Use `--out` to write the result to a file instead of stdout.
 dtokens convert tokens.json --outform hrdt --out tokens.yaml
 ```
 
-Multiple input sources are only supported when `--outform css`.
+Multiple input sources are only supported when `--outform css` or
+`--outform tailwind-v4`.
 
 ## CSS Conversion
 
@@ -222,6 +230,73 @@ properties.
 dtokens convert tokens.json
 dtokens convert tokens.yaml --inform hrdt --outform css
 dtokens convert tokens.json tokens.dark.json --out ./tokens.css
+```
+
+## Tailwind CSS v4 Conversion
+
+Convert a base token set and optional theme overrides to Tailwind CSS
+v4 `@theme` output.
+
+```bash
+dtokens convert tokens.json --outform tailwind-v4
+dtokens convert tokens.json tokens.dark.json --outform tailwind-v4 --out ./tokens.tailwind.css
+dtokens convert tokens.json tokens.dark.json --outform tailwind-v4 --base-selector :host --theme-selector ":host([data-theme='{theme}'])"
+```
+
+By default, the generated file contains:
+
+- `@theme { ... }`
+- `:root { ... }` mirror of base custom properties
+- `[data-theme="<theme>"] { ... }` theme overrides
+
+For `dimension` tokens, Design Token Kit maps Tailwind namespaces in this order:
+
+1. explicit `$extensions["design-token-kit"].tailwindNamespace`
+2. fallback path match: `breakpoint`, `breakpoints`, `screen`, `screens`
+3. otherwise `dimension -> --spacing-*`
+
+Currently, the only supported explicit `tailwindNamespace` value is
+`"breakpoint"`. Unsupported values are reported as warnings by `dtokens check`
+and ignored by Tailwind conversion.
+
+For `gradient` tokens, Design Token Kit emits Tailwind `background-image`
+variables:
+
+```css
+--background-image-primitive-brand: linear-gradient(180deg, #10a5a5 0%, #1e293b 100%);
+```
+
+Gradient aliases stay in the same namespace and can be used with Tailwind
+background-image utilities such as `bg-brand`.
+
+For `transition` tokens, Design Token Kit flattens the value into Tailwind
+transition namespaces:
+
+```css
+--duration-primitive-emphasis: 240ms;
+--ease-primitive-emphasis: cubic-bezier(0.2, 0.8, 0.2, 1);
+```
+
+Transition aliases are flattened into the same `duration` and `ease`
+references. The `delay` part of a DTCG `transition` token is currently not
+emitted in Tailwind output.
+
+Use the explicit marker when your token path does not look like a breakpoint:
+
+```json
+{
+  "layout": {
+    "desktop": {
+      "$type": "dimension",
+      "$value": { "value": 1920, "unit": "px" },
+      "$extensions": {
+        "design-token-kit": {
+          "tailwindNamespace": "breakpoint"
+        }
+      }
+    }
+  }
+}
 ```
 
 ## HTML Showcase
@@ -251,6 +326,13 @@ dtokens stats tokens.yaml --out ./stats.html --open
 * `hrdt` - [HRDT YAML](https://medium.com/@bychinskidm/how-we-made-design-token-kit-an-npm-tool-for-design-tokens-fccf36bd2c65#6821)
 * `design-md` - [DESIGN.md](https://github.com/google-labs-code/design.md) markdown format
 * `css` - CSS custom properties output
+* `tailwind-v4` - Tailwind CSS v4 `@theme` output
 
 The `dtcg` format follows the specification published by the
 Design Tokens Community Group at https://www.designtokens.org.
+
+## Links
+
+[dtcg]: https://www.designtokens.org/
+[hrdt]:https://medium.com/@bychinskidm/how-we-made-design-token-kit-an-npm-tool-for-design-tokens-fccf36bd2c65#6821
+[designmd]: https://github.com/google-labs-code/design.md

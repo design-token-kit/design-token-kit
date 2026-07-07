@@ -10,6 +10,7 @@ import {
     HrdtTokenWriter,
     DesignMdReader,
     DesignMdWriter,
+    DtcgTailwindCssConverter,
 } from "@design-token-kit/core";
 
 export { Format };
@@ -63,6 +64,9 @@ const writers = {
     [Format.CSS]: {
         write: (doc) => new DtcgTokenCssConverter().convertDocument(doc),
     },
+    [Format.TAILWIND_V4]: {
+        write: (doc) => new DtcgTailwindCssConverter().convertDocument(doc),
+    },
 } satisfies Record<OutputFormat, DocumentWriter>;
 
 export function toDocumentFormat(format?: string, fallback = Format.DTCG): DocumentFormat {
@@ -72,7 +76,15 @@ export function toDocumentFormat(format?: string, fallback = Format.DTCG): Docum
 }
 
 function toOutputFormat(format?: string, fallback = Format.CSS): OutputFormat {
-    const resolved = format ?? fallback;
-    if (resolved === Format.DTCG || resolved === Format.HRDT || resolved === Format.DESIGN_MD || resolved === Format.CSS) return resolved;
-    throw new Error(`Unknown format "${resolved}". Available: ${Format.DTCG}, ${Format.HRDT}, ${Format.DESIGN_MD}, ${Format.CSS}`);
+    const resolved = format === "tailwind" ? Format.TAILWIND_V4 : format ?? fallback;
+    if (
+        resolved === Format.DTCG
+        || resolved === Format.HRDT
+        || resolved === Format.DESIGN_MD
+        || resolved === Format.CSS
+        || resolved === Format.TAILWIND_V4
+    ) {
+        return resolved;
+    }
+    throw new Error(`Unknown format "${resolved}". Available: ${Format.DTCG}, ${Format.HRDT}, ${Format.DESIGN_MD}, ${Format.CSS}, ${Format.TAILWIND_V4}`);
 }

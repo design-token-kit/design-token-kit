@@ -26,4 +26,9 @@ export enum Format {
      * CSS custom properties.
      */
     CSS = "css",
+
+    /**
+     * Tailwind CSS v4 theme variables.
+     */
+    TAILWIND_V4 = "tailwind-v4",
 }

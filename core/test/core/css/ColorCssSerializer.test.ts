@@ -4,6 +4,7 @@ import { ColorValue } from "#/core/model/values/ColorValue";
 
 describe("ColorCssSerializer", () => {
     const serializer = new ColorCssSerializer();
+    const tailwindSerializer = new ColorCssSerializer({ mode: "tailwind" });
 
     describe("hex shortcut", () => {
         it("returns hex when hex is set and alpha is 1", () => {
@@ -153,6 +154,23 @@ describe("ColorCssSerializer", () => {
         it("serializes none chroma in oklch", () => {
             const color = new ColorValue("oklch", [0.6, "none", 120]);
             expect(serializer.serialize(color)).toBe("oklch(0.6 none 120)");
+        });
+    });
+
+    describe("tailwind mode", () => {
+        it("computes hex for opaque srgb without hex fallback", () => {
+            const color = new ColorValue("srgb", [0.118, 0.161, 0.231], 1);
+            expect(tailwindSerializer.serialize(color)).toBe("#1e293b");
+        });
+
+        it("serializes translucent srgb as rgb()", () => {
+            const color = new ColorValue("srgb", [0, 0, 0], 0.4, "#000000");
+            expect(tailwindSerializer.serialize(color)).toBe("rgb(0 0 0 / 0.4)");
+        });
+
+        it("keeps non-srgb spaces in native css syntax", () => {
+            const color = new ColorValue("oklch", [0.5, 0.2, 300], 0.4);
+            expect(tailwindSerializer.serialize(color)).toBe("oklch(0.5 0.2 300 / 0.4)");
         });
     });
 });

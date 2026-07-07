@@ -21,7 +21,7 @@ and builds token statistics reports.
 * **Token format conversion** - read and write DTCG JSON, HRDT YAML, and
   DESIGN.md
 * **CSS generation** - base and theme token sets rendered as CSS
-  custom properties
+  custom properties or Tailwind CSS v4 `@theme` variables
 * **Static showcase** - HTML showcase generation from token sources or
   existing CSS
 * **Token stats** - text and HTML statistics reports for token sources
@@ -94,7 +94,9 @@ overrides.
 ### CSS input for showcase
 
 For showcase generation, a single CSS source can be rendered directly
-without going through token validation.
+without going through token validation. This includes both classic
+`:root` custom-property output and Tailwind CSS v4 output with `@theme`
+and `[data-theme="..."]` overrides.
 
 ## Output Formats
 
@@ -102,6 +104,12 @@ without going through token validation.
 
 Generate token sets as CSS variables with a `:root` block for base
 tokens and `:root[data-theme="<theme>"]` blocks for theme overrides.
+
+### Tailwind CSS v4 theme output
+
+Generate Tailwind CSS v4 theme variables with an `@theme` block for the
+base token set and `[data-theme="<theme>"]` overrides for additional
+themes.
 
 ### HTML showcase
 
@@ -126,6 +134,7 @@ write a parsed document back to any supported source format.
 * `DtcgJsonWriter` / `HrdtTokenWriter` / `DesignMdWriter` - export token documents
 * `DtcgToDesignMdMapper` - map DTCG tree to flat DESIGN.md layout
 * `DtcgTokenCssConverter` - generate CSS custom properties from tokens
+* `DtcgTailwindCssConverter` - generate Tailwind CSS v4 `@theme` output
 * `createTokenHtmlShowcase()` - generate an HTML preview from token
   sources or CSS
 * `createTokenStats()` - generate token statistics reports
@@ -193,6 +202,230 @@ const css = await new DtcgTokenCssConverter().convert([
 
 When you already have a parsed document or a prepared `DtcgList`, use
 `convertDocument()` or `convertList()` instead of reloading sources.
+
+For Tailwind CSS v4 output, use `DtcgTailwindCssConverter`.
+
+```ts
+import { DtcgTailwindCssConverter } from "@design-token-kit/core";
+
+const css = await new DtcgTailwindCssConverter().convert([
+  "./tokens.json",
+  "./tokens.dark.json",
+]);
+```
+
+Default Tailwind output contains:
+
+- `@theme { ... }` for Tailwind v4 theme variables
+- `:root { ... }` as a plain custom-property mirror of the base tokens
+- `[data-theme="<theme>"] { ... }` for theme overrides
+
+The `:root` mirror keeps the generated variables directly usable as regular CSS
+custom properties, for example in arbitrary values such as
+`bg-[var(--color-primary-500)]`.
+
+For Shadow DOM or custom theming selectors, pass converter options:
+
+```ts
+import { DtcgTailwindCssConverter } from "@design-token-kit/core";
+
+const css = await new DtcgTailwindCssConverter({
+  baseSelector: ":host",
+  themeSelector: ":host([data-theme='{theme}'])",
+}).convert([
+  "./tokens.json",
+  "./tokens.dark.json",
+]);
+```
+
+Options:
+
+- `baseSelector`: selector that receives the mirrored base custom properties.
+  Defaults to `:root`. Use `:host` for Shadow DOM output.
+- `themeSelector`: selector template for theme overrides. `{theme}` is replaced
+  with the resolved theme name. Defaults to `[data-theme='{theme}']`.
+
+### Tailwind dimension tokens and breakpoints
+
+DTCG does not define `breakpoint` as a separate token type. In DTCG, both
+spacing values and breakpoint values are represented as `dimension` tokens.
+
+Tailwind, however, uses different theme variable namespaces:
+
+```css
+--spacing-md: 16px;
+--breakpoint-3xl: 1920px;
+```
+
+Design Token Kit maps `dimension` tokens to Tailwind namespaces using the
+following order:
+
+1. If the token has an explicit Tailwind namespace in `$extensions`, that
+   namespace is used.
+2. If the token path contains `breakpoint`, `breakpoints`, `screen`, or
+   `screens`, the token is emitted as `--breakpoint-*`.
+3. Otherwise, `dimension` tokens are emitted as `--spacing-*`.
+
+This is a Design Token Kit specific mapping for Tailwind output. It is not a
+separate DTCG token type.
+
+#### Explicit breakpoint marker
+
+Use `$extensions["design-token-kit"].tailwindNamespace` when your token
+structure does not use breakpoint-like group names.
+
+Currently, the only supported explicit `tailwindNamespace` value is
+`"breakpoint"`. Unsupported values are ignored by Tailwind conversion and
+reported as warnings by the validation pipeline.
+
+```json
+{
+  "layout": {
+    "desktop": {
+      "$type": "dimension",
+      "$value": { "value": 1920, "unit": "px" },
+      "$extensions": {
+        "design-token-kit": {
+          "tailwindNamespace": "breakpoint"
+        }
+      }
+    }
+  }
+}
+```
+
+This produces:
+
+```css
+--breakpoint-layout-desktop: 1920px;
+```
+
+#### Naming convention fallback
+
+For simple token files, breakpoint-like paths work without `$extensions`:
+
+```json
+{
+  "breakpoint": {
+    "3xl": {
+      "$type": "dimension",
+      "$value": { "value": 1920, "unit": "px" }
+    }
+  }
+}
+```
+
+This produces:
+
+```css
+--breakpoint-3xl: 1920px;
+```
+
+Any other `dimension` token is treated as spacing by default:
+
+```json
+{
+  "spacing": {
+    "md": {
+      "$type": "dimension",
+      "$value": { "value": 16, "unit": "px" }
+    }
+  }
+}
+```
+
+This produces:
+
+```css
+--spacing-md: 16px;
+```
+
+### Tailwind gradient tokens
+
+Tailwind CSS treats gradients as `background-image` values rather than colors.
+For Tailwind CSS v4 output, Design Token Kit maps DTCG `gradient` tokens to the
+`--background-image-*` namespace.
+
+```json
+{
+  "primitive": {
+    "gradient": {
+      "brand": {
+        "$type": "gradient",
+        "$value": [
+          {
+            "color": { "colorSpace": "srgb", "components": [0.063, 0.647, 0.647], "alpha": 1, "hex": "#10a5a5" },
+            "position": 0
+          },
+          {
+            "color": { "colorSpace": "srgb", "components": [0.118, 0.161, 0.231], "alpha": 1 },
+            "position": 1
+          }
+        ]
+      }
+    }
+  }
+}
+```
+
+This produces:
+
+```css
+--background-image-primitive-brand: linear-gradient(180deg, #10a5a5 0%, #1e293b 100%);
+```
+
+Gradient aliases stay in the same namespace:
+
+```css
+--background-image-semantic-surface-brand: var(--background-image-primitive-brand);
+```
+
+This is a Design Token Kit specific Tailwind mapping. The generated variables
+work with Tailwind background-image utilities such as `bg-brand`, and they are
+also available as regular custom properties for arbitrary values.
+
+### Tailwind transition tokens
+
+Tailwind CSS v4 already has theme namespaces for transition duration and timing
+function. For Tailwind output, Design Token Kit flattens DTCG `transition`
+tokens into:
+
+- `--duration-*` from `transition.duration`
+- `--ease-*` from `transition.timingFunction`
+
+The `delay` part of a DTCG `transition` token is not emitted in Tailwind output
+at this stage.
+
+```json
+{
+  "primitive": {
+    "transition": {
+      "emphasis": {
+        "$type": "transition",
+        "$value": {
+          "duration": { "value": 240, "unit": "ms" },
+          "delay": { "value": 80, "unit": "ms" },
+          "timingFunction": [0.2, 0.8, 0.2, 1]
+        }
+      }
+    }
+  }
+}
+```
+
+This produces:
+
+```css
+--duration-primitive-emphasis: 240ms;
+--ease-primitive-emphasis: cubic-bezier(0.2, 0.8, 0.2, 1);
+```
+
+Transition aliases are flattened the same way:
+
+```css
+--duration-semantic-emphasis: var(--duration-primitive-emphasis);
+--ease-semantic-emphasis: var(--ease-primitive-emphasis);
+```
 
 ## HTML Showcase
 
