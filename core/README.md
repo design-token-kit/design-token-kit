@@ -6,6 +6,9 @@ It defines the typed token model, performs schema and semantic validation,
 converts tokens into CSS custom properties, renders static HTML showcases,
 and builds token statistics reports.
 
+GitHub repository:
+https://github.com/design-token-kit/design-token-kit
+
 ## Features
 
 * **[DTCG 2025.10 validation][dtcg]** - schema validation for DTCG JSON token

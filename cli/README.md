@@ -3,6 +3,9 @@
 The CLI package of Design Token Kit provides the `dtokens` command for
 checking, converting, and previewing design tokens from the terminal.
 
+GitHub repository:
+https://github.com/design-token-kit/design-token-kit
+
 ## Features
 
 * **[DTCG 2025.10 check][dtcg]** - schema, model correctness, and lint
