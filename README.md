@@ -1,6 +1,15 @@
-# Design Token Kit
+# Design Token Kit: Give Your LLM a Design Language, Not a Screenshot
+
+[![AI-Ready](https://img.shields.io/badge/AI-Ready-111827?style=flat-square)](#why-tokens-first)
+[![DTCG Native](https://img.shields.io/badge/DTCG-Native-2563eb?style=flat-square)](https://www.designtokens.org/)
+[![DESIGN.md Compatible](https://img.shields.io/badge/DESIGN.md-Compatible-059669?style=flat-square)](https://github.com/google-labs-code/design.md)
+
+Stop teaching AI to guess pixels. Teach it to think in design tokens. Validate, 
+convert, and showcase DTCG tokens for consistent, AI-native design systems
 
 - [Overview](#overview)
+- [Why Tokens First](#why-tokens-first)
+- [Features](#features)
 - [Build](#build)
 - [Publish](#publish)
 - [Packages](#packages)
@@ -38,6 +47,51 @@ standard command pipeline: checking, CSS conversion, showcase generation, and
 statistics reporting.
 
 Node.js 18 or newer is required.
+
+## Why Tokens First
+
+We ran a small blind experiment with several independent agents on the same UI
+task: build a product card. One group generated HTML/CSS directly. The other
+had one extra requirement: define the design in DTCG tokens first, using three
+layers: `primitive`, `semantic`, and `component`.
+
+In the direct HTML/CSS version, the model usually created CSS variables on its
+own, but the structure was unstable across runs. Variable names changed, some
+values were still hardcoded inside components, and names like `--color-accent`
+mixed two different ideas at once: the raw palette value and its UI role.
+
+```css
+:root {
+  --color-surface: #ffffff;
+  --color-accent: #4f46e5;
+  --radius-lg: 18px;
+  --shadow-card: 0 10px 30px rgba(17, 24, 39, 0.08);
+}
+```
+
+In the tokens-first version, the model described the design through a stable
+three-layer structure and the component CSS referenced tokens instead of raw
+values.
+
+```css
+.card {
+  background: var(--component-card-default-background);
+  border-radius: var(--component-card-default-radius);
+  box-shadow: var(--component-card-default-shadow);
+}
+```
+
+That difference mattered across independent runs. In direct mode, each agent
+invented its own vocabulary: different variable names, different scales,
+different structure. In tokens-first mode, the palettes could differ, but the
+design language stayed almost the same: the same primitive values, the same
+semantic roles, and the same component references.
+
+This is the key advantage of the tokens-first approach: it gives multiple
+independent agents a shared design vocabulary instead of letting each run
+invent its own. Design Token Kit is built for that workflow: validate token
+files, convert formats, and work with DTCG safely when the model gets the
+structure right but misses format details.
 
 ## Features
 
