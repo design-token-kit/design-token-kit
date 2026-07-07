@@ -1,6 +1,6 @@
 {
     "name": "@design-token-kit/core",
-    "version": "1.3.0",
+    "version": "1.4.0",
     "description": "Core library for Design Token Kit: validate, convert, showcase.",
     "keywords": [
         "design-tokens",
