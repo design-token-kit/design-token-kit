@@ -92,6 +92,38 @@ describe("Source", () => {
         });
     });
 
+    describe("getContent - url source", () => {
+        afterEach(() => {
+            vi.restoreAllMocks();
+        });
+
+        it("reads content from a URL", async () => {
+            const fetchMock = vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response(JSON_CONTENT));
+
+            const content = await new Source("https://example.com/tokens.json").getContent();
+
+            expect(content).toBe(JSON_CONTENT);
+            expect(fetchMock).toHaveBeenCalledWith("https://example.com/tokens.json");
+        });
+
+        it("throws when URL response is not ok", async () => {
+            vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response("nope", { status: 404 }));
+
+            await expect(new Source("https://example.com/missing.json").getContent()).rejects.toThrow(
+                'Unable to fetch "https://example.com/missing.json": HTTP 404',
+            );
+        });
+
+        it("writes fetched URL content to a temp file", async () => {
+            vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response(JSON_CONTENT));
+
+            const filePath = await new Source("https://example.com/tokens.json").getFile();
+
+            expect(existsSync(filePath)).toBe(true);
+            expect(readFileSync(filePath, "utf8")).toBe(JSON_CONTENT);
+        });
+    });
+
     describe("getFormat", () => {
         it("detects CSS format for CSS content", async () => {
             const format = await new Source(`content:${CSS_CONTENT}`).getFormat();

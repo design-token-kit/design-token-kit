@@ -3,8 +3,29 @@ import { fileURLToPath } from "node:url";
 import { DtcgTokenCssConverter } from "#/core/css/DtcgTokenCssConverter";
 import { Dtcg } from "#/core/model/Dtcg";
 import { TokenGroup } from "#/core/model/TokenGroup";
+import { TokenReference } from "#/core/model/TokenReference";
+import { BorderToken } from "#/core/model/tokens/BorderToken";
 import { ColorToken } from "#/core/model/tokens/ColorToken";
+import { CubicBezierToken } from "#/core/model/tokens/CubicBezierToken";
+import { DimensionToken } from "#/core/model/tokens/DimensionToken";
+import { DurationToken } from "#/core/model/tokens/DurationToken";
+import { FontFamilyToken } from "#/core/model/tokens/FontFamilyToken";
+import { GradientToken } from "#/core/model/tokens/GradientToken";
+import { NumberToken } from "#/core/model/tokens/NumberToken";
+import { ShadowToken } from "#/core/model/tokens/ShadowToken";
+import { StrokeStyleToken } from "#/core/model/tokens/StrokeStyleToken";
+import { TransitionToken } from "#/core/model/tokens/TransitionToken";
+import { TypographyToken } from "#/core/model/tokens/TypographyToken";
+import { BorderValue } from "#/core/model/values/BorderValue";
 import { ColorValue } from "#/core/model/values/ColorValue";
+import { CubicBezierValue } from "#/core/model/values/CubicBezierValue";
+import { DimensionValue } from "#/core/model/values/DimensionValue";
+import { DurationValue } from "#/core/model/values/DurationValue";
+import { GradientStop } from "#/core/model/values/GradientValue";
+import { ShadowLayer } from "#/core/model/values/ShadowValue";
+import { StrokeStyleObject } from "#/core/model/values/StrokeStyleValue";
+import { TransitionValue } from "#/core/model/values/TransitionValue";
+import { TypographyValue } from "#/core/model/values/TypographyValue";
 
 const FIXTURES = fileURLToPath(new URL("fixtures", import.meta.url));
 const sources = [
@@ -124,5 +145,102 @@ describe("DtcgTokenCssConverter", () => {
 
     it("ends with trailing newline", () => {
         expect(css.endsWith("\n")).toBe(true);
+    });
+
+    it("returns an empty string for a document without serializable tokens", () => {
+        expect(converter.convertDocument(new Dtcg(new TokenGroup()))).toBe("");
+    });
+
+    it("serializes direct top-level tokens and complex css value branches", () => {
+        const generated = converter.convertDocument(new Dtcg(new TokenGroup({
+            children: new Map([
+                ["brand", new ColorToken(new ColorValue("srgb", [1, 0, 0], 1, "#ff0000"))],
+                ["duration", new DurationToken(new DurationValue(200, "ms"))],
+                ["easing", new CubicBezierToken(new CubicBezierValue(0.2, 0.8, 0.2, 1))],
+                ["fontFamily", new FontFamilyToken([
+                    "Inter",
+                    new TokenReference("brandFonts.sans"),
+                    "sans-serif",
+                ])],
+                ["brandFonts", new TokenGroup({
+                    children: new Map([
+                        ["sans", new FontFamilyToken("Arial")],
+                    ]),
+                })],
+                ["shadow", new ShadowToken([
+                    new ShadowLayer(
+                        new TokenReference("brand"),
+                        new DimensionValue(0, "px"),
+                        new DimensionValue(2, "px"),
+                        new DimensionValue(8, "px"),
+                        new DimensionValue(0, "px"),
+                        true,
+                    ),
+                    new TokenReference("shadowAlias"),
+                ])],
+                ["shadowAlias", new ShadowToken(new ShadowLayer(
+                    new ColorValue("srgb", [0, 0, 0], 0.2),
+                    new DimensionValue(0, "px"),
+                    new DimensionValue(1, "px"),
+                    new DimensionValue(2, "px"),
+                    new DimensionValue(0, "px"),
+                ))],
+                ["stroke", new StrokeStyleToken(new StrokeStyleObject([new DimensionValue(2, "px")], "round"))],
+                ["border", new BorderToken(new BorderValue(
+                    new TokenReference("brand"),
+                    new DimensionValue(1, "px"),
+                    new TokenReference("stroke"),
+                ))],
+                ["transition", new TransitionToken(new TransitionValue(
+                    new TokenReference("duration"),
+                    new TokenReference("duration"),
+                    new TokenReference("easing"),
+                ))],
+                ["gradient", new GradientToken([
+                    new GradientStop(new TokenReference("brand"), new TokenReference("progress.start")),
+                    new TokenReference("gradientStops.end"),
+                ])],
+                ["gradientStops", new TokenGroup({
+                    children: new Map([
+                        ["end", new ColorToken(new ColorValue("srgb", [0, 0, 1], 1, "#0000ff"))],
+                    ]),
+                })],
+                ["progress", new TokenGroup({
+                    children: new Map([
+                        ["start", new NumberToken(0.5)],
+                    ]),
+                })],
+                ["typography", new TypographyToken(new TypographyValue(
+                    new TokenReference("brandFonts.sans"),
+                    new TokenReference("size.body"),
+                    new TokenReference("weight.body"),
+                    new DimensionValue(0, "px"),
+                    new TokenReference("lineHeight.body"),
+                ))],
+                ["size", new TokenGroup({
+                    children: new Map([
+                        ["body", new DimensionToken(new DimensionValue(16, "px"))],
+                    ]),
+                })],
+                ["weight", new TokenGroup({
+                    children: new Map([
+                        ["body", new NumberToken(500)],
+                    ]),
+                })],
+                ["lineHeight", new TokenGroup({
+                    children: new Map([
+                        ["body", new NumberToken(1.5)],
+                    ]),
+                })],
+            ]),
+        })));
+
+        expect(generated).toContain("--brand: #ff0000;");
+        expect(generated).toContain('--fontFamily: "Inter", var(--brandFonts-sans), "sans-serif";');
+        expect(generated).toContain("--shadow: inset 0px 2px 8px 0px var(--brand), var(--shadowAlias);");
+        expect(generated).toContain("--border: 1px var(--stroke) var(--brand);");
+        expect(generated).toContain("--transition: var(--duration) var(--easing) var(--duration);");
+        expect(generated).toContain("--gradient: linear-gradient(180deg, var(--brand) calc(var(--progress-start) * 100%), var(--gradientStops-end));");
+        expect(generated).toContain("--typography: var(--weight-body) var(--size-body)/var(--lineHeight-body) var(--brandFonts-sans);");
     });
 });

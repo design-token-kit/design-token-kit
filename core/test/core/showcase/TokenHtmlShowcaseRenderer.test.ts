@@ -131,6 +131,16 @@ describe("TokenHtmlShowcaseRenderer", () => {
             expect(html).toContain("--primitive-typography-body-md");
             expect(html).toContain("font-preview");
         });
+
+        it("renders standalone font previews and typography shorthand fallback", () => {
+            const html = renderer.renderPage(parsed([
+                entry("--font-brand", "Inter, sans-serif"),
+                entry("--primitive-typography-inline", "500 14px/1.4 Inter"),
+            ]));
+            expect(html).toContain("font-sample");
+            expect(html).toContain("--primitive-typography-inline");
+            expect(html).toContain("500 14px/1.4 Inter");
+        });
     });
 
     describe("renderPage - gradient tokens", () => {
@@ -144,6 +154,14 @@ describe("TokenHtmlShowcaseRenderer", () => {
             ]));
             expect(html).toContain("gradient-stop");
             expect(html).toContain("#2549f6");
+        });
+
+        it("renders fallback gradient stops from raw css values", () => {
+            const html = renderer.renderPage(parsed([
+                entry("--primitive-gradients-sunset", "linear-gradient(90deg, #2549f6 0%, #1d39da 100%)"),
+            ]));
+            expect(html).toContain("gradient-stop");
+            expect(html).toContain("100%");
         });
     });
 
@@ -171,6 +189,19 @@ describe("TokenHtmlShowcaseRenderer", () => {
                 entry("--primitive-border-focus-ring-style", "solid"),
             ]));
             expect(html).toContain("border-preview");
+        });
+
+        it("renders stroke style metadata", () => {
+            const html = renderer.renderPage(parsed([
+                entry("--primitive-stroke-style-dashed", "dashed"),
+                entry("--primitive-stroke-style-dashed-dashArray-0", "4px"),
+                entry("--primitive-stroke-style-dashed-dashArray-1", "2px"),
+                entry("--primitive-stroke-style-dashed-lineCap", "round"),
+            ]));
+            expect(html).toContain("Dash");
+            expect(html).toContain("4px, 2px");
+            expect(html).toContain("Line cap");
+            expect(html).toContain("round");
         });
     });
 
@@ -317,6 +348,48 @@ describe("TokenHtmlShowcaseRenderer", () => {
                 ],
             });
             expect(html).not.toContain("component-bg");
+        });
+
+        it("renders themed semantic navigation and themed semantic sections", () => {
+            const html = renderer.renderPage({
+                entries: [
+                    entry("--primitive-color-brand", "#2549f6", "primitive", "base"),
+                    entry("--semantic-color-text-primary", "var(--primitive-color-brand)", "semantic", "base"),
+                ],
+                themes: [
+                    {
+                        name: "base",
+                        entries: [
+                            entry("--primitive-color-brand", "#2549f6", "primitive", "base"),
+                            entry("--semantic-color-text-primary", "var(--primitive-color-brand)", "semantic", "base"),
+                        ],
+                    },
+                ],
+            });
+            expect(html).toContain("semantic-base-group-title-color-text");
+            expect(html).toContain("Theme: base");
+            expect(html).toContain("scope-base-semantic");
+        });
+    });
+
+    describe("renderPage - motion tokens", () => {
+        it("renders aggregated and fallback motion previews", () => {
+            const html = renderer.renderPage(parsed([
+                entry("--primitive-transition-emphasis-duration", "240ms"),
+                entry("--primitive-transition-emphasis-delay", "0ms"),
+                entry("--primitive-transition-emphasis-timingFunction-0", "0.2"),
+                entry("--primitive-transition-emphasis-timingFunction-1", "0.8"),
+                entry("--primitive-transition-emphasis-timingFunction-2", "0.2"),
+                entry("--primitive-transition-emphasis-timingFunction-3", "1"),
+                entry("--primitive-motion-duration-fast", "0ms"),
+                entry("--primitive-motion-cubic-bezier-snappy", "0.2, 0.8, 0.2, 1"),
+                entry("--primitive-motion-transition-card", "200ms cubic-bezier(0.2, 0.8, 0.2, 1)"),
+            ]));
+            expect(html).toContain("motion-preview");
+            expect(html).toContain("--motion-duration:1ms");
+            expect(html).toContain("cubic-bezier(0.2, 0.8, 0.2, 1)");
+            expect(html).toContain("240ms cubic-bezier(0.2, 0.8, 0.2, 1) 0ms");
+            expect(html).toContain("200ms cubic-bezier(0.2, 0.8, 0.2, 1)");
         });
     });
 

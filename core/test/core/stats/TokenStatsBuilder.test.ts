@@ -1,12 +1,16 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { tmpdir } from "node:os";
 import { randomUUID } from "node:crypto";
 import { DtcgListLoader } from "#/core/io/DtcgListLoader";
 import { DtcgChecker } from "#/core/validation/DtcgChecker";
+import { TokenSyntaxError } from "#/core/io/DtcgListLoader";
 import { TokenStatsCalculator } from "#/core/stats/TokenStatsCalculator";
 import { TokenStatsBuilder } from "#/core/stats/TokenStatsBuilder";
+import { Dtcg } from "#/core/model/Dtcg";
+import { DtcgList } from "#/core/model/DtcgList";
+import { TokenGroup } from "#/core/model/TokenGroup";
 
 function createStatsBuilder(): TokenStatsBuilder {
     return new TokenStatsBuilder(
@@ -242,5 +246,83 @@ Themes 1:
         } finally {
             rmSync(temp.dir, { recursive: true, force: true });
         }
+    });
+
+    it("rejects empty source lists", async () => {
+        await expect(createStatsBuilder().collect([])).rejects.toThrow("No token sources provided");
+    });
+
+    it("formats validation errors and ignores warnings", async () => {
+        const builder = new TokenStatsBuilder(
+            { load: vi.fn() } as unknown as DtcgListLoader,
+            {
+                validate: vi.fn().mockResolvedValue([
+                    { id: "warn", sourcePath: "tokens.json", message: "warn only", severity: "warning" },
+                    { id: "bad-reference", sourcePath: "tokens.json", message: "Missing token", severity: "error" },
+                ]),
+            },
+            new TokenStatsCalculator(),
+        );
+
+        await expect(builder.collect(["tokens.json"])).rejects.toThrow("[bad-reference] tokens.json - Missing token");
+    });
+
+    it("rethrows formatted token syntax errors from the loader", async () => {
+        const builder = new TokenStatsBuilder(
+            {
+                load: vi.fn().mockRejectedValue(new TokenSyntaxError([
+                    { id: "bad-dtcg", sourcePath: "tokens.json", message: "Schema mismatch", severity: "error" },
+                ])),
+            } as unknown as DtcgListLoader,
+            { validate: vi.fn().mockResolvedValue([]) },
+            new TokenStatsCalculator(),
+        );
+
+        await expect(builder.collect(["tokens.json"])).rejects.toThrow("[bad-dtcg] tokens.json - Schema mismatch");
+    });
+
+    it("rethrows unknown loader errors as-is", async () => {
+        const builder = new TokenStatsBuilder(
+            {
+                load: vi.fn().mockRejectedValue(new Error("boom")),
+            } as unknown as DtcgListLoader,
+            { validate: vi.fn().mockResolvedValue([]) },
+            new TokenStatsCalculator(),
+        );
+
+        await expect(builder.collect(["tokens.json"])).rejects.toThrow("boom");
+    });
+
+    it("renders simple integer breakdown values without percentages", async () => {
+        const base = new Dtcg(new TokenGroup());
+        const list = new DtcgList(base, new Map());
+        const builder = new TokenStatsBuilder(
+            { load: vi.fn().mockResolvedValue(list) } as unknown as DtcgListLoader,
+            { validate: vi.fn().mockResolvedValue([]) },
+            {
+                calculate: vi.fn().mockReturnValue([
+                    {
+                        label: "Total tokens",
+                        value: 3,
+                        breakdowns: [
+                            {
+                                label: "Plain breakdown",
+                                items: [
+                                    { label: "one", value: 1 },
+                                    { label: "two" },
+                                ],
+                            },
+                        ],
+                    },
+                ]),
+            } as unknown as TokenStatsCalculator,
+        );
+
+        const output = await builder.stats(["tokens.json"]);
+
+        expect(output).toContain("Total tokens: 3");
+        expect(output).toContain("Plain breakdown:");
+        expect(output).toContain("one .... 1");
+        expect(output).toContain("  two");
     });
 });
