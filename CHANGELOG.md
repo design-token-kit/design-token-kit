@@ -16,27 +16,7 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   - `2025.10` (default) — original DTCG 2025.10, units `px` and `rem`
   - `2025.10-design.md` — adds `em` unit for DESIGN.md compatibility
 
-- Tailwind CSS v4 output format via `convert --outform tailwind-v4`, including
-  `@theme` generation, Tailwind namespace mapping, typography flattening, alias
-  support, and theme overrides.
-- Tailwind CSS v4 selector options:
-  - `--base-selector <selector>` for mirrored base custom properties
-  - `--theme-selector <template>` for custom theme override selectors
-- Tailwind CSS v4 gradient mapping now emits DTCG `gradient` tokens under the
-  `--background-image-*` namespace so they can be used as background-image
-  theme variables.
-- Tailwind CSS v4 transition mapping now flattens DTCG `transition` tokens into
-  `--duration-*` and `--ease-*` theme variables.
-
-### Changed
-
-- Tailwind CSS v4 color serialization now prefers Tailwind-friendly output:
-  opaque `srgb` colors are emitted as hex, translucent `srgb` colors as
-  `rgb(... / ...)`, while other color spaces keep native CSS syntax.
-- Tailwind CSS v4 output now mirrors base `@theme` variables under `:root` by
-  default so they are directly usable as regular CSS custom properties.
-
-### Internal
+- Tailwind CSS v4 output support via `convert --outform tailwind-v4`.
 
 - Added validation warnings for unsupported
   `design-token-kit.tailwindNamespace` values. Currently only `"breakpoint"` is
