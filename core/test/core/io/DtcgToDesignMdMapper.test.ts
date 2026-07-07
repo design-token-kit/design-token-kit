@@ -2,6 +2,7 @@ import { describe, expect, it, vi, afterEach } from "vitest";
 import { Dtcg } from "#/core/model/Dtcg";
 import { DtcgList } from "#/core/model/DtcgList";
 import { TokenGroup } from "#/core/model/TokenGroup";
+import { TokenNode } from "#/core/model/TokenNode";
 import { TokenReference } from "#/core/model/TokenReference";
 import { DtcgToDesignMdMapper } from "#/core/io/DtcgToDesignMdMapper";
 import { AliasToken } from "#/core/model/tokens/AliasToken";
@@ -42,39 +43,39 @@ describe("DtcgToDesignMdMapper", () => {
     it("maps the base tree to DESIGN.md sections and rewrites references", () => {
         const warn = vi.spyOn(console, "warn").mockImplementation(() => undefined);
 
-        const root = new TokenGroup({ children: new Map([
-            ["primitive", new TokenGroup({ children: new Map([
-                ["color", new TokenGroup({ children: new Map([
+        const root = new TokenGroup({ children: new Map<string, TokenGroup | TokenNode<unknown>>([
+            ["primitive", new TokenGroup({ children: new Map<string, TokenGroup | TokenNode<unknown>>([
+                ["color", new TokenGroup({ children: new Map<string, TokenGroup | TokenNode<unknown>>([
                     ["white", color("#ffffff")],
                 ]) })],
-                ["dimension", new TokenGroup({ children: new Map([
+                ["dimension", new TokenGroup({ children: new Map<string, TokenGroup | TokenNode<unknown>>([
                     ["radius-sm", dimension(4)],
                     ["space-md", dimension(16)],
                 ]) })],
-                ["typography", new TokenGroup({ children: new Map([
+                ["typography", new TokenGroup({ children: new Map<string, TokenGroup | TokenNode<unknown>>([
                     ["body", typography()],
                 ]) })],
-                ["border", new TokenGroup({ children: new Map([
+                ["border", new TokenGroup({ children: new Map<string, TokenGroup | TokenNode<unknown>>([
                     ["subtle", color("#000000")],
                 ]) })],
             ]) })],
-            ["semantic", new TokenGroup({ children: new Map([
-                ["color", new TokenGroup({ children: new Map([
+            ["semantic", new TokenGroup({ children: new Map<string, TokenGroup | TokenNode<unknown>>([
+                ["color", new TokenGroup({ children: new Map<string, TokenGroup | TokenNode<unknown>>([
                     ["bg", new ColorToken(new TokenReference("primitive.color.white"))],
                 ]) })],
-                ["shape", new TokenGroup({ children: new Map([
+                ["shape", new TokenGroup({ children: new Map<string, TokenGroup | TokenNode<unknown>>([
                     ["radius-md", new DimensionToken(new TokenReference("primitive.dimension.radius-sm"))],
                 ]) })],
-                ["space", new TokenGroup({ children: new Map([
+                ["space", new TokenGroup({ children: new Map<string, TokenGroup | TokenNode<unknown>>([
                     ["gap", new DimensionToken(new TokenReference("primitive.dimension.space-md"))],
                 ]) })],
-                ["text", new TokenGroup({ children: new Map([
+                ["text", new TokenGroup({ children: new Map<string, TokenGroup | TokenNode<unknown>>([
                     ["body", new TypographyToken(new TokenReference("primitive.typography.body"))],
                 ]) })],
             ]) })],
-            ["component", new TokenGroup({ children: new Map([
-                ["button", new TokenGroup({ children: new Map([
-                    ["primary", new TokenGroup({ children: new Map([
+            ["component", new TokenGroup({ children: new Map<string, TokenGroup | TokenNode<unknown>>([
+                ["button", new TokenGroup({ children: new Map<string, TokenGroup | TokenNode<unknown>>([
+                    ["primary", new TokenGroup({ children: new Map<string, TokenGroup | TokenNode<unknown>>([
                         ["background", new ColorToken(new TokenReference("semantic.color.bg"))],
                         ["padding", new DimensionToken(new TokenReference("semantic.space.gap"))],
                         ["label", new TypographyToken(new TokenReference("semantic.text.body"))],
@@ -113,14 +114,14 @@ describe("DtcgToDesignMdMapper", () => {
     });
 
     it("removes references to unmapped unsupported tokens", () => {
-        const root = new TokenGroup({ children: new Map([
-            ["primitive", new TokenGroup({ children: new Map([
-                ["border", new TokenGroup({ children: new Map([
+        const root = new TokenGroup({ children: new Map<string, TokenGroup | TokenNode<unknown>>([
+            ["primitive", new TokenGroup({ children: new Map<string, TokenGroup | TokenNode<unknown>>([
+                ["border", new TokenGroup({ children: new Map<string, TokenGroup | TokenNode<unknown>>([
                     ["subtle", color("#000000")],
                 ]) })],
             ]) })],
-            ["component", new TokenGroup({ children: new Map([
-                ["alert", new TokenGroup({ children: new Map([
+            ["component", new TokenGroup({ children: new Map<string, TokenGroup | TokenNode<unknown>>([
+                ["alert", new TokenGroup({ children: new Map<string, TokenGroup | TokenNode<unknown>>([
                     ["border", new ColorToken(new TokenReference("primitive.border.subtle"))],
                 ]) })],
             ]) })],

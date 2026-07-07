@@ -52,7 +52,7 @@ describe("showcase", () => {
             expect(result.stderr).toContain("Showcase failed");
         } finally {
             if (original === undefined) {
-                delete (process.stdin as typeof process.stdin & { isTTY?: boolean }).isTTY;
+                Reflect.deleteProperty(process.stdin, "isTTY");
             } else {
                 Object.defineProperty(process.stdin, "isTTY", original);
             }

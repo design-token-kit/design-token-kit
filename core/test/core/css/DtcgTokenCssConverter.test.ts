@@ -3,6 +3,7 @@ import { fileURLToPath } from "node:url";
 import { DtcgTokenCssConverter } from "#/core/css/DtcgTokenCssConverter";
 import { Dtcg } from "#/core/model/Dtcg";
 import { TokenGroup } from "#/core/model/TokenGroup";
+import { TokenNode } from "#/core/model/TokenNode";
 import { TokenReference } from "#/core/model/TokenReference";
 import { BorderToken } from "#/core/model/tokens/BorderToken";
 import { ColorToken } from "#/core/model/tokens/ColorToken";
@@ -153,7 +154,7 @@ describe("DtcgTokenCssConverter", () => {
 
     it("serializes direct top-level tokens and complex css value branches", () => {
         const generated = converter.convertDocument(new Dtcg(new TokenGroup({
-            children: new Map([
+            children: new Map<string, TokenGroup | TokenNode<unknown>>([
                 ["brand", new ColorToken(new ColorValue("srgb", [1, 0, 0], 1, "#ff0000"))],
                 ["duration", new DurationToken(new DurationValue(200, "ms"))],
                 ["easing", new CubicBezierToken(new CubicBezierValue(0.2, 0.8, 0.2, 1))],
@@ -163,7 +164,7 @@ describe("DtcgTokenCssConverter", () => {
                     "sans-serif",
                 ])],
                 ["brandFonts", new TokenGroup({
-                    children: new Map([
+                    children: new Map<string, TokenGroup | TokenNode<unknown>>([
                         ["sans", new FontFamilyToken("Arial")],
                     ]),
                 })],
@@ -201,12 +202,12 @@ describe("DtcgTokenCssConverter", () => {
                     new TokenReference("gradientStops.end"),
                 ])],
                 ["gradientStops", new TokenGroup({
-                    children: new Map([
+                    children: new Map<string, TokenGroup | TokenNode<unknown>>([
                         ["end", new ColorToken(new ColorValue("srgb", [0, 0, 1], 1, "#0000ff"))],
                     ]),
                 })],
                 ["progress", new TokenGroup({
-                    children: new Map([
+                    children: new Map<string, TokenGroup | TokenNode<unknown>>([
                         ["start", new NumberToken(0.5)],
                     ]),
                 })],
@@ -218,17 +219,17 @@ describe("DtcgTokenCssConverter", () => {
                     new TokenReference("lineHeight.body"),
                 ))],
                 ["size", new TokenGroup({
-                    children: new Map([
+                    children: new Map<string, TokenGroup | TokenNode<unknown>>([
                         ["body", new DimensionToken(new DimensionValue(16, "px"))],
                     ]),
                 })],
                 ["weight", new TokenGroup({
-                    children: new Map([
+                    children: new Map<string, TokenGroup | TokenNode<unknown>>([
                         ["body", new NumberToken(500)],
                     ]),
                 })],
                 ["lineHeight", new TokenGroup({
-                    children: new Map([
+                    children: new Map<string, TokenGroup | TokenNode<unknown>>([
                         ["body", new NumberToken(1.5)],
                     ]),
                 })],

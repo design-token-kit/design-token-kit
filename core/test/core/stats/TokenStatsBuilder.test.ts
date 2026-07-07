@@ -12,6 +12,10 @@ import { Dtcg } from "#/core/model/Dtcg";
 import { DtcgList } from "#/core/model/DtcgList";
 import { TokenGroup } from "#/core/model/TokenGroup";
 
+function mockChecker(validate: ReturnType<typeof vi.fn>): DtcgChecker {
+    return { validate } as unknown as DtcgChecker;
+}
+
 function createStatsBuilder(): TokenStatsBuilder {
     return new TokenStatsBuilder(
         new DtcgListLoader(),
@@ -255,12 +259,10 @@ Themes 1:
     it("formats validation errors and ignores warnings", async () => {
         const builder = new TokenStatsBuilder(
             { load: vi.fn() } as unknown as DtcgListLoader,
-            {
-                validate: vi.fn().mockResolvedValue([
+            mockChecker(vi.fn().mockResolvedValue([
                     { id: "warn", sourcePath: "tokens.json", message: "warn only", severity: "warning" },
                     { id: "bad-reference", sourcePath: "tokens.json", message: "Missing token", severity: "error" },
-                ]),
-            },
+                ])),
             new TokenStatsCalculator(),
         );
 
@@ -274,7 +276,7 @@ Themes 1:
                     { id: "bad-dtcg", sourcePath: "tokens.json", message: "Schema mismatch", severity: "error" },
                 ])),
             } as unknown as DtcgListLoader,
-            { validate: vi.fn().mockResolvedValue([]) },
+            mockChecker(vi.fn().mockResolvedValue([])),
             new TokenStatsCalculator(),
         );
 
@@ -286,7 +288,7 @@ Themes 1:
             {
                 load: vi.fn().mockRejectedValue(new Error("boom")),
             } as unknown as DtcgListLoader,
-            { validate: vi.fn().mockResolvedValue([]) },
+            mockChecker(vi.fn().mockResolvedValue([])),
             new TokenStatsCalculator(),
         );
 
@@ -298,7 +300,7 @@ Themes 1:
         const list = new DtcgList(base, new Map());
         const builder = new TokenStatsBuilder(
             { load: vi.fn().mockResolvedValue(list) } as unknown as DtcgListLoader,
-            { validate: vi.fn().mockResolvedValue([]) },
+            mockChecker(vi.fn().mockResolvedValue([])),
             {
                 calculate: vi.fn().mockReturnValue([
                     {

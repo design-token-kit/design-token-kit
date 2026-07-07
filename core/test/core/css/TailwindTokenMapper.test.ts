@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { TailwindTokenMapper } from "#/core/css/TailwindTokenMapper";
 import { Dtcg } from "#/core/model/Dtcg";
 import { TokenGroup } from "#/core/model/TokenGroup";
+import { TokenNode } from "#/core/model/TokenNode";
 import { TokenReference } from "#/core/model/TokenReference";
 import { BorderToken } from "#/core/model/tokens/BorderToken";
 import { ColorToken } from "#/core/model/tokens/ColorToken";
@@ -19,17 +20,15 @@ import { CubicBezierValue } from "#/core/model/values/CubicBezierValue";
 import { DimensionValue } from "#/core/model/values/DimensionValue";
 import { GradientStop } from "#/core/model/values/GradientValue";
 import { ShadowLayer } from "#/core/model/values/ShadowValue";
-import { TransitionValue } from "#/core/model/values/TransitionValue";
-import { TypographyValue } from "#/core/model/values/TypographyValue";
 
 describe("TailwindTokenMapper", () => {
     const mapper = new TailwindTokenMapper();
 
     it("maps direct top-level tokens and strips namespace-like segments", () => {
         const declarations = mapper.collectDocument(new Dtcg(new TokenGroup({
-            children: new Map([
+            children: new Map<string, TokenGroup | TokenNode<unknown>>([
                 ["color", new TokenGroup({
-                    children: new Map([
+                    children: new Map<string, TokenGroup | TokenNode<unknown>>([
                         ["brand", new ColorToken(new ColorValue("srgb", [1, 0, 0], 1, "#ff0000"))],
                     ]),
                 })],
@@ -37,7 +36,7 @@ describe("TailwindTokenMapper", () => {
                 ["fontWeight", new FontWeightToken(600)],
                 ["ease", new CubicBezierToken(new CubicBezierValue(0.2, 0.8, 0.2, 1))],
                 ["screens", new TokenGroup({
-                    children: new Map([
+                    children: new Map<string, TokenGroup | TokenNode<unknown>>([
                         ["desktop", new DimensionToken(new DimensionValue(1440, "px"))],
                     ]),
                 })],
@@ -55,9 +54,9 @@ describe("TailwindTokenMapper", () => {
 
     it("maps radius-like dimension paths to the radius namespace", () => {
         const declarations = mapper.collectDocument(new Dtcg(new TokenGroup({
-            children: new Map([
+            children: new Map<string, TokenGroup | TokenNode<unknown>>([
                 ["radius", new TokenGroup({
-                    children: new Map([
+                    children: new Map<string, TokenGroup | TokenNode<unknown>>([
                         ["lg", new DimensionToken(new DimensionValue(12, "px"))],
                     ]),
                 })],
@@ -69,21 +68,21 @@ describe("TailwindTokenMapper", () => {
 
     it("maps shadow, gradient, and namespace-aware references", () => {
         const declarations = mapper.collectDocument(new Dtcg(new TokenGroup({
-            children: new Map([
+            children: new Map<string, TokenGroup | TokenNode<unknown>>([
                 ["primitive", new TokenGroup({
-                    children: new Map([
+                    children: new Map<string, TokenGroup | TokenNode<unknown>>([
                         ["color", new TokenGroup({
-                            children: new Map([
+                            children: new Map<string, TokenGroup | TokenNode<unknown>>([
                                 ["brand", new ColorToken(new ColorValue("srgb", [0, 0, 0], 1, "#000000"))],
                             ]),
                         })],
                         ["spacing", new TokenGroup({
-                            children: new Map([
+                            children: new Map<string, TokenGroup | TokenNode<unknown>>([
                                 ["half", new DimensionToken(new DimensionValue(0.5, "px"))],
                             ]),
                         })],
                         ["shadow", new TokenGroup({
-                            children: new Map([
+                            children: new Map<string, TokenGroup | TokenNode<unknown>>([
                                 ["card", new ShadowToken([
                                     new ShadowLayer(
                                         new TokenReference("primitive.color.brand"),
@@ -105,7 +104,7 @@ describe("TailwindTokenMapper", () => {
                             ]),
                         })],
                         ["gradient", new TokenGroup({
-                            children: new Map([
+                            children: new Map<string, TokenGroup | TokenNode<unknown>>([
                                 ["brand", new GradientToken([
                                     new GradientStop(new TokenReference("primitive.color.brand"), new TokenReference("primitive.spacing.half")),
                                     new TokenReference("primitive.color.brand"),
@@ -129,16 +128,16 @@ describe("TailwindTokenMapper", () => {
 
     it("flattens typography and transition aliases into namespace-specific references", () => {
         const declarations = mapper.collectDocument(new Dtcg(new TokenGroup({
-            children: new Map([
+            children: new Map<string, TokenGroup | TokenNode<unknown>>([
                 ["primitive", new TokenGroup({
-                    children: new Map([
+                    children: new Map<string, TokenGroup | TokenNode<unknown>>([
                         ["typography", new TokenGroup({
-                            children: new Map([
+                            children: new Map<string, TokenGroup | TokenNode<unknown>>([
                                 ["body", new TypographyToken(new TokenReference("semantic.typography.body"))],
                             ]),
                         })],
                         ["transition", new TokenGroup({
-                            children: new Map([
+                            children: new Map<string, TokenGroup | TokenNode<unknown>>([
                                 ["fast", new TransitionToken(new TokenReference("semantic.transition.fast"))],
                             ]),
                         })],
@@ -160,7 +159,7 @@ describe("TailwindTokenMapper", () => {
 
     it("skips unsupported namespaces and invalid typed values", () => {
         const declarations = mapper.collectDocument(new Dtcg(new TokenGroup({
-            children: new Map([
+            children: new Map<string, TokenGroup | TokenNode<unknown>>([
                 ["border", new BorderToken(new BorderValue(
                     new ColorValue("srgb", [1, 0, 0], 1, "#ff0000"),
                     new DimensionValue(1, "px"),
@@ -177,9 +176,9 @@ describe("TailwindTokenMapper", () => {
 
     it("falls back when a custom tailwind namespace extension is unsupported", () => {
         const declarations = mapper.collectDocument(new Dtcg(new TokenGroup({
-            children: new Map([
+            children: new Map<string, TokenGroup | TokenNode<unknown>>([
                 ["spacing", new TokenGroup({
-                    children: new Map([
+                    children: new Map<string, TokenGroup | TokenNode<unknown>>([
                         ["md", new DimensionToken(
                             new DimensionValue(16, "px"),
                             undefined,

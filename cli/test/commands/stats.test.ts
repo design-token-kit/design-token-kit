@@ -77,7 +77,7 @@ describe("stats", () => {
             expect(result.stderr).toContain("Stats failed");
         } finally {
             if (original === undefined) {
-                delete (process.stdin as typeof process.stdin & { isTTY?: boolean }).isTTY;
+                Reflect.deleteProperty(process.stdin, "isTTY");
             } else {
                 Object.defineProperty(process.stdin, "isTTY", original);
             }
