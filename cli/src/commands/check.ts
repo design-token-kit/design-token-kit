@@ -21,6 +21,7 @@ interface CheckOptions {
 }
 
 export const checkCommand = new Command("check")
+    .alias("validate")
     .description("Check token files: schema, model correctness and architecture.")
     .argument("[files...]", "Paths to token files (reads from stdin when omitted). Supported formats: DTCG, HRDT, DESIGN.md.")
     .addOption(

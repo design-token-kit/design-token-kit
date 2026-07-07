@@ -113,7 +113,7 @@ Convert token documents between DTCG JSON and HRDT YAML.
 
 * `check [options] [files...]` - check DTCG JSON, HRDT YAML, or DESIGN.md
   token files: schema, model correctness, lint.
-* `validate [files...]` - deprecated, use `check --scope validate`.
+* `validate [files...]` - alias for `check`.
 * `convert [options] [files...]` - convert a token file to DTCG JSON,
   HRDT YAML, DESIGN.md, or CSS.
 * `showcase [options] [files...]` - create HTML showcase from DTCG JSON,

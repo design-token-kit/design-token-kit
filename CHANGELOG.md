@@ -2,7 +2,30 @@
 
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
-## [Unreleased]
+## [1.3.0] - 2026-07-07
+
+### Changed
+
+- `validate` is now an alias of `check` (same behavior, options, and output)
+  instead of a separate deprecated command. The deprecation warning is gone.
+
+## [1.2.2] - 2026-07-07
+
+### Fixed
+
+- Fixed broken links in the root README.
+
+## [1.2.1] - 2026-07-07
+
+### Added
+
+- Lint: `root-layer` check enforcing that token paths start with a configured
+  layer prefix.
+- Lint: `empty-group` check flagging groups with no tokens or child groups.
+- Lint: `missing-description` check flagging tokens without a `$description`.
+
+
+## [1.2.0] - 2026-06-25
 
 ### Added
 
@@ -15,7 +38,7 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   Accepts a directory path or a built-in resource name. Built-in schemas:
   - `2025.10` (default) — original DTCG 2025.10, units `px` and `rem`
   - `2025.10-design.md` — adds `em` unit for DESIGN.md compatibility
- 
+
 ## [1.1.1] - 2026-06-24
 
 ### Changed

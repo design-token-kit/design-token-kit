@@ -5,10 +5,10 @@ import { dtokens } from "./_run";
 describe("integration", () => {
 
 describe("help", () => {
-    it("shows exit codes in validate help", () => {
+    it("shows exit codes in validate (check alias) help", () => {
         const result = dtokens("validate --help");
         expect(result.stdout).toContain("Exit status:");
-        expect(result.stdout).toContain("validation errors found");
+        expect(result.stdout).toContain("issues found");
     });
 
     it("shows exit codes in check help", () => {

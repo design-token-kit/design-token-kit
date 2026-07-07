@@ -3,7 +3,6 @@ import { readFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { checkCommand } from "./commands/check";
-import { validateCommand } from "./commands/validate";
 import { convertCommand } from "./commands/convert";
 import { showcaseCommand } from "./commands/showcase";
 import { statsCommand } from "./commands/stats";
@@ -16,7 +15,6 @@ const program = new Command()
     .description("CLI for design tokens: check, convert, showcase, stats. Supports DTCG JSON, HRDT YAML, and DESIGN.md.")
     .version(packageJson.version, "-v, --version", "display version")
     .addCommand(checkCommand)
-    .addCommand(validateCommand)
     .addCommand(convertCommand)
     .addCommand(showcaseCommand)
     .addCommand(statsCommand)
