@@ -16,8 +16,8 @@ type StatsOptions = {
 };
 
 export const statsCommand = new Command("stats")
-    .description("Show token statistics for DTCG JSON or HRDT YAML token files.")
-    .argument("[files...]", "Paths to token JSON or HRDT YAML files (reads from stdin when omitted)")
+    .description("Show token statistics for DTCG JSON, HRDT YAML, or DESIGN.md token files.")
+    .argument("[files...]", "Paths to token JSON, HRDT YAML, or DESIGN.md files (reads from stdin when omitted)")
     .option("-o, --out <file>", "Output HTML file name or path")
     .option("--open", "Open the generated HTML in browser (only with --out)")
     .addHelpText("after", "\nExit status:\n  0  success\n  1  stats failed")

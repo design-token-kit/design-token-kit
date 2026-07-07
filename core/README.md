@@ -3,8 +3,8 @@
 The core package of Design Token Kit provides the runtime foundation
 for working with [DTCG 2025.10 design tokens][dtcg] and [DESIGN.md][designmd].
 It defines the typed token model, performs schema and semantic validation,
-converts tokens into CSS custom properties, renders static HTML showcases,
-and builds token statistics reports.
+converts tokens into CSS custom properties and Tailwind CSS v4 theme output,
+renders static HTML showcases, and builds token statistics reports.
 
 GitHub repository:
 https://github.com/design-token-kit/design-token-kit
@@ -24,7 +24,7 @@ https://github.com/design-token-kit/design-token-kit
 * **Token format conversion** - read and write DTCG JSON, HRDT YAML, and
   DESIGN.md
 * **CSS generation** - base and theme token sets rendered as CSS
-  custom properties
+  custom properties or Tailwind CSS v4 `@theme` variables
 * **Static showcase** - HTML showcase generation from token sources or
   existing CSS
 * **Token stats** - text and HTML statistics reports for token sources
@@ -44,7 +44,7 @@ npm install @design-token-kit/core
 ```ts
 import {
   DtcgListLoader,
-  DtcgTokenValidator,
+  DtcgChecker,
   DtcgTokenCssConverter,
   createTokenHtmlShowcase,
   createTokenStats,
@@ -52,7 +52,7 @@ import {
 
 const sources = ["./tokens.json", "./tokens.dark.yaml"];
 
-const issues = await new DtcgTokenValidator().validate(sources);
+const issues = await new DtcgChecker().validate(sources);
 if (issues.some((issue) => issue.severity === "error")) {
   console.error(issues);
   process.exit(1);
@@ -97,7 +97,9 @@ overrides.
 ### CSS input for showcase
 
 For showcase generation, a single CSS source can be rendered directly
-without going through token validation.
+without going through token validation. This includes both classic
+`:root` custom-property output and Tailwind CSS v4 output with `@theme`
+and theme override selectors.
 
 ## Output Formats
 
@@ -106,10 +108,15 @@ without going through token validation.
 Generate token sets as CSS variables with a `:root` block for base
 tokens and `:root[data-theme="<theme>"]` blocks for theme overrides.
 
+### Tailwind CSS v4 theme output
+
+Generate Tailwind CSS v4 theme variables with an `@theme` block for the
+base token set and CSS selectors for theme overrides.
+
 ### HTML showcase
 
-Render a static HTML preview from DTCG JSON, HRDT YAML, or existing
-CSS custom properties.
+Render a static HTML preview from DTCG JSON, HRDT YAML, DESIGN.md, or
+existing CSS.
 
 ### Token statistics
 
@@ -123,28 +130,33 @@ write a parsed document back to any supported source format.
 
 ## Main APIs
 
-* `DtcgTokenValidator` - validate DTCG JSON and HRDT YAML token sources
+* `DtcgChecker` - validate token sources with the full check pipeline
+* `DtcgSchemaValidator` - validate DTCG JSON against the schema only
+* `HrdtTokenValidator` - validate HRDT YAML token sources
 * `DtcgListLoader` - load base and theme sources into a `DtcgList`
 * `DtcgJsonReader` / `HrdtTokenReader` / `DesignMdReader` - parse supported token formats
 * `DtcgJsonWriter` / `HrdtTokenWriter` / `DesignMdWriter` - export token documents
 * `DtcgToDesignMdMapper` - map DTCG tree to flat DESIGN.md layout
 * `DtcgTokenCssConverter` - generate CSS custom properties from tokens
+* `DtcgTailwindCssConverter` - generate Tailwind CSS v4 `@theme` output
+* `createTokenCssConverter()` - create the default CSS converter
+* `createTailwindCssConverter()` - create the default Tailwind converter
 * `createTokenHtmlShowcase()` - generate an HTML preview from token
   sources or CSS
 * `createTokenStats()` - generate token statistics reports
 
 ## Validation
 
-Use `DtcgTokenValidator` when you want the full validation pass:
+Use `DtcgChecker` when you want the full validation pass:
 
-- DTCG schema checks
-- HRDT schema checks
+- format/schema checks for DTCG JSON, HRDT YAML, and DESIGN.md
 - semantic checks on the resolved token graph
+- optional lint checks when `scope` includes `CheckScope.LINT`
 
 ```ts
-import { DtcgTokenValidator } from "@design-token-kit/core";
+import { DtcgChecker } from "@design-token-kit/core";
 
-const issues = await new DtcgTokenValidator().validate([
+const issues = await new DtcgChecker().validate([
   "./tokens.json",
   "./tokens.dark.json",
 ]);
@@ -165,7 +177,7 @@ without semantic checks.
 ## Document Conversion
 
 Use readers and writers to convert token documents between DTCG JSON
-and HRDT YAML.
+HRDT YAML, and DESIGN.md.
 
 ```ts
 import {
@@ -197,6 +209,82 @@ const css = await new DtcgTokenCssConverter().convert([
 When you already have a parsed document or a prepared `DtcgList`, use
 `convertDocument()` or `convertList()` instead of reloading sources.
 
+For Tailwind CSS v4 output, use `DtcgTailwindCssConverter`.
+
+```ts
+import { DtcgTailwindCssConverter } from "@design-token-kit/core";
+
+const css = await new DtcgTailwindCssConverter().convert([
+  "./tokens.json",
+  "./tokens.dark.json",
+]);
+```
+
+Default Tailwind output contains:
+
+- `@import 'tailwindcss';`
+- `@theme { ... }` for Tailwind v4 theme variables
+- `:root { ... }` as a plain custom-property mirror of the base tokens
+- `[data-theme="<theme>"] { ... }` for theme overrides
+
+For Shadow DOM or custom theming selectors, pass converter options:
+
+```ts
+import { DtcgTailwindCssConverter } from "@design-token-kit/core";
+
+const css = await new DtcgTailwindCssConverter({
+  baseSelector: ":host",
+  themeSelector: ":host([data-theme='{theme}'])",
+}).convert([
+  "./tokens.json",
+  "./tokens.dark.json",
+]);
+```
+
+### Tailwind CSS v4 output contract
+
+`DtcgTailwindCssConverter` emits a documented Tailwind contract instead of
+trying to map every DTCG token type into a new namespace.
+
+Current mappings:
+
+- `color` -> `--color-*`
+- `dimension` -> `--spacing-*`, `--breakpoint-*`, or `--radius-*`
+- `fontFamily` -> `--font-*`
+- `fontWeight` -> `--font-weight-*`
+- `shadow` -> `--shadow-*`
+- `gradient` -> `--background-image-*`
+- `duration` -> `--duration-*`
+- `cubicBezier` -> `--ease-*`
+- `typography` -> flattened into `--font-*`, `--text-*`,
+  `--font-weight-*`, `--tracking-*`, `--leading-*`
+- `transition` -> flattened into `--duration-*` and `--ease-*`
+
+Tailwind-specific behavior:
+
+- opaque `srgb` colors -> hex
+- translucent `srgb` colors -> `rgb(... / ...)`
+- other color spaces -> native CSS syntax
+
+#### Breakpoints
+
+DTCG does not define `breakpoint` as a separate token type, so Tailwind
+breakpoints are derived from `dimension` tokens.
+
+Resolution order:
+
+1. `$extensions["design-token-kit"].tailwindNamespace`
+2. path segments `breakpoint`, `breakpoints`, `screen`, `screens`
+3. fallback to `--spacing-*`
+
+Currently, the only supported explicit `tailwindNamespace` value is
+`"breakpoint"`.
+
+#### Limitations
+
+- `border` composite tokens are not emitted as Tailwind theme variables
+- `transition.delay` is not emitted in Tailwind output
+
 ## HTML Showcase
 
 Use `createTokenHtmlShowcase()` for the default pipeline or
@@ -211,6 +299,10 @@ const html = await createTokenHtmlShowcase().showcase([
 ]);
 ```
 
+The showcase pipeline accepts DTCG JSON, HRDT YAML, DESIGN.md, and existing
+CSS sources. CSS input may be classic `:root` custom-property output or
+Tailwind CSS v4 output with `@theme` and theme override selectors.
+
 ## Token Statistics
 
 Use `createTokenStats()` for the default text report or
@@ -224,6 +316,8 @@ const stats = await createTokenStats().stats([
   "./tokens.yaml",
 ]);
 ```
+
+Token statistics work with DTCG JSON, HRDT YAML, and DESIGN.md sources.
 
 ## Links
 

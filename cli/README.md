@@ -22,7 +22,7 @@ https://github.com/design-token-kit/design-token-kit
 * **Token format conversion** - read and write DTCG JSON, HRDT YAML, and
   DESIGN.md
 * **CSS generation** - base and theme token sets rendered as CSS custom
-  properties
+  properties or Tailwind CSS v4 `@theme` variables
 * **Static showcase** - HTML showcase generation from token sources or existing
   CSS
 * **Token stats** - text and HTML reports with token counts and breakdowns
@@ -57,6 +57,7 @@ npm install @design-token-kit/cli
 ```bash
 dtokens check tokens.json
 dtokens convert tokens.yaml --inform hrdt --outform css --out ./tokens.css
+dtokens convert tokens.json --outform tailwind-v4 --out ./tokens.tailwind.css
 dtokens convert tokens.json --outform design-md
 dtokens convert DESIGN.md --inform design-md --outform dtcg
 dtokens showcase tokens.json --out ./showcase.html --open
@@ -98,10 +99,16 @@ Generate CSS variables from token sources.
 Base tokens are emitted under `:root`.
 Theme overrides are emitted under `:root[data-theme="<theme>"]`.
 
+### Tailwind CSS v4 theme output
+
+Generate Tailwind CSS v4 theme variables with an `@theme` block for the
+base token set and CSS selectors for theme overrides.
+
 ### HTML showcase
 
-Generate a static HTML preview from DTCG JSON, HRDT YAML, or existing
-CSS custom properties.
+Generate a static HTML preview from DTCG JSON, HRDT YAML, DESIGN.md, or
+existing CSS. Existing CSS input may be either classic `:root` output or
+Tailwind CSS v4 output with `@theme` and theme override selectors.
 
 ### Token statistics
 
@@ -110,7 +117,7 @@ sources.
 
 ### Serialized token documents
 
-Convert token documents between DTCG JSON and HRDT YAML.
+Convert token documents between DTCG JSON, HRDT YAML, and DESIGN.md.
 
 ## Commands
 
@@ -118,11 +125,11 @@ Convert token documents between DTCG JSON and HRDT YAML.
   token files: schema, model correctness, lint.
 * `validate [files...]` - alias for `check`.
 * `convert [options] [files...]` - convert a token file to DTCG JSON,
-  HRDT YAML, DESIGN.md, or CSS.
+  HRDT YAML, DESIGN.md, CSS, or Tailwind CSS v4 theme CSS.
 * `showcase [options] [files...]` - create HTML showcase from DTCG JSON,
-  HRDT YAML, or CSS.
-* `stats [options] [files...]` - generate token statistics from DTCG JSON
-  or HRDT YAML sources.
+  HRDT YAML, DESIGN.md, or CSS.
+* `stats [options] [files...]` - generate token statistics from DTCG JSON,
+  HRDT YAML, or DESIGN.md sources.
 
 ## Options
 
@@ -145,7 +152,11 @@ Convert token documents between DTCG JSON and HRDT YAML.
 * `-i, --inform [format]` - input format: `dtcg`, `hrdt`, `design-md`
   (default: auto-detect).
 * `-f, --outform [format]` - output format: `dtcg`, `hrdt`, `design-md`,
-  `css`. Defaults to `css`.
+  `css`, `tailwind-v4`. Defaults to `css`.
+* `--base-selector [selector]` - tailwind-v4 only: selector for mirrored base
+  custom properties. Defaults to `:root`.
+* `--theme-selector [template]` - tailwind-v4 only: selector template for
+  theme overrides, with `{theme}` placeholder.
 * `-o, --out [file]` - output file, defaults to stdout.
 
 ### showcase
@@ -214,7 +225,8 @@ Use `--out` to write the result to a file instead of stdout.
 dtokens convert tokens.json --outform hrdt --out tokens.yaml
 ```
 
-Multiple input sources are only supported when `--outform css`.
+Multiple input sources are only supported when `--outform css` or
+`--outform tailwind-v4`.
 
 ## CSS Conversion
 
@@ -227,6 +239,17 @@ dtokens convert tokens.yaml --inform hrdt --outform css
 dtokens convert tokens.json tokens.dark.json --out ./tokens.css
 ```
 
+## Tailwind CSS v4 Conversion
+
+Convert a base token set and optional theme overrides to Tailwind CSS v4
+`@theme` output.
+
+```bash
+dtokens convert tokens.json --outform tailwind-v4
+dtokens convert tokens.json tokens.dark.json --outform tailwind-v4 --out ./tokens.tailwind.css
+dtokens convert tokens.json tokens.dark.json --outform tailwind-v4 --base-selector :host --theme-selector ":host([data-theme='{theme}'])"
+```
+
 ## HTML Showcase
 
 Generate an HTML showcase from token sources or from a single CSS
@@ -234,6 +257,7 @@ source.
 
 ```bash
 dtokens showcase tokens.yaml --out ./showcase.html
+dtokens showcase DESIGN.md --out ./showcase.html
 dtokens showcase tokens.css --out ./showcase.html
 dtokens showcase - < tokens.yaml
 ```
@@ -244,16 +268,18 @@ Generate token statistics from token sources.
 
 ```bash
 dtokens stats tokens.yaml
+dtokens stats DESIGN.md
 dtokens stats - < tokens.yaml
 dtokens stats tokens.yaml --out ./stats.html --open
 ```
 
 ## Supported Formats
 
-* `dtcg` - [DTCG JSON](https://www.designtokens.org/) (schema: `2025.10`, extended: `2025.10-design-md`)
+* `dtcg` - [DTCG JSON](https://www.designtokens.org/) (schema: `2025.10`, extended: `2025.10-design.md`)
 * `hrdt` - [HRDT YAML](https://medium.com/@bychinskidm/how-we-made-design-token-kit-an-npm-tool-for-design-tokens-fccf36bd2c65#6821)
 * `design-md` - [DESIGN.md](https://github.com/google-labs-code/design.md) markdown format
 * `css` - CSS custom properties output
+* `tailwind-v4` - Tailwind CSS v4 `@theme` output
 
 The `dtcg` format follows the specification published by the
 Design Tokens Community Group at https://www.designtokens.org.

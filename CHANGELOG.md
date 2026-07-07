@@ -2,6 +2,12 @@
 
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [1.4.0] - 2026-07-07
+
+### Added
+
+- Tailwind CSS v4 output support via `convert --outform tailwind-v4`.
+
 ## [1.3.0] - 2026-07-07
 
 ### Changed
@@ -39,8 +45,6 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   - `2025.10` (default) — original DTCG 2025.10, units `px` and `rem`
   - `2025.10-design.md` — adds `em` unit for DESIGN.md compatibility
 
-<<<<<<< HEAD
-- Tailwind CSS v4 output support via `convert --outform tailwind-v4`.
 ## [1.1.1] - 2026-06-24
 
 ### Changed

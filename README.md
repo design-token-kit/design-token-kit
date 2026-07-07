@@ -5,7 +5,7 @@
 [![DESIGN.md Compatible](https://img.shields.io/badge/DESIGN.md-Compatible-059669?style=flat-square)](https://github.com/google-labs-code/design.md)
 
 Stop teaching AI to guess pixels. Teach it to think in design tokens. Validate, 
-convert, and showcase DTCG tokens for consistent, AI-native design systems
+convert, and showcase design tokens for consistent, AI-native design systems.
 
 - [Overview](#overview)
 - [Why Tokens First](#why-tokens-first)
@@ -14,6 +14,7 @@ convert, and showcase DTCG tokens for consistent, AI-native design systems
 - [Publish](#publish)
 - [Packages](#packages)
 - [Package Documentation](#package-documentation)
+- [Supported Formats](#supported-formats)
 
 ## Overview
 
@@ -116,18 +117,6 @@ structure right but misses format details.
 * Generate HTML token showcase page
 * Generate token statistics as text or HTML
 
-For Tailwind CSS v4 output, Design Token Kit also defines a Tailwind-specific
-mapping for `dimension` tokens: breakpoint values may be marked explicitly via
-`$extensions["design-token-kit"].tailwindNamespace = "breakpoint"` or inferred
-from breakpoint-like paths such as `breakpoint.*` and `screens.*`. Currently,
-`"breakpoint"` is the only supported explicit Tailwind namespace value.
-
-Tailwind CSS v4 gradient tokens are emitted in the `--background-image-*`
-namespace so they can be used as Tailwind background-image theme variables.
-
-Tailwind CSS v4 transition tokens are flattened into `--duration-*` and
-`--ease-*` variables derived from DTCG `transition` values.
-
 ## Build
 
 Install dependencies:
@@ -163,7 +152,7 @@ npm run dist
 Release flow:
 
 ```bash
-npm run release:prepare -- 0.1.2
+npm run release:prepare -- X.Y.Z
 git push
 git push --tags
 ```
