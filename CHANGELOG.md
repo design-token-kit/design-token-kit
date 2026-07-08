@@ -2,6 +2,14 @@
 
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [Unreleased]
+
+### Added
+
+- Added SCSS output support via `convert --outform scss`, including multi-theme 
+  conversion with separate output files per theme.
+
+
 ## [1.4.0] - 2026-07-07
 
 ### Added
