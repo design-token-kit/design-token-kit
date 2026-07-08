@@ -37,6 +37,8 @@ const sources = [
 
 describe("DtcgTokenScssConverter", () => {
     const converter = new DtcgTokenScssConverter();
+    const children = (entries: Array<readonly [string, TokenGroup | TokenNode<unknown>]>) =>
+        new Map<string, TokenGroup | TokenNode<unknown>>(entries);
 
     function doc(children: Map<string, TokenGroup | TokenNode<unknown>>): Dtcg {
         return new Dtcg(new TokenGroup({ children }));
@@ -232,7 +234,7 @@ it("converts a simple color token", () => {
     });
 
     it("converts border with stroke style ref", () => {
-        const result = converter.convertDocument(doc(new Map([
+        const result = converter.convertDocument(doc(children([
             ["stroke", new StrokeStyleToken("dashed" as const)],
             ["border", new BorderToken(new BorderValue(
                 new TokenReference("color-brand"),
@@ -255,7 +257,7 @@ it("converts a simple color token", () => {
     });
 
     it("converts transition token", () => {
-        const result = converter.convertDocument(doc(new Map([
+        const result = converter.convertDocument(doc(children([
             ["duration", new DurationToken(new DurationValue(200, "ms"))],
             ["easing", new CubicBezierToken(new CubicBezierValue(0.2, 0.8, 0.2, 1))],
             ["transition", new TransitionToken(new TransitionValue(
@@ -279,7 +281,7 @@ it("converts a simple color token", () => {
     });
 
     it("converts gradient with ref position and ref stop", () => {
-        const result = converter.convertDocument(doc(new Map([
+        const result = converter.convertDocument(doc(children([
             ["gradient", new GradientToken([
                 new GradientStop(
                     new TokenReference("color-brand"),
@@ -331,7 +333,7 @@ it("converts a simple color token", () => {
 
     it("skips unsupported value types", () => {
         class UnknownToken extends TokenNode<{ foo: string }> {
-            constructor() { super("unknown", { foo: "bar" }); }
+            constructor() { super(undefined, { foo: "bar" }); }
         }
         const result = converter.convertDocument(doc(new Map([
             ["unsupported", new UnknownToken()],
@@ -341,7 +343,7 @@ it("converts a simple color token", () => {
 
     it("skips unsupported values nested in a group", () => {
         class UnknownToken extends TokenNode<{ foo: string }> {
-            constructor() { super("unknown", { foo: "bar" }); }
+            constructor() { super(undefined, { foo: "bar" }); }
         }
         const result = converter.convertDocument(new Dtcg(new TokenGroup({
             children: new Map([
@@ -386,7 +388,7 @@ it("converts a simple color token", () => {
     });
 
     it("handles top-level tokens", () => {
-        const result = converter.convertDocument(doc(new Map([
+        const result = converter.convertDocument(doc(children([
             ["color-brand", new ColorToken(new ColorValue("srgb", [1, 0, 0], 1, "#ff0000"))],
             ["spacing-sm", new DimensionToken(new DimensionValue(4, "px"))],
         ])));
@@ -407,7 +409,7 @@ it("converts a simple color token", () => {
     describe("convertList", () => {
         it("renders a base document", () => {
             const list = new DtcgList(
-                new Dtcg(new TokenGroup({ children: new Map([
+                new Dtcg(new TokenGroup({ children: children([
                     ["color", new ColorToken(new ColorValue("srgb", [1, 0, 0], 1, "#ff0000"))],
                 ]) })),
             );
@@ -428,10 +430,10 @@ it("converts a simple color token", () => {
     describe("convertThemeList", () => {
         it("returns base and theme outputs", () => {
             const list = new DtcgList(
-                new Dtcg(new TokenGroup({ children: new Map([
+                new Dtcg(new TokenGroup({ children: children([
                     ["color", new ColorToken(new ColorValue("srgb", [1, 1, 1], 1, "#ffffff"))],
                 ]) })),
-                new Map([["dark", new Dtcg(new TokenGroup({ children: new Map([
+                new Map([["dark", new Dtcg(new TokenGroup({ children: children([
                     ["color", new ColorToken(new ColorValue("srgb", [0, 0, 0], 1, "#000000"))],
                 ]) }))]]),
             );
@@ -447,7 +449,7 @@ it("converts a simple color token", () => {
 
         it("returns only base when no themes", () => {
             const list = new DtcgList(
-                new Dtcg(new TokenGroup({ children: new Map([
+                new Dtcg(new TokenGroup({ children: children([
                     ["color", new ColorToken(new ColorValue("srgb", [1, 0, 0], 1, "#ff0000"))],
                 ]) })),
             );
@@ -462,11 +464,11 @@ it("converts a simple color token", () => {
         it("uses custom separator in variable names", () => {
             const customConverter = new DtcgTokenScssConverter({ separator: "_" });
             const result = customConverter.convertDocument(new Dtcg(new TokenGroup({
-                children: new Map([
+                children: children([
                     ["primitive", new TokenGroup({
-                        children: new Map([
+                        children: children([
                             ["color", new TokenGroup({
-                                children: new Map([
+                                children: children([
                                     ["teal-500", new ColorToken(new ColorValue("srgb", [0.063, 0.647, 0.647], 1, "#10a5a5"))],
                                 ]),
                             })],
