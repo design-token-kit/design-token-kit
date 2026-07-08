@@ -1,6 +1,6 @@
 import { beforeAll, describe, expect, it } from "vitest";
 import { fileURLToPath } from "node:url";
-import { DtcgTailwindCssConverter } from "#/core/css/DtcgTailwindCssConverter";
+import { DtcgTailwindCssConverter } from "#/core/platforms/tailwind/DtcgTailwindCssConverter";
 import { Dtcg } from "#/core/model/Dtcg";
 import { TokenGroup } from "#/core/model/TokenGroup";
 import { TokenReference } from "#/core/model/TokenReference";

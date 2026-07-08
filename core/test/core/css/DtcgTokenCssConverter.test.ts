@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeAll } from "vitest";
 import { fileURLToPath } from "node:url";
-import { DtcgTokenCssConverter } from "#/core/css/DtcgTokenCssConverter";
+import { DtcgTokenCssConverter } from "#/core/platforms/css/DtcgTokenCssConverter";
 import { Dtcg } from "#/core/model/Dtcg";
 import { TokenGroup } from "#/core/model/TokenGroup";
 import { TokenNode } from "#/core/model/TokenNode";

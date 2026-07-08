@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { TailwindTokenMapper } from "#/core/css/TailwindTokenMapper";
+import { TailwindTokenMapper } from "#/core/platforms/tailwind/TailwindTokenMapper";
 import { Dtcg } from "#/core/model/Dtcg";
 import { TokenGroup } from "#/core/model/TokenGroup";
 import { TokenNode } from "#/core/model/TokenNode";

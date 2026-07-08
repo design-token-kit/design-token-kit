@@ -13,7 +13,7 @@ import { ShadowLayer } from "#/core/model/values/ShadowValue";
 import { StrokeStyleObject } from "#/core/model/values/StrokeStyleValue";
 import { TransitionValue } from "#/core/model/values/TransitionValue";
 import { TypographyValue } from "#/core/model/values/TypographyValue";
-import { ColorCssSerializer } from "#/core/css/ColorCssSerializer";
+import { ColorCssSerializer } from "#/core/platforms/css/ColorCssSerializer";
 
 type TailwindNamespace =
     | "background-image"

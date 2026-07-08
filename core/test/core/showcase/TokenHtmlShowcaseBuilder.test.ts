@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from "vitest";
 import { TokenHtmlShowcaseBuilder } from "#/core/showcase/TokenHtmlShowcaseBuilder";
 import type { TokenValidator } from "#/core/validation/TokenValidator";
-import type { TokenCssConverter } from "#/core/css/TokenCssConverter";
+import type { TokenCssConverter } from "#/core/platforms/css/TokenCssConverter";
 import type { CssTokenParser } from "#/core/showcase/CssTokenParser";
 import type { TokenHtmlShowcaseRenderer } from "#/core/showcase/TokenHtmlShowcaseRenderer";
 import type { CheckIssue } from "#/core/check/CheckIssue";

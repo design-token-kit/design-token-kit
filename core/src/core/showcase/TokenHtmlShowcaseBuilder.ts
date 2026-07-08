@@ -1,6 +1,6 @@
 import { Source } from "#/core/io/Source";
 import { Format } from "#/core/io/Format";
-import { TokenCssConverter } from "#/core/css/TokenCssConverter";
+import { TokenCssConverter } from "#/core/platforms/css/TokenCssConverter";
 import { CssTokenParser } from "#/core/showcase/CssTokenParser";
 import { TokenHtmlShowcase } from "#/core/showcase/TokenHtmlShowcase";
 import { TokenHtmlShowcaseRenderer } from "#/core/showcase/TokenHtmlShowcaseRenderer";

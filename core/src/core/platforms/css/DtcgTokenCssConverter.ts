@@ -15,8 +15,8 @@ import { TransitionValue } from "#/core/model/values/TransitionValue";
 import { ShadowLayer } from "#/core/model/values/ShadowValue";
 import { GradientStop } from "#/core/model/values/GradientValue";
 import { TypographyValue } from "#/core/model/values/TypographyValue";
-import { ColorCssSerializer } from "#/core/css/ColorCssSerializer";
-import type { TokenCssConverter } from "#/core/css/TokenCssConverter";
+import { ColorCssSerializer } from "#/core/platforms/css/ColorCssSerializer";
+import type { TokenCssConverter } from "#/core/platforms/css/TokenCssConverter";
 
 /**
  * Converts token documents in any supported format to CSS custom properties.

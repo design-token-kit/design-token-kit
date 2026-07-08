@@ -1,14 +1,14 @@
 export type { IssueSeverity, CheckIssue } from "#/core/check/CheckIssue";
 export type { TokenValidator } from "#/core/validation/TokenValidator";
-export type { ColorCssSerializerOptions } from "#/core/css/ColorCssSerializer";
-export type { TokenCssConverter } from "#/core/css/TokenCssConverter";
-export type { DtcgTailwindCssConverterOptions } from "#/core/css/DtcgTailwindCssConverter";
-export type { TokenTailwindConverter } from "#/core/css/TokenTailwindConverter";
+export type { ColorCssSerializerOptions } from "#/core/platforms/css/ColorCssSerializer";
+export type { TokenCssConverter } from "#/core/platforms/css/TokenCssConverter";
+export type { DtcgTailwindCssConverterOptions } from "#/core/platforms/tailwind/DtcgTailwindCssConverter";
+export type { TokenTailwindConverter } from "#/core/platforms/tailwind/TokenTailwindConverter";
 export type { TokenHtmlShowcase } from "#/core/showcase/TokenHtmlShowcase";
 export type { TokenStats } from "#/core/stats/TokenStats";
 
-export { DtcgTokenCssConverter } from "#/core/css/DtcgTokenCssConverter";
-export { DtcgTailwindCssConverter } from "#/core/css/DtcgTailwindCssConverter";
+export { DtcgTokenCssConverter } from "#/core/platforms/css/DtcgTokenCssConverter";
+export { DtcgTailwindCssConverter } from "#/core/platforms/tailwind/DtcgTailwindCssConverter";
 export { TokenHtmlShowcaseBuilder } from "#/core/showcase/TokenHtmlShowcaseBuilder";
 export { TokenStatsBuilder } from "#/core/stats/TokenStatsBuilder";
 export { TokenStatsCalculator } from "#/core/stats/TokenStatsCalculator";
@@ -36,11 +36,11 @@ export { EmptyGroupCheck } from "#/core/check/checks/EmptyGroupCheck";
 export { MissingDescriptionCheck } from "#/core/check/checks/MissingDescriptionCheck";
 export { TailwindNamespaceCheck } from "#/core/check/checks/TailwindNamespaceCheck";
 
-import { DtcgTokenCssConverter } from "#/core/css/DtcgTokenCssConverter";
-import { DtcgTailwindCssConverter } from "#/core/css/DtcgTailwindCssConverter";
-import type { TokenCssConverter } from "#/core/css/TokenCssConverter";
-import type { DtcgTailwindCssConverterOptions } from "#/core/css/DtcgTailwindCssConverter";
-import type { TokenTailwindConverter } from "#/core/css/TokenTailwindConverter";
+import { DtcgTokenCssConverter } from "#/core/platforms/css/DtcgTokenCssConverter";
+import { DtcgTailwindCssConverter } from "#/core/platforms/tailwind/DtcgTailwindCssConverter";
+import type { TokenCssConverter } from "#/core/platforms/css/TokenCssConverter";
+import type { DtcgTailwindCssConverterOptions } from "#/core/platforms/tailwind/DtcgTailwindCssConverter";
+import type { TokenTailwindConverter } from "#/core/platforms/tailwind/TokenTailwindConverter";
 import { DtcgChecker } from "#/core/validation/DtcgChecker";
 import { TokenStatsBuilder } from "#/core/stats/TokenStatsBuilder";
 import type { TokenStats } from "#/core/stats/TokenStats";

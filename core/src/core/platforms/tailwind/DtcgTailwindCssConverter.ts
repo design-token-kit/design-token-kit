@@ -1,8 +1,8 @@
 import { Dtcg } from "#/core/model/Dtcg";
 import { DtcgList } from "#/core/model/DtcgList";
 import { DtcgListLoader } from "#/core/io/DtcgListLoader";
-import type { TokenTailwindConverter } from "#/core/css/TokenTailwindConverter";
-import { TailwindDeclaration, TailwindTokenMapper } from "#/core/css/TailwindTokenMapper";
+import type { TokenTailwindConverter } from "#/core/platforms/tailwind/TokenTailwindConverter";
+import { TailwindDeclaration, TailwindTokenMapper } from "#/core/platforms/tailwind/TailwindTokenMapper";
 
 export interface DtcgTailwindCssConverterOptions {
     /**

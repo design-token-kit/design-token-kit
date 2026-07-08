@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { ColorCssSerializer } from "#/core/css/ColorCssSerializer";
+import { ColorCssSerializer } from "#/core/platforms/css/ColorCssSerializer";
 import { ColorValue } from "#/core/model/values/ColorValue";
 
 describe("ColorCssSerializer", () => {
