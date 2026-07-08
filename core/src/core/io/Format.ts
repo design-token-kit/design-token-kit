@@ -28,6 +28,11 @@ export enum Format {
     CSS = "css",
 
     /**
+     * SCSS variables.
+     */
+    SCSS = "scss",
+
+    /**
      * Tailwind CSS v4 theme variables.
      */
     TAILWIND_V4 = "tailwind-v4",

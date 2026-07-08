@@ -3,7 +3,7 @@
 The core package of Design Token Kit provides the runtime foundation
 for working with [DTCG 2025.10 design tokens][dtcg] and [DESIGN.md][designmd].
 It defines the typed token model, performs schema and semantic validation,
-converts tokens into CSS custom properties and Tailwind CSS v4 theme output,
+converts tokens into CSS custom properties, SCSS variables, and Tailwind CSS v4 theme output,
 renders static HTML showcases, and builds token statistics reports.
 
 GitHub repository:
@@ -24,7 +24,7 @@ https://github.com/design-token-kit/design-token-kit
 * **Token format conversion** - read and write DTCG JSON, HRDT YAML, and
   DESIGN.md
 * **CSS generation** - base and theme token sets rendered as CSS
-  custom properties or Tailwind CSS v4 `@theme` variables
+  custom properties, SCSS variables, or Tailwind CSS v4 `@theme` variables
 * **Static showcase** - HTML showcase generation from token sources or
   existing CSS
 * **Token stats** - text and HTML statistics reports for token sources
@@ -46,6 +46,7 @@ import {
   DtcgListLoader,
   DtcgChecker,
   DtcgTokenCssConverter,
+  DtcgTokenScssConverter,
   createTokenHtmlShowcase,
   createTokenStats,
 } from "@design-token-kit/core";
@@ -60,10 +61,12 @@ if (issues.some((issue) => issue.severity === "error")) {
 
 const list = await new DtcgListLoader().load(sources);
 const css = new DtcgTokenCssConverter().convertList(list);
+const scss = await new DtcgTokenScssConverter().convert(["./tokens.json"]);
 const html = await createTokenHtmlShowcase().showcase(sources);
 const stats = await createTokenStats().stats(sources);
 
 console.log(css);
+console.log(scss);
 console.log(html.slice(0, 120));
 console.log(stats);
 ```
@@ -108,6 +111,16 @@ and theme override selectors.
 Generate token sets as CSS variables with a `:root` block for base
 tokens and `:root[data-theme="<theme>"]` blocks for theme overrides.
 
+### SCSS variables
+
+Generate token sets as SCSS variables.
+Token hierarchy is flattened into variable names by replacing `.` in token
+paths, aliases are emitted as SCSS variable references, and the separator is
+configurable.
+
+Single-document output is returned as one stylesheet.
+Multi-theme output is returned as separate per-theme stylesheets.
+
 ### Tailwind CSS v4 theme output
 
 Generate Tailwind CSS v4 theme variables with an `@theme` block for the
@@ -138,8 +151,10 @@ write a parsed document back to any supported source format.
 * `DtcgJsonWriter` / `HrdtTokenWriter` / `DesignMdWriter` - export token documents
 * `DtcgToDesignMdMapper` - map DTCG tree to flat DESIGN.md layout
 * `DtcgTokenCssConverter` - generate CSS custom properties from tokens
+* `DtcgTokenScssConverter` - generate SCSS variables from tokens
 * `DtcgTailwindCssConverter` - generate Tailwind CSS v4 `@theme` output
 * `createTokenCssConverter()` - create the default CSS converter
+* `createTokenScssConverter()` - create the default SCSS converter
 * `createTailwindCssConverter()` - create the default Tailwind converter
 * `createTokenHtmlShowcase()` - generate an HTML preview from token
   sources or CSS
@@ -208,6 +223,47 @@ const css = await new DtcgTokenCssConverter().convert([
 
 When you already have a parsed document or a prepared `DtcgList`, use
 `convertDocument()` or `convertList()` instead of reloading sources.
+
+## SCSS Conversion
+
+`DtcgTokenScssConverter` emits:
+
+- flattened SCSS variable names that preserve token hierarchy
+- aliases as SCSS variable references
+- configurable separators that replace `.` in token paths
+
+```ts
+import { DtcgTokenScssConverter } from "@design-token-kit/core";
+
+const scss = await new DtcgTokenScssConverter().convert([
+  "./tokens.json",
+]);
+```
+
+Examples:
+
+- `primitive.color.brand` -> `$primitive-color-brand`
+- with separator `_`: `primitive.color.brand` -> `$primitive_color_brand`
+
+For multiple token sources, use separate per-theme outputs:
+
+```ts
+import { DtcgTokenScssConverter } from "@design-token-kit/core";
+
+const outputs = await new DtcgTokenScssConverter().convertThemes([
+  "./tokens.json",
+  "./tokens.dark.json",
+]);
+```
+
+This returns one stylesheet per theme:
+
+- `base`
+- `dark`
+- any additional theme names derived from source file names
+
+Use `convertList()` only for a single-document SCSS result. If the list
+contains themes, use `convertThemeList()` instead.
 
 For Tailwind CSS v4 output, use `DtcgTailwindCssConverter`.
 

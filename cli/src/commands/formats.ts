@@ -2,6 +2,7 @@ import {
     Dtcg,
     DtcgList,
     DtcgTokenCssConverter,
+    DtcgTokenScssConverter,
     DtcgToDesignMdMapper,
     DtcgJsonReader,
     DtcgJsonWriter,
@@ -64,6 +65,9 @@ const writers = {
     [Format.CSS]: {
         write: (doc) => new DtcgTokenCssConverter().convertDocument(doc),
     },
+    [Format.SCSS]: {
+        write: (doc) => new DtcgTokenScssConverter().convertDocument(doc),
+    },
     [Format.TAILWIND_V4]: {
         write: (doc) => new DtcgTailwindCssConverter().convertDocument(doc),
     },
@@ -82,9 +86,10 @@ function toOutputFormat(format?: string, fallback = Format.CSS): OutputFormat {
         || resolved === Format.HRDT
         || resolved === Format.DESIGN_MD
         || resolved === Format.CSS
+        || resolved === Format.SCSS
         || resolved === Format.TAILWIND_V4
     ) {
         return resolved;
     }
-    throw new Error(`Unknown format "${resolved}". Available: ${Format.DTCG}, ${Format.HRDT}, ${Format.DESIGN_MD}, ${Format.CSS}, ${Format.TAILWIND_V4}`);
+    throw new Error(`Unknown format "${resolved}". Available: ${Format.DTCG}, ${Format.HRDT}, ${Format.DESIGN_MD}, ${Format.CSS}, ${Format.SCSS}, ${Format.TAILWIND_V4}`);
 }

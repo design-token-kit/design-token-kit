@@ -22,7 +22,7 @@ https://github.com/design-token-kit/design-token-kit
 * **Token format conversion** - read and write DTCG JSON, HRDT YAML, and
   DESIGN.md
 * **CSS generation** - base and theme token sets rendered as CSS custom
-  properties or Tailwind CSS v4 `@theme` variables
+  properties, SCSS variables, or Tailwind CSS v4 `@theme` variables
 * **Static showcase** - HTML showcase generation from token sources or existing
   CSS
 * **Token stats** - text and HTML reports with token counts and breakdowns
@@ -57,6 +57,7 @@ npm install @design-token-kit/cli
 ```bash
 dtokens check tokens.json
 dtokens convert tokens.yaml --inform hrdt --outform css --out ./tokens.css
+dtokens convert tokens.json --outform scss --out ./tokens.scss
 dtokens convert tokens.json --outform tailwind-v4 --out ./tokens.tailwind.css
 dtokens convert tokens.json --outform design-md
 dtokens convert DESIGN.md --inform design-md --outform dtcg
@@ -99,6 +100,20 @@ Generate CSS variables from token sources.
 Base tokens are emitted under `:root`.
 Theme overrides are emitted under `:root[data-theme="<theme>"]`.
 
+### SCSS variables
+
+Generate SCSS variables from token sources.
+Token hierarchy is flattened into variable names by replacing `.` in token
+paths with `-` by default, for example:
+
+- `primitive.color.brand` -> `$primitive-color-brand`
+- `semantic.color.bg.surface` -> `$semantic-color-bg-surface`
+
+Aliases are emitted as SCSS variable references.
+
+Single-source SCSS output is emitted as one stylesheet.
+Multi-theme SCSS output is emitted as separate files per theme.
+
 ### Tailwind CSS v4 theme output
 
 Generate Tailwind CSS v4 theme variables with an `@theme` block for the
@@ -125,7 +140,7 @@ Convert token documents between DTCG JSON, HRDT YAML, and DESIGN.md.
   token files: schema, model correctness, lint.
 * `validate [files...]` - alias for `check`.
 * `convert [options] [files...]` - convert a token file to DTCG JSON,
-  HRDT YAML, DESIGN.md, CSS, or Tailwind CSS v4 theme CSS.
+  HRDT YAML, DESIGN.md, CSS, SCSS, or Tailwind CSS v4 theme CSS.
 * `showcase [options] [files...]` - create HTML showcase from DTCG JSON,
   HRDT YAML, DESIGN.md, or CSS.
 * `stats [options] [files...]` - generate token statistics from DTCG JSON,
@@ -152,12 +167,15 @@ Convert token documents between DTCG JSON, HRDT YAML, and DESIGN.md.
 * `-i, --inform [format]` - input format: `dtcg`, `hrdt`, `design-md`
   (default: auto-detect).
 * `-f, --outform [format]` - output format: `dtcg`, `hrdt`, `design-md`,
-  `css`, `tailwind-v4`. Defaults to `css`.
+  `css`, `scss`, `tailwind-v4`. Defaults to `css`.
+* `--separator [value]` - scss only: character used to replace `.` in token
+  paths when generating flattened variable names. Defaults to `-`.
 * `--base-selector [selector]` - tailwind-v4 only: selector for mirrored base
   custom properties. Defaults to `:root`.
 * `--theme-selector [template]` - tailwind-v4 only: selector template for
   theme overrides, with `{theme}` placeholder.
 * `-o, --out [file]` - output file, defaults to stdout.
+  For multi-theme SCSS, required and used as the output file prefix.
 
 ### showcase
 
@@ -226,7 +244,7 @@ dtokens convert tokens.json --outform hrdt --out tokens.yaml
 ```
 
 Multiple input sources are only supported when `--outform css` or
-`--outform tailwind-v4`.
+`--outform scss` or `--outform tailwind-v4`.
 
 ## CSS Conversion
 
@@ -237,6 +255,42 @@ properties.
 dtokens convert tokens.json
 dtokens convert tokens.yaml --inform hrdt --outform css
 dtokens convert tokens.json tokens.dark.json --out ./tokens.css
+```
+
+## SCSS Conversion
+
+Convert a token set to SCSS variables.
+
+```bash
+dtokens convert tokens.json --outform scss
+dtokens convert tokens.json --outform scss --separator _
+```
+
+With the default separator:
+
+- `primitive.color.brand` -> `$primitive-color-brand`
+
+With `--separator _`:
+
+- `primitive.color.brand` -> `$primitive_color_brand`
+
+For multiple token sources, SCSS output uses one file per theme.
+
+```bash
+dtokens convert tokens.json tokens.dark.json --outform scss --out ./tokens.scss
+```
+
+This writes:
+
+```text
+./tokens.base.scss
+./tokens.dark.scss
+```
+
+SCSS multi-theme output requires `--out`. Without it, the CLI fails with:
+
+```text
+Conversion failed: SCSS multi-theme output requires --out because it generates multiple files
 ```
 
 ## Tailwind CSS v4 Conversion
@@ -279,6 +333,7 @@ dtokens stats tokens.yaml --out ./stats.html --open
 * `hrdt` - [HRDT YAML](https://medium.com/@bychinskidm/how-we-made-design-token-kit-an-npm-tool-for-design-tokens-fccf36bd2c65#6821)
 * `design-md` - [DESIGN.md](https://github.com/google-labs-code/design.md) markdown format
 * `css` - CSS custom properties output
+* `scss` - SCSS variables output
 * `tailwind-v4` - Tailwind CSS v4 `@theme` output
 
 The `dtcg` format follows the specification published by the

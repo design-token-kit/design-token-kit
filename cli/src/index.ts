@@ -27,6 +27,8 @@ Examples:
   $ dtokens check tokens.json --scope lint
   $ dtokens check tokens.json --scope lint --checks layer-reference
   $ dtokens convert tokens.yaml --inform hrdt --outform css --out ./dist/tokens.css
+  $ dtokens convert tokens.yaml --inform hrdt --outform scss --out ./dist/tokens.scss
+  $ dtokens convert tokens.json tokens.dark.json --outform scss --out ./dist/tokens.scss
   $ dtokens convert tokens.json --outform tailwind-v4 --out ./dist/tokens.tailwind.css
   $ dtokens convert tokens.json --outform hrdt
   $ dtokens convert tokens.yaml --outform design-md
