@@ -112,7 +112,8 @@ paths with `-` by default, for example:
 Aliases are emitted as SCSS variable references.
 
 Single-source SCSS output is emitted as one stylesheet.
-Multi-theme SCSS output is emitted as separate files per theme.
+Multi-theme SCSS output is emitted either as a tar archive or as separate
+files per theme, depending on `--out`.
 
 ### Tailwind CSS v4 theme output
 
@@ -175,7 +176,10 @@ Convert token documents between DTCG JSON, HRDT YAML, and DESIGN.md.
 * `--theme-selector [template]` - tailwind-v4 only: selector template for
   theme overrides, with `{theme}` placeholder.
 * `-o, --out [file]` - output file, defaults to stdout.
-  For multi-theme SCSS, required and used as the output file prefix.
+  For multi-theme SCSS:
+  - omit `--out` to write a tar archive to stdout
+  - use `--out <name>.tar` to write a tar archive to file
+  - use `--out <name>.scss` to write separate per-theme SCSS files
 
 ### showcase
 
@@ -274,24 +278,36 @@ With `--separator _`:
 
 - `primitive.color.brand` -> `$primitive_color_brand`
 
-For multiple token sources, SCSS output uses one file per theme.
+For multiple token sources, SCSS output supports both archive and separate-file
+contracts.
 
 ```bash
+dtokens convert tokens.json tokens.dark.json --outform scss
+dtokens convert tokens.json tokens.dark.json --outform scss --out ./tokens.tar
 dtokens convert tokens.json tokens.dark.json --outform scss --out ./tokens.scss
 ```
 
-This writes:
+Without `--out`, the command writes a tar archive to stdout.
+
+With `--out ./tokens.tar`, the command writes a tar archive containing:
+
+```text
+tokens.base.scss
+tokens.dark.scss
+```
+
+With `--out ./tokens.scss`, the command writes separate files:
 
 ```text
 ./tokens.base.scss
 ./tokens.dark.scss
 ```
 
-SCSS multi-theme output requires `--out`. Without it, the CLI fails with:
+Theme file names are derived from source file names after stripping technical
+suffixes such as `.dtcg`, `.hrdt`, `.valid`, and `.invalid`. For example:
 
-```text
-Conversion failed: SCSS multi-theme output requires --out because it generates multiple files
-```
+- `showcase.dark.valid.dtcg.json` -> `dark`
+- `tokens.dark.json` -> `dark`
 
 ## Tailwind CSS v4 Conversion
 

@@ -118,6 +118,15 @@ function extractThemeName(source: string, index?: number): string {
     }
     const fileName = source.split("/").at(-1)?.split("\\").at(-1) ?? source;
     const withoutExt = fileName.replace(/\.(json|ya?ml|design\.md|md)$/i, "");
-    const dotIndex = withoutExt.lastIndexOf(".");
-    return dotIndex > 0 ? withoutExt.slice(dotIndex + 1) : withoutExt;
+    const parts = withoutExt.split(".");
+
+    while (parts.length > 1 && isNonThemeSuffix(parts.at(-1)!)) {
+        parts.pop();
+    }
+
+    return parts.length > 1 ? parts.at(-1)! : withoutExt;
+}
+
+function isNonThemeSuffix(segment: string): boolean {
+    return segment === "dtcg" || segment === "hrdt" || segment === "valid" || segment === "invalid";
 }

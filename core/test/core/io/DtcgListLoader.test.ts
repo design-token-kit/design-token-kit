@@ -85,6 +85,15 @@ describe("DtcgListLoader", () => {
         expect(list.base.get("primitive")).toBeInstanceOf(TokenGroup);
     });
 
+    it("ignores non-theme filename suffixes when extracting theme names", async () => {
+        const base = tempFile("showcase.valid.dtcg.json", DTCG_BASE);
+        const dark = tempFile("showcase.dark.valid.dtcg.json", DTCG_BASE);
+
+        const list = await new DtcgListLoader().load([base, dark]);
+
+        expect([...list.themes.keys()]).toEqual(["dark"]);
+    });
+
     it("throws TokenSyntaxError for invalid sources", async () => {
         const bad = tempFile("bad.yaml", `primitive:\n  color:\n    bad: \"not-a-color\"\n`);
 

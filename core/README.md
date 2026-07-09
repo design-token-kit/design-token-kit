@@ -119,7 +119,9 @@ paths, aliases are emitted as SCSS variable references, and the separator is
 configurable.
 
 Single-document output is returned as one stylesheet.
-Multi-theme output is returned as separate per-theme stylesheets.
+Multi-theme output is returned as one stylesheet per theme. In the CLI this can
+then be packaged either as a tar archive or as separate `.scss` files,
+depending on the selected `--out` contract.
 
 ### Tailwind CSS v4 theme output
 
@@ -261,6 +263,12 @@ This returns one stylesheet per theme:
 - `base`
 - `dark`
 - any additional theme names derived from source file names
+
+Theme names are extracted from source file names after stripping technical
+suffixes such as `.dtcg`, `.hrdt`, `.valid`, and `.invalid`. For example:
+
+- `showcase.dark.valid.dtcg.json` -> `dark`
+- `tokens.dark.json` -> `dark`
 
 Use `convertList()` only for a single-document SCSS result. If the list
 contains themes, use `convertThemeList()` instead.

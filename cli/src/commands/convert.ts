@@ -24,7 +24,7 @@ export const convertCommand = new Command("convert")
     .option("--separator [value]", "SCSS only: character used to replace '.' in token paths when generating variable names (default: -)")
     .option("--base-selector [selector]", "Tailwind v4 only: selector for mirrored base custom properties (default: :root)")
     .option("--theme-selector [template]", "Tailwind v4 only: selector template for theme overrides with {theme} placeholder")
-    .option("-o, --out [file]", "Output file (SCSS multi-theme uses it as output prefix; default: stdout)")
+    .option("-o, --out [file]", "Output file (SCSS multi-theme: omit for tar stdout, use .tar for archive, or .scss for per-theme files)")
     .addHelpText("after", "\nExit status:\n  0  success\n  1  conversion failed")
     .action(async (files: string[], options: ConvertOptions) => {
         try {
@@ -47,7 +47,13 @@ export const convertCommand = new Command("convert")
                 }).convertThemeList(list);
 
                 if (!options.out) {
-                    throw new Error("SCSS multi-theme output requires --out because it generates multiple files");
+                    process.stdout.write(createScssThemeArchive(outputs, "tokens"));
+                    return;
+                }
+
+                if (extname(options.out).toLowerCase() === ".tar") {
+                    await writeFile(options.out, createScssThemeArchive(outputs, toArchiveBaseName(options.out)));
+                    return;
                 }
 
                 await writeScssThemeOutputs(outputs, options.out);
@@ -101,6 +107,15 @@ async function writeScssThemeOutputs(outputs: ReadonlyArray<TokenScssOutput>, ou
     await Promise.all(filePaths.map(({ filePath, content }) => writeFile(filePath, content)));
 }
 
+function createScssThemeArchive(outputs: ReadonlyArray<TokenScssOutput>, baseName: string): Buffer {
+    return createTarArchive(
+        outputs.map((output) => ({
+            name: `${baseName}.${output.themeName}.scss`,
+            content: Buffer.from(output.content, "utf8"),
+        })),
+    );
+}
+
 function toScssThemeOutputPaths(outputs: ReadonlyArray<TokenScssOutput>, out: string): Array<{ filePath: string; content: string }> {
     const parsed = parse(out);
     const outputDir = parsed.dir || dirname(out);
@@ -117,4 +132,59 @@ function toScssThemeOutputPaths(outputs: ReadonlyArray<TokenScssOutput>, out: st
         filePath: join(outputDir, `${baseName}.${output.themeName}.scss`),
         content: output.content,
     }));
+}
+
+function toArchiveBaseName(out: string): string {
+    const parsed = parse(out);
+    if (extname(out).toLowerCase() !== ".tar") {
+        return parsed.base || parsed.name || "tokens";
+    }
+    return parsed.name || "tokens";
+}
+
+function createTarArchive(files: Array<{ name: string; content: Buffer }>): Buffer {
+    const chunks: Buffer[] = [];
+
+    for (const file of files) {
+        chunks.push(createTarHeader(file.name, file.content.length));
+        chunks.push(file.content);
+
+        const remainder = file.content.length % 512;
+        if (remainder !== 0) {
+            chunks.push(Buffer.alloc(512 - remainder));
+        }
+    }
+
+    chunks.push(Buffer.alloc(1024));
+    return Buffer.concat(chunks);
+}
+
+function createTarHeader(name: string, size: number): Buffer {
+    const header = Buffer.alloc(512);
+
+    writeTarString(header, 0, 100, name);
+    writeTarOctal(header, 100, 8, 0o644);
+    writeTarOctal(header, 108, 8, 0);
+    writeTarOctal(header, 116, 8, 0);
+    writeTarOctal(header, 124, 12, size);
+    writeTarOctal(header, 136, 12, 0);
+    header.fill(0x20, 148, 156);
+    header[156] = "0".charCodeAt(0);
+    writeTarString(header, 257, 6, "ustar");
+    writeTarString(header, 263, 2, "00");
+
+    const checksum = header.reduce((sum, value) => sum + value, 0);
+    const checksumField = `${checksum.toString(8).padStart(6, "0")}\0 `;
+    writeTarString(header, 148, 8, checksumField);
+
+    return header;
+}
+
+function writeTarString(target: Buffer, offset: number, length: number, value: string): void {
+    target.write(value.slice(0, length), offset, Math.min(length, Buffer.byteLength(value)), "utf8");
+}
+
+function writeTarOctal(target: Buffer, offset: number, length: number, value: number): void {
+    const encoded = value.toString(8).padStart(length - 1, "0");
+    writeTarString(target, offset, length, `${encoded}\0`);
 }

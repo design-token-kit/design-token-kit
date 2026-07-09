@@ -68,7 +68,7 @@ describe("convert", () => {
         }
     });
 
-    it("fails when multi-file scss conversion has no output path", async () => {
+    it("writes multi-theme scss tar archive to stdout when --out is omitted", async () => {
         const result = await run(
             convertCommand,
             resolve(__dirname, "../../../core/test/core/css/fixtures/tokens.json"),
@@ -76,8 +76,36 @@ describe("convert", () => {
             "--outform",
             "scss",
         );
-        expect(result.status).toBe(1);
-        expect(result.stderr).toContain("SCSS multi-theme output requires --out because it generates multiple files");
+        expect(result.status).toBe(0);
+        expect(result.stdout).toContain("tokens.base.scss");
+        expect(result.stdout).toContain("tokens.dark.scss");
+        expect(result.stdout).toContain("$semantic-color-bg-surface: $primitive-color-white;");
+        expect(result.stdout).toContain("$semantic-color-bg-surface: $primitive-color-slate-100;");
+    });
+
+    it("writes multi-theme scss tar archive to a .tar file", async () => {
+        const outDir = resolve(tmpdir(), `dtokens-test-${randomUUID()}`);
+        const outFile = resolve(outDir, "tokens.tar");
+        mkdirSync(outDir, { recursive: true });
+        try {
+            const result = await run(
+                convertCommand,
+                resolve(__dirname, "../../../core/test/core/css/fixtures/tokens.json"),
+                resolve(__dirname, "../../../core/test/core/css/fixtures/tokens.dark.json"),
+                "--outform",
+                "scss",
+                "--out",
+                outFile,
+            );
+            expect(result.status).toBe(0);
+            const archive = readFileSync(outFile, "utf8");
+            expect(archive).toContain("tokens.base.scss");
+            expect(archive).toContain("tokens.dark.scss");
+            expect(archive).toContain("$semantic-color-bg-surface: $primitive-color-white;");
+            expect(archive).toContain("$semantic-color-bg-surface: $primitive-color-slate-100;");
+        } finally {
+            rmSync(outDir, { recursive: true, force: true });
+        }
     });
 
     it("supports tailwind selector options", async () => {
