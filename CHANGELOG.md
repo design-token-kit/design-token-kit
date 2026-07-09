@@ -2,13 +2,19 @@
 
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
-## [Unreleased]
+## [1.5.0] - 2026-07-09
 
 ### Added
 
 - Added SCSS output support via `convert --outform scss`, including multi-theme 
   conversion with separate output files per theme.
+ 
+### Fixed
 
+- Fixed Tailwind CSS v4 token export to use correct theme variable namespaces, 
+  normalize font-weight keywords, remove redundant base and duplicate declarations, 
+  and emit typography tokens in a Tailwind-compatible --font-* plus 
+  --text-*/--text-*--* format.
 
 ## [1.4.0] - 2026-07-07
 
