@@ -390,8 +390,6 @@ const stats = await createTokenStats().stats([
 
 Token statistics work with DTCG JSON, HRDT YAML, and DESIGN.md sources.
 
-## Links
-
 [dtcg]: https://www.designtokens.org/
 [hrdt]:https://medium.com/@bychinskidm/how-we-made-design-token-kit-an-npm-tool-for-design-tokens-fccf36bd2c65#6821
 [designmd]: https://github.com/google-labs-code/design.md
