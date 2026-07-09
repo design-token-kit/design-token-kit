@@ -120,6 +120,15 @@ files per theme, depending on `--out`.
 Generate Tailwind CSS v4 theme variables with an `@theme` block for the
 base token set and CSS selectors for theme overrides.
 
+By default the generated stylesheet contains:
+
+- `@import 'tailwindcss';`
+- one `@theme { ... }` block for the base token set
+- theme override selectors such as `[data-theme="<theme>"] { ... }`
+
+Use `--base-selector` only when you also need an explicit mirror of the base
+custom properties outside `@theme`, for example in Shadow DOM scenarios.
+
 ### HTML showcase
 
 Generate a static HTML preview from DTCG JSON, HRDT YAML, DESIGN.md, or
@@ -171,8 +180,8 @@ Convert token documents between DTCG JSON, HRDT YAML, and DESIGN.md.
   `css`, `scss`, `tailwind-v4`. Defaults to `css`.
 * `--separator [value]` - scss only: character used to replace `.` in token
   paths when generating flattened variable names. Defaults to `-`.
-* `--base-selector [selector]` - tailwind-v4 only: selector for mirrored base
-  custom properties. Defaults to `:root`.
+* `--base-selector [selector]` - tailwind-v4 only: selector for an optional
+  mirror of the base custom properties.
 * `--theme-selector [template]` - tailwind-v4 only: selector template for
   theme overrides, with `{theme}` placeholder.
 * `-o, --out [file]` - output file, defaults to stdout.

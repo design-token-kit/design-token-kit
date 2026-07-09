@@ -288,10 +288,10 @@ Default Tailwind output contains:
 
 - `@import 'tailwindcss';`
 - `@theme { ... }` for Tailwind v4 theme variables
-- `:root { ... }` as a plain custom-property mirror of the base tokens
 - `[data-theme="<theme>"] { ... }` for theme overrides
 
-For Shadow DOM or custom theming selectors, pass converter options:
+If you also need a plain custom-property mirror for Shadow DOM or another
+runtime CSS integration, pass converter options:
 
 ```ts
 import { DtcgTailwindCssConverter } from "@design-token-kit/core";
@@ -313,15 +313,18 @@ trying to map every DTCG token type into a new namespace.
 Current mappings:
 
 - `color` -> `--color-*`
-- `dimension` -> `--spacing-*`, `--breakpoint-*`, or `--radius-*`
+- `dimension` -> `--spacing-*`, `--breakpoint-*`, `--radius-*`,
+  `--text-*`, or `--tracking-*` depending on token naming
 - `fontFamily` -> `--font-*`
 - `fontWeight` -> `--font-weight-*`
+- `number` -> `--font-weight-*` or `--leading-*` when token naming matches
 - `shadow` -> `--shadow-*`
 - `gradient` -> `--background-image-*`
 - `duration` -> `--duration-*`
 - `cubicBezier` -> `--ease-*`
 - `typography` -> flattened into `--font-*`, `--text-*`,
-  `--font-weight-*`, `--tracking-*`, `--leading-*`
+  `--text-*--line-height`, `--text-*--letter-spacing`,
+  and `--text-*--font-weight`
 - `transition` -> flattened into `--duration-*` and `--ease-*`
 
 Tailwind-specific behavior:
@@ -329,6 +332,8 @@ Tailwind-specific behavior:
 - opaque `srgb` colors -> hex
 - translucent `srgb` colors -> `rgb(... / ...)`
 - other color spaces -> native CSS syntax
+- font-weight keywords such as `regular`, `book`, and `bold` -> numeric CSS
+  weights such as `400`, `400`, and `700`
 
 #### Breakpoints
 
@@ -347,6 +352,8 @@ Currently, the only supported explicit `tailwindNamespace` value is
 #### Limitations
 
 - `border` composite tokens are not emitted as Tailwind theme variables
+- `dimension` tokens named like border widths are currently skipped instead of
+  being mapped to an undocumented Tailwind namespace
 - `transition.delay` is not emitted in Tailwind output
 
 ## HTML Showcase

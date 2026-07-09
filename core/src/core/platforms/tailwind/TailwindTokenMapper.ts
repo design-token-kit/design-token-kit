@@ -41,21 +41,17 @@ export interface TailwindTokenMapperOptions {
     colorCssSerializer?: ColorCssSerializer;
 }
 
-const TYPOGRAPHY_NAMESPACES: TailwindNamespace[] = [
-    "font",
-    "text",
-    "font-weight",
-    "tracking",
-    "leading",
-];
-
 const TRANSITION_NAMESPACES: TailwindNamespace[] = [
     "duration",
     "ease",
 ];
 
-const BREAKPOINT_SEGMENTS = new Set(["breakpoint", "breakpoints", "screen", "screens"]);
-const RADIUS_SEGMENTS = new Set(["radius", "radii", "rounded", "rounding"]);
+const BREAKPOINT_LABELS = ["breakpoint", "breakpoints", "screen", "screens"];
+const RADIUS_LABELS = ["radius", "radii", "rounded", "rounding"];
+const FONT_SIZE_LABELS = ["font-size", "fontSize"];
+const LETTER_SPACING_LABELS = ["letter-spacing", "letterSpacing"];
+const LINE_HEIGHT_LABELS = ["line-height", "lineHeight"];
+const BORDER_WIDTH_LABELS = ["border-width", "borderWidth"];
 
 const STRIPPED_SEGMENTS: Record<TailwindNamespace, Set<string>> = {
     "background-image": new Set(["background-image", "backgroundImage", "gradient", "gradients"]),
@@ -63,14 +59,35 @@ const STRIPPED_SEGMENTS: Record<TailwindNamespace, Set<string>> = {
     color: new Set(["color", "colors"]),
     duration: new Set(["duration", "durations", "motion", "transition", "transitions"]),
     ease: new Set(["cubic-bezier", "ease", "easing", "motion", "timing", "transition", "transitions"]),
-    font: new Set(["font", "font-family", "fonts", "family", "text", "typography"]),
-    "font-weight": new Set(["font", "font-weight", "fonts", "text", "typography", "weight"]),
-    leading: new Set(["leading", "line-height", "lineHeight", "text", "typography"]),
-    radius: new Set(["border-radius", "radius", "radii", "rounded", "rounding"]),
+    font: new Set(["font", "font-family", "fontFamily", "fonts", "family", "text", "typography"]),
+    "font-weight": new Set(["font", "font-weight", "fontWeight", "fonts", "text", "typography", "weight"]),
+    leading: new Set(["leading", "line-height", "lineHeight", "number", "text", "typography"]),
+    radius: new Set(["border-radius", "dimension", "radius", "radii", "rounded", "rounding"]),
     shadow: new Set(["elevation", "shadow", "shadows"]),
     spacing: new Set(["dimension", "size", "sizes", "space", "spacing"]),
-    text: new Set(["font-size", "size", "sizes", "text", "typography"]),
-    tracking: new Set(["letter-spacing", "text", "tracking", "typography"]),
+    text: new Set(["dimension", "font-size", "fontSize", "size", "sizes", "text", "typography"]),
+    tracking: new Set(["dimension", "letter-spacing", "letterSpacing", "text", "tracking", "typography"]),
+};
+
+const FONT_WEIGHT_KEYWORDS: Record<string, string> = {
+    thin: "100",
+    hairline: "100",
+    "extra-light": "200",
+    "ultra-light": "200",
+    light: "300",
+    normal: "400",
+    regular: "400",
+    book: "400",
+    medium: "500",
+    "semi-bold": "600",
+    "demi-bold": "600",
+    bold: "700",
+    "extra-bold": "800",
+    "ultra-bold": "800",
+    black: "900",
+    heavy: "900",
+    "extra-black": "950",
+    "ultra-black": "950",
 };
 
 /**
@@ -131,10 +148,28 @@ export class TailwindTokenMapper {
 
     #mapTypography(path: TokenPath, value: unknown): TailwindDeclaration[] {
         if (value instanceof TokenReference) {
-            return TYPOGRAPHY_NAMESPACES.map((namespace) => ({
-                property: this.#buildPropertyName(namespace, path),
-                value: this.#refToVar(value.path, namespace),
-            }));
+            return [
+                {
+                    property: this.#buildPropertyName("font", path),
+                    value: this.#refToVar(value.path, "font"),
+                },
+                {
+                    property: this.#buildPropertyName("text", path),
+                    value: this.#refToVar(value.path, "text"),
+                },
+                {
+                    property: this.#buildTextStylePropertyName(path, "line-height"),
+                    value: this.#refToTextStyleVar(value.path, "line-height"),
+                },
+                {
+                    property: this.#buildTextStylePropertyName(path, "letter-spacing"),
+                    value: this.#refToTextStyleVar(value.path, "letter-spacing"),
+                },
+                {
+                    property: this.#buildTextStylePropertyName(path, "font-weight"),
+                    value: this.#refToTextStyleVar(value.path, "font-weight"),
+                },
+            ];
         }
         if (!(value instanceof TypographyValue)) return [];
 
@@ -148,20 +183,22 @@ export class TailwindTokenMapper {
                 value: this.#dimensionOrRefToCss(value.fontSize, "text"),
             },
             {
-                property: this.#buildPropertyName("font-weight", path),
-                value: value.fontWeight instanceof TokenReference
-                    ? this.#refToVar(value.fontWeight.path, "font-weight")
-                    : String(value.fontWeight),
-            },
-            {
-                property: this.#buildPropertyName("tracking", path),
-                value: this.#dimensionOrRefToCss(value.letterSpacing, "tracking"),
-            },
-            {
-                property: this.#buildPropertyName("leading", path),
+                property: this.#buildTextStylePropertyName(path, "line-height"),
                 value: value.lineHeight instanceof TokenReference
                     ? this.#refToVar(value.lineHeight.path, "leading")
                     : String(value.lineHeight),
+            },
+            {
+                property: this.#buildTextStylePropertyName(path, "letter-spacing"),
+                value: value.letterSpacing instanceof TokenReference
+                    ? this.#refToVar(value.letterSpacing.path, "tracking")
+                    : this.#dimensionOrRefToCss(value.letterSpacing, "tracking"),
+            },
+            {
+                property: this.#buildTextStylePropertyName(path, "font-weight"),
+                value: value.fontWeight instanceof TokenReference
+                    ? this.#refToVar(value.fontWeight.path, "font-weight")
+                    : this.#normalizeFontWeight(value.fontWeight),
             },
         ];
     }
@@ -195,8 +232,11 @@ export class TailwindTokenMapper {
         if (type === "color") return "color";
         if (type === "gradient") return "background-image";
         if (type === "dimension") {
-            if (this.#pathHasSegment(path, BREAKPOINT_SEGMENTS)) return "breakpoint";
-            if (this.#pathHasSegment(path, RADIUS_SEGMENTS)) return "radius";
+            if (this.#pathHasLabel(path, BREAKPOINT_LABELS)) return "breakpoint";
+            if (this.#pathHasLabel(path, RADIUS_LABELS)) return "radius";
+            if (this.#pathHasLabel(path, FONT_SIZE_LABELS)) return "text";
+            if (this.#pathHasLabel(path, LETTER_SPACING_LABELS)) return "tracking";
+            if (this.#pathHasLabel(path, BORDER_WIDTH_LABELS)) return undefined;
             return "spacing";
         }
         if (type === "fontFamily") return "font";
@@ -205,6 +245,7 @@ export class TailwindTokenMapper {
         if (type === "cubicBezier") return "ease";
         if (type === "shadow") return "shadow";
         if (type === "number" && this.#looksLikeFontWeight(path)) return "font-weight";
+        if (type === "number" && this.#pathHasLabel(path, LINE_HEIGHT_LABELS)) return "leading";
         return undefined;
     }
 
@@ -218,8 +259,8 @@ export class TailwindTokenMapper {
         return tailwindNamespace === "breakpoint" ? tailwindNamespace : undefined;
     }
 
-    #pathHasSegment(path: TokenPath, candidates: Set<string>): boolean {
-        return path.segments().some((segment) => candidates.has(segment.toLowerCase()));
+    #pathHasLabel(path: TokenPath, labels: string[]): boolean {
+        return path.segments().some((segment) => this.#segmentMatchesAnyLabel(segment, labels));
     }
 
     #looksLikeFontWeight(path: TokenPath): boolean {
@@ -230,13 +271,55 @@ export class TailwindTokenMapper {
     }
 
     #buildPropertyName(namespace: TailwindNamespace, path: TokenPath): string {
-        const keptSegments = path.segments().filter((segment) => !STRIPPED_SEGMENTS[namespace].has(segment.toLowerCase()));
-        const suffix = (keptSegments.length > 0 ? keptSegments : path.segments()).join("-");
+        const suffix = this.#buildPropertySuffix(namespace, path);
         return `--${namespace}-${suffix}`;
     }
 
     #refToVar(path: TokenPath, namespace: TailwindNamespace): string {
         return `var(${this.#buildPropertyName(namespace, path)})`;
+    }
+
+    #buildTextStylePropertyName(
+        path: TokenPath,
+        part: "font-weight" | "letter-spacing" | "line-height",
+    ): string {
+        return `--text-${this.#buildPropertySuffix("text", path)}--${part}`;
+    }
+
+    #refToTextStyleVar(
+        path: TokenPath,
+        part: "font-weight" | "letter-spacing" | "line-height",
+    ): string {
+        return `var(${this.#buildTextStylePropertyName(path, part)})`;
+    }
+
+    #buildPropertySuffix(namespace: TailwindNamespace, path: TokenPath): string {
+        const keptSegments = path.segments()
+            .map((segment) => this.#stripNamespacePrefix(segment, STRIPPED_SEGMENTS[namespace]))
+            .filter((segment) => segment.length > 0);
+        return (keptSegments.length > 0 ? keptSegments : path.segments()).join("-");
+    }
+
+    #stripNamespacePrefix(segment: string, labels: Set<string>): string {
+        for (const label of labels) {
+            if (segment.toLowerCase() === label.toLowerCase()) {
+                return "";
+            }
+            if (segment.toLowerCase().startsWith(`${label.toLowerCase()}-`)) {
+                return segment.slice(label.length + 1);
+            }
+        }
+        return segment;
+    }
+
+    #segmentMatchesAnyLabel(segment: string, labels: string[]): boolean {
+        const normalized = segment.toLowerCase();
+        return labels.some((label) => normalized === label.toLowerCase() || normalized.startsWith(`${label.toLowerCase()}-`));
+    }
+
+    #normalizeFontWeight(value: number | string): string {
+        if (typeof value === "number") return String(value);
+        return FONT_WEIGHT_KEYWORDS[value] ?? value;
     }
 
     #colorToCss(color: ColorValue): string {
@@ -296,7 +379,11 @@ export class TailwindTokenMapper {
         if (value instanceof DurationValue) return `${value.value}${value.unit}`;
         if (value instanceof CubicBezierValue) return `cubic-bezier(${value.p1x}, ${value.p1y}, ${value.p2x}, ${value.p2y})`;
         if (typeof value === "number") return String(value);
-        if (typeof value === "string") return value;
+        if (typeof value === "string") {
+            return namespace === "font-weight"
+                ? this.#normalizeFontWeight(value)
+                : value;
+        }
 
         if (value instanceof ShadowLayer) return this.#shadowLayerToCss(value);
 

@@ -28,6 +28,7 @@ describe("convert", () => {
         expect(result.stdout).toContain("@import 'tailwindcss';");
         expect(result.stdout).toContain("@theme {");
         expect(result.stdout).toContain("--color-primitive-white");
+        expect(result.stdout).not.toContain(":root {");
     });
 
     it("converts DTCG JSON to SCSS", async () => {

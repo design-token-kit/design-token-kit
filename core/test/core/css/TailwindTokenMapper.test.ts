@@ -11,6 +11,7 @@ import { DimensionToken } from "#/core/model/tokens/DimensionToken";
 import { FontFamilyToken } from "#/core/model/tokens/FontFamilyToken";
 import { FontWeightToken } from "#/core/model/tokens/FontWeightToken";
 import { GradientToken } from "#/core/model/tokens/GradientToken";
+import { NumberToken } from "#/core/model/tokens/NumberToken";
 import { ShadowToken } from "#/core/model/tokens/ShadowToken";
 import { TransitionToken } from "#/core/model/tokens/TransitionToken";
 import { TypographyToken } from "#/core/model/tokens/TypographyToken";
@@ -20,6 +21,7 @@ import { CubicBezierValue } from "#/core/model/values/CubicBezierValue";
 import { DimensionValue } from "#/core/model/values/DimensionValue";
 import { GradientStop } from "#/core/model/values/GradientValue";
 import { ShadowLayer } from "#/core/model/values/ShadowValue";
+import { TypographyValue } from "#/core/model/values/TypographyValue";
 
 describe("TailwindTokenMapper", () => {
     const mapper = new TailwindTokenMapper();
@@ -64,6 +66,60 @@ describe("TailwindTokenMapper", () => {
         })));
 
         expect(declarations).toContainEqual({ property: "--radius-lg", value: "12px" });
+    });
+
+    it("maps flat dimension names to the correct tailwind namespaces", () => {
+        const declarations = mapper.collectDocument(new Dtcg(new TokenGroup({
+            children: new Map<string, TokenGroup | TokenNode<unknown>>([
+                ["primitive", new TokenGroup({
+                    children: new Map<string, TokenGroup | TokenNode<unknown>>([
+                        ["dimension", new TokenGroup({
+                            children: new Map<string, TokenGroup | TokenNode<unknown>>([
+                                ["radius-100", new DimensionToken(new DimensionValue(4, "px"))],
+                                ["font-size-200", new DimensionToken(new DimensionValue(14, "px"))],
+                                ["letter-spacing-wide", new DimensionToken(new DimensionValue(0.4, "px"))],
+                                ["border-width-100", new DimensionToken(new DimensionValue(1, "px"))],
+                            ]),
+                        })],
+                        ["number", new TokenGroup({
+                            children: new Map<string, TokenGroup | TokenNode<unknown>>([
+                                ["line-height-tight", new NumberToken(1.2)],
+                            ]),
+                        })],
+                    ]),
+                })],
+            ]),
+        })));
+
+        expect(declarations).toEqual(expect.arrayContaining([
+            { property: "--radius-primitive-100", value: "4px" },
+            { property: "--text-primitive-200", value: "14px" },
+            { property: "--tracking-primitive-wide", value: "0.4px" },
+            { property: "--leading-primitive-tight", value: "1.2" },
+        ]));
+        expect(declarations.some((entry) => entry.property.includes("border-width"))).toBe(false);
+    });
+
+    it("normalizes font weight keywords for tailwind font-weight variables", () => {
+        const declarations = mapper.collectDocument(new Dtcg(new TokenGroup({
+            children: new Map<string, TokenGroup | TokenNode<unknown>>([
+                ["fontWeight", new FontWeightToken("regular")],
+                ["typography", new TypographyToken(new TypographyValue(
+                    ["Inter", "sans-serif"],
+                    new DimensionValue(16, "px"),
+                    "book",
+                    new DimensionValue(0, "px"),
+                    1.5,
+                ))],
+            ]),
+        })));
+
+        expect(declarations).toEqual(expect.arrayContaining([
+            { property: "--font-weight-fontWeight", value: "400" },
+            { property: "--text-typography--font-weight", value: "400" },
+            { property: "--text-typography--letter-spacing", value: "0px" },
+            { property: "--text-typography--line-height", value: "1.5" },
+        ]));
     });
 
     it("maps shadow, gradient, and namespace-aware references", () => {
@@ -149,9 +205,9 @@ describe("TailwindTokenMapper", () => {
         expect(declarations).toEqual(expect.arrayContaining([
             { property: "--font-primitive-body", value: "var(--font-semantic-body)" },
             { property: "--text-primitive-body", value: "var(--text-semantic-body)" },
-            { property: "--font-weight-primitive-body", value: "var(--font-weight-semantic-body)" },
-            { property: "--tracking-primitive-body", value: "var(--tracking-semantic-body)" },
-            { property: "--leading-primitive-body", value: "var(--leading-semantic-body)" },
+            { property: "--text-primitive-body--font-weight", value: "var(--text-semantic-body--font-weight)" },
+            { property: "--text-primitive-body--letter-spacing", value: "var(--text-semantic-body--letter-spacing)" },
+            { property: "--text-primitive-body--line-height", value: "var(--text-semantic-body--line-height)" },
             { property: "--duration-primitive-fast", value: "var(--duration-semantic-fast)" },
             { property: "--ease-primitive-fast", value: "var(--ease-semantic-fast)" },
         ]));

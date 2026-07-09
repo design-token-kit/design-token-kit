@@ -5,6 +5,9 @@ import { Dtcg } from "#/core/model/Dtcg";
 import { TokenGroup } from "#/core/model/TokenGroup";
 import { TokenReference } from "#/core/model/TokenReference";
 import { DimensionToken } from "#/core/model/tokens/DimensionToken";
+import { DurationToken } from "#/core/model/tokens/DurationToken";
+import { FontFamilyToken } from "#/core/model/tokens/FontFamilyToken";
+import { FontWeightToken } from "#/core/model/tokens/FontWeightToken";
 import { NumberToken } from "#/core/model/tokens/NumberToken";
 import { TransitionToken } from "#/core/model/tokens/TransitionToken";
 import { TypographyToken } from "#/core/model/tokens/TypographyToken";
@@ -34,7 +37,7 @@ describe("DtcgTailwindCssConverter", () => {
 
     it("renders base tokens in @theme", () => {
         expect(css).toContain("@theme {");
-        expect(css).toContain(":root {");
+        expect(css).not.toContain(":root {");
         expect(css).toContain("--color-primitive-teal-500: #10a5a5;");
         expect(css).toContain("--background-image-primitive-brand: linear-gradient(180deg, #10a5a5 0%, #1e293b 100%);");
         expect(css).toContain("--spacing-primitive-4: 16px;");
@@ -107,15 +110,53 @@ describe("DtcgTailwindCssConverter", () => {
     it("flattens typography tokens into tailwind namespaces", () => {
         expect(css).toContain('--font-primitive-body: "Inter", "Arial", "sans-serif";');
         expect(css).toContain("--text-primitive-body: 16px;");
-        expect(css).toContain("--font-weight-primitive-body: 500;");
-        expect(css).toContain("--tracking-primitive-body: 0px;");
-        expect(css).toContain("--leading-primitive-body: 1.5;");
+        expect(css).toContain("--text-primitive-body--line-height: 1.5;");
+        expect(css).toContain("--text-primitive-body--letter-spacing: 0px;");
+        expect(css).toContain("--text-primitive-body--font-weight: 500;");
+        expect(css).not.toContain("--font-weight-primitive-body: 500;");
+        expect(css).not.toContain("--tracking-primitive-body: 0px;");
+        expect(css).not.toContain("--leading-primitive-body: 1.5;");
+    });
+
+    it("normalizes font weight keywords to numeric values", () => {
+        const generated = converter.convertDocument(new Dtcg(new TokenGroup({
+            children: new Map([
+                ["primitive", new TokenGroup({
+                    children: new Map([
+                        ["fontWeight", new TokenGroup({
+                            children: new Map([
+                                ["regular", new FontWeightToken("regular")],
+                            ]),
+                        })],
+                        ["typography", new TokenGroup({
+                            children: new Map([
+                                ["body", new TypographyToken(new TypographyValue(
+                                    ["Inter", "sans-serif"],
+                                    new DimensionValue(14, "px"),
+                                    "regular",
+                                    new DimensionValue(0, "px"),
+                                    1.4,
+                                ))],
+                            ]),
+                        })],
+                    ]),
+                })],
+            ]),
+        })));
+
+        expect(generated).toContain("--font-weight-primitive-regular: 400;");
+        expect(generated).toContain("--text-primitive-body--font-weight: 400;");
+        expect(generated).not.toContain("--font-weight-primitive-regular: regular;");
+        expect(generated).not.toContain("--text-primitive-body--font-weight: regular;");
     });
 
     it("flattens typography aliases into per-namespace references", () => {
         expect(css).toContain("--font-semantic-body: var(--font-primitive-body);");
         expect(css).toContain("--text-semantic-body: var(--text-primitive-body);");
-        expect(css).toContain("--leading-semantic-body: var(--leading-primitive-body);");
+        expect(css).toContain("--text-semantic-body--line-height: var(--text-primitive-body--line-height);");
+        expect(css).toContain("--text-semantic-body--letter-spacing: var(--text-primitive-body--letter-spacing);");
+        expect(css).toContain("--text-semantic-body--font-weight: var(--text-primitive-body--font-weight);");
+        expect(css).not.toContain("--leading-semantic-body: var(--leading-primitive-body);");
     });
 
     it("renders theme overrides outside @theme", () => {
@@ -176,7 +217,7 @@ describe("DtcgTailwindCssConverter", () => {
 
         expect(generated).toContain("--breakpoint-3xl: 1920px;");
         expect(generated).toContain("--font-weight-primitive-bold: 700;");
-        expect(generated).toContain("--font-weight-primitive-body: var(--font-weight-primitive-bold);");
+        expect(generated).toContain("--text-primitive-body--font-weight: var(--font-weight-primitive-bold);");
     });
 
     it("maps dimension tokens with explicit tailwind breakpoint marker to --breakpoint-*", () => {
@@ -202,6 +243,86 @@ describe("DtcgTailwindCssConverter", () => {
     it("maps plain dimension tokens to --spacing-* by default", () => {
         const generated = renderNestedDimensionDoc(["spacing", "md"], 16);
         expect(generated).toContain("--spacing-md: 16px;");
+    });
+
+    it("maps flat dimension token names to tailwind-specific namespaces", () => {
+        const generated = converter.convertDocument(new Dtcg(new TokenGroup({
+            children: new Map([
+                ["primitive", new TokenGroup({
+                    children: new Map([
+                        ["dimension", new TokenGroup({
+                            children: new Map([
+                                ["radius-100", new DimensionToken(new DimensionValue(4, "px"))],
+                                ["font-size-200", new DimensionToken(new DimensionValue(14, "px"))],
+                                ["letter-spacing-wide", new DimensionToken(new DimensionValue(0.4, "px"))],
+                                ["border-width-100", new DimensionToken(new DimensionValue(1, "px"))],
+                            ]),
+                        })],
+                        ["number", new TokenGroup({
+                            children: new Map([
+                                ["line-height-tight", new NumberToken(1.2)],
+                            ]),
+                        })],
+                    ]),
+                })],
+            ]),
+        })));
+
+        expect(generated).toContain("--radius-primitive-100: 4px;");
+        expect(generated).toContain("--text-primitive-200: 14px;");
+        expect(generated).toContain("--tracking-primitive-wide: 0.4px;");
+        expect(generated).toContain("--leading-primitive-tight: 1.2;");
+        expect(generated).not.toContain("border-width-100");
+        expect(generated).not.toContain("--spacing-primitive-radius-100");
+        expect(generated).not.toContain("--spacing-primitive-font-size-200");
+        expect(generated).not.toContain("--spacing-primitive-letter-spacing-wide");
+    });
+
+    it("deduplicates colliding declarations from overlapping token types", () => {
+        const generated = converter.convertDocument(new Dtcg(new TokenGroup({
+            children: new Map([
+                ["primitive", new TokenGroup({
+                    children: new Map([
+                        ["fontFamily", new TokenGroup({
+                            children: new Map([
+                                ["display", new FontFamilyToken(["Sora", "Arial", "sans-serif"])],
+                            ]),
+                        })],
+                        ["typography", new TokenGroup({
+                            children: new Map([
+                                ["display", new TypographyToken(new TypographyValue(
+                                    ["Sora", "Arial", "sans-serif"],
+                                    new DimensionValue(48, "px"),
+                                    "bold",
+                                    new DimensionValue(-0.8, "px"),
+                                    1.1,
+                                ))],
+                            ]),
+                        })],
+                        ["duration", new TokenGroup({
+                            children: new Map([
+                                ["fast", new DurationToken(new DurationValue(120, "ms"))],
+                            ]),
+                        })],
+                        ["transition", new TokenGroup({
+                            children: new Map([
+                                ["fast", new TransitionToken(new TransitionValue(
+                                    new DurationValue(120, "ms"),
+                                    new DurationValue(0, "ms"),
+                                    new CubicBezierValue(0.2, 0, 0, 1),
+                                ))],
+                            ]),
+                        })],
+                    ]),
+                })],
+            ]),
+        })));
+
+        const fontMatches = generated.match(/--font-primitive-display:/g) ?? [];
+        const durationMatches = generated.match(/--duration-primitive-fast:/g) ?? [];
+
+        expect(fontMatches).toHaveLength(1);
+        expect(durationMatches).toHaveLength(1);
     });
 
     it("gives explicit breakpoint marker priority over fallback path logic", () => {

@@ -10,8 +10,6 @@ export interface DtcgTailwindCssConverterOptions {
      * `@theme` declarations.
      *
      * Use `:host` for Shadow DOM output.
-     *
-     * @defaultValue `":root"`
      */
     baseSelector?: string;
     /**
@@ -24,8 +22,10 @@ export interface DtcgTailwindCssConverterOptions {
 }
 
 const DEFAULT_THEME_SELECTOR = "[data-theme='{theme}']";
-const DEFAULT_BASE_SELECTOR = ":root";
-
+type ResolvedDtcgTailwindCssConverterOptions = {
+    baseSelector?: string;
+    themeSelector: string;
+};
 /**
  * Converts token documents to Tailwind CSS v4 theme variables.
  *
@@ -36,11 +36,11 @@ const DEFAULT_BASE_SELECTOR = ":root";
 export class DtcgTailwindCssConverter implements TokenTailwindConverter {
     readonly #loader = new DtcgListLoader();
     readonly #mapper = new TailwindTokenMapper();
-    readonly #options: Required<DtcgTailwindCssConverterOptions>;
+    readonly #options: ResolvedDtcgTailwindCssConverterOptions;
 
     constructor(options: DtcgTailwindCssConverterOptions = {}) {
         this.#options = {
-            baseSelector: options.baseSelector ?? DEFAULT_BASE_SELECTOR,
+            baseSelector: options.baseSelector,
             themeSelector: options.themeSelector ?? DEFAULT_THEME_SELECTOR,
         };
     }
@@ -56,7 +56,7 @@ export class DtcgTailwindCssConverter implements TokenTailwindConverter {
 
     convertList(list: DtcgList): string {
         const sections = ["@import 'tailwindcss';"];
-        const baseDeclarations = this.#mapper.collectDocument(list.base);
+        const baseDeclarations = dedupeDeclarations(this.#mapper.collectDocument(list.base));
         const baseBlock = renderBlock("@theme", baseDeclarations);
         if (baseBlock) {
             sections.push(baseBlock);
@@ -69,7 +69,7 @@ export class DtcgTailwindCssConverter implements TokenTailwindConverter {
         }
 
         for (const [themeName, theme] of list.themes) {
-            const block = renderBlock(this.#resolveThemeSelector(themeName), this.#mapper.collectDocument(theme));
+            const block = renderBlock(this.#resolveThemeSelector(themeName), dedupeDeclarations(this.#mapper.collectDocument(theme)));
             if (block) {
                 sections.push(block);
             }
@@ -87,4 +87,12 @@ function renderBlock(selector: string, declarations: TailwindDeclaration[]): str
     if (declarations.length === 0) return "";
     const lines = declarations.map(({ property, value }) => `  ${property}: ${value};`).join("\n");
     return `${selector} {\n${lines}\n}`;
+}
+
+function dedupeDeclarations(declarations: TailwindDeclaration[]): TailwindDeclaration[] {
+    const byProperty = new Map<string, TailwindDeclaration>();
+    for (const declaration of declarations) {
+        byProperty.set(declaration.property, declaration);
+    }
+    return [...byProperty.values()];
 }
