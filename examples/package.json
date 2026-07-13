@@ -1,0 +1,16 @@
+{
+    "name": "design-token-kit-example",
+    "private": true,
+    "version": "1.0.0",
+    "type": "module",
+    "scripts": {
+        "tokens:check": "node --import tsx ./scripts/check-tokens.mts",
+        "tokens:convert": "node --import tsx ./scripts/convert-tokens.mts",
+        "tokens:convert:validated": "npm run tokens:check && npm run tokens:convert",
+        "tokens:showcase": "node --import tsx ./scripts/generate-showcase.mts"
+    },
+    "devDependencies": {
+        "@design-token-kit/core": "1.5.0",
+        "tsx": "4.22.4"
+    }
+}

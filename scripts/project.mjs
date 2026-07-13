@@ -10,6 +10,7 @@ export function loadProject() {
 
 class Project {
     #dir;
+    #extraPackages;
 
     constructor() {
         this.#dir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
@@ -20,6 +21,7 @@ class Project {
         }
         this._workspaces = rootPkg.workspaces.map((d) => new Workspace(this, d));
         this._rootPkg = rootPkg;
+        this.#extraPackages = [new ExtraPackage(this, "examples/package.json")];
     }
 
     workspace(dir) {
@@ -32,6 +34,10 @@ class Project {
 
     *workspaces() {
         yield* this._workspaces;
+    }
+
+    *extraPackages() {
+        yield* this.#extraPackages;
     }
 
     build() {
@@ -159,6 +165,44 @@ class Workspace {
     }
 }
 
+class ExtraPackage {
+    #project;
+    #relativePath;
+    #pkg;
+
+    constructor(project, relativePath) {
+        this.#project = project;
+        this.#relativePath = relativePath;
+        this.#pkg = JSON.parse(readFileSync(project.path(relativePath), "utf8"));
+    }
+
+    setDependencyVersion(name, version) {
+        let changed = false;
+
+        if (this.#pkg.dependencies?.[name] !== undefined) {
+            this.#pkg.dependencies[name] = version;
+            changed = true;
+        }
+
+        if (this.#pkg.devDependencies?.[name] !== undefined) {
+            this.#pkg.devDependencies[name] = version;
+            changed = true;
+        }
+
+        if (changed) {
+            this.#save();
+        }
+    }
+
+    get relativePath() {
+        return this.#relativePath;
+    }
+
+    #save() {
+        writeFileSync(this.#project.path(this.#relativePath), `${JSON.stringify(this.#pkg, null, 4)}\n`, "utf8");
+    }
+}
+
 export class Release {
     #project;
 
@@ -201,12 +245,20 @@ export class Release {
                 ws.setDependencyVersion(dep.name, version);
             }
         }
+        for (const extraPackage of this.#project.extraPackages()) {
+            for (const dep of this.#project.workspaces()) {
+                extraPackage.setDependencyVersion(dep.name, version);
+            }
+        }
     }
 
     #commit(version) {
         const files = ["package.json"];
         for (const ws of this.#project.workspaces()) {
             files.push(path.join(ws.dir, "package.json"));
+        }
+        for (const extraPackage of this.#project.extraPackages()) {
+            files.push(extraPackage.relativePath);
         }
 
         const root = this.#project.path();
