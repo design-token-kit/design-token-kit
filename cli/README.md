@@ -33,12 +33,6 @@ Node.js 18 or newer is required.
 
 ## Install
 
-Run without installing:
-
-```bash
-npx @design-token-kit/cli check tokens.json
-```
-
 Install globally:
 
 ```bash
@@ -53,6 +47,12 @@ npm install @design-token-kit/cli
 ```
 
 ## Quick Start
+
+Run with npx:
+
+```bash
+npx @design-token-kit/cli check tokens.json
+```
 
 ```bash
 dtokens check tokens.json
