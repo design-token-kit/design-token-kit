@@ -1,9 +1,11 @@
 {
-    "extends": "../tsconfig.json",
+    "extends": "../../tsconfig.json",
     "compilerOptions": {
         "module": "nodenext",
         "moduleResolution": "nodenext",
         "target": "es2022"
     },
-    "include": ["scripts/**/*.mts"]
+    "include": [
+      "app-min/scripts/**/*.mts"
+    ]
 }
