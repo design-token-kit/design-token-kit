@@ -6,6 +6,6 @@
         "target": "es2022"
     },
     "include": [
-        "./*.mts"
+      "app-min/scripts/**/*.mts"
     ]
 }

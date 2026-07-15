@@ -4,9 +4,9 @@
     "version": "1.0.0",
     "type": "module",
     "scripts": {
-        "tokens:check": "node --import tsx design-token-kit.mts check",
-        "tokens:convert": "node --import tsx design-token-kit.mts convert",
-        "tokens:showcase": "node --import tsx design-token-kit.mts showcase"
+        "tokens:check": "node --import tsx scripts/check-tokens.mts",
+        "tokens:convert": "node --import tsx scripts/convert-tokens.mts",
+        "tokens:showcase": "node --import tsx scripts/generate-showcase.mts"
     },
     "devDependencies": {
         "@design-token-kit/core": "1.5.0",
