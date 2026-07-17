@@ -6,6 +6,9 @@ checking, converting, and previewing design tokens from the terminal.
 GitHub repository:
 https://github.com/design-token-kit/design-token-kit
 
+Website:
+https://design-token-kit.github.io/
+
 ## Features
 
 * **[DTCG 2025.10 check][dtcg]** - schema, model correctness, and lint
