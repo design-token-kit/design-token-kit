@@ -21,7 +21,10 @@ class Project {
         }
         this._workspaces = rootPkg.workspaces.map((d) => new Workspace(this, d));
         this._rootPkg = rootPkg;
-        this.#extraPackages = [new ExtraPackage(this, "examples/package.json")];
+        this.#extraPackages = [
+            new ExtraPackage(this, "examples/app-min/package.json"),
+            new ExtraPackage(this, "examples/app-max/package.json"),
+        ];
     }
 
     workspace(dir) {

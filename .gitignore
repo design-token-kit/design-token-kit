@@ -22,4 +22,3 @@ out/
 logs/
 coverage/
 package-lock.json
-.local-agent/

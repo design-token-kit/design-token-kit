@@ -2,6 +2,20 @@
 
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [1.6.0] - 2026-07-17
+
+### Added
+
+- Added project website link to README files.
+- Added short runnable examples for core integration:
+  - `examples/app-min` with a single `design-token-kit.mts` entrypoint.
+  - `examples/app-max` with separate token check, conversion, and showcase scripts.
+
+### Changed
+
+- Moved shared example token fixtures into `examples/tokens`.
+- Updated package documentation with links to runnable examples.
+
 ## [1.5.0] - 2026-07-09
 
 ### Added
