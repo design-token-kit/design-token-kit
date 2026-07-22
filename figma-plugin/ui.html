@@ -1,0 +1,373 @@
+<!doctype html>
+<html>
+<style>
+    body {
+        font-family: Inter, sans-serif;
+        padding: 16px;
+    }
+
+    label,
+    select,
+    button {
+        display: block;
+    }
+
+    select,
+    button {
+        margin-top: 8px;
+        margin-bottom: 12px;
+        width: 100%;
+    }
+
+    pre {
+        white-space: pre-wrap;
+        overflow-wrap: anywhere;
+        max-height: 420px;
+        overflow: auto;
+        background: #f5f5f5;
+        padding: 12px;
+        border-radius: 8px;
+    }
+</style>
+<body>
+<h2>Design Token Kit</h2>
+
+<label for="collection-select">Collection</label>
+<select id="collection-select" disabled></select>
+
+<label for="mode-select">Mode</label>
+<select id="mode-select" disabled></select>
+
+<button id="read-variables" disabled>
+    Read Variables
+</button>
+
+<button id="read-all-modes" disabled>
+    Read All Modes
+</button>
+
+<button id="copy-json" disabled>
+    Copy JSON
+</button>
+
+<button id="download-json" disabled>
+    Download JSON
+</button>
+
+<p id="status">Loading modes...</p>
+<p id="diagnostics"></p>
+<p>
+    Variables found: <span id="variable-count">0</span><br>
+    COLOR Variables converted: <span id="converted-count">0</span><br>
+    Issues: <span id="issue-count">0</span>
+</p>
+<h3>Issues</h3>
+<ul id="issues"></ul>
+<h3>DTCG tree</h3>
+<pre id="dtcg-tree"></pre>
+
+<script>
+    const collectionSelect = document.getElementById("collection-select");
+    const modeSelect = document.getElementById("mode-select");
+    const readButton = document.getElementById("read-variables");
+    const readAllModesButton = document.getElementById("read-all-modes");
+    const copyButton = document.getElementById("copy-json");
+    const downloadButton = document.getElementById("download-json");
+    const status = document.getElementById("status");
+    const diagnostics = document.getElementById("diagnostics");
+    const variableCount = document.getElementById("variable-count");
+    const convertedCount = document.getElementById("converted-count");
+    const issueCount = document.getElementById("issue-count");
+    const issues = document.getElementById("issues");
+    const dtcgTree = document.getElementById("dtcg-tree");
+    let collectionOptions = [];
+    let exportedTreeJson = "";
+    let exportedArtifacts = [];
+
+    collectionSelect.addEventListener("change", () => {
+        renderModeOptions(getSelectedCollectionOption(), null);
+        clearResults();
+        status.textContent = "Collection selected.";
+    });
+
+    readButton.addEventListener("click", () => {
+        clearResults();
+        status.textContent = "Reading variables...";
+
+        parent.postMessage(
+            {
+                pluginMessage: {
+                    type: "READ_VARIABLES",
+                    selectedCollectionId: collectionSelect.value,
+                    selectedModeId: modeSelect.value,
+                },
+            },
+            "*",
+        );
+    });
+
+    readAllModesButton.addEventListener("click", () => {
+        clearResults();
+        status.textContent = "Reading variables for all modes...";
+
+        parent.postMessage(
+            {
+                pluginMessage: {
+                    type: "READ_ALL_MODES",
+                    selectedCollectionId: collectionSelect.value,
+                },
+            },
+            "*",
+        );
+    });
+
+    copyButton.addEventListener("click", async () => {
+        if (exportedTreeJson === "") {
+            return;
+        }
+
+        try {
+            await copyText(exportedTreeJson);
+            status.textContent = "DTCG JSON copied to clipboard.";
+        } catch (_error) {
+            status.textContent = "Failed to copy DTCG JSON to clipboard.";
+        }
+    });
+
+    downloadButton.addEventListener("click", () => {
+        if (exportedTreeJson === "") {
+            return;
+        }
+
+        if (exportedArtifacts.length === 1) {
+            const artifact = exportedArtifacts[0];
+            downloadJsonFile(artifact.fileName, artifact.content);
+            status.textContent = `Downloaded ${artifact.fileName}.`;
+            return;
+        }
+
+        for (const artifact of exportedArtifacts) {
+            downloadJsonFile(artifact.fileName, artifact.content);
+        }
+
+        status.textContent = `Downloaded ${exportedArtifacts.length} DTCG files.`;
+    });
+
+    window.onmessage = (event) => {
+        const message = event.data.pluginMessage;
+
+        if (message?.type === "COLLECTIONS_LOAD_FAILED") {
+            collectionSelect.disabled = true;
+            modeSelect.disabled = true;
+            readButton.disabled = true;
+            readAllModesButton.disabled = true;
+            clearResults();
+            status.textContent = `Failed to load collections: ${message.payload.message}`;
+            return;
+        }
+
+        if (message?.type === "COLLECTIONS_LOADED") {
+            renderCollectionOptions(
+                message.payload.collectionOptions,
+                message.payload.selectedCollectionId,
+                message.payload.selectedModeId,
+                message.payload.diagnostics,
+            );
+            return;
+        }
+
+        if (message?.type === "VARIABLES_LOAD_FAILED") {
+            clearResults();
+            status.textContent = `Failed to read Variables: ${message.payload.message}`;
+            return;
+        }
+
+        if (message?.type !== "VARIABLES_LOADED") {
+            return;
+        }
+
+        exportedArtifacts = message.payload.exportArtifacts ?? [];
+        exportedTreeJson = JSON.stringify(
+            message.payload.dtcgTree,
+            null,
+            2,
+        );
+        status.textContent = `Variables loaded for collection: ${message.payload.selectedCollectionName}. Mode: ${message.payload.selectedModeLabel}.`;
+        variableCount.textContent = message.payload.variableCount;
+        convertedCount.textContent =
+            message.payload.convertedColorVariableCount;
+        issueCount.textContent = message.payload.issueCount;
+
+        for (const issue of message.payload.issues) {
+            const issueItem = document.createElement("li");
+            issueItem.textContent = issue.message;
+            issues.appendChild(issueItem);
+        }
+
+        dtcgTree.textContent = exportedTreeJson;
+        updateExportButtons(true);
+    };
+
+    requestCollections();
+
+    function requestCollections() {
+        parent.postMessage(
+            {
+                pluginMessage: {
+                    type: "LOAD_COLLECTIONS",
+                },
+            },
+            "*",
+        );
+    }
+
+    function renderCollectionOptions(
+        nextCollectionOptions,
+        selectedCollectionId,
+        selectedModeId,
+        fileDiagnostics,
+    ) {
+        const previousCollectionId = collectionSelect.value;
+
+        collectionOptions = nextCollectionOptions;
+        collectionSelect.textContent = "";
+
+        for (const collectionOption of collectionOptions) {
+            const option = document.createElement("option");
+            option.value = collectionOption.collectionId;
+            option.textContent = collectionOption.collectionName;
+            collectionSelect.appendChild(option);
+        }
+
+        const nextCollectionId = collectionOptions.some(
+            (collectionOption) => collectionOption.collectionId === previousCollectionId,
+        )
+            ? previousCollectionId
+            : selectedCollectionId;
+
+        if (nextCollectionId !== null && nextCollectionId !== undefined) {
+            collectionSelect.value = nextCollectionId;
+        }
+
+        renderModeOptions(getSelectedCollectionOption(), selectedModeId);
+
+        const hasCollections = collectionOptions.length > 0;
+        collectionSelect.disabled = !hasCollections;
+        diagnostics.textContent = createDiagnosticsMessage(fileDiagnostics);
+        status.textContent = hasCollections
+            ? "Collections loaded."
+            : createNoLocalCollectionsStatus(fileDiagnostics);
+    }
+
+    function renderModeOptions(selectedCollectionOption, selectedModeId) {
+        const previousModeId = modeSelect.value;
+        const modeOptions = selectedCollectionOption?.modeOptions ?? [];
+
+        modeSelect.textContent = "";
+
+        for (const modeOption of modeOptions) {
+            const option = document.createElement("option");
+            option.value = modeOption.modeId;
+            option.textContent = modeOption.label;
+            modeSelect.appendChild(option);
+        }
+
+        const nextModeId = modeOptions.some((modeOption) => modeOption.modeId === previousModeId)
+            ? previousModeId
+            : selectedModeId;
+
+        if (nextModeId !== null && nextModeId !== undefined) {
+            modeSelect.value = nextModeId;
+        }
+
+        const hasModes = modeOptions.length > 0;
+        collectionSelect.disabled = collectionOptions.length === 0;
+        modeSelect.disabled = !hasModes;
+        readButton.disabled = !hasModes;
+        readAllModesButton.disabled = !hasModes;
+        status.textContent = hasModes
+            ? "Collection and modes loaded."
+            : "No variable modes found in the selected collection.";
+    }
+
+    function getSelectedCollectionOption() {
+        return collectionOptions.find(
+            (collectionOption) =>
+                collectionOption.collectionId === collectionSelect.value,
+        );
+    }
+
+    function clearResults() {
+        exportedTreeJson = "";
+        exportedArtifacts = [];
+        variableCount.textContent = "0";
+        convertedCount.textContent = "0";
+        issueCount.textContent = "0";
+        issues.textContent = "";
+        dtcgTree.textContent = "";
+        updateExportButtons(false);
+    }
+
+    function createDiagnosticsMessage(fileDiagnostics) {
+        if (!fileDiagnostics) {
+            return "";
+        }
+
+        return [
+            `Local variable collections: ${fileDiagnostics.localCollectionCount}`,
+            `local variables: ${fileDiagnostics.localVariableCount}`,
+            `local styles: paint ${fileDiagnostics.localPaintStyleCount}, text ${fileDiagnostics.localTextStyleCount}, effect ${fileDiagnostics.localEffectStyleCount}, grid ${fileDiagnostics.localGridStyleCount}`,
+            `enabled library variable collections: ${fileDiagnostics.libraryVariableCollectionCount}`,
+        ].join(". ");
+    }
+
+    function createNoLocalCollectionsStatus(fileDiagnostics) {
+        if (!fileDiagnostics) {
+            return "No local variable collections found.";
+        }
+
+        const hasLocalStyles = fileDiagnostics.localPaintStyleCount > 0
+            || fileDiagnostics.localTextStyleCount > 0
+            || fileDiagnostics.localEffectStyleCount > 0
+            || fileDiagnostics.localGridStyleCount > 0;
+        const hasLibraryVariables = fileDiagnostics.libraryVariableCollectionCount > 0;
+
+        if (hasLocalStyles || hasLibraryVariables) {
+            return "No local variable collections found. This file likely uses local styles and/or variables from enabled libraries, which this plugin does not export yet.";
+        }
+
+        return "No local variable collections found in this file.";
+    }
+
+    async function copyText(text) {
+        if (navigator.clipboard?.writeText) {
+            await navigator.clipboard.writeText(text);
+            return;
+        }
+
+        const textarea = document.createElement("textarea");
+        textarea.value = text;
+        document.body.appendChild(textarea);
+        textarea.select();
+        document.execCommand("copy");
+        textarea.remove();
+    }
+
+    function downloadJsonFile(fileName, text) {
+        const blob = new Blob([text], { type: "application/json" });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = fileName;
+        link.click();
+        URL.revokeObjectURL(url);
+    }
+
+    function updateExportButtons(hasExport) {
+        copyButton.disabled = !hasExport;
+        downloadButton.disabled = !hasExport;
+    }
+</script>
+
+</body>
+</html>

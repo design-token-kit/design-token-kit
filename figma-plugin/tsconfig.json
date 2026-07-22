@@ -1,0 +1,18 @@
+{
+  "compilerOptions": {
+    "target": "es2020",
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "lib": ["es2020"],
+    "strict": true,
+    "types": ["@figma/plugin-typings"],
+    "baseUrl": ".",
+    "paths": {
+      "#/*": ["../core/src/*"]
+    }
+  },
+  "include": [
+    "code.ts",
+    "figma-*.ts"
+  ]
+}

@@ -1,0 +1,27 @@
+{
+  "name": "@design-token-kit/figma-plugin",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Figma plugin for exporting Variables to DTCG design tokens",
+  "main": "code.js",
+  "scripts": {
+    "build": "vite build",
+    "lint": "eslint .",
+    "test": "npm run build && vitest run",
+    "lint:fix": "eslint . --fix",
+    "watch": "npm run build -- --watch"
+  },
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "@eslint/js": "^9.39.4",
+    "@figma/eslint-plugin-figma-plugins": "*",
+    "@figma/plugin-typings": "*",
+    "@types/node": "24.10.1",
+    "eslint": "^9.39.4",
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.57.1",
+    "vite": "8.0.10",
+    "vitest": "4.1.7"
+  }
+}

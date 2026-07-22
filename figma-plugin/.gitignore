@@ -1,0 +1,12 @@
+# Node
+*.log
+*.log.*
+node_modules
+
+out/
+dist/
+code.js
+.figma-build/
+figma-core-runtime.js
+figma-dtcg-export.js
+figma-to-dtcg.js
