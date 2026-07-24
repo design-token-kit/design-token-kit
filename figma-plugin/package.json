@@ -2,7 +2,7 @@
   "name": "@design-token-kit/figma-plugin",
   "version": "0.1.0",
   "private": true,
-  "description": "Figma plugin for exporting Variables to DTCG design tokens",
+  "description": "Figma plugin for exporting file JSON through REST and Plugin API",
   "main": "code.js",
   "scripts": {
     "build": "vite build",

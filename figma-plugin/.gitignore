@@ -7,6 +7,3 @@ out/
 dist/
 code.js
 .figma-build/
-figma-core-runtime.js
-figma-dtcg-export.js
-figma-to-dtcg.js

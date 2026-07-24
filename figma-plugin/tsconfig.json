@@ -5,14 +5,9 @@
     "moduleResolution": "bundler",
     "lib": ["es2020"],
     "strict": true,
-    "types": ["@figma/plugin-typings"],
-    "baseUrl": ".",
-    "paths": {
-      "#/*": ["../core/src/*"]
-    }
+    "types": ["@figma/plugin-typings"]
   },
   "include": [
-    "code.ts",
-    "figma-*.ts"
+    "src"
   ]
 }
