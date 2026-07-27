@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { Dtcg, Format, TokenGroup } from "@design-token-kit/core";
+import { Dtcg, Format, TokenGroup, DtcgJsonReader, DtcgList, DtcgTokenSwiftUiConverter } from "@design-token-kit/core";
 import { getReader, getWriter, toDocumentFormat } from "#/commands/formats";
 
 describe("toDocumentFormat", () => {
@@ -111,5 +111,42 @@ describe("getWriter", () => {
 
     it("throws for invalid format", () => {
         expect(() => getWriter("unknown")).toThrow("Unknown format \"unknown\"");
+    });
+
+    it("writes SwiftUI output", () => {
+        const doc = new DtcgJsonReader().parse(
+            JSON.stringify({ spacing: { md: { $type: "dimension", $value: { value: 16, unit: "px" } } } }),
+        );
+        const out = getWriter(Format.SWIFT_UI).write(doc);
+        expect(out).toContain("enum DesignTokens {");
+        expect(out).toContain("static let md: CGFloat = 16");
+    });
+});
+
+describe("SwiftUI multi-theme conversion", () => {
+    function themedList(): DtcgList {
+        const reader = new DtcgJsonReader();
+        const base = reader.parse(
+            JSON.stringify({
+                color: { primary: { $type: "color", $value: { colorSpace: "srgb", components: [1, 0, 0] } } },
+            }),
+        );
+        const dark = reader.parse(
+            JSON.stringify({
+                color: { primary: { $type: "color", $value: { colorSpace: "srgb", components: [0, 0, 1] } } },
+            }),
+        );
+        return new DtcgList(base, new Map([["dark", dark]]));
+    }
+
+    it("emits a theme enum for the enum form", () => {
+        const out = new DtcgTokenSwiftUiConverter({ swiftType: "enum" }).convertList(themedList());
+        expect(out).toContain("enum DesignTokensDark {");
+    });
+
+    it("emits the Theme struct and a theme instance for the struct form", () => {
+        const out = new DtcgTokenSwiftUiConverter({ swiftType: "struct" }).convertList(themedList());
+        expect(out).toContain("struct Theme {");
+        expect(out).toContain("static let dark = Theme(");
     });
 });

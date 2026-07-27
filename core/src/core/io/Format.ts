@@ -36,4 +36,9 @@ export enum Format {
      * Tailwind CSS v4 theme variables.
      */
     TAILWIND_V4 = "tailwind-v4",
+
+    /**
+     * SwiftUI design tokens (namespaced enum of static let).
+     */
+    SWIFT_UI = "swiftui",
 }
