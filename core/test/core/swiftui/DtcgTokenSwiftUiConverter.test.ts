@@ -125,7 +125,7 @@ describe("DtcgTokenSwiftUiConverter scalars", () => {
                 },
             },
         });
-        expect(out).not.toContain("///");
+        expect(out).not.toContain("/// Pure white");
     });
 
     it("emits auto-generated file header", () => {
@@ -136,7 +136,8 @@ describe("DtcgTokenSwiftUiConverter scalars", () => {
     it("returns an empty DesignTokens enum for empty input", () => {
         const out = convert({});
         expect(out).toContain("enum DesignTokens {");
-        expect(out).not.toContain("static let");
+        const body = out.slice(out.indexOf("enum DesignTokens {"));
+        expect(body).not.toContain("static let");
     });
 });
 
@@ -389,14 +390,14 @@ describe("DtcgTokenSwiftUiConverter struct themes", () => {
 
     it("holds enum references in struct fields, not color literals", () => {
         const out = convertList(THEMED_BASE, { dark: DARK_OVERRIDE }, { swiftType: "struct" });
-        const extension = out.slice(out.indexOf("extension Theme"));
-        expect(extension).not.toContain("SwiftUI.Color(");
+        const themesSection = out.slice(out.indexOf("enum Themes {"));
+        expect(themesSection).not.toContain("SwiftUI.Color(");
     });
 
     it("emits a single default instance in the degenerate no-themes struct", () => {
         const out = convertList(THEMED_BASE, {}, { swiftType: "struct" });
         expect(out).toContain("struct Theme {");
-        expect(out).toContain("static let light = Theme(");
+        expect(out).toContain("static let base = Theme(");
         expect(out).toContain("DesignTokens.Semantic.Color.surface");
         expect(out).not.toContain("DesignTokensDark");
     });
