@@ -14,6 +14,7 @@
         "test:coverage:v8": "npm run test:coverage:v8 --workspaces",
         "clean": "node scripts/clean.mjs",
         "dtokens": "node --import tsx --conditions development cli/src/index.ts",
+        "verify:swift": "node scripts/verify-swift/index.mjs",
         "release:prepare": "node scripts/release-prepare.mjs",
         "release:publish": "node scripts/release-publish.mjs"
     },

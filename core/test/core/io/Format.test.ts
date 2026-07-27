@@ -26,7 +26,13 @@ describe("Format", () => {
         expect(Format.TAILWIND_V4).toBe("tailwind-v4");
     });
 
-    it("has exactly 6 members", () => {
-        expect(Object.keys(Format).filter((k) => isNaN(Number(k)))).toHaveLength(6);
+    it("has exactly 7 members", () => {
+        expect(Object.keys(Format).filter((k) => isNaN(Number(k)))).toHaveLength(7);
+    });
+});
+
+describe("Format swiftui", () => {
+    it("exposes the swiftui format value", () => {
+        expect(Format.SWIFT_UI).toBe("swiftui");
     });
 });

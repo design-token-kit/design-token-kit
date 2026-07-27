@@ -1,0 +1,5 @@
+{
+    "color": {
+        "base": { "red": { "$type": "color", "$value": { "colorSpace": "srgb", "components": [0.8, 0.1, 0.1] } } }
+    }
+}

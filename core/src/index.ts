@@ -5,6 +5,8 @@ export type { TokenCssConverter } from "#/core/platforms/css/TokenCssConverter";
 export type { DtcgTokenScssConverterOptions } from "#/core/platforms/scss/DtcgTokenScssConverter";
 export type { TokenScssConverter } from "#/core/platforms/scss/TokenScssConverter";
 export type { TokenScssOutput } from "#/core/platforms/scss/TokenScssOutput";
+export type { DtcgTokenSwiftUiConverterOptions } from "#/core/platforms/swiftui/DtcgTokenSwiftUiConverter";
+export type { TokenSwiftUiConverter } from "#/core/platforms/swiftui/TokenSwiftUiConverter";
 export type { DtcgTailwindCssConverterOptions } from "#/core/platforms/tailwind/DtcgTailwindCssConverter";
 export type { TokenTailwindConverter } from "#/core/platforms/tailwind/TokenTailwindConverter";
 export type { TokenHtmlShowcase } from "#/core/showcase/TokenHtmlShowcase";
@@ -12,6 +14,7 @@ export type { TokenStats } from "#/core/stats/TokenStats";
 
 export { DtcgTokenCssConverter } from "#/core/platforms/css/DtcgTokenCssConverter";
 export { DtcgTokenScssConverter } from "#/core/platforms/scss/DtcgTokenScssConverter";
+export { DtcgTokenSwiftUiConverter } from "#/core/platforms/swiftui/DtcgTokenSwiftUiConverter";
 export { DtcgTailwindCssConverter } from "#/core/platforms/tailwind/DtcgTailwindCssConverter";
 export { TokenHtmlShowcaseBuilder } from "#/core/showcase/TokenHtmlShowcaseBuilder";
 export { TokenStatsBuilder } from "#/core/stats/TokenStatsBuilder";
