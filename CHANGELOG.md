@@ -2,6 +2,16 @@
 
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [1.7.0] - 2026-07-29
+
+### Added
+
+- Added SwiftUI output support via `convert --outform swiftui`.
+  Generates a namespaced enum API with typed token constants and
+  multi-theme support. Token references are preserved as alias chains.
+  The `--swift-type struct` (optional) adds a `Theme` struct for
+  runtime theme switching through SwiftUI Environment.
+
 ## [1.6.0] - 2026-07-17
 
 ### Added
