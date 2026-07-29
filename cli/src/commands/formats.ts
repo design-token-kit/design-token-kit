@@ -1,8 +1,8 @@
 import {
     Dtcg,
     DtcgList,
-    DtcgTokenCssConverter,
-    DtcgTokenScssConverter,
+    CssTokenConverter,
+    ScssTokenConverter,
     DtcgToDesignMdMapper,
     DtcgJsonReader,
     DtcgJsonWriter,
@@ -11,7 +11,8 @@ import {
     HrdtTokenWriter,
     DesignMdReader,
     DesignMdWriter,
-    DtcgTailwindCssConverter,
+    TailwindTokenConverter,
+    SwiftUiTokenConverter,
 } from "@design-token-kit/core";
 
 export { Format };
@@ -63,13 +64,16 @@ const writers = {
         },
     },
     [Format.CSS]: {
-        write: (doc) => new DtcgTokenCssConverter().convertDocument(doc),
+        write: (doc) => new CssTokenConverter().convertDocument(doc),
     },
     [Format.SCSS]: {
-        write: (doc) => new DtcgTokenScssConverter().convertDocument(doc),
+        write: (doc) => new ScssTokenConverter().convertDocument(doc),
     },
     [Format.TAILWIND_V4]: {
-        write: (doc) => new DtcgTailwindCssConverter().convertDocument(doc),
+        write: (doc) => new TailwindTokenConverter().convertDocument(doc),
+    },
+    [Format.SWIFT_UI]: {
+        write: (doc) => new SwiftUiTokenConverter().convertDocument(doc),
     },
 } satisfies Record<OutputFormat, DocumentWriter>;
 
@@ -88,8 +92,9 @@ function toOutputFormat(format?: string, fallback = Format.CSS): OutputFormat {
         || resolved === Format.CSS
         || resolved === Format.SCSS
         || resolved === Format.TAILWIND_V4
+        || resolved === Format.SWIFT_UI
     ) {
         return resolved;
     }
-    throw new Error(`Unknown format "${resolved}". Available: ${Format.DTCG}, ${Format.HRDT}, ${Format.DESIGN_MD}, ${Format.CSS}, ${Format.SCSS}, ${Format.TAILWIND_V4}`);
+    throw new Error(`Unknown format "${resolved}". Available: ${Format.DTCG}, ${Format.HRDT}, ${Format.DESIGN_MD}, ${Format.CSS}, ${Format.SCSS}, ${Format.TAILWIND_V4}, ${Format.SWIFT_UI}`);
 }

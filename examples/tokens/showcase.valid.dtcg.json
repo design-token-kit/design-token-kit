@@ -1161,7 +1161,7 @@
       "text-link": {
         "$value": "{primitive.color.brand-500}"
       },
-      "border-default": {
+      "border-normal": {
         "$value": "{primitive.color.neutral-300}"
       },
       "border-strong": {
@@ -1328,7 +1328,7 @@
       "body-small": {
         "$value": "{primitive.typography.body-sm}"
       },
-      "body-default": {
+      "body-normal": {
         "$value": "{primitive.typography.body-md}"
       },
       "body-large": {
@@ -1349,7 +1349,7 @@
       "code-small": {
         "$value": "{primitive.typography.code-sm}"
       },
-      "code-default": {
+      "code-normal": {
         "$value": "{primitive.typography.code-md}"
       },
       "family-body": {
@@ -1425,7 +1425,7 @@
           "$value": "{semantic.space.inset-sm}"
         },
         "typography": {
-          "$value": "{semantic.text.body-default}"
+          "$value": "{semantic.text.body-normal}"
         },
         "transition": {
           "$value": "{semantic.motion.transition-fast}"
@@ -1454,7 +1454,7 @@
           "$value": "{semantic.space.inset-sm}"
         },
         "typography": {
-          "$value": "{semantic.text.body-default}"
+          "$value": "{semantic.text.body-normal}"
         },
         "transition": {
           "$value": "{semantic.motion.transition-fast}"
@@ -1477,7 +1477,7 @@
           "$value": "{semantic.space.inset-xs}"
         },
         "typography": {
-          "$value": "{semantic.text.body-default}"
+          "$value": "{semantic.text.body-normal}"
         },
         "transition": {
           "$value": "{semantic.motion.transition-fast}"
@@ -1503,7 +1503,7 @@
           "$value": "{semantic.space.inset-sm}"
         },
         "typography": {
-          "$value": "{semantic.text.body-default}"
+          "$value": "{semantic.text.body-normal}"
         },
         "transition": {
           "$value": "{semantic.motion.transition-fast}"
@@ -1511,7 +1511,7 @@
       }
     },
     "input": {
-      "default": {
+      "normal": {
         "background": {
           "$value": "{semantic.color.background-surface}"
         },
@@ -1543,7 +1543,7 @@
           "$value": "{semantic.space.inset-sm}"
         },
         "typography": {
-          "$value": "{semantic.text.body-default}"
+          "$value": "{semantic.text.body-normal}"
         },
         "transition": {
           "$value": "{semantic.motion.transition-fast}"
@@ -1551,7 +1551,7 @@
       }
     },
     "card": {
-      "default": {
+      "normal": {
         "background": {
           "$value": "{semantic.color.background-surface}"
         },
@@ -1568,7 +1568,7 @@
           "$value": "{semantic.text.title-medium}"
         },
         "body": {
-          "$value": "{semantic.text.body-default}"
+          "$value": "{semantic.text.body-normal}"
         },
         "shadow": {
           "$value": "{semantic.motion.shadow-surface}"
@@ -1591,7 +1591,7 @@
           "$value": "{semantic.text.title-medium}"
         },
         "body": {
-          "$value": "{semantic.text.body-default}"
+          "$value": "{semantic.text.body-normal}"
         },
         "shadow": {
           "$value": "{semantic.motion.shadow-elevated}"
@@ -1671,7 +1671,7 @@
       }
     },
     "modal": {
-      "default": {
+      "normal": {
         "overlay": {
           "$value": "{semantic.color.background-overlay}"
         },
@@ -1688,7 +1688,7 @@
           "$value": "{semantic.text.title-medium}"
         },
         "body": {
-          "$value": "{semantic.text.body-default}"
+          "$value": "{semantic.text.body-normal}"
         },
         "shadow": {
           "$value": "{semantic.motion.shadow-overlay}"
@@ -1699,7 +1699,7 @@
       }
     },
     "tooltip": {
-      "default": {
+      "normal": {
         "background": {
           "$value": "{semantic.color.background-inverse}"
         },

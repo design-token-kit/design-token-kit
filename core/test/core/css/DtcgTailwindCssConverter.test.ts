@@ -1,6 +1,6 @@
 import { beforeAll, describe, expect, it } from "vitest";
 import { fileURLToPath } from "node:url";
-import { DtcgTailwindCssConverter } from "#/core/platforms/tailwind/DtcgTailwindCssConverter";
+import { TailwindTokenConverter } from "#/core/platforms/tailwind/TailwindTokenConverter";
 import { Dtcg } from "#/core/model/Dtcg";
 import { TokenGroup } from "#/core/model/TokenGroup";
 import { TokenReference } from "#/core/model/TokenReference";
@@ -23,8 +23,8 @@ const sources = [
     `${FIXTURES}/tokens.dark.json`,
 ];
 
-describe("DtcgTailwindCssConverter", () => {
-    const converter = new DtcgTailwindCssConverter();
+describe("TailwindTokenConverter", () => {
+    const converter = new TailwindTokenConverter();
     let css: string;
 
     beforeAll(async () => {
@@ -166,7 +166,7 @@ describe("DtcgTailwindCssConverter", () => {
     });
 
     it("supports shadow-dom and custom theme selectors", async () => {
-        const shadowCss = await new DtcgTailwindCssConverter({
+        const shadowCss = await new TailwindTokenConverter({
             baseSelector: ":host",
             themeSelector: ":host([data-theme='{theme}'])",
         }).convert(sources);
@@ -354,7 +354,7 @@ function renderNestedDimensionDoc(
     value = 1920,
     extensions?: Record<string, unknown>,
 ): string {
-    const converter = new DtcgTailwindCssConverter();
+    const converter = new TailwindTokenConverter();
     return converter.convertDocument(new Dtcg(buildGroup(path, value, extensions)));
 }
 

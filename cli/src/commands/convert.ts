@@ -1,5 +1,15 @@
 import { Command } from "commander";
-import { DtcgChecker, DtcgList, DtcgListLoader, DtcgTailwindCssConverter, DtcgTokenCssConverter, DtcgTokenScssConverter, Format, type TokenScssOutput } from "@design-token-kit/core";
+import {
+    CssTokenConverter,
+    DtcgChecker,
+    DtcgList,
+    DtcgListLoader,
+    Format,
+    ScssTokenConverter,
+    SwiftUiTokenConverter,
+    TailwindTokenConverter,
+    type TokenScssOutput,
+} from "@design-token-kit/core";
 import { writeFile } from "node:fs/promises";
 import { dirname, extname, join, parse } from "node:path";
 import { getWriter, toDocumentFormat } from "./formats";
@@ -14,16 +24,18 @@ type ConvertOptions = {
     separator?: string;
     baseSelector?: string;
     themeSelector?: string;
+    swiftType?: string;
 };
 
 export const convertCommand = new Command("convert")
     .description("Convert a token file to DTCG JSON, HRDT YAML, DESIGN.md, CSS, SCSS, or Tailwind CSS v4 theme CSS.")
     .argument("[files...]", "Paths to token files (reads from stdin when omitted or '-')")
     .option("-i, --inform [format]", "Input format: dtcg, hrdt, design-md (default: auto-detect)")
-    .option("-f, --outform [format]", "Output format: dtcg, hrdt, design-md, css, scss, tailwind-v4 (default: css)")
+    .option("-f, --outform [format]", "Output format: dtcg, hrdt, design-md, css, scss, tailwind-v4, swiftui (default: css)")
     .option("--separator [value]", "SCSS only: character used to replace '.' in token paths when generating variable names (default: -)")
     .option("--base-selector [selector]", "Tailwind v4 only: selector for optional mirrored base custom properties")
     .option("--theme-selector [template]", "Tailwind v4 only: selector template for theme overrides with {theme} placeholder")
+    .option("--swift-type [type]", "SwiftUI only: output form 'enum' or 'struct' (default: enum)")
     .option("-o, --out [file]", "Output file (SCSS multi-theme: omit for tar stdout, use .tar for archive, or .scss for per-theme files)")
     .addHelpText("after", "\nExit status:\n  0  success\n  1  conversion failed")
     .action(async (files: string[], options: ConvertOptions) => {
@@ -42,7 +54,7 @@ export const convertCommand = new Command("convert")
             }
             const list: DtcgList = await loadSources(files, forcedFormat);
             if (outform === Format.SCSS && list.themes.size > 0) {
-                const outputs = new DtcgTokenScssConverter({
+                const outputs = new ScssTokenConverter({
                     separator: options.separator,
                 }).convertThemeList(list);
 
@@ -75,23 +87,32 @@ async function loadSources(files: string[], forcedFormat?: Format): Promise<Dtcg
 
 function convertList(list: DtcgList, outform: string, options: ConvertOptions): string {
     if (outform === Format.CSS) {
-        return new DtcgTokenCssConverter().convertList(list);
+        return new CssTokenConverter().convertList(list);
     }
     if (outform === Format.SCSS) {
-        return new DtcgTokenScssConverter({
+        return new ScssTokenConverter({
             separator: options.separator,
         }).convertList(list);
     }
     if (outform === Format.TAILWIND_V4) {
-        return new DtcgTailwindCssConverter({
+        return new TailwindTokenConverter({
             baseSelector: options.baseSelector,
             themeSelector: options.themeSelector,
         }).convertList(list);
+    }
+    if (outform === Format.SWIFT_UI) {
+        return new SwiftUiTokenConverter({ swiftType: toSwiftType(options.swiftType) }).convertList(list);
     }
     if (list.themes.size > 0) {
         throw new Error(`Multiple files are only supported with --outform css or tailwind-v4, got ${outform}`);
     }
     return getWriter(outform).write(list.base);
+}
+
+function toSwiftType(v?: string): "enum" | "struct" | undefined {
+    if (v === undefined) return undefined;
+    if (v === "enum" || v === "struct") return v;
+    throw new Error(`Unknown --swift-type "${v}", use enum or struct`);
 }
 
 async function writeOutput(output: string, out?: string): Promise<void> {

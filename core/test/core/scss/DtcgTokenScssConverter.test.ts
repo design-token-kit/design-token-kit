@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeAll } from "vitest";
 import { fileURLToPath } from "node:url";
-import { DtcgTokenScssConverter } from "#/core/platforms/scss/DtcgTokenScssConverter";
+import { ScssTokenConverter } from "#/core/platforms/scss/ScssTokenConverter";
 import { Dtcg } from "#/core/model/Dtcg";
 import { TokenGroup } from "#/core/model/TokenGroup";
 import { TokenNode } from "#/core/model/TokenNode";
@@ -35,8 +35,8 @@ const sources = [
     `${FIXTURES}/tokens.dark.json`,
 ];
 
-describe("DtcgTokenScssConverter", () => {
-    const converter = new DtcgTokenScssConverter();
+describe("ScssTokenConverter", () => {
+    const converter = new ScssTokenConverter();
     const children = (entries: Array<readonly [string, TokenGroup | TokenNode<unknown>]>) =>
         new Map<string, TokenGroup | TokenNode<unknown>>(entries);
 
@@ -462,7 +462,7 @@ it("converts a simple color token", () => {
 
     describe("custom separator", () => {
         it("uses custom separator in variable names", () => {
-            const customConverter = new DtcgTokenScssConverter({ separator: "_" });
+            const customConverter = new ScssTokenConverter({ separator: "_" });
             const result = customConverter.convertDocument(new Dtcg(new TokenGroup({
                 children: children([
                     ["primitive", new TokenGroup({
