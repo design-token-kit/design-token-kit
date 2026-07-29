@@ -36,6 +36,10 @@
 <label for="figma-token">Figma REST Token</label>
 <input id="figma-token" type="password" placeholder="figd_...">
 
+<button id="download-tokens-json">
+    Download Tokens JSON
+</button>
+
 <button id="download-rest-json">
     Download REST JSON
 </button>
@@ -52,11 +56,25 @@
 
 <script>
     const figmaTokenInput = document.getElementById("figma-token");
+    const downloadTokensJsonButton = document.getElementById("download-tokens-json");
     const downloadRestJsonButton = document.getElementById("download-rest-json");
     const downloadPluginJsonButton = document.getElementById("download-plugin-json");
     const status = document.getElementById("status");
     const dtoSummary = document.getElementById("dto-summary");
     const jsonPreview = document.getElementById("json-preview");
+
+    downloadTokensJsonButton.addEventListener("click", () => {
+        status.textContent = "Exporting tokens JSON...";
+
+        parent.postMessage(
+            {
+                pluginMessage: {
+                    type: "EXPORT_TOKENS_JSON",
+                },
+            },
+            "*",
+        );
+    });
 
     downloadRestJsonButton.addEventListener("click", () => {
         status.textContent = "Exporting REST JSON...";
@@ -94,6 +112,14 @@
         }
 
         if (message?.type !== "FILE_EXPORTED") {
+            if (message?.type === "TOKENS_EXPORTED") {
+                const file = message.payload.files[0];
+                downloadJsonFile(file.fileName, file.content);
+                jsonPreview.textContent = file.content;
+                dtoSummary.textContent = createTokenSummary(message.payload.summary, message.payload.warnings);
+                status.textContent = `Downloaded ${file.fileName}.`;
+            }
+
             return;
         }
 
@@ -110,6 +136,14 @@
             `components: ${dto.componentIds.length}`,
             `component sets: ${dto.componentSetIds.length}`,
             `styles: ${dto.styleIds.length}`,
+        ].join(". ");
+    }
+
+    function createTokenSummary(summary, warnings) {
+        return [
+            `source: ${summary.source}`,
+            `colors: ${summary.colorTokens}`,
+            `warnings: ${warnings.length}`,
         ].join(". ");
     }
 

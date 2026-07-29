@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import { normalizeFileResponse } from "../../src/normalize";
 import { PluginFigmaFileReader } from "../../src/PluginFigmaFileReader";
+import { mapFigmaColorTokenName } from "../../src/tokens/FigmaTokenNameMapper";
 import { loadPluginContext, toPlainJson } from "./loadPluginContext";
 
 describe("normalizeFileResponse", () => {
@@ -168,7 +169,369 @@ describe("PluginFigmaFileReader", () => {
     });
 });
 
+describe("mapFigmaColorTokenName", () => {
+    it("keeps explicit primitive, semantic and component token layers", () => {
+        expect(mapFigmaColorTokenName("Primitive/Color/Blue/500")?.path).toEqual(["primitive", "color", "blue", "500"]);
+        expect(mapFigmaColorTokenName("Semantic/Color/Action/Primary")?.path).toEqual(["semantic", "color", "action", "primary"]);
+        expect(mapFigmaColorTokenName("Component/Button/Primary/Bg")?.path).toEqual(["component", "button", "primary", "bg"]);
+    });
+
+    it("falls back to primitive color path when layer is omitted", () => {
+        expect(mapFigmaColorTokenName("Blue/500")?.path).toEqual(["primitive", "color", "blue", "500"]);
+    });
+
+    it("normalizes whitespace and special characters", () => {
+        expect(mapFigmaColorTokenName(" Primitive / Color / Brand Blue / 500 % ")?.path).toEqual(["primitive", "color", "brand-blue", "500"]);
+    });
+
+    it("rejects empty names and incomplete explicit layer paths", () => {
+        expect(mapFigmaColorTokenName("  / / ")).toBeUndefined();
+        expect(mapFigmaColorTokenName("Primitive")).toBeUndefined();
+        expect(mapFigmaColorTokenName("Semantic/Color")).toBeUndefined();
+    });
+});
+
 describe("message flow", () => {
+    it("posts a tokens export payload from color variables", async () => {
+        const context = loadPluginContext({
+            figma: {
+                root: {
+                    id: "0:0",
+                    name: "Token File",
+                    children: [],
+                },
+                variables: {
+                    getLocalVariablesAsync: async () => [
+                        {
+                            id: "variable-blue-500",
+                            name: "Primitive/Color/Blue/500",
+                            description: "Primary blue",
+                            valuesByMode: {
+                                default: { r: 0.145, g: 0.388, b: 0.922, a: 1 },
+                            },
+                        },
+                    ],
+                },
+                getLocalPaintStylesAsync: async () => [],
+            },
+        });
+
+        await context.sendMessage({ type: "EXPORT_TOKENS_JSON" });
+
+        expect(toPlainJson(context.postedMessages)).toEqual([
+            {
+                type: "TOKENS_EXPORTED",
+                payload: {
+                    files: [
+                        {
+                            fileName: "tokens.json",
+                            content: JSON.stringify({
+                                primitive: {
+                                    color: {
+                                        blue: {
+                                            500: {
+                                                $type: "color",
+                                                $value: {
+                                                    colorSpace: "srgb",
+                                                    components: [0.145, 0.388, 0.922],
+                                                    alpha: 1,
+                                                },
+                                                $description: "Primary blue",
+                                            },
+                                        },
+                                    },
+                                },
+                            }, null, 2),
+                            tokens: {
+                                primitive: {
+                                    color: {
+                                        blue: {
+                                            500: {
+                                                $type: "color",
+                                                $value: {
+                                                    colorSpace: "srgb",
+                                                    components: [0.145, 0.388, 0.922],
+                                                    alpha: 1,
+                                                },
+                                                $description: "Primary blue",
+                                            },
+                                        },
+                                    },
+                                },
+                            },
+                        },
+                    ],
+                    summary: {
+                        source: "variables",
+                        colorTokens: 1,
+                        skipped: 0,
+                    },
+                    warnings: [],
+                },
+            },
+        ]);
+    });
+
+    it("exports color variable aliases as DTCG references", async () => {
+        const context = loadPluginContext({
+            figma: {
+                variables: {
+                    getLocalVariablesAsync: async () => [
+                        {
+                            id: "variable-blue-500",
+                            name: "Primitive/Color/Blue/500",
+                            description: "",
+                            valuesByMode: {
+                                default: { r: 0.145, g: 0.388, b: 0.922, a: 1 },
+                            },
+                        },
+                        {
+                            id: "variable-action-primary",
+                            name: "Semantic/Color/Action/Primary",
+                            description: "Primary action color",
+                            valuesByMode: {
+                                default: { type: "VARIABLE_ALIAS", id: "variable-blue-500" },
+                            },
+                        },
+                    ],
+                },
+                getLocalPaintStylesAsync: async () => [],
+            },
+        });
+
+        await context.sendMessage({ type: "EXPORT_TOKENS_JSON" });
+
+        expect(toPlainJson(context.postedMessages[0])).toEqual({
+            type: "TOKENS_EXPORTED",
+            payload: {
+                files: [
+                    {
+                        fileName: "tokens.json",
+                        content: JSON.stringify({
+                            primitive: {
+                                color: {
+                                    blue: {
+                                        500: {
+                                            $type: "color",
+                                            $value: {
+                                                colorSpace: "srgb",
+                                                components: [0.145, 0.388, 0.922],
+                                                alpha: 1,
+                                            },
+                                        },
+                                    },
+                                },
+                            },
+                            semantic: {
+                                color: {
+                                    action: {
+                                        primary: {
+                                            $type: "color",
+                                            $value: "{primitive.color.blue.500}",
+                                            $description: "Primary action color",
+                                        },
+                                    },
+                                },
+                            },
+                        }, null, 2),
+                        tokens: {
+                            primitive: {
+                                color: {
+                                    blue: {
+                                        500: {
+                                            $type: "color",
+                                            $value: {
+                                                colorSpace: "srgb",
+                                                components: [0.145, 0.388, 0.922],
+                                                alpha: 1,
+                                            },
+                                        },
+                                    },
+                                },
+                            },
+                            semantic: {
+                                color: {
+                                    action: {
+                                        primary: {
+                                            $type: "color",
+                                            $value: "{primitive.color.blue.500}",
+                                            $description: "Primary action color",
+                                        },
+                                    },
+                                },
+                            },
+                        },
+                    },
+                ],
+                summary: {
+                    source: "variables",
+                    colorTokens: 2,
+                    skipped: 0,
+                },
+                warnings: [],
+            },
+        });
+    });
+
+    it("skips color variable aliases when the target cannot be mapped", async () => {
+        const context = loadPluginContext({
+            figma: {
+                variables: {
+                    getLocalVariablesAsync: async () => [
+                        {
+                            id: "variable-action-primary",
+                            name: "Semantic/Color/Action/Primary",
+                            description: "",
+                            valuesByMode: {
+                                default: { type: "VARIABLE_ALIAS", id: "missing-variable" },
+                            },
+                        },
+                    ],
+                },
+                getLocalPaintStylesAsync: async () => [],
+            },
+        });
+
+        await context.sendMessage({ type: "EXPORT_TOKENS_JSON" });
+
+        expect(toPlainJson(context.postedMessages[0])).toEqual({
+            type: "TOKENS_EXPORTED",
+            payload: {
+                files: [
+                    {
+                        fileName: "tokens.json",
+                        content: JSON.stringify({}, null, 2),
+                        tokens: {},
+                    },
+                ],
+                summary: {
+                    source: "variables",
+                    colorTokens: 0,
+                    skipped: 1,
+                },
+                warnings: [
+                    "Skipped color variable \"Semantic/Color/Action/Primary\" because it has no raw color value or resolvable alias.",
+                ],
+            },
+        });
+    });
+
+    it("falls back to paint styles when there are no color variables", async () => {
+        const context = loadPluginContext({
+            figma: {
+                variables: {
+                    getLocalVariablesAsync: async () => [],
+                },
+                getLocalPaintStylesAsync: async () => [
+                    {
+                        name: "Red/600",
+                        description: "",
+                        paints: [
+                            {
+                                type: "SOLID",
+                                color: { r: 0.86, g: 0.15, b: 0.15 },
+                                opacity: 0.9,
+                            },
+                        ],
+                    },
+                ],
+            },
+        });
+
+        await context.sendMessage({ type: "EXPORT_TOKENS_JSON" });
+
+        expect(toPlainJson(context.postedMessages[0])).toEqual({
+            type: "TOKENS_EXPORTED",
+            payload: {
+                files: [
+                    {
+                        fileName: "tokens.json",
+                        content: JSON.stringify({
+                            primitive: {
+                                color: {
+                                    red: {
+                                        600: {
+                                            $type: "color",
+                                            $value: {
+                                                colorSpace: "srgb",
+                                                components: [0.86, 0.15, 0.15],
+                                                alpha: 0.9,
+                                            },
+                                        },
+                                    },
+                                },
+                            },
+                        }, null, 2),
+                        tokens: {
+                            primitive: {
+                                color: {
+                                    red: {
+                                        600: {
+                                            $type: "color",
+                                            $value: {
+                                                colorSpace: "srgb",
+                                                components: [0.86, 0.15, 0.15],
+                                                alpha: 0.9,
+                                            },
+                                        },
+                                    },
+                                },
+                            },
+                        },
+                    },
+                ],
+                summary: {
+                    source: "styles",
+                    colorTokens: 1,
+                    skipped: 0,
+                },
+                warnings: [],
+            },
+        });
+    });
+
+    it("skips color variables with invalid token names", async () => {
+        const context = loadPluginContext({
+            figma: {
+                variables: {
+                    getLocalVariablesAsync: async () => [
+                        {
+                            name: "Primitive",
+                            description: "",
+                            valuesByMode: {
+                                default: { r: 1, g: 0, b: 0, a: 1 },
+                            },
+                        },
+                    ],
+                },
+                getLocalPaintStylesAsync: async () => [],
+            },
+        });
+
+        await context.sendMessage({ type: "EXPORT_TOKENS_JSON" });
+
+        expect(toPlainJson(context.postedMessages[0])).toEqual({
+            type: "TOKENS_EXPORTED",
+            payload: {
+                files: [
+                    {
+                        fileName: "tokens.json",
+                        content: JSON.stringify({}, null, 2),
+                        tokens: {},
+                    },
+                ],
+                summary: {
+                    source: "variables",
+                    colorTokens: 0,
+                    skipped: 1,
+                },
+                warnings: [
+                    "Skipped color variable \"Primitive\" because it does not contain a valid token path.",
+                ],
+            },
+        });
+    });
+
     it("posts a plugin export payload through the plugin message flow", async () => {
         const pageExport = {
             editorType: "figma",

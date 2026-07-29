@@ -1,5 +1,6 @@
 import type { FigmaFileReader } from "./FigmaFileReader";
 import { PluginFigmaFileReader, RestFigmaFileReader } from ".";
+import { FigmaTokenExporter } from "./tokens/FigmaTokenExporter";
 
 figma.showUI(__html__, {
     width: 480,
@@ -8,11 +9,17 @@ figma.showUI(__html__, {
 
 type PluginMessage =
     | { type: "EXPORT_PLUGIN_JSON" }
+    | { type: "EXPORT_TOKENS_JSON" }
     | { type: "EXPORT_REST_JSON"; accessToken: string };
 
 figma.ui.onmessage = async (msg: PluginMessage) => {
     if (msg.type === "EXPORT_PLUGIN_JSON") {
         await exportWithReader(new PluginFigmaFileReader());
+        return;
+    }
+
+    if (msg.type === "EXPORT_TOKENS_JSON") {
+        await exportTokens();
         return;
     }
 
@@ -26,6 +33,27 @@ figma.ui.onmessage = async (msg: PluginMessage) => {
         await exportWithReader(new RestFigmaFileReader(msg.accessToken, fileKey));
     }
 };
+
+async function exportTokens(): Promise<void> {
+    try {
+        const result = await new FigmaTokenExporter().export();
+
+        figma.ui.postMessage({
+            type: "TOKENS_EXPORTED",
+            payload: result,
+        });
+    } catch (error: unknown) {
+        const message = getErrorMessage(error);
+        figma.notify(message, { error: true });
+        figma.ui.postMessage({
+            type: "EXPORT_FAILED",
+            payload: {
+                source: "tokens",
+                message,
+            },
+        });
+    }
+}
 
 async function exportWithReader(reader: FigmaFileReader): Promise<void> {
     try {
