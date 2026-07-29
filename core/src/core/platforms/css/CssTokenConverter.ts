@@ -15,8 +15,8 @@ import { TransitionValue } from "#/core/model/values/TransitionValue";
 import { ShadowLayer } from "#/core/model/values/ShadowValue";
 import { GradientStop } from "#/core/model/values/GradientValue";
 import { TypographyValue } from "#/core/model/values/TypographyValue";
-import { ColorCssSerializer } from "#/core/platforms/css/ColorCssSerializer";
-import type { TokenCssConverter } from "#/core/platforms/css/TokenCssConverter";
+import { CssColorValueConverter } from "#/core/platforms/css/CssColorValueConverter";
+import type { TokenConverter } from "#/core/platforms/TokenConverter";
 
 /**
  * Converts token documents in any supported format to CSS custom properties.
@@ -26,7 +26,7 @@ import type { TokenCssConverter } from "#/core/platforms/css/TokenCssConverter";
  * Base tokens are emitted under {@code :root}.
  * Theme tokens are emitted under {@code :root[data-theme="name"]}.
  */
-export class DtcgTokenCssConverter implements TokenCssConverter {
+export class CssTokenConverter implements TokenConverter {
 
     readonly #loader = new DtcgListLoader();
 
@@ -62,10 +62,10 @@ function refToCssVar(ref: TokenReference): string {
     return `var(${tokenPathToCssVar(ref.value)})`;
 }
 
-const colorCssSerializer = new ColorCssSerializer();
+const cssColorValueConverter = new CssColorValueConverter();
 
 function colorToCss(color: ColorValue): string {
-    return colorCssSerializer.serialize(color);
+    return cssColorValueConverter.convert(color);
 }
 
 function dimensionOrRefToCss(value: DimensionValue | TokenReference): string {

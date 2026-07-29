@@ -15,11 +15,11 @@ import { ShadowLayer } from "#/core/model/values/ShadowValue";
 import { StrokeStyleObject } from "#/core/model/values/StrokeStyleValue";
 import { TransitionValue } from "#/core/model/values/TransitionValue";
 import { TypographyValue } from "#/core/model/values/TypographyValue";
-import { ColorCssSerializer } from "#/core/platforms/css/ColorCssSerializer";
-import type { TokenScssConverter } from "#/core/platforms/scss/TokenScssConverter";
+import { CssColorValueConverter } from "#/core/platforms/css/CssColorValueConverter";
+import type { TokenConverter } from "#/core/platforms/TokenConverter";
 import type { TokenScssOutput } from "#/core/platforms/scss/TokenScssOutput";
 
-export interface DtcgTokenScssConverterOptions {
+export interface ScssTokenConverterOptions {
     /**
      * Separator used when flattening token paths into SCSS variable names.
      *
@@ -37,11 +37,11 @@ const DEFAULT_SEPARATOR = "-";
  * Base and theme documents are emitted as separate SCSS stylesheets. Theme
  * output keeps the same variable names as base and changes only the values.
  */
-export class DtcgTokenScssConverter implements TokenScssConverter {
+export class ScssTokenConverter implements TokenConverter {
     readonly #loader = new DtcgListLoader();
-    readonly #options: Required<DtcgTokenScssConverterOptions>;
+    readonly #options: Required<ScssTokenConverterOptions>;
 
-    constructor(options: DtcgTokenScssConverterOptions = {}) {
+    constructor(options: ScssTokenConverterOptions = {}) {
         this.#options = {
             separator: options.separator ?? DEFAULT_SEPARATOR,
         };
@@ -89,7 +89,7 @@ export class DtcgTokenScssConverter implements TokenScssConverter {
     }
 }
 
-const colorCssSerializer = new ColorCssSerializer();
+const cssColorValueConverter = new CssColorValueConverter();
 
 function tokenPathToScssVar(path: string, separator: string): string {
     return `$${path.replace(/\./g, separator)}`;
@@ -100,7 +100,7 @@ function refToScssVar(ref: TokenReference, separator: string): string {
 }
 
 function colorToCss(color: ColorValue): string {
-    return colorCssSerializer.serialize(color);
+    return cssColorValueConverter.convert(color);
 }
 
 function dimensionOrRefToScss(value: DimensionValue | TokenReference, separator: string): string {

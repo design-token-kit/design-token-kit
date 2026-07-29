@@ -14,13 +14,13 @@ import { StrokeStyleObject } from "#/core/model/values/StrokeStyleValue";
 import { TransitionValue } from "#/core/model/values/TransitionValue";
 import { TypographyValue } from "#/core/model/values/TypographyValue";
 import { GradientStop } from "#/core/model/values/GradientValue";
-import { ColorSwiftUiSerializer } from "#/core/platforms/swiftui/ColorSwiftUiSerializer";
-import type { TokenSwiftUiConverter } from "#/core/platforms/swiftui/TokenSwiftUiConverter";
+import { SwiftUiColorValueConverter } from "#/core/platforms/swiftui/SwiftUiColorValueConverter";
+import type { TokenConverter } from "#/core/platforms/TokenConverter";
 
 /**
  * Output form for the generated SwiftUI source.
  */
-export interface DtcgTokenSwiftUiConverterOptions {
+export interface SwiftUiTokenConverterOptions {
     /**
      * Whether to emit tokens as a namespaced `enum` API or as a `Theme`
      * `struct` value on top of the enum layer.
@@ -43,11 +43,11 @@ export interface DtcgTokenSwiftUiConverterOptions {
  * `"struct"`, a `Theme` struct and one instance per theme are emitted on top,
  * with fields referencing the corresponding enum constants.
  */
-export class DtcgTokenSwiftUiConverter implements TokenSwiftUiConverter {
+export class SwiftUiTokenConverter implements TokenConverter {
     readonly #swiftType: "enum" | "struct";
     #used = new Set<CompositeKind>();
 
-    constructor(options: DtcgTokenSwiftUiConverterOptions = {}) {
+    constructor(options: SwiftUiTokenConverterOptions = {}) {
         this.#swiftType = options.swiftType ?? "enum";
     }
 
@@ -347,7 +347,7 @@ const INDENT = "    ";
  */
 let currentRoot = ROOT;
 
-const colorSerializer = new ColorSwiftUiSerializer();
+const swiftUiColorValueConverter = new SwiftUiColorValueConverter();
 
 const SWIFT_KEYWORDS = new Set([
     "default", "class", "enum", "struct", "case", "let", "var", "func",
@@ -544,7 +544,7 @@ function referencedFieldType(type: TokenType | undefined): string {
 
 function renderScalar(value: unknown): Rendered | undefined {
     if (value instanceof TokenReference) return { expr: refToSwift(value) };
-    if (value instanceof ColorValue) return { expr: colorSerializer.serialize(value) };
+    if (value instanceof ColorValue) return { expr: swiftUiColorValueConverter.convert(value) };
     if (value instanceof DimensionValue) return { expr: String(value.value), type: "CGFloat" };
     if (value instanceof DurationValue) return { expr: String(durationSeconds(value)), type: "TimeInterval" };
     if (value instanceof CubicBezierValue) {
@@ -577,7 +577,7 @@ function dimToSwift(value: DimensionValue | TokenReference): string {
 }
 
 function colorArgToSwift(value: ColorValue | TokenReference): string {
-    return value instanceof TokenReference ? refToSwift(value) : colorSerializer.serialize(value);
+    return value instanceof TokenReference ? refToSwift(value) : swiftUiColorValueConverter.convert(value);
 }
 
 function typographyToSwift(value: TypographyValue): string {

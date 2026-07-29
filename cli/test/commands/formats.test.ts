@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { Dtcg, Format, TokenGroup, DtcgJsonReader, DtcgList, DtcgTokenSwiftUiConverter } from "@design-token-kit/core";
+import { Dtcg, Format, TokenGroup, DtcgJsonReader, DtcgList, SwiftUiTokenConverter } from "@design-token-kit/core";
 import { getReader, getWriter, toDocumentFormat } from "#/commands/formats";
 
 describe("toDocumentFormat", () => {
@@ -140,12 +140,12 @@ describe("SwiftUI multi-theme conversion", () => {
     }
 
     it("emits a theme enum for the enum form", () => {
-        const out = new DtcgTokenSwiftUiConverter({ swiftType: "enum" }).convertList(themedList());
+        const out = new SwiftUiTokenConverter({ swiftType: "enum" }).convertList(themedList());
         expect(out).toContain("enum DesignTokensDark {");
     });
 
     it("emits the Theme struct and a theme instance for the struct form", () => {
-        const out = new DtcgTokenSwiftUiConverter({ swiftType: "struct" }).convertList(themedList());
+        const out = new SwiftUiTokenConverter({ swiftType: "struct" }).convertList(themedList());
         expect(out).toContain("struct Theme {");
         expect(out).toContain("static let dark = Theme(");
     });

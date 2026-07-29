@@ -1,19 +1,19 @@
 import { ColorValue, type ColorComponent, type ColorSpace } from "#/core/model/values/ColorValue";
 
-type ColorSerializer = (color: ColorValue) => string;
-type ColorSerializerMode = "css" | "tailwind";
+type ColorValueConverter = (color: ColorValue) => string;
+type CssColorValueConverterMode = "css" | "tailwind";
 
-export interface ColorCssSerializerOptions {
-    mode?: ColorSerializerMode;
+export interface CssColorValueConverterOptions {
+    mode?: CssColorValueConverterMode;
 }
 
 /**
- * Serializes DTCG color values to CSS color syntax.
+ * Converts DTCG color values to CSS color syntax.
  */
-export class ColorCssSerializer {
-    readonly #mode: ColorSerializerMode;
+export class CssColorValueConverter {
+    readonly #mode: CssColorValueConverterMode;
 
-    readonly #serializers: Record<ColorSpace, ColorSerializer> = {
+    readonly #converters: Record<ColorSpace, ColorValueConverter> = {
         "srgb": (color) => this.#colorFunction(color),
         "srgb-linear": (color) => this.#colorFunction(color),
         "display-p3": (color) => this.#colorFunction(color),
@@ -30,20 +30,20 @@ export class ColorCssSerializer {
         "oklch": (color) => `oklch(${this.#component(color.components[0])} ${this.#component(color.components[1])} ${this.#component(color.components[2])}${this.#alpha(color)})`,
     };
 
-    constructor(options: ColorCssSerializerOptions = {}) {
+    constructor(options: CssColorValueConverterOptions = {}) {
         this.#mode = options.mode ?? "css";
     }
 
-    serialize(color: ColorValue): string {
+    convert(color: ColorValue): string {
         if (this.#mode === "tailwind") {
-            const tailwindColor = this.#serializeTailwind(color);
+            const tailwindColor = this.#convertTailwind(color);
             if (tailwindColor) return tailwindColor;
         }
         if (color.hex && color.alpha === 1) return color.hex;
-        return this.#serializers[color.colorSpace](color);
+        return this.#converters[color.colorSpace](color);
     }
 
-    #serializeTailwind(color: ColorValue): string | undefined {
+    #convertTailwind(color: ColorValue): string | undefined {
         if (color.colorSpace !== "srgb") {
             return undefined;
         }

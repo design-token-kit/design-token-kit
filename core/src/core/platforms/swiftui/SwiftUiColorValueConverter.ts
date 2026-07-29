@@ -7,15 +7,15 @@ const SPACE_MAP: Partial<Record<ColorSpace, string>> = {
 };
 
 /**
- * Serializes DTCG color values to SwiftUI Color initializers.
+ * Converts DTCG color values to SwiftUI Color initializers.
  *
  * @remarks
  * Unsupported color spaces (lab, lch, oklab, oklch, hsl, ...) fall back to
  * sRGB. Components are emitted as raw 0-1 numbers; `opacity:` is added only
  * when alpha is below 1.
  */
-export class ColorSwiftUiSerializer {
-    serialize(color: ColorValue): string {
+export class SwiftUiColorValueConverter {
+    convert(color: ColorValue): string {
         const space = SPACE_MAP[color.colorSpace] ?? ".sRGB";
         const [r, g, b] = color.components;
         const parts = [

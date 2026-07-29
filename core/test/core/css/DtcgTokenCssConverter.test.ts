@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeAll } from "vitest";
 import { fileURLToPath } from "node:url";
-import { DtcgTokenCssConverter } from "#/core/platforms/css/DtcgTokenCssConverter";
+import { CssTokenConverter } from "#/core/platforms/css/CssTokenConverter";
 import { Dtcg } from "#/core/model/Dtcg";
 import { TokenGroup } from "#/core/model/TokenGroup";
 import { TokenNode } from "#/core/model/TokenNode";
@@ -34,8 +34,8 @@ const sources = [
     `${FIXTURES}/tokens.dark.json`,
 ];
 
-describe("DtcgTokenCssConverter", () => {
-    const converter = new DtcgTokenCssConverter();
+describe("CssTokenConverter", () => {
+    const converter = new CssTokenConverter();
     let css: string;
 
     beforeAll(async () => {

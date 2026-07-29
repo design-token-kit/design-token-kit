@@ -13,7 +13,7 @@ import { ShadowLayer } from "#/core/model/values/ShadowValue";
 import { StrokeStyleObject } from "#/core/model/values/StrokeStyleValue";
 import { TransitionValue } from "#/core/model/values/TransitionValue";
 import { TypographyValue } from "#/core/model/values/TypographyValue";
-import { ColorCssSerializer } from "#/core/platforms/css/ColorCssSerializer";
+import { CssColorValueConverter } from "#/core/platforms/css/CssColorValueConverter";
 
 type TailwindNamespace =
     | "background-image"
@@ -38,7 +38,7 @@ export type TailwindDeclaration = {
 type ExplicitTailwindNamespace = "breakpoint";
 
 export interface TailwindTokenMapperOptions {
-    colorCssSerializer?: ColorCssSerializer;
+    cssColorValueConverter?: CssColorValueConverter;
 }
 
 const TRANSITION_NAMESPACES: TailwindNamespace[] = [
@@ -94,10 +94,10 @@ const FONT_WEIGHT_KEYWORDS: Record<string, string> = {
  * Maps DTCG tokens to Tailwind CSS v4 theme custom properties.
  */
 export class TailwindTokenMapper {
-    readonly #colorCssSerializer: ColorCssSerializer;
+    readonly #cssColorValueConverter: CssColorValueConverter;
 
     constructor(options: TailwindTokenMapperOptions = {}) {
-        this.#colorCssSerializer = options.colorCssSerializer ?? new ColorCssSerializer({ mode: "tailwind" });
+        this.#cssColorValueConverter = options.cssColorValueConverter ?? new CssColorValueConverter({ mode: "tailwind" });
     }
 
     collectDocument(doc: Dtcg): TailwindDeclaration[] {
@@ -323,7 +323,7 @@ export class TailwindTokenMapper {
     }
 
     #colorToCss(color: ColorValue): string {
-        return this.#colorCssSerializer.serialize(color);
+        return this.#cssColorValueConverter.convert(color);
     }
 
     #fontFamilyToCss(value: TypographyValue["fontFamily"]): string {

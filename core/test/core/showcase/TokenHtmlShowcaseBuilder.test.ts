@@ -1,10 +1,11 @@
 import { describe, it, expect, vi } from "vitest";
 import { TokenHtmlShowcaseBuilder } from "#/core/showcase/TokenHtmlShowcaseBuilder";
 import type { TokenValidator } from "#/core/validation/TokenValidator";
-import type { TokenCssConverter } from "#/core/platforms/css/TokenCssConverter";
 import type { CssTokenParser } from "#/core/showcase/CssTokenParser";
 import type { TokenHtmlShowcaseRenderer } from "#/core/showcase/TokenHtmlShowcaseRenderer";
 import type { CheckIssue } from "#/core/check/CheckIssue";
+
+type CssSourceConverter = ConstructorParameters<typeof TokenHtmlShowcaseBuilder>[1];
 
 function makeBuilder(overrides: {
     issues?: CheckIssue[];
@@ -15,7 +16,7 @@ function makeBuilder(overrides: {
         validate: vi.fn().mockResolvedValue(overrides.issues ?? []),
     };
 
-    const converter: TokenCssConverter = {
+    const converter: CssSourceConverter = {
         convert: vi.fn().mockResolvedValue(overrides.css ?? ":root { --color-brand: #fff; }"),
     };
 
@@ -50,7 +51,7 @@ describe("TokenHtmlShowcaseBuilder", () => {
     describe("showcase - JSON sources", () => {
         it("validates sources before converting", async () => {
             const validator: TokenValidator = { validate: vi.fn().mockResolvedValue([]) };
-            const converter: TokenCssConverter = { convert: vi.fn().mockResolvedValue(":root {}") };
+            const converter: CssSourceConverter = { convert: vi.fn().mockResolvedValue(":root {}") };
             const parser = { parse: vi.fn().mockReturnValue({ entries: [], themes: [] }) } as unknown as CssTokenParser;
             const renderer = { renderPage: vi.fn().mockReturnValue("<html/>") } as unknown as TokenHtmlShowcaseRenderer;
 
@@ -61,7 +62,7 @@ describe("TokenHtmlShowcaseBuilder", () => {
 
         it("converts sources to CSS when validation passes", async () => {
             const validator: TokenValidator = { validate: vi.fn().mockResolvedValue([]) };
-            const converter: TokenCssConverter = { convert: vi.fn().mockResolvedValue(":root {}") };
+            const converter: CssSourceConverter = { convert: vi.fn().mockResolvedValue(":root {}") };
             const parser = { parse: vi.fn().mockReturnValue({ entries: [], themes: [] }) } as unknown as CssTokenParser;
             const renderer = { renderPage: vi.fn().mockReturnValue("<html/>") } as unknown as TokenHtmlShowcaseRenderer;
 
@@ -73,7 +74,7 @@ describe("TokenHtmlShowcaseBuilder", () => {
         it("parses the CSS returned by converter", async () => {
             const css = ":root { --color-brand: #fff; }";
             const validator: TokenValidator = { validate: vi.fn().mockResolvedValue([]) };
-            const converter: TokenCssConverter = { convert: vi.fn().mockResolvedValue(css) };
+            const converter: CssSourceConverter = { convert: vi.fn().mockResolvedValue(css) };
             const parser = { parse: vi.fn().mockReturnValue({ entries: [], themes: [] }) } as unknown as CssTokenParser;
             const renderer = { renderPage: vi.fn().mockReturnValue("<html/>") } as unknown as TokenHtmlShowcaseRenderer;
 
@@ -85,7 +86,7 @@ describe("TokenHtmlShowcaseBuilder", () => {
         it("renders HTML from parsed CSS and returns it", async () => {
             const parsedResult = { entries: [{ name: "--color-brand", value: "#fff", scope: "primitive" }], themes: [] };
             const validator: TokenValidator = { validate: vi.fn().mockResolvedValue([]) };
-            const converter: TokenCssConverter = { convert: vi.fn().mockResolvedValue(":root {}") };
+            const converter: CssSourceConverter = { convert: vi.fn().mockResolvedValue(":root {}") };
             const parser = { parse: vi.fn().mockReturnValue(parsedResult) } as unknown as CssTokenParser;
             const renderer = { renderPage: vi.fn().mockReturnValue("<html>ok</html>") } as unknown as TokenHtmlShowcaseRenderer;
 
@@ -131,7 +132,7 @@ describe("TokenHtmlShowcaseBuilder", () => {
 
         it("does not convert when validation has errors", async () => {
             const validator: TokenValidator = { validate: vi.fn().mockResolvedValue([issue("error", "Bad token")]) };
-            const converter: TokenCssConverter = { convert: vi.fn().mockResolvedValue(":root {}") };
+            const converter: CssSourceConverter = { convert: vi.fn().mockResolvedValue(":root {}") };
             const parser = { parse: vi.fn() } as unknown as CssTokenParser;
             const renderer = { renderPage: vi.fn() } as unknown as TokenHtmlShowcaseRenderer;
 
@@ -148,7 +149,7 @@ describe("TokenHtmlShowcaseBuilder", () => {
     describe("showcase - two JSON sources", () => {
         it("passes all sources to validator", async () => {
             const validator: TokenValidator = { validate: vi.fn().mockResolvedValue([]) };
-            const converter: TokenCssConverter = { convert: vi.fn().mockResolvedValue(":root {}") };
+            const converter: CssSourceConverter = { convert: vi.fn().mockResolvedValue(":root {}") };
             const parser = { parse: vi.fn().mockReturnValue({ entries: [], themes: [] }) } as unknown as CssTokenParser;
             const renderer = { renderPage: vi.fn().mockReturnValue("<html/>") } as unknown as TokenHtmlShowcaseRenderer;
 
@@ -159,7 +160,7 @@ describe("TokenHtmlShowcaseBuilder", () => {
 
         it("passes all sources to converter", async () => {
             const validator: TokenValidator = { validate: vi.fn().mockResolvedValue([]) };
-            const converter: TokenCssConverter = { convert: vi.fn().mockResolvedValue(":root {}") };
+            const converter: CssSourceConverter = { convert: vi.fn().mockResolvedValue(":root {}") };
             const parser = { parse: vi.fn().mockReturnValue({ entries: [], themes: [] }) } as unknown as CssTokenParser;
             const renderer = { renderPage: vi.fn().mockReturnValue("<html/>") } as unknown as TokenHtmlShowcaseRenderer;
 

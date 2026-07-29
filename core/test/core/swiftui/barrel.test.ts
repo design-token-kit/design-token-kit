@@ -1,8 +1,8 @@
 import { describe, it, expect } from "vitest";
-import { DtcgTokenSwiftUiConverter } from "#/index";
+import { SwiftUiTokenConverter } from "#/index";
 
 describe("core barrel", () => {
-    it("exports DtcgTokenSwiftUiConverter", () => {
-        expect(typeof DtcgTokenSwiftUiConverter).toBe("function");
+    it("exports SwiftUiTokenConverter", () => {
+        expect(typeof SwiftUiTokenConverter).toBe("function");
     });
 });

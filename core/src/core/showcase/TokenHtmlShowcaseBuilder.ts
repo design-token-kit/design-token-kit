@@ -1,6 +1,6 @@
 import { Source } from "#/core/io/Source";
 import { Format } from "#/core/io/Format";
-import { TokenCssConverter } from "#/core/platforms/css/TokenCssConverter";
+import type { CssTokenConverter } from "#/core/platforms/css/CssTokenConverter";
 import { CssTokenParser } from "#/core/showcase/CssTokenParser";
 import { TokenHtmlShowcase } from "#/core/showcase/TokenHtmlShowcase";
 import { TokenHtmlShowcaseRenderer } from "#/core/showcase/TokenHtmlShowcaseRenderer";
@@ -16,13 +16,13 @@ import type { CheckIssue } from "#/core/check/CheckIssue";
  */
 export class TokenHtmlShowcaseBuilder implements TokenHtmlShowcase {
     readonly #validator: TokenValidator;
-    readonly #converter: TokenCssConverter;
+    readonly #converter: Pick<CssTokenConverter, "convert">;
     readonly #parser: CssTokenParser;
     readonly #renderer: TokenHtmlShowcaseRenderer;
 
     constructor(
         validator: TokenValidator,
-        converter: TokenCssConverter,
+        converter: Pick<CssTokenConverter, "convert">,
         parser = new CssTokenParser(),
         renderer = new TokenHtmlShowcaseRenderer(),
     ) {

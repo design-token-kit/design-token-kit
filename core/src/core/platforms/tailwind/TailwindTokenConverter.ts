@@ -1,10 +1,10 @@
 import { Dtcg } from "#/core/model/Dtcg";
 import { DtcgList } from "#/core/model/DtcgList";
 import { DtcgListLoader } from "#/core/io/DtcgListLoader";
-import type { TokenTailwindConverter } from "#/core/platforms/tailwind/TokenTailwindConverter";
+import type { TokenConverter } from "#/core/platforms/TokenConverter";
 import { TailwindDeclaration, TailwindTokenMapper } from "#/core/platforms/tailwind/TailwindTokenMapper";
 
-export interface DtcgTailwindCssConverterOptions {
+export interface TailwindTokenConverterOptions {
     /**
      * Selector that receives a plain CSS custom property mirror of the base
      * `@theme` declarations.
@@ -22,7 +22,7 @@ export interface DtcgTailwindCssConverterOptions {
 }
 
 const DEFAULT_THEME_SELECTOR = "[data-theme='{theme}']";
-type ResolvedDtcgTailwindCssConverterOptions = {
+type ResolvedTailwindTokenConverterOptions = {
     baseSelector?: string;
     themeSelector: string;
 };
@@ -33,12 +33,12 @@ type ResolvedDtcgTailwindCssConverterOptions = {
  * Theme overrides are emitted as plain CSS custom properties under
  * {@code [data-theme="<name>"]}.
  */
-export class DtcgTailwindCssConverter implements TokenTailwindConverter {
+export class TailwindTokenConverter implements TokenConverter {
     readonly #loader = new DtcgListLoader();
     readonly #mapper = new TailwindTokenMapper();
-    readonly #options: ResolvedDtcgTailwindCssConverterOptions;
+    readonly #options: ResolvedTailwindTokenConverterOptions;
 
-    constructor(options: DtcgTailwindCssConverterOptions = {}) {
+    constructor(options: TailwindTokenConverterOptions = {}) {
         this.#options = {
             baseSelector: options.baseSelector,
             themeSelector: options.themeSelector ?? DEFAULT_THEME_SELECTOR,

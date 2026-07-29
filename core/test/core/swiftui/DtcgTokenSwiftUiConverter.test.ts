@@ -2,29 +2,29 @@ import { describe, it, expect } from "vitest";
 import { DtcgJsonReader } from "#/core/io/DtcgJsonReader";
 import { DtcgList } from "#/core/model/DtcgList";
 import {
-    DtcgTokenSwiftUiConverter,
-    type DtcgTokenSwiftUiConverterOptions,
-} from "#/core/platforms/swiftui/DtcgTokenSwiftUiConverter";
+    SwiftUiTokenConverter,
+    type SwiftUiTokenConverterOptions,
+} from "#/core/platforms/swiftui/SwiftUiTokenConverter";
 
 function convert(json: object): string {
     const doc = new DtcgJsonReader().parse(JSON.stringify(json));
-    return new DtcgTokenSwiftUiConverter().convertDocument(doc);
+    return new SwiftUiTokenConverter().convertDocument(doc);
 }
 
 function convertList(
     base: object,
     themes: Record<string, object> = {},
-    options?: DtcgTokenSwiftUiConverterOptions,
+    options?: SwiftUiTokenConverterOptions,
 ): string {
     const reader = new DtcgJsonReader();
     const baseDoc = reader.parse(JSON.stringify(base));
     const themeMap = new Map(
         Object.entries(themes).map(([name, doc]) => [name, reader.parse(JSON.stringify(doc))]),
     );
-    return new DtcgTokenSwiftUiConverter(options).convertList(new DtcgList(baseDoc, themeMap));
+    return new SwiftUiTokenConverter(options).convertList(new DtcgList(baseDoc, themeMap));
 }
 
-describe("DtcgTokenSwiftUiConverter scalars", () => {
+describe("SwiftUiTokenConverter scalars", () => {
     it("wraps output in a DesignTokens enum with SwiftUI import", () => {
         const out = convert({
             color: {
@@ -141,7 +141,7 @@ describe("DtcgTokenSwiftUiConverter scalars", () => {
     });
 });
 
-describe("DtcgTokenSwiftUiConverter composites", () => {
+describe("SwiftUiTokenConverter composites", () => {
     it("emits a ShadowToken struct and value when a shadow token exists", () => {
         const out = convert({
             elevation: {
@@ -320,7 +320,7 @@ const DARK_OVERRIDE = {
     },
 };
 
-describe("DtcgTokenSwiftUiConverter enum themes", () => {
+describe("SwiftUiTokenConverter enum themes", () => {
     it("emits a base enum and a full per-theme enum", () => {
         const out = convertList(THEMED_BASE, { dark: DARK_OVERRIDE });
         expect(out).toContain("enum DesignTokens {");
@@ -363,7 +363,7 @@ describe("DtcgTokenSwiftUiConverter enum themes", () => {
     });
 });
 
-describe("DtcgTokenSwiftUiConverter struct themes", () => {
+describe("SwiftUiTokenConverter struct themes", () => {
     it("emits a Theme struct mirroring the token tree", () => {
         const out = convertList(THEMED_BASE, { dark: DARK_OVERRIDE }, { swiftType: "struct" });
         expect(out).toContain("struct Theme {");

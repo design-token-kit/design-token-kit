@@ -1,8 +1,8 @@
 import {
     Dtcg,
     DtcgList,
-    DtcgTokenCssConverter,
-    DtcgTokenScssConverter,
+    CssTokenConverter,
+    ScssTokenConverter,
     DtcgToDesignMdMapper,
     DtcgJsonReader,
     DtcgJsonWriter,
@@ -11,8 +11,8 @@ import {
     HrdtTokenWriter,
     DesignMdReader,
     DesignMdWriter,
-    DtcgTailwindCssConverter,
-    DtcgTokenSwiftUiConverter,
+    TailwindTokenConverter,
+    SwiftUiTokenConverter,
 } from "@design-token-kit/core";
 
 export { Format };
@@ -64,16 +64,16 @@ const writers = {
         },
     },
     [Format.CSS]: {
-        write: (doc) => new DtcgTokenCssConverter().convertDocument(doc),
+        write: (doc) => new CssTokenConverter().convertDocument(doc),
     },
     [Format.SCSS]: {
-        write: (doc) => new DtcgTokenScssConverter().convertDocument(doc),
+        write: (doc) => new ScssTokenConverter().convertDocument(doc),
     },
     [Format.TAILWIND_V4]: {
-        write: (doc) => new DtcgTailwindCssConverter().convertDocument(doc),
+        write: (doc) => new TailwindTokenConverter().convertDocument(doc),
     },
     [Format.SWIFT_UI]: {
-        write: (doc) => new DtcgTokenSwiftUiConverter().convertDocument(doc),
+        write: (doc) => new SwiftUiTokenConverter().convertDocument(doc),
     },
 } satisfies Record<OutputFormat, DocumentWriter>;
 
