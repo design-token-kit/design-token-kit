@@ -2,6 +2,14 @@
 
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [Unreleased]
+
+## [1.7.1] - 2026-07-29
+
+### Added
+
+- Added SwiftUI documentation to the root, CLI, and core README files.
+
 ## [1.7.0] - 2026-07-29
 
 ### Added
