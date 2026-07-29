@@ -28,7 +28,7 @@ type ConvertOptions = {
 };
 
 export const convertCommand = new Command("convert")
-    .description("Convert a token file to DTCG JSON, HRDT YAML, DESIGN.md, CSS, SCSS, or Tailwind CSS v4 theme CSS.")
+    .description("Convert a token file to DTCG JSON, HRDT YAML, DESIGN.md, CSS, SCSS, Tailwind CSS v4, or SwiftUI.")
     .argument("[files...]", "Paths to token files (reads from stdin when omitted or '-')")
     .option("-i, --inform [format]", "Input format: dtcg, hrdt, design-md (default: auto-detect)")
     .option("-f, --outform [format]", "Output format: dtcg, hrdt, design-md, css, scss, tailwind-v4, swiftui (default: css)")

@@ -26,6 +26,8 @@ https://design-token-kit.github.io/
   DESIGN.md
 * **CSS generation** - base and theme token sets rendered as CSS custom
   properties, SCSS variables, or Tailwind CSS v4 `@theme` variables
+* **SwiftUI generation** - token sets rendered as Swift source using a
+  namespaced enum API or a `Theme` struct layer
 * **Static showcase** - HTML showcase generation from token sources or existing
   CSS
 * **Token stats** - text and HTML reports with token counts and breakdowns
@@ -62,6 +64,7 @@ dtokens check tokens.json
 dtokens convert tokens.yaml --inform hrdt --outform css --out ./tokens.css
 dtokens convert tokens.json --outform scss --out ./tokens.scss
 dtokens convert tokens.json --outform tailwind-v4 --out ./tokens.tailwind.css
+dtokens convert tokens.json --outform swiftui --out ./DesignTokens.swift
 dtokens convert tokens.json --outform design-md
 dtokens convert DESIGN.md --inform design-md --outform dtcg
 dtokens showcase tokens.json --out ./showcase.html --open
@@ -132,6 +135,14 @@ By default the generated stylesheet contains:
 Use `--base-selector` only when you also need an explicit mirror of the base
 custom properties outside `@theme`, for example in Shadow DOM scenarios.
 
+### SwiftUI source
+
+Generate Swift source from token sources.
+By default tokens are emitted as nested enums with `static let` members.
+
+Use `--swift-type struct` to also emit a `Theme` struct layer and theme
+instances for advanced theme switching.
+
 ### HTML showcase
 
 Generate a static HTML preview from DTCG JSON, HRDT YAML, DESIGN.md, or
@@ -153,7 +164,7 @@ Convert token documents between DTCG JSON, HRDT YAML, and DESIGN.md.
   token files: schema, model correctness, lint.
 * `validate [files...]` - alias for `check`.
 * `convert [options] [files...]` - convert a token file to DTCG JSON,
-  HRDT YAML, DESIGN.md, CSS, SCSS, or Tailwind CSS v4 theme CSS.
+  HRDT YAML, DESIGN.md, CSS, SCSS, Tailwind CSS v4 theme CSS, or SwiftUI.
 * `showcase [options] [files...]` - create HTML showcase from DTCG JSON,
   HRDT YAML, DESIGN.md, or CSS.
 * `stats [options] [files...]` - generate token statistics from DTCG JSON,
@@ -180,13 +191,15 @@ Convert token documents between DTCG JSON, HRDT YAML, and DESIGN.md.
 * `-i, --inform [format]` - input format: `dtcg`, `hrdt`, `design-md`
   (default: auto-detect).
 * `-f, --outform [format]` - output format: `dtcg`, `hrdt`, `design-md`,
-  `css`, `scss`, `tailwind-v4`. Defaults to `css`.
+  `css`, `scss`, `tailwind-v4`, `swiftui`. Defaults to `css`.
 * `--separator [value]` - scss only: character used to replace `.` in token
   paths when generating flattened variable names. Defaults to `-`.
 * `--base-selector [selector]` - tailwind-v4 only: selector for an optional
   mirror of the base custom properties.
 * `--theme-selector [template]` - tailwind-v4 only: selector template for
   theme overrides, with `{theme}` placeholder.
+* `--swift-type [type]` - SwiftUI only: output form `enum` or `struct`.
+  Defaults to `enum`.
 * `-o, --out [file]` - output file, defaults to stdout.
   For multi-theme SCSS:
   - omit `--out` to write a tar archive to stdout
@@ -259,8 +272,8 @@ Use `--out` to write the result to a file instead of stdout.
 dtokens convert tokens.json --outform hrdt --out tokens.yaml
 ```
 
-Multiple input sources are only supported when `--outform css` or
-`--outform scss` or `--outform tailwind-v4`.
+Multiple input sources are only supported when `--outform css`,
+`--outform scss`, `--outform tailwind-v4`, or `--outform swiftui`.
 
 ## CSS Conversion
 
@@ -332,6 +345,19 @@ dtokens convert tokens.json tokens.dark.json --outform tailwind-v4 --out ./token
 dtokens convert tokens.json tokens.dark.json --outform tailwind-v4 --base-selector :host --theme-selector ":host([data-theme='{theme}'])"
 ```
 
+## SwiftUI Conversion
+
+Convert a base token set and optional theme overrides to Swift source.
+
+```bash
+dtokens convert tokens.json --outform swiftui
+dtokens convert tokens.json tokens.dark.json --outform swiftui --out ./DesignTokens.swift
+dtokens convert tokens.json tokens.dark.json --outform swiftui --swift-type struct
+```
+
+The default `enum` form emits one base enum and one enum per theme.
+The `struct` form also emits a `Theme` struct and theme instances.
+
 ## HTML Showcase
 
 Generate an HTML showcase from token sources or from a single CSS
@@ -363,6 +389,7 @@ dtokens stats tokens.yaml --out ./stats.html --open
 * `css` - CSS custom properties output
 * `scss` - SCSS variables output
 * `tailwind-v4` - Tailwind CSS v4 `@theme` output
+* `swiftui` - SwiftUI source output
 
 The `dtcg` format follows the specification published by the
 Design Tokens Community Group at https://www.designtokens.org.

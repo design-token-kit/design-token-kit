@@ -115,7 +115,8 @@ structure right but misses format details.
   * Empty group detection (empty-group)
   * Missing token description detection (missing-description)
 * Convert between DTCG JSON, HRDT YAML, and DESIGN.md
-* Generate CSS and SCSS from token files, including Tailwind CSS v4 `@theme` output
+* Generate CSS and SCSS from token files, including Tailwind CSS v4 `@theme`
+  output and SwiftUI source
 * Generate HTML token showcase page
 * Generate token statistics as text or HTML
 
@@ -176,8 +177,10 @@ npm run dist
 
 ## Packages
 
-- [`@design-token-kit/core`](core/README.md) - core library for validation, parsing, CSS conversion, HTML showcase generation, and token statistics
-- [`@design-token-kit/cli`](cli/README.md) - command line interface `dtokens` for checking, conversion, showcase generation, and token statistics
+- [`@design-token-kit/core`](core/README.md) - core library for validation,
+  parsing, platform conversion, HTML showcase generation, and token statistics
+- [`@design-token-kit/cli`](cli/README.md) - command line interface `dtokens`
+  for checking, conversion, showcase generation, and token statistics
 
 ## Package Documentation
 
