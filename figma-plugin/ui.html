@@ -158,12 +158,6 @@
             gap: 8px;
         }
 
-        .utility-actions {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 8px;
-        }
-
         .platform-actions {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -176,16 +170,8 @@
             line-height: 1.4;
         }
 
-        .json-preview {
-            max-height: 220px;
-            overflow: auto;
-            white-space: pre-wrap;
-            overflow-wrap: anywhere;
-            border-radius: 10px;
-            padding: 12px;
-            color: #26324a;
-            background: #eef2f7;
-            font-size: 11px;
+        .hidden {
+            display: none;
         }
 
         summary {
@@ -221,16 +207,7 @@
         <ul id="warnings-list" class="warnings-list"></ul>
     </section>
 
-    <section class="panel details">
-        <h2 class="eyebrow">Debug helpers</h2>
-        <p class="help-text">Copy the latest token summary or warnings when reporting export issues.</p>
-        <div class="utility-actions">
-            <button id="copy-summary">Copy summary</button>
-            <button id="copy-warnings">Copy warnings</button>
-        </div>
-    </section>
-
-    <details class="panel details">
+    <details class="panel details hidden">
         <summary>Diagnostic exports</summary>
         <p class="help-text">Raw JSON exports are for debugging differences between Figma Plugin API and REST API. They are not token files.</p>
         <label for="figma-token">Figma REST Token</label>
@@ -241,10 +218,6 @@
         </div>
     </details>
 
-    <section class="panel details">
-        <h2 class="eyebrow">Last JSON</h2>
-        <pre id="json-preview" class="json-preview"></pre>
-    </section>
 </main>
 
 <script>
@@ -252,15 +225,10 @@
     const tokenExportButtons = document.querySelectorAll("[data-token-export-message]");
     const downloadRestJsonButton = document.getElementById("download-rest-json");
     const downloadPluginJsonButton = document.getElementById("download-plugin-json");
-    const copySummaryButton = document.getElementById("copy-summary");
-    const copyWarningsButton = document.getElementById("copy-warnings");
     const status = document.getElementById("status");
     const tokenSummary = document.getElementById("token-summary");
     const warningsPanel = document.getElementById("warnings-panel");
     const warningsList = document.getElementById("warnings-list");
-    const jsonPreview = document.getElementById("json-preview");
-    let lastSummaryText = "No summary yet.";
-    let lastWarnings = [];
 
     renderMetrics({
         colorTokens: 0,
@@ -314,17 +282,6 @@
         );
     });
 
-    copySummaryButton.addEventListener("click", async () => {
-        await copyText(lastSummaryText);
-        status.textContent = "Copied summary.";
-    });
-
-    copyWarningsButton.addEventListener("click", async () => {
-        const text = lastWarnings.length > 0 ? lastWarnings.join("\n") : "No warnings.";
-        await copyText(text);
-        status.textContent = "Copied warnings.";
-    });
-
     window.onmessage = (event) => {
         const message = event.data.pluginMessage;
 
@@ -344,7 +301,6 @@
         }
 
         downloadTextFile(message.payload.fileName, message.payload.content);
-        jsonPreview.textContent = message.payload.content;
         renderDiagnosticSummary(message.payload.dto);
         clearWarnings();
         status.textContent = `Downloaded ${message.payload.fileName}.`;
@@ -352,14 +308,11 @@
 
     function handleTokensExported(payload) {
         const files = payload.files;
-        const file = files[0];
         const downloadableFiles = files.filter((exportedFile) => exportedFile.downloadable !== false);
 
         downloadableFiles.forEach((exportedFile) => downloadTextFile(exportedFile.fileName, exportedFile.content));
-        jsonPreview.textContent = file === undefined ? "" : file.content;
         renderMetrics(payload.summary);
         renderWarnings(payload.warnings);
-        lastSummaryText = createSummaryText(payload.summary, downloadableFiles);
         status.textContent = downloadableFiles.length > 0
             ? `Downloaded ${downloadableFiles.map((exportedFile) => exportedFile.fileName).join(", ")}.`
             : "No token files to download.";
@@ -379,28 +332,8 @@
         });
     }
 
-    function createSummaryText(summary, downloadableFiles) {
-        return [
-            `source: ${summary.source}`,
-            `colors: ${summary.colorTokens}`,
-            `dimensions: ${summary.dimensionTokens}`,
-            `numbers: ${summary.numberTokens}`,
-            `typography: ${summary.typographyTokens}`,
-            `shadows: ${summary.shadowTokens}`,
-            `skipped: ${summary.skipped}`,
-            `files: ${downloadableFiles.map((file) => file.fileName).join(", ") || "none"}`,
-        ].join("\n");
-    }
-
     function renderDiagnosticSummary(dto) {
         tokenSummary.innerHTML = "";
-        lastSummaryText = [
-            `source: ${dto.name}`,
-            `pages: ${dto.pages.length}`,
-            `components: ${dto.componentIds.length}`,
-            `component sets: ${dto.componentSetIds.length}`,
-            `styles: ${dto.styleIds.length}`,
-        ].join("\n");
         [
             ["Pages", dto.pages.length],
             ["Components", dto.componentIds.length],
@@ -431,7 +364,6 @@
 
     function renderWarnings(warnings) {
         warningsList.innerHTML = "";
-        lastWarnings = warnings;
         warningsPanel.classList.toggle("visible", warnings.length > 0);
 
         warnings.forEach((warning) => {
@@ -467,19 +399,6 @@
         return "text/plain";
     }
 
-    async function copyText(text) {
-        if (navigator.clipboard !== undefined) {
-            await navigator.clipboard.writeText(text);
-            return;
-        }
-
-        const input = document.createElement("textarea");
-        input.value = text;
-        document.body.appendChild(input);
-        input.select();
-        document.execCommand("copy");
-        input.remove();
-    }
 </script>
 </body>
 </html>
