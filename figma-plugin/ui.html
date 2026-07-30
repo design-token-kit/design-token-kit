@@ -164,6 +164,12 @@
             gap: 8px;
         }
 
+        .platform-actions {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+
         .help-text {
             color: #6f7b91;
             font-size: 12px;
@@ -194,8 +200,14 @@
     <section class="panel hero">
         <p class="eyebrow">Design Token Kit</p>
         <h1 class="title">Export Figma tokens</h1>
-        <p class="description">Downloads DTCG token files from local variables and styles. Empty files are skipped automatically.</p>
-        <button id="download-tokens-json" class="primary">Download Tokens JSON</button>
+        <p class="description">Downloads DTCG tokens and converts them through Design Token Kit core converters.</p>
+        <div class="platform-actions">
+            <button class="primary" data-token-export-message="EXPORT_TOKENS_DTCG">DTCG JSON</button>
+            <button data-token-export-message="EXPORT_TOKENS_CSS">CSS</button>
+            <button data-token-export-message="EXPORT_TOKENS_SCSS">SCSS</button>
+            <button data-token-export-message="EXPORT_TOKENS_TAILWIND">Tailwind v4</button>
+            <button data-token-export-message="EXPORT_TOKENS_SWIFTUI">SwiftUI</button>
+        </div>
         <p id="status" class="status">Ready.</p>
     </section>
 
@@ -237,7 +249,7 @@
 
 <script>
     const figmaTokenInput = document.getElementById("figma-token");
-    const downloadTokensJsonButton = document.getElementById("download-tokens-json");
+    const tokenExportButtons = document.querySelectorAll("[data-token-export-message]");
     const downloadRestJsonButton = document.getElementById("download-rest-json");
     const downloadPluginJsonButton = document.getElementById("download-plugin-json");
     const copySummaryButton = document.getElementById("copy-summary");
@@ -259,18 +271,20 @@
         skipped: 0,
     });
 
-    downloadTokensJsonButton.addEventListener("click", () => {
-        status.textContent = "Exporting tokens JSON...";
-        clearWarnings();
+    tokenExportButtons.forEach((button) => {
+        button.addEventListener("click", () => {
+            status.textContent = `Exporting ${button.textContent}...`;
+            clearWarnings();
 
-        parent.postMessage(
-            {
-                pluginMessage: {
-                    type: "EXPORT_TOKENS_JSON",
+            parent.postMessage(
+                {
+                    pluginMessage: {
+                        type: button.dataset.tokenExportMessage,
+                    },
                 },
-            },
-            "*",
-        );
+                "*",
+            );
+        });
     });
 
     downloadRestJsonButton.addEventListener("click", () => {
@@ -329,7 +343,7 @@
             return;
         }
 
-        downloadJsonFile(message.payload.fileName, message.payload.content);
+        downloadTextFile(message.payload.fileName, message.payload.content);
         jsonPreview.textContent = message.payload.content;
         renderDiagnosticSummary(message.payload.dto);
         clearWarnings();
@@ -341,8 +355,8 @@
         const file = files[0];
         const downloadableFiles = files.filter((exportedFile) => exportedFile.downloadable !== false);
 
-        downloadableFiles.forEach((exportedFile) => downloadJsonFile(exportedFile.fileName, exportedFile.content));
-        jsonPreview.textContent = file.content;
+        downloadableFiles.forEach((exportedFile) => downloadTextFile(exportedFile.fileName, exportedFile.content));
+        jsonPreview.textContent = file === undefined ? "" : file.content;
         renderMetrics(payload.summary);
         renderWarnings(payload.warnings);
         lastSummaryText = createSummaryText(payload.summary, downloadableFiles);
@@ -431,14 +445,26 @@
         renderWarnings([]);
     }
 
-    function downloadJsonFile(fileName, text) {
-        const blob = new Blob([text], { type: "application/json" });
+    function downloadTextFile(fileName, text) {
+        const blob = new Blob([text], { type: toMimeType(fileName) });
         const url = URL.createObjectURL(blob);
         const link = document.createElement("a");
         link.href = url;
         link.download = fileName;
         link.click();
         URL.revokeObjectURL(url);
+    }
+
+    function toMimeType(fileName) {
+        if (fileName.endsWith(".json")) {
+            return "application/json";
+        }
+
+        if (fileName.endsWith(".css") || fileName.endsWith(".scss")) {
+            return "text/css";
+        }
+
+        return "text/plain";
     }
 
     async function copyText(text) {

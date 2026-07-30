@@ -1,5 +1,6 @@
 import type { FigmaFileReader } from "./FigmaFileReader";
 import { PluginFigmaFileReader, RestFigmaFileReader } from ".";
+import { TokenConversionService, type TokenOutputFormat } from "./token-export/TokenConversionService";
 import { TokenExporter } from "./token-export/TokenExporter";
 
 const MISSING_FILE_KEY_MESSAGE = "REST export requires figma.fileKey. "
@@ -16,8 +17,9 @@ figma.ui.onmessage = async (msg: PluginMessage) => {
         return;
     }
 
-    if (msg.type === "EXPORT_TOKENS_JSON") {
-        await exportTokens();
+    const tokenOutputFormat = toTokenOutputFormat(msg.type);
+    if (tokenOutputFormat !== undefined) {
+        await exportTokens(tokenOutputFormat);
         return;
     }
 
@@ -32,13 +34,21 @@ figma.ui.onmessage = async (msg: PluginMessage) => {
     }
 };
 
-async function exportTokens(): Promise<void> {
+async function exportTokens(format: TokenOutputFormat): Promise<void> {
     try {
         const result = await new TokenExporter().export();
+        const files = new TokenConversionService().convert({
+            files: result.files,
+            format,
+        });
 
         figma.ui.postMessage({
             type: "TOKENS_EXPORTED",
-            payload: result,
+            payload: {
+                files,
+                summary: result.summary,
+                warnings: result.warnings,
+            },
         });
     } catch (error: unknown) {
         const message = getErrorMessage(error);
@@ -100,7 +110,30 @@ function slugifyFileName(value: string): string {
         .replace(/^-+|-+$/g, "") || "figma";
 }
 
+function toTokenOutputFormat(type: PluginMessage["type"]): TokenOutputFormat | undefined {
+    switch (type) {
+        case "EXPORT_TOKENS_JSON":
+        case "EXPORT_TOKENS_DTCG":
+            return "dtcg";
+        case "EXPORT_TOKENS_CSS":
+            return "css";
+        case "EXPORT_TOKENS_SCSS":
+            return "scss";
+        case "EXPORT_TOKENS_TAILWIND":
+            return "tailwind-v4";
+        case "EXPORT_TOKENS_SWIFTUI":
+            return "swiftui";
+        default:
+            return undefined;
+    }
+}
+
 type PluginMessage =
     | { type: "EXPORT_PLUGIN_JSON" }
     | { type: "EXPORT_TOKENS_JSON" }
+    | { type: "EXPORT_TOKENS_DTCG" }
+    | { type: "EXPORT_TOKENS_CSS" }
+    | { type: "EXPORT_TOKENS_SCSS" }
+    | { type: "EXPORT_TOKENS_TAILWIND" }
+    | { type: "EXPORT_TOKENS_SWIFTUI" }
     | { type: "EXPORT_REST_JSON"; accessToken: string };

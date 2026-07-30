@@ -8,6 +8,8 @@ normalizes both into one internal DTO.
 - exports `figma.plugin.json` through Plugin API
 - exports `figma.rest.json` through the real Figma REST API
 - exports `tokens.json` with DTCG tokens from Figma Variables or paint styles
+- converts exported DTCG tokens to CSS, SCSS, Tailwind v4, and SwiftUI through
+  `@design-token-kit/core`
 - normalizes both payloads into one internal DTO
 - previews the last exported JSON in the plugin UI
 - shows token counts, skipped entries, and warnings in the plugin UI
@@ -19,6 +21,7 @@ The export lives in:
 - `figma-file-json.ts` - whole-document Plugin API export and shared DTO adapters
 - `code.ts` - UI message handling and REST API fetch
 - `token-export/TokenExporter.ts` - Figma token conversion to DTCG JSON
+- `token-export/TokenConversionService.ts` - DTCG conversion through core platform converters
 - `token-export/TokenNameMapper.ts` - Figma style / variable name to token path mapping
 
 The internal DTO currently contains:

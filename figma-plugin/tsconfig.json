@@ -16,7 +16,10 @@
         "types": ["@figma/plugin-typings", "node", "vitest"],
         "baseUrl": ".",
         "paths": {
-            "#/*": ["src/*"]
+            "@design-token-kit/core": ["../core/src/index.ts"],
+            "@design-token-kit/core/*": ["../core/src/*"],
+            "#/core/io/DtcgListLoader": ["src/core-adapter/DtcgListLoader.ts"],
+            "#/*": ["../core/src/*"]
         }
     },
     "include": ["src", "test", "vite.config.ts"]

@@ -4,6 +4,15 @@ import { PluginFigmaFileReader } from "../../src/PluginFigmaFileReader";
 import { mapColorTokenName, mapTokenName } from "../../src/token-export/TokenNameMapper";
 import { loadPluginContext, toPlainJson } from "./loadPluginContext";
 
+interface TokenExportPayload {
+    files: Array<{
+        fileName: string;
+        content: string;
+        downloadable: boolean;
+        tokens?: unknown;
+    }>;
+}
+
 describe("normalizeFileResponse", () => {
     it("normalizes REST-like and Plugin-like file responses to the same DTO", () => {
         const restLike = {
@@ -1315,6 +1324,56 @@ describe("message flow", () => {
         });
     });
 
+    it("converts exported tokens to CSS through core", async () => {
+        const context = loadSingleColorTokenContext();
+
+        await context.sendMessage({ type: "EXPORT_TOKENS_CSS" });
+
+        const payload = getTokenExportPayload(context.postedMessages[0]);
+        expect(payload.files).toHaveLength(1);
+        expect(payload.files[0].fileName).toBe("tokens.css");
+        expect(payload.files[0].content).toContain(":root");
+        expect(payload.files[0].content).toContain("--primitive-color-blue-500");
+    });
+
+    it("converts exported token modes to SCSS files through core", async () => {
+        const context = loadColorModeTokenContext();
+
+        await context.sendMessage({ type: "EXPORT_TOKENS_SCSS" });
+
+        const payload = getTokenExportPayload(context.postedMessages[0]);
+        expect(payload.files.map((file) => file.fileName)).toEqual([
+            "tokens.scss",
+            "tokens.dark.scss",
+        ]);
+        expect(payload.files[0].content).toContain("$primitive-color-bg-canvas");
+        expect(payload.files[1].content).toContain("$primitive-color-bg-canvas");
+    });
+
+    it("converts exported tokens to Tailwind v4 through core", async () => {
+        const context = loadSingleColorTokenContext();
+
+        await context.sendMessage({ type: "EXPORT_TOKENS_TAILWIND" });
+
+        const payload = getTokenExportPayload(context.postedMessages[0]);
+        expect(payload.files).toHaveLength(1);
+        expect(payload.files[0].fileName).toBe("tokens.tailwind.css");
+        expect(payload.files[0].content).toContain("@import 'tailwindcss';");
+        expect(payload.files[0].content).toContain("@theme");
+    });
+
+    it("converts exported tokens to SwiftUI through core", async () => {
+        const context = loadSingleColorTokenContext();
+
+        await context.sendMessage({ type: "EXPORT_TOKENS_SWIFTUI" });
+
+        const payload = getTokenExportPayload(context.postedMessages[0]);
+        expect(payload.files).toHaveLength(1);
+        expect(payload.files[0].fileName).toBe("DesignTokens.swift");
+        expect(payload.files[0].content).toContain("import SwiftUI");
+        expect(payload.files[0].content).toContain("enum DesignTokens");
+    });
+
     it("posts a plugin export payload through the plugin message flow", async () => {
         const pageExport = {
             editorType: "figma",
@@ -1444,3 +1503,68 @@ describe("message flow", () => {
         ]);
     });
 });
+
+function loadSingleColorTokenContext(): ReturnType<typeof loadPluginContext> {
+    return loadPluginContext({
+        figma: {
+            variables: {
+                getLocalVariablesAsync: async () => [
+                    {
+                        id: "variable-blue-500",
+                        variableCollectionId: "collection-colors",
+                        name: "Primitive/Color/Blue/500",
+                        description: "",
+                        valuesByMode: {
+                            default: { r: 0.145, g: 0.388, b: 0.922, a: 1 },
+                        },
+                    },
+                ],
+                getLocalVariableCollectionsAsync: async () => [
+                    {
+                        id: "collection-colors",
+                        defaultModeId: "default",
+                        modes: [{ modeId: "default", name: "Default" }],
+                    },
+                ],
+            },
+            getLocalPaintStylesAsync: async () => [],
+        },
+    });
+}
+
+function getTokenExportPayload(message: { type: string; payload: unknown } | undefined): TokenExportPayload {
+    expect(message?.type).toBe("TOKENS_EXPORTED");
+    return toPlainJson(message?.payload) as TokenExportPayload;
+}
+
+function loadColorModeTokenContext(): ReturnType<typeof loadPluginContext> {
+    return loadPluginContext({
+        figma: {
+            variables: {
+                getLocalVariablesAsync: async () => [
+                    {
+                        id: "variable-bg-canvas",
+                        variableCollectionId: "collection-theme",
+                        name: "Primitive/Color/Bg/Canvas",
+                        description: "",
+                        valuesByMode: {
+                            light: { r: 1, g: 1, b: 1, a: 1 },
+                            dark: { r: 0.05, g: 0.05, b: 0.05, a: 1 },
+                        },
+                    },
+                ],
+                getLocalVariableCollectionsAsync: async () => [
+                    {
+                        id: "collection-theme",
+                        defaultModeId: "light",
+                        modes: [
+                            { modeId: "light", name: "Light" },
+                            { modeId: "dark", name: "Dark" },
+                        ],
+                    },
+                ],
+            },
+            getLocalPaintStylesAsync: async () => [],
+        },
+    });
+}
