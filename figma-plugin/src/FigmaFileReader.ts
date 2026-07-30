@@ -4,12 +4,12 @@
  * Recursively describes the page hierarchy: each node may contain
  * nested {@link FigmaNodeDto children}.
  */
-export type FigmaNodeDto = {
+export interface FigmaNodeDto {
     id: string;
     name: string;
     type: string;
     children: FigmaNodeDto[];
-};
+}
 
 /**
  * Summarised view of a Figma file, extracted from either a REST API
@@ -17,13 +17,13 @@ export type FigmaNodeDto = {
  *
  * Lists every page, component, component set and style by their IDs.
  */
-export type FigmaDocumentDto = {
+export interface FigmaDocumentDto {
     name: string;
     pages: FigmaNodeDto[];
     componentIds: string[];
     componentSetIds: string[];
     styleIds: string[];
-};
+}
 
 /**
  * Reads a Figma file and normalises its JSON into a {@link FigmaDocumentDto}.

@@ -18,8 +18,8 @@ The export lives in:
 
 - `figma-file-json.ts` - whole-document Plugin API export and shared DTO adapters
 - `code.ts` - UI message handling and REST API fetch
-- `tokens/FigmaTokenExporter.ts` - Figma token conversion to DTCG JSON
-- `tokens/FigmaTokenNameMapper.ts` - Figma style / variable name to token path mapping
+- `token-export/TokenExporter.ts` - Figma token conversion to DTCG JSON
+- `token-export/TokenNameMapper.ts` - Figma style / variable name to token path mapping
 
 The internal DTO currently contains:
 

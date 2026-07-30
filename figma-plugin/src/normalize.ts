@@ -1,19 +1,19 @@
 import type { FigmaNodeDto, FigmaDocumentDto } from "./FigmaFileReader";
 
-type RestLikeNode = {
+interface RestLikeNode {
     id?: string;
     name?: string;
     type?: string;
     children?: RestLikeNode[];
-};
+}
 
-type RestLikeFileResponse = {
+interface RestLikeFileResponse {
     name?: string;
     document?: RestLikeNode;
     components?: Record<string, unknown>;
     componentSets?: Record<string, unknown>;
     styles?: Record<string, unknown>;
-};
+}
 
 /**
  * Normalises a Figma REST-like file response into a {@link FigmaDocumentDto}.

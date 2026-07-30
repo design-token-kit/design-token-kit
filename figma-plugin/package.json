@@ -1,27 +1,28 @@
 {
-  "name": "@design-token-kit/figma-plugin",
-  "version": "0.1.0",
-  "private": true,
-  "description": "Figma plugin for exporting file JSON through REST and Plugin API",
-  "main": "code.js",
-  "scripts": {
-    "build": "vite build",
-    "lint": "eslint .",
-    "test": "npm run build && vitest run",
-    "lint:fix": "eslint . --fix",
-    "watch": "npm run build -- --watch"
-  },
-  "author": "",
-  "license": "MIT",
-  "devDependencies": {
-    "@eslint/js": "9.39.4",
-    "@figma/eslint-plugin-figma-plugins": "1.0.0",
-    "@figma/plugin-typings": "1.131.0",
-    "@types/node": "24.10.1",
-    "eslint": "9.39.4",
-    "typescript": "5.9.3",
-    "typescript-eslint": "8.57.1",
-    "vite": "8.0.10",
-    "vitest": "4.1.7"
-  }
+    "name": "@design-token-kit/figma-plugin",
+    "version": "0.1.0",
+    "private": true,
+    "description": "Figma plugin for exporting file JSON through REST and Plugin API",
+    "type": "module",
+    "main": "code.js",
+    "scripts": {
+        "build": "tsc --noEmit && vite build",
+        "lint": "eslint .",
+        "test": "npm run build && vitest run",
+        "lint:fix": "eslint . --fix",
+        "watch": "npm run build -- --watch"
+    },
+    "author": "",
+    "license": "MIT",
+    "devDependencies": {
+        "@eslint/js": "9.39.4",
+        "@figma/eslint-plugin-figma-plugins": "1.0.0",
+        "@figma/plugin-typings": "1.131.0",
+        "@types/node": "24.10.1",
+        "eslint": "9.39.4",
+        "typescript": "5.9.3",
+        "typescript-eslint": "8.57.1",
+        "vite": "8.0.10",
+        "vitest": "4.1.7"
+    }
 }

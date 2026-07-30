@@ -1,14 +1,15 @@
-import path from "node:path";
-import { defineConfig } from "vite";
+import { dirname, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
+import { defineConfig } from "vitest/config";
 
-const __dirname = import.meta.dirname;
+const currentDir = dirname(fileURLToPath(import.meta.url));
 
 export default defineConfig({
     build: {
         emptyOutDir: false,
         outDir: ".figma-build",
         lib: {
-            entry: path.resolve(__dirname, "src/code.ts"),
+            entry: resolve(currentDir, "src/code.ts"),
             formats: ["iife"],
             name: "DesignTokenKitFigmaPlugin",
             fileName: () => "code.js",

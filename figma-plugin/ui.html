@@ -361,10 +361,7 @@
             ["Shadows", summary.shadowTokens],
             ["Skipped", summary.skipped],
         ].forEach(([label, value]) => {
-            const item = document.createElement("div");
-            item.className = "metric";
-            item.innerHTML = `<span class="metric-value">${value}</span><span class="metric-label">${label}</span>`;
-            tokenSummary.appendChild(item);
+            tokenSummary.appendChild(createMetric(label, value));
         });
     }
 
@@ -397,11 +394,25 @@
             ["Styles", dto.styleIds.length],
             ["Source", dto.name],
         ].forEach(([label, value]) => {
-            const item = document.createElement("div");
-            item.className = "metric";
-            item.innerHTML = `<span class="metric-value">${value}</span><span class="metric-label">${label}</span>`;
-            tokenSummary.appendChild(item);
+            tokenSummary.appendChild(createMetric(label, value));
         });
+    }
+
+    function createMetric(label, value) {
+        const item = document.createElement("div");
+        const valueElement = document.createElement("span");
+        const labelElement = document.createElement("span");
+
+        item.className = "metric";
+        valueElement.className = "metric-value";
+        valueElement.textContent = String(value);
+        labelElement.className = "metric-label";
+        labelElement.textContent = label;
+
+        item.appendChild(valueElement);
+        item.appendChild(labelElement);
+
+        return item;
     }
 
     function renderWarnings(warnings) {

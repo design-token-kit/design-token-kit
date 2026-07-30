@@ -1,14 +1,14 @@
-export type TokenNameMapping = {
+export interface TokenNameMapping {
     path: string[];
-};
+}
 
 const TOKEN_LAYERS = new Set(["primitive", "semantic", "component"]);
 
-export function mapFigmaColorTokenName(name: string): TokenNameMapping | undefined {
-    return mapFigmaTokenName(name, ["primitive", "color"]);
+export function mapColorTokenName(name: string): TokenNameMapping | undefined {
+    return mapTokenName(name, ["primitive", "color"]);
 }
 
-export function mapFigmaTokenName(name: string, fallbackPrefix: string[]): TokenNameMapping | undefined {
+export function mapTokenName(name: string, fallbackPrefix: string[]): TokenNameMapping | undefined {
     const normalized = name
         .split("/")
         .map((segment) => slugifyPathSegment(segment))

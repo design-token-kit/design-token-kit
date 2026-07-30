@@ -1,16 +1,14 @@
 import type { FigmaFileReader } from "./FigmaFileReader";
 import { PluginFigmaFileReader, RestFigmaFileReader } from ".";
-import { FigmaTokenExporter } from "./tokens/FigmaTokenExporter";
+import { TokenExporter } from "./token-export/TokenExporter";
+
+const MISSING_FILE_KEY_MESSAGE = "REST export requires figma.fileKey. "
+    + "Reload the plugin after manifest update or run it as a private/local plugin.";
 
 figma.showUI(__html__, {
     width: 480,
     height: 520,
 });
-
-type PluginMessage =
-    | { type: "EXPORT_PLUGIN_JSON" }
-    | { type: "EXPORT_TOKENS_JSON" }
-    | { type: "EXPORT_REST_JSON"; accessToken: string };
 
 figma.ui.onmessage = async (msg: PluginMessage) => {
     if (msg.type === "EXPORT_PLUGIN_JSON") {
@@ -26,7 +24,7 @@ figma.ui.onmessage = async (msg: PluginMessage) => {
     if (msg.type === "EXPORT_REST_JSON") {
         const fileKey = figma.fileKey;
         if (fileKey === undefined) {
-            figma.notify("REST export requires figma.fileKey. Reload the plugin after manifest update or run it as a private/local plugin.", { error: true });
+            figma.notify(MISSING_FILE_KEY_MESSAGE, { error: true });
             return;
         }
 
@@ -36,7 +34,7 @@ figma.ui.onmessage = async (msg: PluginMessage) => {
 
 async function exportTokens(): Promise<void> {
     try {
-        const result = await new FigmaTokenExporter().export();
+        const result = await new TokenExporter().export();
 
         figma.ui.postMessage({
             type: "TOKENS_EXPORTED",
@@ -101,3 +99,8 @@ function slugifyFileName(value: string): string {
         .replace(/[^a-z0-9]+/g, "-")
         .replace(/^-+|-+$/g, "") || "figma";
 }
+
+type PluginMessage =
+    | { type: "EXPORT_PLUGIN_JSON" }
+    | { type: "EXPORT_TOKENS_JSON" }
+    | { type: "EXPORT_REST_JSON"; accessToken: string };

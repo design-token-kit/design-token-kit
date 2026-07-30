@@ -6,15 +6,20 @@ import { fileURLToPath } from "node:url";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-export type PluginTestContext = {
-    sendMessage: (message: { type: string; accessToken?: string }) => Promise<void>;
+export interface PluginTestContext {
+    sendMessage: (message: PluginMessage) => Promise<void>;
     postedMessages: Array<{ type: string; payload: unknown }>;
-};
+}
 
-type LoadPluginContextOptions = {
+interface PluginMessage {
+    type: string;
+    accessToken?: string;
+}
+
+interface LoadPluginContextOptions {
     figma?: Record<string, unknown>;
     fetch?: typeof globalThis.fetch;
-};
+}
 
 export function loadPluginContext(options: LoadPluginContextOptions = {}): PluginTestContext {
     const codePath = path.join(__dirname, "..", "..", ".figma-build", "code.js");
@@ -48,8 +53,13 @@ export function loadPluginContext(options: LoadPluginContextOptions = {}): Plugi
 
     return {
         postedMessages,
-        async sendMessage(message: { type: string; accessToken?: string }) {
-            await (context.figma.ui as { onmessage: (message: { type: string; accessToken?: string }) => Promise<void> }).onmessage(message);
+        async sendMessage(message: PluginMessage) {
+            const pluginUi = context.figma.ui as { onmessage?: (message: PluginMessage) => Promise<void> };
+            if (pluginUi.onmessage === undefined) {
+                throw new Error("Plugin UI message handler was not registered.");
+            }
+
+            await pluginUi.onmessage(message);
         },
     };
 }

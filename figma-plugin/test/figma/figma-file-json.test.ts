@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import { normalizeFileResponse } from "../../src/normalize";
 import { PluginFigmaFileReader } from "../../src/PluginFigmaFileReader";
-import { mapFigmaColorTokenName, mapFigmaTokenName } from "../../src/tokens/FigmaTokenNameMapper";
+import { mapColorTokenName, mapTokenName } from "../../src/token-export/TokenNameMapper";
 import { loadPluginContext, toPlainJson } from "./loadPluginContext";
 
 describe("normalizeFileResponse", () => {
@@ -169,32 +169,32 @@ describe("PluginFigmaFileReader", () => {
     });
 });
 
-describe("mapFigmaColorTokenName", () => {
+describe("mapColorTokenName", () => {
     it("keeps explicit primitive, semantic and component token layers", () => {
-        expect(mapFigmaColorTokenName("Primitive/Color/Blue/500")?.path).toEqual(["primitive", "color", "blue", "500"]);
-        expect(mapFigmaColorTokenName("Semantic/Color/Action/Primary")?.path).toEqual(["semantic", "color", "action", "primary"]);
-        expect(mapFigmaColorTokenName("Component/Button/Primary/Bg")?.path).toEqual(["component", "button", "primary", "bg"]);
+        expect(mapColorTokenName("Primitive/Color/Blue/500")?.path).toEqual(["primitive", "color", "blue", "500"]);
+        expect(mapColorTokenName("Semantic/Color/Action/Primary")?.path).toEqual(["semantic", "color", "action", "primary"]);
+        expect(mapColorTokenName("Component/Button/Primary/Bg")?.path).toEqual(["component", "button", "primary", "bg"]);
     });
 
     it("falls back to primitive color path when layer is omitted", () => {
-        expect(mapFigmaColorTokenName("Blue/500")?.path).toEqual(["primitive", "color", "blue", "500"]);
+        expect(mapColorTokenName("Blue/500")?.path).toEqual(["primitive", "color", "blue", "500"]);
     });
 
     it("normalizes whitespace and special characters", () => {
-        expect(mapFigmaColorTokenName(" Primitive / Color / Brand Blue / 500 % ")?.path).toEqual(["primitive", "color", "brand-blue", "500"]);
+        expect(mapColorTokenName(" Primitive / Color / Brand Blue / 500 % ")?.path).toEqual(["primitive", "color", "brand-blue", "500"]);
     });
 
     it("rejects empty names and incomplete explicit layer paths", () => {
-        expect(mapFigmaColorTokenName("  / / ")).toBeUndefined();
-        expect(mapFigmaColorTokenName("Primitive")).toBeUndefined();
-        expect(mapFigmaColorTokenName("Semantic/Color")).toBeUndefined();
+        expect(mapColorTokenName("  / / ")).toBeUndefined();
+        expect(mapColorTokenName("Primitive")).toBeUndefined();
+        expect(mapColorTokenName("Semantic/Color")).toBeUndefined();
     });
 });
 
-describe("mapFigmaTokenName", () => {
+describe("mapTokenName", () => {
     it("uses the requested fallback path when layer is omitted", () => {
-        expect(mapFigmaTokenName("4", ["primitive", "spacing"])?.path).toEqual(["primitive", "spacing", "4"]);
-        expect(mapFigmaTokenName("Disabled", ["primitive", "opacity"])?.path).toEqual(["primitive", "opacity", "disabled"]);
+        expect(mapTokenName("4", ["primitive", "spacing"])?.path).toEqual(["primitive", "spacing", "4"]);
+        expect(mapTokenName("Disabled", ["primitive", "opacity"])?.path).toEqual(["primitive", "opacity", "disabled"]);
     });
 });
 
