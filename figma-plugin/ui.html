@@ -1,70 +1,267 @@
 <!doctype html>
-<html>
-<style>
-    body {
-        font-family: Inter, sans-serif;
-        padding: 16px;
-    }
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <style>
+        :root {
+            color: #172033;
+            background: #f5f7fb;
+            font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        }
 
-    label,
-    input,
-    button {
-        display: block;
-    }
+        body {
+            margin: 0;
+            padding: 16px;
+        }
 
-    input,
-    button {
-        margin-top: 8px;
-        margin-bottom: 12px;
-        width: 100%;
-        box-sizing: border-box;
-    }
+        h1,
+        h2,
+        h3,
+        p {
+            margin: 0;
+        }
 
-    pre {
-        white-space: pre-wrap;
-        overflow-wrap: anywhere;
-        max-height: 260px;
-        overflow: auto;
-        background: #f5f5f5;
-        padding: 12px;
-        border-radius: 8px;
-    }
-</style>
+        button,
+        input {
+            box-sizing: border-box;
+            width: 100%;
+            font: inherit;
+        }
+
+        button {
+            cursor: pointer;
+            border: 1px solid #cad3e3;
+            border-radius: 10px;
+            padding: 10px 12px;
+            color: #172033;
+            background: #fff;
+        }
+
+        button.primary {
+            border-color: #255ad6;
+            color: #fff;
+            background: #255ad6;
+            font-weight: 700;
+        }
+
+        input {
+            border: 1px solid #cad3e3;
+            border-radius: 8px;
+            padding: 8px 10px;
+            color: #172033;
+            background: #fff;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 6px;
+            color: #58647a;
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        .app {
+            display: grid;
+            gap: 14px;
+        }
+
+        .panel {
+            border: 1px solid #dde4f0;
+            border-radius: 14px;
+            padding: 14px;
+            background: #fff;
+            box-shadow: 0 8px 24px rgba(23, 32, 51, 0.06);
+        }
+
+        .hero {
+            display: grid;
+            gap: 12px;
+        }
+
+        .eyebrow {
+            color: #6f7b91;
+            font-size: 11px;
+            font-weight: 800;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+        }
+
+        .title {
+            font-size: 20px;
+            line-height: 1.2;
+        }
+
+        .description {
+            color: #58647a;
+            font-size: 13px;
+            line-height: 1.45;
+        }
+
+        .status {
+            border-radius: 10px;
+            padding: 10px 12px;
+            color: #2d3a52;
+            background: #edf3ff;
+            font-size: 13px;
+        }
+
+        .metrics {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 8px;
+        }
+
+        .metric {
+            border: 1px solid #e1e7f2;
+            border-radius: 10px;
+            padding: 9px;
+            background: #fafcff;
+        }
+
+        .metric-value {
+            display: block;
+            font-size: 18px;
+            font-weight: 800;
+        }
+
+        .metric-label {
+            display: block;
+            margin-top: 2px;
+            color: #6f7b91;
+            font-size: 11px;
+        }
+
+        .warnings {
+            display: none;
+        }
+
+        .warnings.visible {
+            display: block;
+        }
+
+        .warnings-list {
+            margin: 10px 0 0;
+            padding-left: 18px;
+            color: #8a4b00;
+            font-size: 12px;
+            line-height: 1.4;
+        }
+
+        .details {
+            display: grid;
+            gap: 10px;
+        }
+
+        .diagnostic-actions {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+
+        .utility-actions {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+
+        .help-text {
+            color: #6f7b91;
+            font-size: 12px;
+            line-height: 1.4;
+        }
+
+        .json-preview {
+            max-height: 220px;
+            overflow: auto;
+            white-space: pre-wrap;
+            overflow-wrap: anywhere;
+            border-radius: 10px;
+            padding: 12px;
+            color: #26324a;
+            background: #eef2f7;
+            font-size: 11px;
+        }
+
+        summary {
+            cursor: pointer;
+            color: #3c4a62;
+            font-weight: 800;
+        }
+    </style>
+</head>
 <body>
-<h2>Figma Core Export</h2>
+<main class="app">
+    <section class="panel hero">
+        <p class="eyebrow">Design Token Kit</p>
+        <h1 class="title">Export Figma tokens</h1>
+        <p class="description">Downloads DTCG token files from local variables and styles. Empty files are skipped automatically.</p>
+        <button id="download-tokens-json" class="primary">Download Tokens JSON</button>
+        <p id="status" class="status">Ready.</p>
+    </section>
 
-<label for="figma-token">Figma REST Token</label>
-<input id="figma-token" type="password" placeholder="figd_...">
+    <section class="panel">
+        <h2 class="eyebrow">Summary</h2>
+        <div id="token-summary" class="metrics" aria-live="polite"></div>
+    </section>
 
-<button id="download-tokens-json">
-    Download Tokens JSON
-</button>
+    <section id="warnings-panel" class="panel warnings">
+        <h2 class="eyebrow">Warnings</h2>
+        <ul id="warnings-list" class="warnings-list"></ul>
+    </section>
 
-<button id="download-rest-json">
-    Download REST JSON
-</button>
+    <section class="panel details">
+        <h2 class="eyebrow">Debug helpers</h2>
+        <p class="help-text">Copy the latest token summary or warnings when reporting export issues.</p>
+        <div class="utility-actions">
+            <button id="copy-summary">Copy summary</button>
+            <button id="copy-warnings">Copy warnings</button>
+        </div>
+    </section>
 
-<button id="download-plugin-json">
-    Download Plugin JSON
-</button>
+    <details class="panel details">
+        <summary>Diagnostic exports</summary>
+        <p class="help-text">Raw JSON exports are for debugging differences between Figma Plugin API and REST API. They are not token files.</p>
+        <label for="figma-token">Figma REST Token</label>
+        <input id="figma-token" type="password" placeholder="figd_...">
+        <div class="diagnostic-actions">
+            <button id="download-rest-json">Debug: REST JSON</button>
+            <button id="download-plugin-json">Debug: Plugin JSON</button>
+        </div>
+    </details>
 
-<p id="status">Ready.</p>
-<p id="dto-summary"></p>
-
-<h3>Last JSON</h3>
-<pre id="json-preview"></pre>
+    <section class="panel details">
+        <h2 class="eyebrow">Last JSON</h2>
+        <pre id="json-preview" class="json-preview"></pre>
+    </section>
+</main>
 
 <script>
     const figmaTokenInput = document.getElementById("figma-token");
     const downloadTokensJsonButton = document.getElementById("download-tokens-json");
     const downloadRestJsonButton = document.getElementById("download-rest-json");
     const downloadPluginJsonButton = document.getElementById("download-plugin-json");
+    const copySummaryButton = document.getElementById("copy-summary");
+    const copyWarningsButton = document.getElementById("copy-warnings");
     const status = document.getElementById("status");
-    const dtoSummary = document.getElementById("dto-summary");
+    const tokenSummary = document.getElementById("token-summary");
+    const warningsPanel = document.getElementById("warnings-panel");
+    const warningsList = document.getElementById("warnings-list");
     const jsonPreview = document.getElementById("json-preview");
+    let lastSummaryText = "No summary yet.";
+    let lastWarnings = [];
+
+    renderMetrics({
+        colorTokens: 0,
+        dimensionTokens: 0,
+        numberTokens: 0,
+        typographyTokens: 0,
+        shadowTokens: 0,
+        skipped: 0,
+    });
 
     downloadTokensJsonButton.addEventListener("click", () => {
         status.textContent = "Exporting tokens JSON...";
+        clearWarnings();
 
         parent.postMessage(
             {
@@ -103,48 +300,124 @@
         );
     });
 
+    copySummaryButton.addEventListener("click", async () => {
+        await copyText(lastSummaryText);
+        status.textContent = "Copied summary.";
+    });
+
+    copyWarningsButton.addEventListener("click", async () => {
+        const text = lastWarnings.length > 0 ? lastWarnings.join("\n") : "No warnings.";
+        await copyText(text);
+        status.textContent = "Copied warnings.";
+    });
+
     window.onmessage = (event) => {
         const message = event.data.pluginMessage;
 
         if (message?.type === "EXPORT_FAILED") {
             status.textContent = `Failed to export ${message.payload.source} JSON: ${message.payload.message}`;
+            renderWarnings([message.payload.message]);
+            return;
+        }
+
+        if (message?.type === "TOKENS_EXPORTED") {
+            handleTokensExported(message.payload);
             return;
         }
 
         if (message?.type !== "FILE_EXPORTED") {
-            if (message?.type === "TOKENS_EXPORTED") {
-                const file = message.payload.files[0];
-                downloadJsonFile(file.fileName, file.content);
-                jsonPreview.textContent = file.content;
-                dtoSummary.textContent = createTokenSummary(message.payload.summary, message.payload.warnings);
-                status.textContent = `Downloaded ${file.fileName}.`;
-            }
-
             return;
         }
 
         downloadJsonFile(message.payload.fileName, message.payload.content);
         jsonPreview.textContent = message.payload.content;
-        dtoSummary.textContent = createDtoSummary(message.payload.dto);
+        renderDiagnosticSummary(message.payload.dto);
+        clearWarnings();
         status.textContent = `Downloaded ${message.payload.fileName}.`;
     };
 
-    function createDtoSummary(dto) {
+    function handleTokensExported(payload) {
+        const files = payload.files;
+        const file = files[0];
+        const downloadableFiles = files.filter((exportedFile) => exportedFile.downloadable !== false);
+
+        downloadableFiles.forEach((exportedFile) => downloadJsonFile(exportedFile.fileName, exportedFile.content));
+        jsonPreview.textContent = file.content;
+        renderMetrics(payload.summary);
+        renderWarnings(payload.warnings);
+        lastSummaryText = createSummaryText(payload.summary, downloadableFiles);
+        status.textContent = downloadableFiles.length > 0
+            ? `Downloaded ${downloadableFiles.map((exportedFile) => exportedFile.fileName).join(", ")}.`
+            : "No token files to download.";
+    }
+
+    function renderMetrics(summary) {
+        tokenSummary.innerHTML = "";
+        [
+            ["Colors", summary.colorTokens],
+            ["Dimensions", summary.dimensionTokens],
+            ["Numbers", summary.numberTokens],
+            ["Typography", summary.typographyTokens],
+            ["Shadows", summary.shadowTokens],
+            ["Skipped", summary.skipped],
+        ].forEach(([label, value]) => {
+            const item = document.createElement("div");
+            item.className = "metric";
+            item.innerHTML = `<span class="metric-value">${value}</span><span class="metric-label">${label}</span>`;
+            tokenSummary.appendChild(item);
+        });
+    }
+
+    function createSummaryText(summary, downloadableFiles) {
         return [
-            `DTO name: ${dto.name}`,
+            `source: ${summary.source}`,
+            `colors: ${summary.colorTokens}`,
+            `dimensions: ${summary.dimensionTokens}`,
+            `numbers: ${summary.numberTokens}`,
+            `typography: ${summary.typographyTokens}`,
+            `shadows: ${summary.shadowTokens}`,
+            `skipped: ${summary.skipped}`,
+            `files: ${downloadableFiles.map((file) => file.fileName).join(", ") || "none"}`,
+        ].join("\n");
+    }
+
+    function renderDiagnosticSummary(dto) {
+        tokenSummary.innerHTML = "";
+        lastSummaryText = [
+            `source: ${dto.name}`,
             `pages: ${dto.pages.length}`,
             `components: ${dto.componentIds.length}`,
             `component sets: ${dto.componentSetIds.length}`,
             `styles: ${dto.styleIds.length}`,
-        ].join(". ");
+        ].join("\n");
+        [
+            ["Pages", dto.pages.length],
+            ["Components", dto.componentIds.length],
+            ["Sets", dto.componentSetIds.length],
+            ["Styles", dto.styleIds.length],
+            ["Source", dto.name],
+        ].forEach(([label, value]) => {
+            const item = document.createElement("div");
+            item.className = "metric";
+            item.innerHTML = `<span class="metric-value">${value}</span><span class="metric-label">${label}</span>`;
+            tokenSummary.appendChild(item);
+        });
     }
 
-    function createTokenSummary(summary, warnings) {
-        return [
-            `source: ${summary.source}`,
-            `colors: ${summary.colorTokens}`,
-            `warnings: ${warnings.length}`,
-        ].join(". ");
+    function renderWarnings(warnings) {
+        warningsList.innerHTML = "";
+        lastWarnings = warnings;
+        warningsPanel.classList.toggle("visible", warnings.length > 0);
+
+        warnings.forEach((warning) => {
+            const item = document.createElement("li");
+            item.textContent = warning;
+            warningsList.appendChild(item);
+        });
+    }
+
+    function clearWarnings() {
+        renderWarnings([]);
     }
 
     function downloadJsonFile(fileName, text) {
@@ -156,7 +429,20 @@
         link.click();
         URL.revokeObjectURL(url);
     }
-</script>
 
+    async function copyText(text) {
+        if (navigator.clipboard !== undefined) {
+            await navigator.clipboard.writeText(text);
+            return;
+        }
+
+        const input = document.createElement("textarea");
+        input.value = text;
+        document.body.appendChild(input);
+        input.select();
+        document.execCommand("copy");
+        input.remove();
+    }
+</script>
 </body>
 </html>

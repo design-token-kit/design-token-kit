@@ -1,11 +1,14 @@
 export type TokenNameMapping = {
     path: string[];
-    warning?: string;
 };
 
 const TOKEN_LAYERS = new Set(["primitive", "semantic", "component"]);
 
 export function mapFigmaColorTokenName(name: string): TokenNameMapping | undefined {
+    return mapFigmaTokenName(name, ["primitive", "color"]);
+}
+
+export function mapFigmaTokenName(name: string, fallbackPrefix: string[]): TokenNameMapping | undefined {
     const normalized = name
         .split("/")
         .map((segment) => slugifyPathSegment(segment))
@@ -17,7 +20,7 @@ export function mapFigmaColorTokenName(name: string): TokenNameMapping | undefin
 
     if (!TOKEN_LAYERS.has(normalized[0]!)) {
         return {
-            path: ["primitive", "color", ...normalized],
+            path: [...fallbackPrefix, ...normalized],
         };
     }
 

@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import { normalizeFileResponse } from "../../src/normalize";
 import { PluginFigmaFileReader } from "../../src/PluginFigmaFileReader";
-import { mapFigmaColorTokenName } from "../../src/tokens/FigmaTokenNameMapper";
+import { mapFigmaColorTokenName, mapFigmaTokenName } from "../../src/tokens/FigmaTokenNameMapper";
 import { loadPluginContext, toPlainJson } from "./loadPluginContext";
 
 describe("normalizeFileResponse", () => {
@@ -191,6 +191,13 @@ describe("mapFigmaColorTokenName", () => {
     });
 });
 
+describe("mapFigmaTokenName", () => {
+    it("uses the requested fallback path when layer is omitted", () => {
+        expect(mapFigmaTokenName("4", ["primitive", "spacing"])?.path).toEqual(["primitive", "spacing", "4"]);
+        expect(mapFigmaTokenName("Disabled", ["primitive", "opacity"])?.path).toEqual(["primitive", "opacity", "disabled"]);
+    });
+});
+
 describe("message flow", () => {
     it("posts a tokens export payload from color variables", async () => {
         const context = loadPluginContext({
@@ -204,11 +211,19 @@ describe("message flow", () => {
                     getLocalVariablesAsync: async () => [
                         {
                             id: "variable-blue-500",
+                            variableCollectionId: "collection-colors",
                             name: "Primitive/Color/Blue/500",
                             description: "Primary blue",
                             valuesByMode: {
                                 default: { r: 0.145, g: 0.388, b: 0.922, a: 1 },
                             },
+                        },
+                    ],
+                    getLocalVariableCollectionsAsync: async () => [
+                        {
+                            id: "collection-colors",
+                            defaultModeId: "default",
+                            modes: [{ modeId: "default", name: "Default" }],
                         },
                     ],
                 },
@@ -259,11 +274,16 @@ describe("message flow", () => {
                                     },
                                 },
                             },
+                            downloadable: true,
                         },
                     ],
                     summary: {
                         source: "variables",
                         colorTokens: 1,
+                        dimensionTokens: 0,
+                        numberTokens: 0,
+                        typographyTokens: 0,
+                        shadowTokens: 0,
                         skipped: 0,
                     },
                     warnings: [],
@@ -279,6 +299,7 @@ describe("message flow", () => {
                     getLocalVariablesAsync: async () => [
                         {
                             id: "variable-blue-500",
+                            variableCollectionId: "collection-colors",
                             name: "Primitive/Color/Blue/500",
                             description: "",
                             valuesByMode: {
@@ -287,11 +308,19 @@ describe("message flow", () => {
                         },
                         {
                             id: "variable-action-primary",
+                            variableCollectionId: "collection-colors",
                             name: "Semantic/Color/Action/Primary",
                             description: "Primary action color",
                             valuesByMode: {
                                 default: { type: "VARIABLE_ALIAS", id: "variable-blue-500" },
                             },
+                        },
+                    ],
+                    getLocalVariableCollectionsAsync: async () => [
+                        {
+                            id: "collection-colors",
+                            defaultModeId: "default",
+                            modes: [{ modeId: "default", name: "Default" }],
                         },
                     ],
                 },
@@ -361,14 +390,534 @@ describe("message flow", () => {
                                 },
                             },
                         },
+                        downloadable: true,
                     },
                 ],
                 summary: {
                     source: "variables",
                     colorTokens: 2,
+                    dimensionTokens: 0,
+                    numberTokens: 0,
+                    typographyTokens: 0,
+                    shadowTokens: 0,
                     skipped: 0,
                 },
                 warnings: [],
+            },
+        });
+    });
+
+    it("exports float variables as dimension and number tokens", async () => {
+        const variables = [
+            {
+                id: "variable-spacing-4",
+                variableCollectionId: "collection-size",
+                name: "Primitive/Spacing/4",
+                description: "Base spacing",
+                resolvedType: "FLOAT",
+                scopes: ["GAP"],
+                valuesByMode: {
+                    default: 16,
+                },
+            },
+            {
+                id: "variable-opacity-disabled",
+                variableCollectionId: "collection-size",
+                name: "Primitive/Opacity/Disabled",
+                description: "",
+                resolvedType: "FLOAT",
+                scopes: ["OPACITY"],
+                valuesByMode: {
+                    default: 0.4,
+                },
+            },
+            {
+                id: "variable-spacing-md",
+                variableCollectionId: "collection-size",
+                name: "Semantic/Spacing/Md",
+                description: "",
+                resolvedType: "FLOAT",
+                scopes: ["GAP"],
+                valuesByMode: {
+                    default: { type: "VARIABLE_ALIAS", id: "variable-spacing-4" },
+                },
+            },
+        ];
+        const context = loadPluginContext({
+            figma: {
+                variables: {
+                    getLocalVariablesAsync: async (type: string) => variables.filter((variable) => variable.resolvedType === type),
+                    getLocalVariableCollectionsAsync: async () => [
+                        {
+                            id: "collection-size",
+                            defaultModeId: "default",
+                            modes: [{ modeId: "default", name: "Default" }],
+                        },
+                    ],
+                },
+                getLocalPaintStylesAsync: async () => [],
+            },
+        });
+
+        await context.sendMessage({ type: "EXPORT_TOKENS_JSON" });
+
+        expect(toPlainJson(context.postedMessages[0])).toEqual({
+            type: "TOKENS_EXPORTED",
+            payload: {
+                files: [
+                    {
+                        fileName: "tokens.json",
+                        content: JSON.stringify({
+                            primitive: {
+                                spacing: {
+                                    4: {
+                                        $type: "dimension",
+                                        $value: { value: 16, unit: "px" },
+                                        $description: "Base spacing",
+                                    },
+                                },
+                                opacity: {
+                                    disabled: {
+                                        $type: "number",
+                                        $value: 0.4,
+                                    },
+                                },
+                            },
+                            semantic: {
+                                spacing: {
+                                    md: {
+                                        $type: "dimension",
+                                        $value: "{primitive.spacing.4}",
+                                    },
+                                },
+                            },
+                        }, null, 2),
+                        tokens: {
+                            primitive: {
+                                spacing: {
+                                    4: {
+                                        $type: "dimension",
+                                        $value: { value: 16, unit: "px" },
+                                        $description: "Base spacing",
+                                    },
+                                },
+                                opacity: {
+                                    disabled: {
+                                        $type: "number",
+                                        $value: 0.4,
+                                    },
+                                },
+                            },
+                            semantic: {
+                                spacing: {
+                                    md: {
+                                        $type: "dimension",
+                                        $value: "{primitive.spacing.4}",
+                                    },
+                                },
+                            },
+                        },
+                        downloadable: true,
+                    },
+                ],
+                summary: {
+                    source: "variables",
+                    colorTokens: 0,
+                    dimensionTokens: 2,
+                    numberTokens: 1,
+                    typographyTokens: 0,
+                    shadowTokens: 0,
+                    skipped: 0,
+                },
+                warnings: [],
+            },
+        });
+    });
+
+    it("exports float variable mode overrides", async () => {
+        const variables = [
+            {
+                id: "variable-radius-md",
+                variableCollectionId: "collection-size",
+                name: "Primitive/Radius/Md",
+                description: "",
+                resolvedType: "FLOAT",
+                scopes: ["CORNER_RADIUS"],
+                valuesByMode: {
+                    compact: 8,
+                    spacious: 12,
+                },
+            },
+        ];
+        const context = loadPluginContext({
+            figma: {
+                variables: {
+                    getLocalVariablesAsync: async (type: string) => variables.filter((variable) => variable.resolvedType === type),
+                    getLocalVariableCollectionsAsync: async () => [
+                        {
+                            id: "collection-size",
+                            defaultModeId: "compact",
+                            modes: [
+                                { modeId: "compact", name: "Compact" },
+                                { modeId: "spacious", name: "Spacious" },
+                            ],
+                        },
+                    ],
+                },
+                getLocalPaintStylesAsync: async () => [],
+            },
+        });
+
+        await context.sendMessage({ type: "EXPORT_TOKENS_JSON" });
+
+        expect(toPlainJson(context.postedMessages[0])).toEqual({
+            type: "TOKENS_EXPORTED",
+            payload: {
+                files: [
+                    {
+                        fileName: "tokens.json",
+                        content: JSON.stringify({
+                            primitive: {
+                                radius: {
+                                    md: {
+                                        $type: "dimension",
+                                        $value: { value: 8, unit: "px" },
+                                    },
+                                },
+                            },
+                        }, null, 2),
+                        tokens: {
+                            primitive: {
+                                radius: {
+                                    md: {
+                                        $type: "dimension",
+                                        $value: { value: 8, unit: "px" },
+                                    },
+                                },
+                            },
+                        },
+                        downloadable: true,
+                    },
+                    {
+                        fileName: "tokens.spacious.json",
+                        content: JSON.stringify({
+                            primitive: {
+                                radius: {
+                                    md: {
+                                        $type: "dimension",
+                                        $value: { value: 12, unit: "px" },
+                                    },
+                                },
+                            },
+                        }, null, 2),
+                        tokens: {
+                            primitive: {
+                                radius: {
+                                    md: {
+                                        $type: "dimension",
+                                        $value: { value: 12, unit: "px" },
+                                    },
+                                },
+                            },
+                        },
+                        downloadable: true,
+                    },
+                ],
+                summary: {
+                    source: "variables",
+                    colorTokens: 0,
+                    dimensionTokens: 2,
+                    numberTokens: 0,
+                    typographyTokens: 0,
+                    shadowTokens: 0,
+                    skipped: 0,
+                },
+                warnings: [],
+            },
+        });
+    });
+
+    it("exports local text styles as typography tokens", async () => {
+        const context = loadPluginContext({
+            figma: {
+                variables: {
+                    getLocalVariablesAsync: async () => [],
+                },
+                getLocalPaintStylesAsync: async () => [],
+                getLocalTextStylesAsync: async () => [
+                    {
+                        name: "Heading/H1",
+                        description: "Main heading",
+                        fontName: { family: "Inter", style: "Semi Bold" },
+                        fontSize: 32,
+                        lineHeight: { unit: "PIXELS", value: 40 },
+                        letterSpacing: { unit: "PERCENT", value: -2 },
+                    },
+                ],
+            },
+        });
+
+        await context.sendMessage({ type: "EXPORT_TOKENS_JSON" });
+
+        expect(toPlainJson(context.postedMessages[0])).toEqual({
+            type: "TOKENS_EXPORTED",
+            payload: {
+                files: [
+                    {
+                        fileName: "tokens.json",
+                        content: JSON.stringify({
+                            component: {
+                                typography: {
+                                    heading: {
+                                        h1: {
+                                            $type: "typography",
+                                            $value: {
+                                                fontFamily: "Inter",
+                                                fontSize: { value: 32, unit: "px" },
+                                                fontWeight: 600,
+                                                letterSpacing: { value: -0.64, unit: "px" },
+                                                lineHeight: 1.25,
+                                            },
+                                            $description: "Main heading",
+                                        },
+                                    },
+                                },
+                            },
+                        }, null, 2),
+                        tokens: {
+                            component: {
+                                typography: {
+                                    heading: {
+                                        h1: {
+                                            $type: "typography",
+                                            $value: {
+                                                fontFamily: "Inter",
+                                                fontSize: { value: 32, unit: "px" },
+                                                fontWeight: 600,
+                                                letterSpacing: { value: -0.64, unit: "px" },
+                                                lineHeight: 1.25,
+                                            },
+                                            $description: "Main heading",
+                                        },
+                                    },
+                                },
+                            },
+                        },
+                        downloadable: true,
+                    },
+                ],
+                summary: {
+                    source: "styles",
+                    colorTokens: 0,
+                    dimensionTokens: 0,
+                    numberTokens: 0,
+                    typographyTokens: 1,
+                    shadowTokens: 0,
+                    skipped: 0,
+                },
+                warnings: [],
+            },
+        });
+    });
+
+    it("exports local effect styles as shadow tokens", async () => {
+        const context = loadPluginContext({
+            figma: {
+                variables: {
+                    getLocalVariablesAsync: async () => [],
+                },
+                getLocalPaintStylesAsync: async () => [],
+                getLocalTextStylesAsync: async () => [],
+                getLocalEffectStylesAsync: async () => [
+                    {
+                        name: "Card/Shadow",
+                        description: "Card elevation",
+                        effects: [
+                            {
+                                type: "DROP_SHADOW",
+                                color: { r: 0, g: 0, b: 0, a: 0.2 },
+                                offset: { x: 0, y: 8 },
+                                radius: 24,
+                                spread: -2,
+                                visible: true,
+                            },
+                        ],
+                    },
+                ],
+            },
+        });
+
+        await context.sendMessage({ type: "EXPORT_TOKENS_JSON" });
+
+        expect(toPlainJson(context.postedMessages[0])).toEqual({
+            type: "TOKENS_EXPORTED",
+            payload: {
+                files: [
+                    {
+                        fileName: "tokens.json",
+                        content: JSON.stringify({
+                            component: {
+                                shadow: {
+                                    card: {
+                                        shadow: {
+                                            $type: "shadow",
+                                            $value: {
+                                                color: {
+                                                    colorSpace: "srgb",
+                                                    components: [0, 0, 0],
+                                                    alpha: 0.2,
+                                                },
+                                                offsetX: { value: 0, unit: "px" },
+                                                offsetY: { value: 8, unit: "px" },
+                                                blur: { value: 24, unit: "px" },
+                                                spread: { value: -2, unit: "px" },
+                                            },
+                                            $description: "Card elevation",
+                                        },
+                                    },
+                                },
+                            },
+                        }, null, 2),
+                        tokens: {
+                            component: {
+                                shadow: {
+                                    card: {
+                                        shadow: {
+                                            $type: "shadow",
+                                            $value: {
+                                                color: {
+                                                    colorSpace: "srgb",
+                                                    components: [0, 0, 0],
+                                                    alpha: 0.2,
+                                                },
+                                                offsetX: { value: 0, unit: "px" },
+                                                offsetY: { value: 8, unit: "px" },
+                                                blur: { value: 24, unit: "px" },
+                                                spread: { value: -2, unit: "px" },
+                                            },
+                                            $description: "Card elevation",
+                                        },
+                                    },
+                                },
+                            },
+                        },
+                        downloadable: true,
+                    },
+                ],
+                summary: {
+                    source: "styles",
+                    colorTokens: 0,
+                    dimensionTokens: 0,
+                    numberTokens: 0,
+                    typographyTokens: 0,
+                    shadowTokens: 1,
+                    skipped: 0,
+                },
+                warnings: [],
+            },
+        });
+    });
+
+    it("exports inner shadow layers and warns about unsupported effects", async () => {
+        const context = loadPluginContext({
+            figma: {
+                variables: {
+                    getLocalVariablesAsync: async () => [],
+                },
+                getLocalPaintStylesAsync: async () => [],
+                getLocalTextStylesAsync: async () => [],
+                getLocalEffectStylesAsync: async () => [
+                    {
+                        name: "Input/Shadow",
+                        description: "",
+                        effects: [
+                            {
+                                type: "INNER_SHADOW",
+                                color: { r: 1, g: 1, b: 1, a: 0.6 },
+                                offset: { x: 0, y: 1 },
+                                radius: 2,
+                                visible: true,
+                            },
+                            {
+                                type: "LAYER_BLUR",
+                                radius: 4,
+                                visible: true,
+                            },
+                        ],
+                    },
+                ],
+            },
+        });
+
+        await context.sendMessage({ type: "EXPORT_TOKENS_JSON" });
+
+        expect(toPlainJson(context.postedMessages[0])).toEqual({
+            type: "TOKENS_EXPORTED",
+            payload: {
+                files: [
+                    {
+                        fileName: "tokens.json",
+                        content: JSON.stringify({
+                            component: {
+                                shadow: {
+                                    input: {
+                                        shadow: {
+                                            $type: "shadow",
+                                            $value: {
+                                                color: {
+                                                    colorSpace: "srgb",
+                                                    components: [1, 1, 1],
+                                                    alpha: 0.6,
+                                                },
+                                                offsetX: { value: 0, unit: "px" },
+                                                offsetY: { value: 1, unit: "px" },
+                                                blur: { value: 2, unit: "px" },
+                                                spread: { value: 0, unit: "px" },
+                                                inset: true,
+                                            },
+                                        },
+                                    },
+                                },
+                            },
+                        }, null, 2),
+                        tokens: {
+                            component: {
+                                shadow: {
+                                    input: {
+                                        shadow: {
+                                            $type: "shadow",
+                                            $value: {
+                                                color: {
+                                                    colorSpace: "srgb",
+                                                    components: [1, 1, 1],
+                                                    alpha: 0.6,
+                                                },
+                                                offsetX: { value: 0, unit: "px" },
+                                                offsetY: { value: 1, unit: "px" },
+                                                blur: { value: 2, unit: "px" },
+                                                spread: { value: 0, unit: "px" },
+                                                inset: true,
+                                            },
+                                        },
+                                    },
+                                },
+                            },
+                        },
+                        downloadable: true,
+                    },
+                ],
+                summary: {
+                    source: "styles",
+                    colorTokens: 0,
+                    dimensionTokens: 0,
+                    numberTokens: 0,
+                    typographyTokens: 0,
+                    shadowTokens: 1,
+                    skipped: 1,
+                },
+                warnings: [
+                    "Skipped unsupported non-shadow effects in effect style \"Input/Shadow\".",
+                ],
             },
         });
     });
@@ -380,11 +929,19 @@ describe("message flow", () => {
                     getLocalVariablesAsync: async () => [
                         {
                             id: "variable-action-primary",
+                            variableCollectionId: "collection-colors",
                             name: "Semantic/Color/Action/Primary",
                             description: "",
                             valuesByMode: {
                                 default: { type: "VARIABLE_ALIAS", id: "missing-variable" },
                             },
+                        },
+                    ],
+                    getLocalVariableCollectionsAsync: async () => [
+                        {
+                            id: "collection-colors",
+                            defaultModeId: "default",
+                            modes: [{ modeId: "default", name: "Default" }],
                         },
                     ],
                 },
@@ -402,16 +959,232 @@ describe("message flow", () => {
                         fileName: "tokens.json",
                         content: JSON.stringify({}, null, 2),
                         tokens: {},
+                        downloadable: false,
                     },
                 ],
                 summary: {
                     source: "variables",
                     colorTokens: 0,
+                    dimensionTokens: 0,
+                    numberTokens: 0,
+                    typographyTokens: 0,
+                    shadowTokens: 0,
                     skipped: 1,
                 },
                 warnings: [
-                    "Skipped color variable \"Semantic/Color/Action/Primary\" because it has no raw color value or resolvable alias.",
+                    "Skipped color variable \"Semantic/Color/Action/Primary\" in tokens.json because it has no raw value or resolvable alias.",
                 ],
+            },
+        });
+    });
+
+    it("exports default and theme files from variable modes", async () => {
+        const context = loadPluginContext({
+            figma: {
+                variables: {
+                    getLocalVariablesAsync: async () => [
+                        {
+                            id: "variable-bg-canvas",
+                            variableCollectionId: "collection-theme",
+                            name: "Primitive/Color/Bg/Canvas",
+                            description: "",
+                            valuesByMode: {
+                                light: { r: 1, g: 1, b: 1, a: 1 },
+                                dark: { r: 0.05, g: 0.05, b: 0.05, a: 1 },
+                            },
+                        },
+                    ],
+                    getLocalVariableCollectionsAsync: async () => [
+                        {
+                            id: "collection-theme",
+                            defaultModeId: "light",
+                            modes: [
+                                { modeId: "light", name: "Light" },
+                                { modeId: "dark", name: "Dark" },
+                            ],
+                        },
+                    ],
+                },
+                getLocalPaintStylesAsync: async () => [],
+            },
+        });
+
+        await context.sendMessage({ type: "EXPORT_TOKENS_JSON" });
+
+        expect(toPlainJson(context.postedMessages[0])).toEqual({
+            type: "TOKENS_EXPORTED",
+            payload: {
+                files: [
+                    {
+                        fileName: "tokens.json",
+                        content: JSON.stringify({
+                            primitive: {
+                                color: {
+                                    bg: {
+                                        canvas: {
+                                            $type: "color",
+                                            $value: {
+                                                colorSpace: "srgb",
+                                                components: [1, 1, 1],
+                                                alpha: 1,
+                                            },
+                                        },
+                                    },
+                                },
+                            },
+                        }, null, 2),
+                        tokens: {
+                            primitive: {
+                                color: {
+                                    bg: {
+                                        canvas: {
+                                            $type: "color",
+                                            $value: {
+                                                colorSpace: "srgb",
+                                                components: [1, 1, 1],
+                                                alpha: 1,
+                                            },
+                                        },
+                                    },
+                                },
+                            },
+                        },
+                        downloadable: true,
+                    },
+                    {
+                        fileName: "tokens.dark.json",
+                        content: JSON.stringify({
+                            primitive: {
+                                color: {
+                                    bg: {
+                                        canvas: {
+                                            $type: "color",
+                                            $value: {
+                                                colorSpace: "srgb",
+                                                components: [0.05, 0.05, 0.05],
+                                                alpha: 1,
+                                            },
+                                        },
+                                    },
+                                },
+                            },
+                        }, null, 2),
+                        tokens: {
+                            primitive: {
+                                color: {
+                                    bg: {
+                                        canvas: {
+                                            $type: "color",
+                                            $value: {
+                                                colorSpace: "srgb",
+                                                components: [0.05, 0.05, 0.05],
+                                                alpha: 1,
+                                            },
+                                        },
+                                    },
+                                },
+                            },
+                        },
+                        downloadable: true,
+                    },
+                ],
+                summary: {
+                    source: "variables",
+                    colorTokens: 2,
+                    dimensionTokens: 0,
+                    numberTokens: 0,
+                    typographyTokens: 0,
+                    shadowTokens: 0,
+                    skipped: 0,
+                },
+                warnings: [],
+            },
+        });
+    });
+
+    it("does not warn when a non-default mode has no override", async () => {
+        const context = loadPluginContext({
+            figma: {
+                variables: {
+                    getLocalVariablesAsync: async () => [
+                        {
+                            id: "variable-blue-500",
+                            variableCollectionId: "collection-theme",
+                            name: "Primitive/Color/Blue/500",
+                            description: "",
+                            valuesByMode: {
+                                light: { r: 0.145, g: 0.388, b: 0.922, a: 1 },
+                            },
+                        },
+                    ],
+                    getLocalVariableCollectionsAsync: async () => [
+                        {
+                            id: "collection-theme",
+                            defaultModeId: "light",
+                            modes: [
+                                { modeId: "light", name: "Light" },
+                                { modeId: "dark", name: "Dark" },
+                            ],
+                        },
+                    ],
+                },
+                getLocalPaintStylesAsync: async () => [],
+            },
+        });
+
+        await context.sendMessage({ type: "EXPORT_TOKENS_JSON" });
+
+        expect(toPlainJson(context.postedMessages[0])).toEqual({
+            type: "TOKENS_EXPORTED",
+            payload: {
+                files: [
+                    {
+                        fileName: "tokens.json",
+                        content: JSON.stringify({
+                            primitive: {
+                                color: {
+                                    blue: {
+                                        500: {
+                                            $type: "color",
+                                            $value: {
+                                                colorSpace: "srgb",
+                                                components: [0.145, 0.388, 0.922],
+                                                alpha: 1,
+                                            },
+                                        },
+                                    },
+                                },
+                            },
+                        }, null, 2),
+                        tokens: {
+                            primitive: {
+                                color: {
+                                    blue: {
+                                        500: {
+                                            $type: "color",
+                                            $value: {
+                                                colorSpace: "srgb",
+                                                components: [0.145, 0.388, 0.922],
+                                                alpha: 1,
+                                            },
+                                        },
+                                    },
+                                },
+                            },
+                        },
+                        downloadable: true,
+                    },
+                ],
+                summary: {
+                    source: "variables",
+                    colorTokens: 1,
+                    dimensionTokens: 0,
+                    numberTokens: 0,
+                    typographyTokens: 0,
+                    shadowTokens: 0,
+                    skipped: 0,
+                },
+                warnings: [],
             },
         });
     });
@@ -478,11 +1251,16 @@ describe("message flow", () => {
                                 },
                             },
                         },
+                        downloadable: true,
                     },
                 ],
                 summary: {
                     source: "styles",
                     colorTokens: 1,
+                    dimensionTokens: 0,
+                    numberTokens: 0,
+                    typographyTokens: 0,
+                    shadowTokens: 0,
                     skipped: 0,
                 },
                 warnings: [],
@@ -518,11 +1296,16 @@ describe("message flow", () => {
                         fileName: "tokens.json",
                         content: JSON.stringify({}, null, 2),
                         tokens: {},
+                        downloadable: false,
                     },
                 ],
                 summary: {
                     source: "variables",
                     colorTokens: 0,
+                    dimensionTokens: 0,
+                    numberTokens: 0,
+                    typographyTokens: 0,
+                    shadowTokens: 0,
                     skipped: 1,
                 },
                 warnings: [
