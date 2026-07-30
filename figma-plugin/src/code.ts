@@ -1,7 +1,7 @@
-import type { FigmaFileReader } from "./FigmaFileReader";
-import { PluginFigmaFileReader, RestFigmaFileReader } from ".";
-import { TokenConversionService, type TokenOutputFormat } from "./token-export/TokenConversionService";
-import { TokenExporter } from "./token-export/TokenExporter";
+import type { FigmaFileReader } from "#/figma-plugin/FigmaFileReader";
+import { PluginFigmaFileReader, RestFigmaFileReader } from "#/figma-plugin/index";
+import { TokenConversionService, type TokenOutputFormat } from "#/figma-plugin/token-export/TokenConversionService";
+import { TokenExporter } from "#/figma-plugin/token-export/TokenExporter";
 
 const MISSING_FILE_KEY_MESSAGE = "REST export requires figma.fileKey. "
     + "Reload the plugin after manifest update or run it as a private/local plugin.";

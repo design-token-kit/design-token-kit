@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
-import { normalizeFileResponse } from "../../src/normalize";
-import { PluginFigmaFileReader } from "../../src/PluginFigmaFileReader";
-import { mapColorTokenName, mapTokenName } from "../../src/token-export/TokenNameMapper";
+import { normalizeFileResponse } from "#/figma-plugin/normalize";
+import { PluginFigmaFileReader } from "#/figma-plugin/PluginFigmaFileReader";
+import { mapColorTokenName, mapTokenName } from "#/figma-plugin/token-export/TokenNameMapper";
 import { loadPluginContext, toPlainJson } from "./loadPluginContext";
 
 interface TokenExportPayload {

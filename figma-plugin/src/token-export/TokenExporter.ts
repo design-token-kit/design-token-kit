@@ -1,8 +1,8 @@
-import { mapColorTokenName, mapTokenName } from "./TokenNameMapper";
-import { TokenCounter } from "./TokenCounter";
-import { TokenDocumentBuilder } from "./TokenDocumentBuilder";
+import { mapColorTokenName, mapTokenName } from "#/figma-plugin/token-export/TokenNameMapper";
+import { TokenCounter } from "#/figma-plugin/token-export/TokenCounter";
+import { TokenDocumentBuilder } from "#/figma-plugin/token-export/TokenDocumentBuilder";
 
-export type { TokenCounts } from "./TokenCounter";
+export type { TokenCounts } from "#/figma-plugin/token-export/TokenCounter";
 
 /**
  * Color value in the DTCG JSON format.

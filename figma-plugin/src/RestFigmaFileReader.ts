@@ -1,5 +1,5 @@
-import type { FigmaFileReader, FigmaDocumentDto } from "./FigmaFileReader";
-import { normalizeFileResponse } from "./normalize";
+import type { FigmaFileReader, FigmaDocumentDto } from "#/figma-plugin/FigmaFileReader";
+import { normalizeFileResponse } from "#/figma-plugin/normalize";
 
 /**
  * Reads a Figma file through the official REST API

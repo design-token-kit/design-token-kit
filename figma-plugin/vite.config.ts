@@ -9,10 +9,14 @@ export default defineConfig({
         alias: [
             // Core converters import this loader for file-based `convert(sources)`.
             // The Figma plugin calls only `convertList()`, so the Node-only loader
-            // is replaced with a runtime adapter before the generic `#/...` alias.
+            // is replaced with a runtime adapter before package-import resolution.
             {
                 find: "#/core/io/DtcgListLoader",
                 replacement: resolve(currentDir, "src/core-adapter/DtcgListLoader.ts"),
+            },
+            {
+                find: /^#\/figma-plugin\/(.*)$/,
+                replacement: `${resolve(currentDir, "src")}/$1`,
             },
             {
                 find: /^@design-token-kit\/core\/(.*)$/,

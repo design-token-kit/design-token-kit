@@ -31,7 +31,7 @@
         "bin"
     ],
     "imports": {
-        "#/*": "./src/*"
+        "#commands/*": "./src/commands/*"
     },
     "engines": {
         "node": ">=18"

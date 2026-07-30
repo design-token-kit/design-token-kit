@@ -5,7 +5,7 @@ import { ScssTokenConverter } from "@design-token-kit/core/core/platforms/scss/S
 import { SwiftUiTokenConverter } from "@design-token-kit/core/core/platforms/swiftui/SwiftUiTokenConverter";
 import { TailwindTokenConverter } from "@design-token-kit/core/core/platforms/tailwind/TailwindTokenConverter";
 import type { Dtcg } from "@design-token-kit/core/core/model/Dtcg";
-import type { ExportedTokenFile } from "./TokenExporter";
+import type { ExportedTokenFile } from "#/figma-plugin/token-export/TokenExporter";
 
 export interface ConvertedTokenFile {
     fileName: string;

@@ -12,8 +12,8 @@ import {
 } from "@design-token-kit/core";
 import { writeFile } from "node:fs/promises";
 import { dirname, extname, join, parse } from "node:path";
-import { getWriter, toDocumentFormat } from "./formats";
-import { hasErrors, printIssues } from "./issues";
+import { getWriter, toDocumentFormat } from "#commands/formats";
+import { hasErrors, printIssues } from "#commands/issues";
 
 const EXIT_FAILURE = 1;
 

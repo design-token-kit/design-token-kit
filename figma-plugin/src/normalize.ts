@@ -1,4 +1,4 @@
-import type { FigmaNodeDto, FigmaDocumentDto } from "./FigmaFileReader";
+import type { FigmaNodeDto, FigmaDocumentDto } from "#/figma-plugin/FigmaFileReader";
 
 interface RestLikeNode {
     id?: string;

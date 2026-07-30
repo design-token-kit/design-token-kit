@@ -6,8 +6,8 @@ import {
     type CheckInfo,
     type CheckSelectionWarning,
 } from "@design-token-kit/core";
-import { toDocumentFormat } from "./formats";
-import { hasErrors, printIssues } from "./issues";
+import { toDocumentFormat } from "#commands/formats";
+import { hasErrors, printIssues } from "#commands/issues";
 
 const EXIT_ISSUES = 2;
 const EXIT_FAILURE = 1;

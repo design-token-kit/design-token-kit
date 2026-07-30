@@ -18,6 +18,7 @@
         "paths": {
             "@design-token-kit/core": ["../core/src/index.ts"],
             "@design-token-kit/core/*": ["../core/src/*"],
+            "#/figma-plugin/*": ["src/*"],
             "#/core/io/DtcgListLoader": ["src/core-adapter/DtcgListLoader.ts"],
             "#/*": ["../core/src/*"]
         }

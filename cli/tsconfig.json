@@ -15,7 +15,7 @@
         "types": ["node"],
         "baseUrl": ".",
         "paths": {
-            "#/*": ["src/*"]
+            "#commands/*": ["src/commands/*"]
         }
     },
     "include": ["src", "test", "tsup.config.ts", "vitest.config.ts"]

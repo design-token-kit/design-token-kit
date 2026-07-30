@@ -5,7 +5,7 @@ import { resolve } from "node:path";
 import { tmpdir } from "node:os";
 import { randomUUID } from "node:crypto";
 import process from "node:process";
-import { showcaseCommand } from "#/commands/showcase";
+import { showcaseCommand } from "#commands/showcase";
 import { run, dtokens } from "./_run";
 
 vi.mock("node:child_process", async () => {

@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { Dtcg, Format, TokenGroup, DtcgJsonReader, DtcgList, SwiftUiTokenConverter } from "@design-token-kit/core";
-import { getReader, getWriter, toDocumentFormat } from "#/commands/formats";
+import { getReader, getWriter, toDocumentFormat } from "#commands/formats";
 
 describe("toDocumentFormat", () => {
     it("returns DTCG for 'dtcg'", () => {

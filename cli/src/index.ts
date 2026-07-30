@@ -2,10 +2,10 @@ import { Command } from "commander";
 import { readFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { checkCommand } from "./commands/check";
-import { convertCommand } from "./commands/convert";
-import { showcaseCommand } from "./commands/showcase";
-import { statsCommand } from "./commands/stats";
+import { checkCommand } from "#commands/check";
+import { convertCommand } from "#commands/convert";
+import { showcaseCommand } from "#commands/showcase";
+import { statsCommand } from "#commands/stats";
 
 const packageJsonPath = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../package.json");
 const packageJson = JSON.parse(readFileSync(packageJsonPath, "utf8")) as { version: string };

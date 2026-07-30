@@ -4,6 +4,9 @@
     "private": true,
     "description": "Figma plugin for exporting file JSON through REST and Plugin API",
     "type": "module",
+    "imports": {
+        "#/figma-plugin/*": "./src/*"
+    },
     "main": "code.js",
     "scripts": {
         "build": "tsc --noEmit && vite build",

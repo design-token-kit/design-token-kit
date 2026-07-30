@@ -4,7 +4,7 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { tmpdir } from "node:os";
 import { randomUUID } from "node:crypto";
-import { convertCommand } from "#/commands/convert";
+import { convertCommand } from "#commands/convert";
 import { run, dtokens } from "./_run";
 
 describe("convert", () => {

@@ -1,6 +1,6 @@
-import type { DtcgList } from "@design-token-kit/core/core/model/DtcgList";
 import type { CheckIssue } from "@design-token-kit/core/core/check/CheckIssue";
 import type { Format } from "@design-token-kit/core/core/io/Format";
+import type { DtcgList } from "@design-token-kit/core/core/model/DtcgList";
 
 /**
  * Replaces the core file-source loader inside the Figma plugin bundle.

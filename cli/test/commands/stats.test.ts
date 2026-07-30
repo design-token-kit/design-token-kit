@@ -5,7 +5,7 @@ import { randomUUID } from "node:crypto";
 import { tmpdir } from "node:os";
 import { spawn } from "node:child_process";
 import process from "node:process";
-import { statsCommand } from "#/commands/stats";
+import { statsCommand } from "#commands/stats";
 import { run } from "./_run";
 import { dtokens } from "./_run";
 

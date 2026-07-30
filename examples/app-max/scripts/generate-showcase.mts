@@ -6,8 +6,8 @@ import { mkdir, writeFile } from "node:fs/promises";
 import { createTokenHtmlShowcase } from "@design-token-kit/core";
 
 const html = await createTokenHtmlShowcase().showcase([
-    "./src/styles/tokens/tokens.dtcg.json",
-    "./src/styles/tokens/tokens.dark.dtcg.json",
+    "./src/styles/tokens/tokens.json",
+    "./src/styles/tokens/tokens.dark.json",
 ]);
 
 await mkdir("./dist", { recursive: true });

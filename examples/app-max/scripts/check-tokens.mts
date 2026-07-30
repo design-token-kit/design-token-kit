@@ -5,8 +5,8 @@
 import { DtcgChecker, type CheckIssue } from "@design-token-kit/core";
 
 const issues = await new DtcgChecker().validate([
-    "./src/styles/tokens/tokens.dtcg.json",
-    "./src/styles/tokens/tokens.dark.dtcg.json",
+    "./src/styles/tokens/tokens.json",
+    "./src/styles/tokens/tokens.dark.json",
 ]);
 
 for (const issue of issues) {
