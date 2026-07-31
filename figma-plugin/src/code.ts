@@ -8,12 +8,17 @@ const MISSING_FILE_KEY_MESSAGE = "REST export requires figma.fileKey. "
 
 figma.showUI(__html__, {
     width: 680,
-    height: 920,
+    height: 720,
 });
 
 figma.ui.onmessage = async (msg: PluginMessage) => {
     if (msg.type === "EXPORT_PLUGIN_JSON") {
         await exportWithReader(new PluginFigmaFileReader());
+        return;
+    }
+
+    if (msg.type === "ANALYZE_TOKENS") {
+        await analyzeTokens();
         return;
     }
 
@@ -33,6 +38,30 @@ figma.ui.onmessage = async (msg: PluginMessage) => {
         await exportWithReader(new RestFigmaFileReader(msg.accessToken, fileKey));
     }
 };
+
+async function analyzeTokens(): Promise<void> {
+    try {
+        const result = await new TokenExporter().export();
+
+        figma.ui.postMessage({
+            type: "TOKENS_ANALYZED",
+            payload: {
+                summary: result.summary,
+                warnings: result.warnings,
+            },
+        });
+    } catch (error: unknown) {
+        const message = getErrorMessage(error);
+        figma.notify(message, { error: true });
+        figma.ui.postMessage({
+            type: "EXPORT_FAILED",
+            payload: {
+                source: "tokens",
+                message,
+            },
+        });
+    }
+}
 
 async function exportTokens(format: TokenOutputFormat): Promise<void> {
     try {
@@ -130,6 +159,7 @@ function toTokenOutputFormat(type: PluginMessage["type"]): TokenOutputFormat | u
 
 type PluginMessage =
     | { type: "EXPORT_PLUGIN_JSON" }
+    | { type: "ANALYZE_TOKENS" }
     | { type: "EXPORT_TOKENS_JSON" }
     | { type: "EXPORT_TOKENS_DTCG" }
     | { type: "EXPORT_TOKENS_CSS" }
