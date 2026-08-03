@@ -196,13 +196,9 @@
 
         .format-button.primary,
         .format-button[aria-pressed="true"] {
-            border-color: var(--color-accent);
-            color: #fff;
-            background: var(--color-accent);
-        }
-
-        .format-button:nth-child(5) {
-            grid-column: 1;
+            border-color: var(--color-border-strong);
+            color: var(--color-text);
+            background: #fffefb;
         }
 
         .format-icon {
@@ -227,17 +223,17 @@
             stroke: none;
         }
 
-        .format-button[aria-pressed="true"] .format-icon {
-            color: #fff;
-        }
-
         .format-button[data-token-export-message="EXPORT_TOKENS_TAILWIND"] .format-icon {
             color: #2fb8ad;
             font-size: 19px;
         }
 
-        .format-button[aria-pressed="true"][data-token-export-message="EXPORT_TOKENS_TAILWIND"] .format-icon {
-            color: #fff;
+        .format-button[data-token-export-message="EXPORT_TOKENS_SCSS"] .format-icon {
+            color: #cf649a;
+        }
+
+        .format-button[data-token-export-message="EXPORT_TOKENS_SWIFTUI"] .format-icon {
+            color: #f05138;
         }
 
         .status {
@@ -502,7 +498,42 @@
         </div>
 
         <div class="platform-actions" aria-label="Token export formats">
-            <button class="format-button primary" data-token-export-message="EXPORT_TOKENS_DTCG" aria-pressed="true">
+            <button class="format-button primary" data-token-export-message="EXPORT_TOKENS_CSS" aria-pressed="true">
+                <span class="format-icon solid" aria-hidden="true">
+                    <svg viewBox="0 0 512 512">
+                        <path d="M378.413 0H208.297h-13.182L185.8 9.314 57.02 138.102l-9.314 9.314v13.176 265.514c0 47.36 38.528 85.895 85.896 85.895h244.811c47.353 0 85.881-38.535 85.881-85.895V85.896C464.294 38.528 425.766 0 378.413 0zM432.497 426.105c0 29.877-24.214 54.091-54.084 54.091H133.602c-29.884 0-54.098-24.214-54.098-54.091V160.591h83.716c24.885 0 45.077-20.178 45.077-45.07V31.804h170.116c29.87 0 54.084 24.214 54.084 54.092v340.209z" />
+                        <path d="M169.574 268.949c5.837 0 9.104 2.171 12.499 6.786 2.709 3.805 5.432 5.167 8.825 5.167 5.028 0 9.105-3.673 9.105-8.965 0-2.171-.684-4.078-1.774-5.977-4.622-8.288-14.802-14.669-28.655-14.669-16.171 0-28.124 7.603-33.012 22.685-1.899 6.11-2.57 10.865-2.57 24.989 0 14.125.67 18.881 2.57 24.99 4.888 15.081 16.841 22.685 33.012 22.685 13.853 0 24.033-6.382 28.655-14.67 1.09-1.899 1.774-3.805 1.774-5.976 0-5.3-4.078-8.965-9.105-8.965-3.393 0-6.116 1.361-8.825 5.16-3.394 4.622-6.662 6.794-12.499 6.794-7.471 0-11.814-3.938-13.853-10.187-1.089-3.393-1.494-6.654-1.494-19.83 0-13.175.406-16.436 1.494-19.829 2.039-6.25 6.382-10.188 13.853-10.188z" />
+                        <path d="M255.149 289.595l-4.888-.684c-10.725-1.494-14.398-5.02-14.398-10.187 0-5.837 4.343-9.915 12.498-9.915 5.698 0 11.409 1.634 15.892 3.805 1.899.95 3.938 1.494 5.837 1.494 4.888 0 8.7-3.666 8.7-8.693 0-3.261-1.494-5.977-4.762-8.016-5.432-3.394-15.612-6.11-25.806-6.11-19.97 0-32.733 11.269-32.733 28.25 0 16.304 10.32 25.13 29.2 27.713l4.901.677c10.99 1.494 14.258 4.888 14.258 10.32 0 6.389-5.306 10.872-15.082 10.872-6.787 0-12.219-1.767-19.83-5.977-1.634-.956-3.672-1.634-5.837-1.634-5.166 0-8.965 3.938-8.965 8.832 0 3.254 1.634 6.382 4.748 8.42 6.116 3.799 16.031 7.876 29.074 7.876 24.032 0 36.266-12.358 36.266-29.067.001-16.706-9.915-25.26-29.073-27.976z" />
+                        <path d="M338.697 289.595l-4.888-.684c-10.738-1.494-14.398-5.02-14.398-10.187 0-5.837 4.344-9.915 12.484-9.915 5.712 0 11.423 1.634 15.892 3.805 1.913.95 3.952 1.494 5.851 1.494 4.887 0 8.686-3.666 8.686-8.693 0-3.261-1.494-5.977-4.748-8.016-5.432-3.394-15.626-6.11-25.806-6.11-19.969 0-32.733 11.269-32.733 28.25 0 16.304 10.32 25.13 29.2 27.713l4.888.677c11.004 1.494 14.258 4.888 14.258 10.32 0 6.389-5.292 10.872-15.068 10.872-6.8 0-12.232-1.767-19.829-5.977-1.634-.956-3.673-1.634-5.851-1.634-5.153 0-8.965 3.938-8.965 8.832 0 3.254 1.634 6.382 4.762 8.42 6.117 3.799 16.032 7.876 29.06 7.876 24.047 0 36.266-12.358 36.266-29.067 0-16.706-9.915-25.26-29.061-27.976z" />
+                    </svg>
+                </span>
+                <span>CSS</span>
+            </button>
+            <button class="format-button" data-token-export-message="EXPORT_TOKENS_SCSS" aria-pressed="false">
+                <span class="format-icon solid" aria-hidden="true">
+                    <svg viewBox="0 0 32 32">
+                        <path d="M16.171 18.7c-.481.221-1.008.509-2.063 1.088-.4.225-.818.45-1.207.662-.027-.027-.055-.061-.082-.089-2.087-2.23-5.947-3.805-5.783-6.8.061-1.091.436-3.955 7.413-7.433 5.742-2.83 10.311-2.046 11.1-.307C26.683 8.3 23.1 12.913 17.17 13.582a4.469 4.469 0 0 1-3.751-.948c-.314-.341-.361-.361-.477-.293-.191.1-.068.409 0 .586a3.5 3.5 0 0 0 2.141 1.684 11.4 11.4 0 0 0 6.956-.689c3.594-1.391 6.4-5.258 5.578-8.5-.825-3.287-6.281-4.371-11.443-2.537a26 26 0 0 0-8.79 5.047c-2.844 2.66-3.294 4.972-3.11 5.94.662 3.437 5.4 5.674 7.3 7.331-.1.055-.184.1-.259.143-.948.471-4.562 2.36-5.463 4.358-1.023 2.264.164 3.887.948 4.105a5.832 5.832 0 0 0 6.281-2.544 6.3 6.3 0 0 0 .559-5.8 5.03 5.03 0 0 1 .716-.477c.484-.286.945-.568 1.354-.786l0 0a10.475 10.475 0 0 1 4.475-.989c3.246.382 3.887 2.407 3.764 3.26a2.157 2.157 0 0 1-1.03 1.459c-.225.143-.3.191-.28.293.027.15.136.143.327.116a2.535 2.535 0 0 0 1.766-2.257c.1-2-1.807-4.194-5.183-4.174a7.753 7.753 0 0 0-2.946.587q-.225.093-.437.2Zm-4.825 7.839c-1.078 1.173-2.578 1.616-3.226 1.241-.7-.4-.423-2.135.9-3.376a17.18 17.18 0 0 1 2.53-1.889c.157-.1.389-.232.668-.4.048-.027.075-.041.075-.041l.164-.1a4.658 4.658 0 0 1-1.111 4.565Z" />
+                    </svg>
+                </span>
+                <span>SCSS</span>
+            </button>
+            <button class="format-button" data-token-export-message="EXPORT_TOKENS_TAILWIND" aria-pressed="false">
+                <span class="format-icon solid" aria-hidden="true">
+                    <svg viewBox="0 0 32 32">
+                        <path d="M9 13.7q1.4-5.6 7-5.6c5.6 0 6.3 4.2 9.1 4.9q2.8.7 4.9-2.1-1.4 5.6-7 5.6c-5.6 0-6.3-4.2-9.1-4.9Q11.1 10.9 9 13.7ZM2 22.1q1.4-5.6 7-5.6c5.6 0 6.3 4.2 9.1 4.9q2.8.7 4.9-2.1-1.4 5.6-7 5.6c-5.6 0-6.3-4.2-9.1-4.9Q4.1 19.3 2 22.1Z" />
+                    </svg>
+                </span>
+                <span>Tailwind v4</span>
+            </button>
+            <button class="format-button" data-token-export-message="EXPORT_TOKENS_SWIFTUI" aria-pressed="false">
+                <span class="format-icon solid" aria-hidden="true">
+                    <svg viewBox="0 0 32 32">
+                        <path d="M19.422 4.007s6.217 3.554 7.844 9.2c1.466 5.1.292 7.534.292 7.534a8.915 8.915 0 0 1 1.742 2.8 4.825 4.825 0 0 1 .29 4.453s-.1-2.08-3.2-2.511c-2.841-.4-3.874 2.366-9.3 2.232A18.435 18.435 0 0 1 2 19.354C4.651 20.8 8.124 23.045 12.449 22.7s5.228-1.674 5.228-1.674A66.9 66.9 0 0 1 4.891 7.643c3.4 2.845 11.822 8.507 11.626 8.363A75.826 75.826 0 0 1 8.092 6.24s12.636 10.389 13.653 10.323c.418-.861 2.579-5.318-2.324-12.557Z" />
+                    </svg>
+                </span>
+                <span>SwiftUI</span>
+            </button>
+            <button class="format-button" data-token-export-message="EXPORT_TOKENS_DTCG" aria-pressed="false">
                 <span class="format-icon" aria-hidden="true">
                     <svg viewBox="0 0 24 24" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">
                         <path d="M9 4c-2.4 0-3.2 1.1-3.2 3.2v2.2c0 1.1-.8 2-1.8 2.2 1 .2 1.8 1.1 1.8 2.2v3c0 2.1.8 3.2 3.2 3.2" />
@@ -510,42 +541,6 @@
                     </svg>
                 </span>
                 <span>DTCG JSON</span>
-            </button>
-            <button class="format-button" data-token-export-message="EXPORT_TOKENS_CSS" aria-pressed="false">
-                <span class="format-icon" aria-hidden="true">
-                    <svg viewBox="0 0 24 24" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M9 4c-2.2 0-3 1-3 3v2.4c0 1-.7 1.8-1.6 2.1.9.3 1.6 1.1 1.6 2.1V17c0 2 .8 3 3 3" />
-                        <path d="M15 4c2.2 0 3 1 3 3v2.4c0 1 .7 1.8 1.6 2.1-.9.3-1.6 1.1-1.6 2.1V17c0 2-.8 3-3 3" />
-                    </svg>
-                </span>
-                <span>CSS</span>
-            </button>
-            <button class="format-button" data-token-export-message="EXPORT_TOKENS_SCSS" aria-pressed="false">
-                <span class="format-icon" aria-hidden="true">
-                    <svg viewBox="0 0 24 24" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M17.8 5.9c-2.5-2.5-8.8-1.5-10.7 1.8-1.4 2.4 3 2.5 6.1 1.8 3-.6 5.1.4 4.6 2.5-.7 3.4-8.8 4-11.3.7" />
-                        <path d="M10.7 11.7c4.3 1.5 5.1 5.5 2.4 6.4-2.3.8-4.7-1.8-2.1-3.7 1.8-1.2 4.1-.5 5.7.8" />
-                    </svg>
-                </span>
-                <span>SCSS</span>
-            </button>
-            <button class="format-button" data-token-export-message="EXPORT_TOKENS_TAILWIND" aria-pressed="false">
-                <span class="format-icon solid" aria-hidden="true">
-                    <svg viewBox="0 0 24 24">
-                        <path d="M6 10.2c1.7-3.1 4.3-4.5 7.8-4.2 2.1.2 3.4 1 4 2.5.3.7.8 1.2 1.5 1.4 1 .3 1.9-.1 2.7-1.2-1.7 3.1-4.3 4.5-7.8 4.2-2.1-.2-3.4-1-4-2.5-.3-.7-.8-1.2-1.5-1.4-1-.3-1.9.1-2.7 1.2Z" />
-                        <path d="M2 15.8c1.7-3.1 4.3-4.5 7.8-4.2 2.1.2 3.4 1 4 2.5.3.7.8 1.2 1.5 1.4 1 .3 1.9-.1 2.7-1.2-1.7 3.1-4.3 4.5-7.8 4.2-2.1-.2-3.4-1-4-2.5-.3-.7-.8-1.2-1.5-1.4-1-.3-1.9.1-2.7 1.2Z" />
-                    </svg>
-                </span>
-                <span>Tailwind v4</span>
-            </button>
-            <button class="format-button" data-token-export-message="EXPORT_TOKENS_SWIFTUI" aria-pressed="false">
-                <span class="format-icon solid" aria-hidden="true">
-                    <svg viewBox="0 0 24 24">
-                        <path d="M19.8 18.9c-2.1-3.1-5.3-5.2-8.7-7.4 2 2.3 4.2 4.5 5.2 7-3.1-2-6.4-4.6-9.7-7.8 1.5 2.2 3.1 4.2 4.8 5.9-2.2-1.2-4.5-2.8-6.8-4.9 2.7 4.3 6.8 7.5 11.9 8.2 1.7.2 2.5-.2 3.3-1Z" />
-                        <path d="M4.4 4c4.1 3.1 7.3 5.5 9.9 7.6-1.2-2.4-3.4-5-5.7-7.6 4.2 2.5 8.4 6.5 10.8 10.4.9 1.5 1.1 2.8.7 3.8-.9-1.4-2.1-2.5-3.7-3.3C13 12.9 8.7 9.8 4.4 4Z" />
-                    </svg>
-                </span>
-                <span>SwiftUI</span>
             </button>
         </div>
 
