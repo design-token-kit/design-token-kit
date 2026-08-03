@@ -19,6 +19,8 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
 
+      - run: npm install --global npm@11.19.0
+
       - run: npm install
 
       - run: npm run build
@@ -37,6 +39,8 @@ jobs:
       - uses: swift-actions/setup-swift@v2
         with:
           swift-version: "6.0"
+
+      - run: npm install --global npm@11.19.0
 
       - run: npm install
 
