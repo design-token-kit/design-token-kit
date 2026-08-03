@@ -2,6 +2,7 @@
     "name": "design-token-kit",
     "private": true,
     "version": "1.7.1",
+    "packageManager": "npm@11.19.0",
     "workspaces": [
         "core",
         "cli",

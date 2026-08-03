@@ -50,6 +50,7 @@ standard command pipeline: checking, CSS conversion, showcase generation, and
 statistics reporting.
 
 Node.js 20.19.0 or newer is required.
+Building this repository requires npm 11.19.0.
 
 ## Why Tokens First
 
@@ -125,7 +126,7 @@ structure right but misses format details.
 Install dependencies:
 
 ```bash
-npm install
+npx --yes npm@11.19.0 install
 ```
 
 Build workspace packages:
