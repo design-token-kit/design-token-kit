@@ -34,7 +34,7 @@
         "#commands/*": "./src/commands/*"
     },
     "engines": {
-        "node": ">=18"
+        "node": ">=20.19.0"
     },
     "scripts": {
         "build": "tsc --noEmit && tsup",

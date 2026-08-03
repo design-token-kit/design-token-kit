@@ -17,6 +17,9 @@
     },
     "author": "",
     "license": "MIT",
+    "engines": {
+        "node": ">=20.19.0"
+    },
     "dependencies": {
         "@design-token-kit/core": "1.7.1"
     },

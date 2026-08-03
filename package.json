@@ -20,7 +20,7 @@
         "release:publish": "node scripts/release-publish.mjs"
     },
     "engines": {
-        "node": ">=18"
+        "node": ">=20.19.0"
     },
     "devDependencies": {
         "tsx": "4.22.4"

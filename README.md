@@ -49,7 +49,7 @@ HRDT YAML files are automatically converted to DTCG JSON and then passed to the
 standard command pipeline: checking, CSS conversion, showcase generation, and
 statistics reporting.
 
-Node.js 18 or newer is required.
+Node.js 20.19.0 or newer is required.
 
 ## Why Tokens First
 

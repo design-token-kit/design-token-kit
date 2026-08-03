@@ -6,7 +6,7 @@ export default defineConfig({
     format: ["esm"],
     outDir: process.env.BIN_OUT_DIR ?? "bin",
     platform: "node",
-    target: "node18",
+    target: "node20",
     sourcemap: false,
     splitting: false,
     bundle: true,

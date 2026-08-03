@@ -37,7 +37,7 @@ https://design-token-kit.github.io/
 * **Source abstraction** - local files, stdin, URLs, and raw token
   content strings
 
-Node.js 18 or newer is required.
+Node.js 20.19.0 or newer is required.
 
 ## Install
 
