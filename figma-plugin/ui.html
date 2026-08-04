@@ -247,6 +247,8 @@
             background: var(--color-accent-soft);
             font-size: 13px;
             font-weight: 800;
+            line-height: 1.4;
+            overflow-wrap: anywhere;
         }
 
         .status::before {
@@ -360,6 +362,7 @@
             line-height: 1.05;
             font-weight: 900;
             letter-spacing: -0.035em;
+            overflow-wrap: anywhere;
         }
 
         .metric-label {
@@ -386,6 +389,8 @@
             color: #8a4b00;
             font-size: 12px;
             line-height: 1.4;
+            max-height: 180px;
+            overflow: auto;
         }
 
         .details {
@@ -695,10 +700,11 @@
         const downloadableFiles = files.filter((exportedFile) => exportedFile.downloadable !== false);
 
         downloadableFiles.forEach((exportedFile) => downloadTextFile(exportedFile.fileName, exportedFile.content));
+        renderMetrics(payload.summary);
         renderWarnings(payload.warnings);
         setStatus(
             downloadableFiles.length > 0
-                ? `Downloaded ${downloadableFiles.map((exportedFile) => exportedFile.fileName).join(", ")}.`
+                ? formatDownloadedFilesMessage(downloadableFiles)
                 : "No token files to download.",
             "success",
         );
@@ -836,6 +842,18 @@
 
     function clearWarnings() {
         renderWarnings([]);
+    }
+
+    function formatDownloadedFilesMessage(files) {
+        if (files.length === 1) {
+            return `Downloaded ${files[0].fileName}.`;
+        }
+
+        const visibleNames = files.slice(0, 2).map((file) => file.fileName);
+        const remainingCount = files.length - visibleNames.length;
+        return remainingCount > 0
+            ? `Downloaded ${visibleNames.join(", ")} and ${remainingCount} more files.`
+            : `Downloaded ${visibleNames.join(", ")}.`;
     }
 
     function downloadTextFile(fileName, text) {

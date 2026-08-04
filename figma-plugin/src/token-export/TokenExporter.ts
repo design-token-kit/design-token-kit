@@ -541,13 +541,7 @@ async function createModeExports(variables: Variable[], warnings: string[]): Pro
     }
 
     const baseModeIds = new Map(usedCollections.map((collection) => [collection.id, collection.defaultModeId]));
-    const themeModeExports = usedCollections.flatMap((collection) => collection.modes
-        .filter((mode) => mode.modeId !== collection.defaultModeId)
-        .map((mode) => ({
-            fileName: `tokens.${slugifyFileName(mode.name)}.json`,
-            modeIdByCollectionId: new Map([[collection.id, mode.modeId]]),
-            base: false,
-        })));
+    const themeModeExports = mergeThemeModeExports(usedCollections);
 
     return [
         {
@@ -557,6 +551,33 @@ async function createModeExports(variables: Variable[], warnings: string[]): Pro
         },
         ...themeModeExports,
     ];
+}
+
+function mergeThemeModeExports(collections: VariableCollection[]): ModeExport[] {
+    const modeExportsByFileName = new Map<string, ModeExport>();
+
+    for (const collection of collections) {
+        for (const mode of collection.modes) {
+            if (mode.modeId === collection.defaultModeId) {
+                continue;
+            }
+
+            const fileName = `tokens.${slugifyFileName(mode.name)}.json`;
+            const existingExport = modeExportsByFileName.get(fileName);
+            if (existingExport !== undefined) {
+                existingExport.modeIdByCollectionId.set(collection.id, mode.modeId);
+                continue;
+            }
+
+            modeExportsByFileName.set(fileName, {
+                fileName,
+                modeIdByCollectionId: new Map([[collection.id, mode.modeId]]),
+                base: false,
+            });
+        }
+    }
+
+    return Array.from(modeExportsByFileName.values());
 }
 
 async function readVariableCollections(warnings: string[]): Promise<VariableCollection[]> {

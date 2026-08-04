@@ -3,7 +3,6 @@
   "id": "1661669063434861129",
   "api": "1.0.0",
   "main": ".figma-build/code.js",
-  "enablePrivatePluginApi": true,
   "capabilities": [],
   "enableProposedApi": false,
   "documentAccess": "dynamic-page",

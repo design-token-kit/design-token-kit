@@ -1111,6 +1111,174 @@ describe("message flow", () => {
         });
     });
 
+    it("merges same-named modes from multiple variable collections into one theme file", async () => {
+        const context = loadPluginContext({
+            figma: {
+                variables: {
+                    getLocalVariablesAsync: async () => [
+                        {
+                            id: "variable-bg-canvas",
+                            variableCollectionId: "collection-theme",
+                            name: "Primitive/Color/Bg/Canvas",
+                            description: "",
+                            valuesByMode: {
+                                light: { r: 1, g: 1, b: 1, a: 1 },
+                                darkTheme: { r: 0.05, g: 0.05, b: 0.05, a: 1 },
+                            },
+                        },
+                        {
+                            id: "variable-spacing-4",
+                            variableCollectionId: "collection-spacing",
+                            name: "Primitive/Spacing/4",
+                            description: "",
+                            resolvedType: "FLOAT",
+                            scopes: ["GAP"],
+                            valuesByMode: {
+                                compact: 16,
+                                darkSpacing: 20,
+                            },
+                        },
+                    ],
+                    getLocalVariableCollectionsAsync: async () => [
+                        {
+                            id: "collection-theme",
+                            defaultModeId: "light",
+                            modes: [
+                                { modeId: "light", name: "Light" },
+                                { modeId: "darkTheme", name: "Dark" },
+                            ],
+                        },
+                        {
+                            id: "collection-spacing",
+                            defaultModeId: "compact",
+                            modes: [
+                                { modeId: "compact", name: "Compact" },
+                                { modeId: "darkSpacing", name: "Dark" },
+                            ],
+                        },
+                    ],
+                },
+                getLocalPaintStylesAsync: async () => [],
+            },
+        });
+
+        await context.sendMessage({ type: "EXPORT_TOKENS_JSON" });
+
+        expect(toPlainJson(context.postedMessages[0])).toEqual({
+            type: "TOKENS_EXPORTED",
+            payload: {
+                files: [
+                    {
+                        fileName: "tokens.json",
+                        content: JSON.stringify({
+                            primitive: {
+                                color: {
+                                    bg: {
+                                        canvas: {
+                                            $type: "color",
+                                            $value: {
+                                                colorSpace: "srgb",
+                                                components: [1, 1, 1],
+                                                alpha: 1,
+                                            },
+                                        },
+                                    },
+                                },
+                                spacing: {
+                                    4: {
+                                        $type: "dimension",
+                                        $value: { value: 16, unit: "px" },
+                                    },
+                                },
+                            },
+                        }, null, 2),
+                        tokens: {
+                            primitive: {
+                                color: {
+                                    bg: {
+                                        canvas: {
+                                            $type: "color",
+                                            $value: {
+                                                colorSpace: "srgb",
+                                                components: [1, 1, 1],
+                                                alpha: 1,
+                                            },
+                                        },
+                                    },
+                                },
+                                spacing: {
+                                    4: {
+                                        $type: "dimension",
+                                        $value: { value: 16, unit: "px" },
+                                    },
+                                },
+                            },
+                        },
+                        downloadable: true,
+                    },
+                    {
+                        fileName: "tokens.dark.json",
+                        content: JSON.stringify({
+                            primitive: {
+                                color: {
+                                    bg: {
+                                        canvas: {
+                                            $type: "color",
+                                            $value: {
+                                                colorSpace: "srgb",
+                                                components: [0.05, 0.05, 0.05],
+                                                alpha: 1,
+                                            },
+                                        },
+                                    },
+                                },
+                                spacing: {
+                                    4: {
+                                        $type: "dimension",
+                                        $value: { value: 20, unit: "px" },
+                                    },
+                                },
+                            },
+                        }, null, 2),
+                        tokens: {
+                            primitive: {
+                                color: {
+                                    bg: {
+                                        canvas: {
+                                            $type: "color",
+                                            $value: {
+                                                colorSpace: "srgb",
+                                                components: [0.05, 0.05, 0.05],
+                                                alpha: 1,
+                                            },
+                                        },
+                                    },
+                                },
+                                spacing: {
+                                    4: {
+                                        $type: "dimension",
+                                        $value: { value: 20, unit: "px" },
+                                    },
+                                },
+                            },
+                        },
+                        downloadable: true,
+                    },
+                ],
+                summary: {
+                    source: "variables",
+                    colorTokens: 2,
+                    dimensionTokens: 2,
+                    numberTokens: 0,
+                    typographyTokens: 0,
+                    shadowTokens: 0,
+                    skipped: 0,
+                },
+                warnings: [],
+            },
+        });
+    });
+
     it("does not warn when a non-default mode has no override", async () => {
         const context = loadPluginContext({
             figma: {
