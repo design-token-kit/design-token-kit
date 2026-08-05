@@ -5,10 +5,10 @@ import {
     DtcgList,
     DtcgListLoader,
     Format,
+    type ScssTokenOutput,
     ScssTokenConverter,
     SwiftUiTokenConverter,
     TailwindTokenConverter,
-    type TokenScssOutput,
 } from "@design-token-kit/core";
 import { writeFile } from "node:fs/promises";
 import { dirname, extname, join, parse } from "node:path";
@@ -123,12 +123,12 @@ async function writeOutput(output: string, out?: string): Promise<void> {
     }
 }
 
-async function writeScssThemeOutputs(outputs: ReadonlyArray<TokenScssOutput>, out: string): Promise<void> {
+async function writeScssThemeOutputs(outputs: ReadonlyArray<ScssTokenOutput>, out: string): Promise<void> {
     const filePaths = toScssThemeOutputPaths(outputs, out);
     await Promise.all(filePaths.map(({ filePath, content }) => writeFile(filePath, content)));
 }
 
-function createScssThemeArchive(outputs: ReadonlyArray<TokenScssOutput>, baseName: string): Buffer {
+function createScssThemeArchive(outputs: ReadonlyArray<ScssTokenOutput>, baseName: string): Buffer {
     return createTarArchive(
         outputs.map((output) => ({
             name: `${baseName}.${output.themeName}.scss`,
@@ -137,7 +137,7 @@ function createScssThemeArchive(outputs: ReadonlyArray<TokenScssOutput>, baseNam
     );
 }
 
-function toScssThemeOutputPaths(outputs: ReadonlyArray<TokenScssOutput>, out: string): Array<{ filePath: string; content: string }> {
+function toScssThemeOutputPaths(outputs: ReadonlyArray<ScssTokenOutput>, out: string): Array<{ filePath: string; content: string }> {
     const parsed = parse(out);
     const outputDir = parsed.dir || dirname(out);
     const ext = extname(out).toLowerCase();

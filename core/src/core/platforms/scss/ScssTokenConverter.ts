@@ -17,7 +17,7 @@ import { TransitionValue } from "#/core/model/values/TransitionValue";
 import { TypographyValue } from "#/core/model/values/TypographyValue";
 import { CssColorValueConverter } from "#/core/platforms/css/CssColorValueConverter";
 import type { TokenConverter } from "#/core/platforms/TokenConverter";
-import type { TokenScssOutput } from "#/core/platforms/scss/TokenScssOutput";
+import type { ScssTokenOutput } from "#/core/platforms/scss/ScssTokenOutput";
 
 export interface ScssTokenConverterOptions {
     /**
@@ -52,7 +52,7 @@ export class ScssTokenConverter implements TokenConverter {
         return this.convertList(list);
     }
 
-    async convertThemes(sources: string[]): Promise<ReadonlyArray<TokenScssOutput>> {
+    async convertThemes(sources: string[]): Promise<ReadonlyArray<ScssTokenOutput>> {
         const list = await this.#loader.load(sources);
         return this.convertThemeList(list);
     }
@@ -70,8 +70,8 @@ export class ScssTokenConverter implements TokenConverter {
         return renderDeclarations(declarations);
     }
 
-    convertThemeList(list: DtcgList): ReadonlyArray<TokenScssOutput> {
-        const outputs: TokenScssOutput[] = [{
+    convertThemeList(list: DtcgList): ReadonlyArray<ScssTokenOutput> {
+        const outputs: ScssTokenOutput[] = [{
             themeName: "base",
             isBase: true,
             content: renderDeclarations(collectFromDoc(list.base, this.#options.separator)),

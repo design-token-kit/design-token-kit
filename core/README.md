@@ -174,22 +174,57 @@ write a parsed document back to any supported source format.
 * `SwiftUiTokenConverter` - generate SwiftUI source from tokens
 * `CssColorValueConverter` - convert color values to CSS color syntax
 * `SwiftUiColorValueConverter` - convert color values to SwiftUI expressions
-* `createTokenCssConverter()` - create the default CSS converter
-* `createTokenScssConverter()` - create the default SCSS converter
-* `createTailwindCssConverter()` - create the default Tailwind converter
+* `ScssTokenOutput` - one generated SCSS stylesheet output
+* `createCssTokenConverter()` - create the default CSS converter
+* `createScssTokenConverter()` - create the default SCSS converter
+* `createTailwindTokenConverter()` - create the default Tailwind converter
 * `createTokenHtmlShowcase()` - generate an HTML preview from token
   sources or CSS
 * `createTokenStats()` - generate token statistics reports
 
-Compatibility aliases are still exported for older consumers.
-Prefer the new primary names in new code.
+Deprecated compatibility aliases are still exported for older consumers.
+Prefer the primary names in new code.
 
 * `DtcgTokenCssConverter` -> `CssTokenConverter`
 * `DtcgTokenScssConverter` -> `ScssTokenConverter`
 * `DtcgTailwindCssConverter` -> `TailwindTokenConverter`
-* `DtcgTokenSwiftUiConverter` -> `SwiftUiTokenConverter`
 * `ColorCssSerializer` -> `CssColorValueConverter`
+* `TokenScssOutput` -> `ScssTokenOutput`
+* `createTokenCssConverter()` -> `createCssTokenConverter()`
+* `createTokenScssConverter()` -> `createScssTokenConverter()`
+* `createTailwindCssConverter()` -> `createTailwindTokenConverter()`
+
+Other compatibility aliases are still exported but are not deprecated by this
+migration:
+
+* `DtcgTokenSwiftUiConverter` -> `SwiftUiTokenConverter`
 * `ColorSwiftUiSerializer` -> `SwiftUiColorValueConverter`
+
+The root package import supports both names during migration:
+
+```ts
+import type { ScssTokenOutput, TokenScssOutput } from "@design-token-kit/core";
+```
+
+Use the new primary root import in new code:
+
+```ts
+import type { ScssTokenOutput } from "@design-token-kit/core";
+```
+
+Where source deep imports are already supported by the consumer tooling, the
+old SCSS output path remains available during migration:
+
+```ts
+import type { TokenScssOutput } from "@design-token-kit/core/core/platforms/scss/TokenScssOutput";
+```
+
+Use the new primary deep import path in new code only if you already rely on
+source deep imports:
+
+```ts
+import type { ScssTokenOutput } from "@design-token-kit/core/core/platforms/scss/ScssTokenOutput";
+```
 
 ## Validation
 

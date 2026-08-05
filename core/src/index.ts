@@ -1,29 +1,54 @@
 export type { IssueSeverity, CheckIssue } from "#/core/check/CheckIssue";
 export type { TokenValidator } from "#/core/validation/TokenValidator";
 export type { CssColorValueConverterOptions } from "#/core/platforms/css/CssColorValueConverter";
+/**
+ * @deprecated Use {@link CssColorValueConverterOptions}.
+ */
 export type { CssColorValueConverterOptions as ColorCssSerializerOptions } from "#/core/platforms/css/CssColorValueConverter";
 export type { TokenConverter } from "#/core/platforms/TokenConverter";
 export type { ScssTokenConverterOptions } from "#/core/platforms/scss/ScssTokenConverter";
+/**
+ * @deprecated Use {@link ScssTokenConverterOptions}.
+ */
 export type { ScssTokenConverterOptions as DtcgTokenScssConverterOptions } from "#/core/platforms/scss/ScssTokenConverter";
+export type { ScssTokenOutput } from "#/core/platforms/scss/ScssTokenOutput";
+/**
+ * @deprecated Use {@link ScssTokenOutput}.
+ */
 export type { TokenScssOutput } from "#/core/platforms/scss/TokenScssOutput";
 export type { SwiftUiTokenConverterOptions } from "#/core/platforms/swiftui/SwiftUiTokenConverter";
 export type { SwiftUiTokenConverterOptions as DtcgTokenSwiftUiConverterOptions } from "#/core/platforms/swiftui/SwiftUiTokenConverter";
 export type { TailwindTokenConverterOptions } from "#/core/platforms/tailwind/TailwindTokenConverter";
+/**
+ * @deprecated Use {@link TailwindTokenConverterOptions}.
+ */
 export type { TailwindTokenConverterOptions as DtcgTailwindCssConverterOptions } from "#/core/platforms/tailwind/TailwindTokenConverter";
 export type { TokenHtmlShowcase } from "#/core/showcase/TokenHtmlShowcase";
 export type { TokenStats } from "#/core/stats/TokenStats";
 
 export { CssTokenConverter } from "#/core/platforms/css/CssTokenConverter";
 export { CssColorValueConverter } from "#/core/platforms/css/CssColorValueConverter";
+/**
+ * @deprecated Use {@link CssColorValueConverter}.
+ */
 export { CssColorValueConverter as ColorCssSerializer } from "#/core/platforms/css/CssColorValueConverter";
+/**
+ * @deprecated Use {@link CssTokenConverter}.
+ */
 export { CssTokenConverter as DtcgTokenCssConverter } from "#/core/platforms/css/CssTokenConverter";
 export { ScssTokenConverter } from "#/core/platforms/scss/ScssTokenConverter";
+/**
+ * @deprecated Use {@link ScssTokenConverter}.
+ */
 export { ScssTokenConverter as DtcgTokenScssConverter } from "#/core/platforms/scss/ScssTokenConverter";
 export { SwiftUiTokenConverter } from "#/core/platforms/swiftui/SwiftUiTokenConverter";
 export { SwiftUiColorValueConverter } from "#/core/platforms/swiftui/SwiftUiColorValueConverter";
 export { SwiftUiColorValueConverter as ColorSwiftUiSerializer } from "#/core/platforms/swiftui/SwiftUiColorValueConverter";
 export { SwiftUiTokenConverter as DtcgTokenSwiftUiConverter } from "#/core/platforms/swiftui/SwiftUiTokenConverter";
 export { TailwindTokenConverter } from "#/core/platforms/tailwind/TailwindTokenConverter";
+/**
+ * @deprecated Use {@link TailwindTokenConverter}.
+ */
 export { TailwindTokenConverter as DtcgTailwindCssConverter } from "#/core/platforms/tailwind/TailwindTokenConverter";
 export { TokenHtmlShowcaseBuilder } from "#/core/showcase/TokenHtmlShowcaseBuilder";
 export { TokenStatsBuilder } from "#/core/stats/TokenStatsBuilder";
@@ -63,16 +88,37 @@ import type { TokenStats } from "#/core/stats/TokenStats";
 import { TokenHtmlShowcaseBuilder } from "#/core/showcase/TokenHtmlShowcaseBuilder";
 import type { TokenHtmlShowcase } from "#/core/showcase/TokenHtmlShowcase";
 
-export function createTokenCssConverter(): CssTokenConverter {
+export function createCssTokenConverter(): CssTokenConverter {
     return new CssTokenConverter();
 }
 
-export function createTokenScssConverter(options?: ScssTokenConverterOptions): ScssTokenConverter {
+/**
+ * @deprecated Use {@link createCssTokenConverter}.
+ */
+export function createTokenCssConverter(): CssTokenConverter {
+    return createCssTokenConverter();
+}
+
+export function createScssTokenConverter(options?: ScssTokenConverterOptions): ScssTokenConverter {
     return new ScssTokenConverter(options);
 }
 
-export function createTailwindCssConverter(options?: TailwindTokenConverterOptions): TailwindTokenConverter {
+/**
+ * @deprecated Use {@link createScssTokenConverter}.
+ */
+export function createTokenScssConverter(options?: ScssTokenConverterOptions): ScssTokenConverter {
+    return createScssTokenConverter(options);
+}
+
+export function createTailwindTokenConverter(options?: TailwindTokenConverterOptions): TailwindTokenConverter {
     return new TailwindTokenConverter(options);
+}
+
+/**
+ * @deprecated Use {@link createTailwindTokenConverter}.
+ */
+export function createTailwindCssConverter(options?: TailwindTokenConverterOptions): TailwindTokenConverter {
+    return createTailwindTokenConverter(options);
 }
 
 export function createTokenHtmlShowcase(): TokenHtmlShowcase {
