@@ -53,8 +53,14 @@ export interface CheckerOptions {
     checks?: string[];
 
     /**
-     * DTCG JSON Schema version directory (e.g. "2025.10" or "2025.10-ext").
-     * Defaults to "2025.10-ext".
+     * DTCG JSON Schema, one of:
+     * - a directory path holding schema files
+     * - a built-in schema name:
+     *   - "2025.10": stock DTCG 2025.10
+     *   - "2025.10-design.md": "2025.10" extended with the "em" dimension unit
+     *     for DESIGN.md
+     *
+     * Defaults to the built-in "2025.10" schema.
      */
     schema?: string;
 

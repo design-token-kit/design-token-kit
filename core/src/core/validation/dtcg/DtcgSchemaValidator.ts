@@ -18,10 +18,20 @@ const DEFAULT_SCHEMA = "2025.10";
  * Accepts DTCG JSON sources only.
  */
 export class DtcgSchemaValidator implements TokenValidator {
-    readonly #schemaVersion: string;
+    readonly #schema: string;
 
-    constructor(schemaVersion?: string) {
-        this.#schemaVersion = schemaVersion ?? DEFAULT_SCHEMA;
+    /**
+     * @param schema - DTCG JSON Schema, one of:
+     *   - a directory path holding schema files
+     *   - a built-in schema name:
+     *     - "2025.10": stock DTCG 2025.10
+     *     - "2025.10-design.md": "2025.10" extended with the "em" dimension
+     *       unit for DESIGN.md
+     *
+     *   Defaults to the built-in "2025.10" schema.
+     */
+    constructor(schema?: string) {
+        this.#schema = schema ?? DEFAULT_SCHEMA;
     }
 
     async validate(sources: string[]): Promise<CheckIssue[]> {
@@ -65,11 +75,11 @@ export class DtcgSchemaValidator implements TokenValidator {
     }
 
     #resolveSchemaDir(): string {
-        if (path.isAbsolute(this.#schemaVersion) || existsSync(this.#schemaVersion)) {
-            return this.#schemaVersion;
+        if (path.isAbsolute(this.#schema) || existsSync(this.#schema)) {
+            return this.#schema;
         }
         const moduleDir = path.dirname(fileURLToPath(import.meta.url));
-        return path.resolve(moduleDir, `schemas/${this.#schemaVersion}`);
+        return path.resolve(moduleDir, `schemas/${this.#schema}`);
     }
 
     #toCheckIssue(sourcePath: string, error: ErrorObject): CheckIssue {
