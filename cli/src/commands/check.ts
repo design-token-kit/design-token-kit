@@ -12,11 +12,28 @@ import { hasErrors, printIssues } from "#commands/issues";
 const EXIT_ISSUES = 2;
 const EXIT_FAILURE = 1;
 
+const DEFAULT_SCHEMA = "2025.10";
+
+/**
+ * Built-in DTCG JSON Schema names and what each one is, the single source for
+ * both the {@link CheckOptions.schema} documentation and the `--schema` help.
+ */
+const BUILTIN_SCHEMAS = [
+    { name: "2025.10", summary: "stock DTCG 2025.10" },
+    { name: "2025.10-design.md", summary: "2025.10 extended with the em dimension unit for DESIGN.md" },
+] as const;
+
 interface CheckOptions {
     scope?: string;
     layers?: string;
     checks?: string;
+
+    /**
+     * DTCG JSON Schema: a directory path or one of the {@link BUILTIN_SCHEMAS}
+     * names. Defaults to {@link DEFAULT_SCHEMA}.
+     */
     schema?: string;
+
     inform?: string;
 }
 
@@ -31,7 +48,7 @@ export const checkCommand = new Command("check")
     )
     .option("--layers <names>", "Comma-separated layer order, lowest first", "primitive,semantic,component")
     .option("--checks <ids>", "Comma-separated allow-list of active check ids (default: all). See 'Available checks' below.")
-    .option("--schema <path>", "DTCG JSON Schema: directory path or built-in resource (2025.10, 2025.10-design.md)", "2025.10")
+    .option("--schema <path>", schemaOptionDescription())
     .option("-i, --inform [format]", "Input format: dtcg, hrdt, design-md (default: auto-detect)")
     .addHelpText("after", formatAvailableChecks(listChecks()))
     .addHelpText("after", "\nExit status:\n  0  success\n  1  unexpected error\n  2  issues found")
@@ -81,6 +98,21 @@ function formatAvailableChecks(checks: CheckInfo[]): string {
 function formatCheck(check: CheckInfo, idWidth: number): string {
     const id = check.id.padEnd(idWidth);
     return `  ${id}  (${check.scope.name}, ${check.severity})\n    ${check.description}`;
+}
+
+function schemaOptionDescription(): string {
+    const nameWidth = Math.max(...BUILTIN_SCHEMAS.map((schema) => schema.name.length));
+    const builtins = BUILTIN_SCHEMAS.map((schema) => formatSchema(schema, nameWidth));
+    return [
+        "DTCG JSON Schema: a directory path or a built-in schema name:",
+        ...builtins,
+    ].join("\n");
+}
+
+function formatSchema(schema: { name: string; summary: string }, nameWidth: number): string {
+    const name = schema.name.padEnd(nameWidth);
+    const suffix = schema.name === DEFAULT_SCHEMA ? " (default)" : "";
+    return `  ${name}  ${schema.summary}${suffix}`;
 }
 
 function splitList(value?: string): string[] | undefined {
