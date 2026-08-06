@@ -29,10 +29,20 @@ export class DtcgListLoader {
         [Format.DESIGN_MD, async (source) => [new DesignMdReader().parse(await source.getContent(), source.getInput())]],
     ]);
 
-    constructor(schemaVersion?: string) {
+    /**
+     * @param schema - DTCG JSON Schema, one of:
+     *   - a directory path holding schema files
+     *   - a built-in schema name:
+     *     - "2025.10": stock DTCG 2025.10
+     *     - "2025.10-design.md": "2025.10" extended with the "em" dimension
+     *       unit for DESIGN.md
+     *
+     *   Defaults to the built-in "2025.10" schema.
+     */
+    constructor(schema?: string) {
         this.#validators = new Map<Format, TokenValidator>([
             [Format.HRDT, new HrdtTokenValidator()],
-            [Format.DTCG, new DtcgSchemaValidator(schemaVersion)],
+            [Format.DTCG, new DtcgSchemaValidator(schema)],
             [Format.DESIGN_MD, new DesignMdTokenValidator()],
         ]);
     }
