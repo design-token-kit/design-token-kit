@@ -15,7 +15,7 @@ export type { ScssTokenOutput } from "#/core/platforms/scss/ScssTokenOutput";
 /**
  * @deprecated Use {@link ScssTokenOutput}.
  */
-export type { TokenScssOutput } from "#/core/platforms/scss/TokenScssOutput";
+export type { ScssTokenOutput as TokenScssOutput } from "#/core/platforms/scss/ScssTokenOutput";
 export type { SwiftUiTokenConverterOptions } from "#/core/platforms/swiftui/SwiftUiTokenConverter";
 export type { SwiftUiTokenConverterOptions as DtcgTokenSwiftUiConverterOptions } from "#/core/platforms/swiftui/SwiftUiTokenConverter";
 export type { TailwindTokenConverterOptions } from "#/core/platforms/tailwind/TailwindTokenConverter";
