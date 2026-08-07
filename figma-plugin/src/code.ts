@@ -7,7 +7,7 @@ const MISSING_FILE_KEY_MESSAGE = "REST export requires figma.fileKey. "
     + "Reload the plugin after manifest update or run it as a private/local plugin.";
 
 figma.showUI(__html__, {
-    width: 680,
+    width: 720,
     height: 720,
 });
 

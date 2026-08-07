@@ -162,6 +162,143 @@
             object-fit: contain;
         }
 
+        .structure-helper {
+            display: grid;
+            grid-template-columns: minmax(210px, 0.85fr) minmax(0, 1.45fr);
+            gap: 12px;
+            align-items: center;
+            border: 1px solid #cfe5df;
+            border-radius: 14px;
+            padding: 13px 14px;
+            background: linear-gradient(135deg, #f2fbf8 0%, #fffdf8 100%);
+        }
+
+        .structure-helper-copy {
+            min-width: 0;
+        }
+
+        .structure-helper-title {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            color: var(--color-orange);
+            font-size: 13px;
+            line-height: 1.2;
+            font-weight: 900;
+            white-space: nowrap;
+        }
+
+        .structure-helper-title::before {
+            content: "";
+            width: 14px;
+            height: 14px;
+            flex: 0 0 auto;
+            background: currentColor;
+            clip-path: polygon(50% 3%, 92% 26%, 92% 74%, 50% 97%, 8% 74%, 8% 26%, 50% 3%, 50% 22%, 25% 36%, 25% 64%, 50% 78%, 75% 64%, 75% 36%, 50% 22%);
+        }
+
+        .structure-helper-description {
+            margin-top: 7px;
+            color: var(--color-muted);
+            font-size: 12px;
+            line-height: 1.35;
+            font-weight: 600;
+        }
+
+        .structure-helper-link {
+            display: inline-flex;
+            align-items: center;
+            margin-top: 8px;
+            color: var(--color-accent-dark);
+            font-size: 12px;
+            line-height: 1.2;
+            font-weight: 900;
+            text-decoration: none;
+        }
+
+        .structure-helper-link:hover {
+            color: var(--color-orange);
+        }
+
+        .structure-helper-link:focus-visible {
+            outline: 3px solid rgba(242, 138, 24, 0.42);
+            outline-offset: 3px;
+            border-radius: 4px;
+        }
+
+        .structure-flow {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 7px;
+            align-items: center;
+            min-width: 0;
+        }
+
+        .structure-step {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) 14px;
+            gap: 7px;
+            align-items: center;
+            min-width: 0;
+        }
+
+        .structure-card {
+            min-width: 0;
+            border: 1px solid var(--color-border-strong);
+            border-radius: 12px;
+            padding: 10px 11px;
+            background: rgba(255, 254, 251, 0.9);
+            box-shadow: var(--shadow-soft);
+        }
+
+        .structure-card-title {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            color: var(--color-text);
+            font-size: 11px;
+            line-height: 1.2;
+            font-weight: 900;
+            white-space: nowrap;
+        }
+
+        .structure-marker {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            flex: 0 0 auto;
+            background: var(--marker-color);
+        }
+
+        .structure-card-description {
+            display: block;
+            margin-top: 7px;
+            color: var(--color-muted);
+            font-size: 9px;
+            line-height: 1.2;
+            font-weight: 700;
+            overflow-wrap: anywhere;
+        }
+
+        .structure-card.primitive {
+            --marker-color: #74d6ca;
+        }
+
+        .structure-card.semantic {
+            --marker-color: #f2ba45;
+        }
+
+        .structure-card.component {
+            --marker-color: #9a8cff;
+        }
+
+        .structure-arrow {
+            color: #78bdb2;
+            font-size: 16px;
+            line-height: 1;
+            text-align: center;
+        }
+
         .platform-actions {
             display: grid;
             grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -477,6 +614,22 @@
                 font-size: 13px;
             }
 
+            .structure-helper {
+                grid-template-columns: minmax(0, 1fr);
+            }
+
+            .structure-flow {
+                grid-template-columns: minmax(0, 1fr);
+            }
+
+            .structure-step {
+                grid-template-columns: minmax(0, 1fr);
+            }
+
+            .structure-arrow {
+                transform: rotate(90deg);
+            }
+
             .metrics {
                 grid-template-columns: repeat(2, minmax(0, 1fr));
             }
@@ -501,6 +654,34 @@
             </div>
             <img class="hero-logo" data-logo alt="Design Token Kit layered token logo">
         </div>
+
+        <section class="structure-helper" aria-labelledby="structure-helper-title">
+            <div class="structure-helper-copy">
+                <h2 id="structure-helper-title" class="structure-helper-title">Recommended structure</h2>
+                <p class="structure-helper-description">For best results, organize tokens in layers.</p>
+                <a class="structure-helper-link" href="https://design-token-kit.github.io/docs/guides/figma-plugin/" target="_blank" rel="noopener noreferrer">View full token structure guide ↗</a>
+            </div>
+            <div class="structure-flow" aria-label="Primitive to Semantic to Component token flow">
+                <div class="structure-step">
+                    <div class="structure-card primitive">
+                        <span class="structure-card-title"><span class="structure-marker" aria-hidden="true"></span>Primitive</span>
+                        <span class="structure-card-description">raw values</span>
+                    </div>
+                    <span class="structure-arrow" aria-hidden="true">→</span>
+                </div>
+                <div class="structure-step">
+                    <div class="structure-card semantic">
+                        <span class="structure-card-title"><span class="structure-marker" aria-hidden="true"></span>Semantic</span>
+                        <span class="structure-card-description">meaning aliases</span>
+                    </div>
+                    <span class="structure-arrow" aria-hidden="true">→</span>
+                </div>
+                <div class="structure-card component">
+                    <span class="structure-card-title"><span class="structure-marker" aria-hidden="true"></span>Component</span>
+                    <span class="structure-card-description">UI tokens</span>
+                </div>
+            </div>
+        </section>
 
         <div class="platform-actions" aria-label="Token export formats">
             <button class="format-button primary" data-token-export-message="EXPORT_TOKENS_CSS" aria-pressed="true">
@@ -578,6 +759,7 @@
 
     <nav class="footer-links" aria-label="Design Token Kit links">
         <a href="https://design-token-kit.github.io/" target="_blank" rel="noopener noreferrer">Website</a>
+        <a href="https://design-token-kit.github.io/docs/guides/figma-plugin/" target="_blank" rel="noopener noreferrer">Docs</a>
         <a href="https://github.com/design-token-kit/design-token-kit" target="_blank" rel="noopener noreferrer">GitHub</a>
     </nav>
 
