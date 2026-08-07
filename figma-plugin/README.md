@@ -131,6 +131,38 @@ The exporter maps:
 
 Blur-only and other non-shadow effects are skipped and reported as warnings.
 
+## Token import
+
+The plugin also imports DTCG token files into the current file, creating Figma
+variables and styles. This is the reverse of the export described above and is
+used to populate the playground file from `examples/playground/`.
+
+The import panel accepts one or more DTCG JSON files. The base file becomes the
+collection default mode; every `tokens.<mode>.json` file becomes an extra mode.
+
+The importer creates:
+
+- one variable collection per token layer: `Primitive`, `Semantic`, `Component`
+- a mode per theme file, with the base document named `Light`
+- color and float variables, with aliases preserved as Figma variable aliases
+- text styles from `typography` tokens and effect styles from `shadow` tokens
+
+Tokens Figma cannot represent are skipped and reported by type with a reason.
+Only five of the thirteen DTCG types survive a round trip: `color`, `dimension`,
+`number`, `typography` and `shadow`. Figma styles cannot alias other styles, so
+`semantic` and `component` tokens referencing a typography or shadow token are
+skipped as well.
+
+Import strategies:
+
+- `merge` - update existing entities by name and create missing ones
+- `replace` - additionally delete imported entities absent from the files
+
+Deletion is limited to names starting with a known layer prefix, so entities
+created by hand are never removed.
+
+Recommendations for designers are in [`docs/designer.adoc`](../docs/designer.adoc).
+
 ## Diagnostics
 
 The main UI action downloads generated token files. Raw Plugin API and REST API
