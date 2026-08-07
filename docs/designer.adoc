@@ -1,0 +1,171 @@
+= Design tokens in Figma: a guide for designers
+
+The document describes how to build a design system in Figma so that it exports
+to design tokens without losses or surprises.
+
+The rules follow the behaviour of the Design Token Kit plugin and are pinned by
+automated tests. The xref:figma-limits[] section matches the round-trip test in
+`figma-plugin/test/figma/token-round-trip.test.ts`.
+
+[[playground]]
+== The playground file
+
+The playground is a reference Figma file built by the rules of this document.
+It serves as an example and as a place to validate recommendations.
+
+The source token set lives in `examples/playground/`. The steps for populating
+the file are described in `examples/playground/README.md`.
+
+[[layers]]
+== Token layers
+
+The design system is split into three layers, each referencing only the layer
+below it.
+
+`primitive` holds the palette, scales, curves and typefaces. It is the only
+layer that carries raw values.
+
+`semantic` maps primitives onto roles: background, text, borders, actions and
+statuses.
+
+`component` describes properties of buttons, inputs, cards and other components.
+
+A component token never references a primitive directly. A semantic token always
+sits between them, and a reference that skips a layer is an error.
+
+The point of the split is that a theme changes the `primitive` layer only. Roles
+and components stay untouched.
+
+[[collections]]
+== Collections and modes
+
+Each layer is a separate Figma variable collection: `Primitive`, `Semantic` and
+`Component`. Variables reference each other across collections freely, so the
+layered structure survives.
+
+Themes are expressed as collection modes.
+
+* The default mode exports to `tokens.json`. Name it `Light`, not `Mode 1`.
+* Every other mode exports to its own `tokens.<mode>.json` file. A mode named
+  `Dark` produces `tokens.dark.json`.
+* Modes sharing a name across collections merge into a single theme file.
+
+Only the `Primitive` collection needs modes when a theme changes the palette
+alone.
+
+[[naming]]
+== Naming
+
+The name of a variable or a style becomes a token path. Levels are separated by
+a slash.
+
+Rules that keep a name predictable on export:
+
+* the first segment is a layer: `primitive`, `semantic` or `component`
+* the name has at least three segments
+* segments are lowercase, words separated by hyphens
+* no spaces, dots, uppercase letters or punctuation
+
+These names are correct:
+
+* `primitive/color/brand-500` becomes `primitive.color.brand-500`
+* `semantic/color/action-primary` becomes `semantic.color.action-primary`
+* `component/button/primary/background` becomes `component.button.primary.background`
+
+These names cause trouble:
+
+* `primitive/color` is skipped: fewer than three segments
+* `component/modal/zIndex` becomes `component.modal.z-index`, so a re-export no
+  longer matches the name in Figma
+* `Brand 500` gets a layer prepended automatically and becomes
+  `primitive.color.brand-500`, again losing the original name
+
+The last two work, but break reversibility: the exported token carries a name
+different from the one in Figma. Use only the correct forms.
+
+[[figma-limits]]
+== What Figma cannot express
+
+The DTCG specification defines 13 token types. Figma represents five of them:
+
+* `color` as a COLOR variable
+* `dimension` as a FLOAT variable
+* `number` as a FLOAT variable scoped to OPACITY
+* `typography` as a text style
+* `shadow` as an effect style
+
+Eight types have no representation and are lost on export: `fontFamily`,
+`fontWeight`, `duration`, `cubicBezier`, `strokeStyle`, `border`, `transition`
+and `gradient`.
+
+Some of them have a workaround outside Figma. A `border` decomposes into
+separate width and colour tokens. A `gradient` can be drawn as a paint style and
+documented by hand. Font family and weight already live inside a text style, so
+they need no separate token in Figma.
+
+A further limitation applies to styles. Figma variables reference each other,
+styles do not. So `primitive.shadow.surface` exports fine, while
+`semantic.motion.shadow-surface` referencing it is lost.
+
+The practical conclusion: describe shadows and typography at the layer where
+they are actually applied, without building a chain of references between
+styles.
+
+[[lossy]]
+== What changes on export
+
+Some values are transformed even when the token itself survives.
+
+The `hex` field of a colour is dropped, leaving components in the range from 0
+to 1. Letter spacing given in percent is recalculated into pixels using the
+current font size. Line height given in percent or pixels becomes a unitless
+multiplier. The numeric font weight is inferred from the name of the font style.
+
+Because of the last point, use standard style names: `Regular`, `Medium`,
+`SemiBold`, `Bold`. A name like `Book` or `Normal` yields a weight of 400
+regardless of intent.
+
+[[scopes]]
+== Variable scopes
+
+For numeric variables the scope decides which token type the variable becomes on
+export.
+
+* `OPACITY` produces a `number` token
+* `GAP` produces a `dimension` token in the spacing group
+* `CORNER_RADIUS` produces a `dimension` token in the radius group
+* `WIDTH_HEIGHT` produces a `dimension` token in the size group
+* `STROKE_FLOAT` produces a `dimension` token in the border width group
+
+An opacity variable without the `OPACITY` scope exports as a pixel dimension.
+This is the least visible mistake possible: the check passes and the result is
+wrong.
+
+[[workflow]]
+== Workflow
+
+Two directions are possible.
+
+Design in Figma: describe the system with variables and styles, export it with
+the plugin, verify it with `dtokens check --scope lint`, hand it to engineering.
+
+Tokens in code: describe the system in DTCG, verify it with the same command,
+import it into Figma with the plugin. This direction suits teams whose source of
+truth is the repository.
+
+[[checklist]]
+== Checklist before handoff
+
+. All variables live in the `Primitive`, `Semantic` and `Component` collections.
+. Names start with a layer and hold at least three segments.
+. Names are lowercase with words separated by hyphens.
+. The default mode is named `Light`, themes are separate modes.
+. Raw values exist only in the `primitive` layer; other layers reference.
+. The `component` layer references `semantic`, not `primitive`.
+. Opacity variables carry the `OPACITY` scope.
+. Font styles use standard names: `Regular`, `Medium`, `SemiBold`, `Bold`.
+. Variables and styles have descriptions filled in.
+. The exported set passes `dtokens check --scope lint` with no warnings.
+
+The export naming convention is documented in detail in
+`figma-plugin/README.md`.

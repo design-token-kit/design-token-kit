@@ -1,0 +1,12 @@
+= Design Token Kit documentation
+
+Documentation of the Design Token Kit project.
+
+* xref:designer.adoc[Design tokens in Figma: a guide for designers]
+
+Package documentation lives next to the code.
+
+* `core/README.md`: library for checking, parsing and conversion
+* `cli/README.md`: the `dtokens` command
+* `figma-plugin/README.md`: the Figma plugin and its naming convention
+* `examples/playground/README.md`: the reference token set

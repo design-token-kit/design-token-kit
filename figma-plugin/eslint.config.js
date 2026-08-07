@@ -9,6 +9,13 @@ export default tseslint.config(
         plugins: {
             "@figma/figma-plugins": figmaPlugin,
         },
+        // Figma plugin rules inspect argument types, so they need type information.
+        languageOptions: {
+            parserOptions: {
+                projectService: true,
+                tsconfigRootDir: import.meta.dirname,
+            },
+        },
         rules: {
             ...figmaPlugin.configs.recommended.rules,
             "@typescript-eslint/no-unused-vars": [

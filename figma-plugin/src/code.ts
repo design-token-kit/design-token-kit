@@ -2,6 +2,7 @@ import type { FigmaFileReader } from "#/figma-plugin/FigmaFileReader";
 import { PluginFigmaFileReader, RestFigmaFileReader } from "#/figma-plugin/index";
 import { TokenConversionService, type TokenOutputFormat } from "#/figma-plugin/token-export/TokenConversionService";
 import { TokenExporter } from "#/figma-plugin/token-export/TokenExporter";
+import { TokenImporter, type TokenImportRequest } from "#/figma-plugin/token-import/TokenImporter";
 
 const MISSING_FILE_KEY_MESSAGE = "REST export requires figma.fileKey. "
     + "Reload the plugin after manifest update or run it as a private/local plugin.";
@@ -22,6 +23,11 @@ figma.ui.onmessage = async (msg: PluginMessage) => {
         return;
     }
 
+    if (msg.type === "IMPORT_TOKENS") {
+        await importTokens(msg);
+        return;
+    }
+
     const tokenOutputFormat = toTokenOutputFormat(msg.type);
     if (tokenOutputFormat !== undefined) {
         await exportTokens(tokenOutputFormat);
@@ -38,6 +44,31 @@ figma.ui.onmessage = async (msg: PluginMessage) => {
         await exportWithReader(new RestFigmaFileReader(msg.accessToken, fileKey));
     }
 };
+
+async function importTokens(request: TokenImportRequest): Promise<void> {
+    try {
+        const result = await new TokenImporter().import(request);
+
+        figma.ui.postMessage({
+            type: "TOKENS_IMPORTED",
+            payload: {
+                summary: result.summary,
+                skipped: result.skipped,
+                warnings: result.warnings,
+            },
+        });
+    } catch (error: unknown) {
+        const message = getErrorMessage(error);
+        figma.notify(message, { error: true });
+        figma.ui.postMessage({
+            type: "IMPORT_FAILED",
+            payload: {
+                source: "import",
+                message,
+            },
+        });
+    }
+}
 
 async function analyzeTokens(): Promise<void> {
     try {
@@ -166,4 +197,5 @@ type PluginMessage =
     | { type: "EXPORT_TOKENS_SCSS" }
     | { type: "EXPORT_TOKENS_TAILWIND" }
     | { type: "EXPORT_TOKENS_SWIFTUI" }
-    | { type: "EXPORT_REST_JSON"; accessToken: string };
+    | { type: "EXPORT_REST_JSON"; accessToken: string }
+    | ({ type: "IMPORT_TOKENS" } & TokenImportRequest);

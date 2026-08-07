@@ -424,6 +424,56 @@
             display: none;
         }
 
+        .import-dropzone {
+            border: 1px dashed var(--color-border);
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+            font-size: 12px;
+            color: var(--color-muted);
+            cursor: pointer;
+        }
+
+        .import-dropzone:hover,
+        .import-dropzone.dragging {
+            border-color: var(--color-accent);
+            color: var(--color-text);
+        }
+
+        .import-file-list {
+            margin: 0;
+            padding-left: 18px;
+            font-size: 12px;
+        }
+
+        .import-file-list:empty {
+            display: none;
+        }
+
+        .import-options {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            font-size: 12px;
+        }
+
+        .import-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        #import-skipped details {
+            font-size: 12px;
+            margin-top: 6px;
+        }
+
+        #import-skipped ul {
+            margin: 4px 0 0;
+            padding-left: 18px;
+            color: var(--color-muted);
+        }
+
         .footer-links {
             display: flex;
             justify-content: center;
@@ -560,6 +610,25 @@
         <div id="token-summary" class="metrics" aria-live="polite"></div>
     </section>
 
+    <section class="panel import-panel" aria-labelledby="import-title">
+        <div class="summary-head">
+            <h2 id="import-title" class="eyebrow">Import</h2>
+        </div>
+        <p class="help-text">Create Figma variables and styles from DTCG token files. Select the base file and any theme files together.</p>
+        <div id="import-dropzone" class="import-dropzone" role="button" tabindex="0" aria-controls="import-files">
+            Drop DTCG JSON files here, or click to choose
+        </div>
+        <input id="import-files" type="file" accept=".json,application/json" multiple hidden>
+        <ul id="import-file-list" class="import-file-list"></ul>
+        <div class="import-options">
+            <label><input type="radio" name="import-strategy" value="merge" checked> Merge: update existing entities, create missing ones</label>
+            <label><input type="radio" name="import-strategy" value="replace"> Replace: also delete imported entities absent from the files</label>
+        </div>
+        <button id="run-import" type="button" disabled>Import tokens into this file</button>
+        <div id="import-report" class="metrics" aria-live="polite"></div>
+        <div id="import-skipped"></div>
+    </section>
+
     <section id="warnings-panel" class="panel warnings">
         <h2 class="eyebrow">Warnings</h2>
         <ul id="warnings-list" class="warnings-list"></ul>
@@ -682,6 +751,18 @@
 
         if (message?.type === "TOKENS_ANALYZED") {
             handleTokensAnalyzed(message.payload);
+            return;
+        }
+
+        if (message?.type === "IMPORT_FAILED") {
+            setStatus(`Failed to import tokens: ${message.payload.message}`, "error");
+            renderWarnings([message.payload.message]);
+            runImportButton.disabled = importFiles.length === 0;
+            return;
+        }
+
+        if (message?.type === "TOKENS_IMPORTED") {
+            handleTokensImported(message.payload);
             return;
         }
 
@@ -821,6 +902,150 @@
             const isActive = button === activeButton;
             button.classList.toggle("primary", isActive);
             button.setAttribute("aria-pressed", String(isActive));
+        });
+    }
+
+    const importDropzone = document.getElementById("import-dropzone");
+    const importFilesInput = document.getElementById("import-files");
+    const importFileList = document.getElementById("import-file-list");
+    const runImportButton = document.getElementById("run-import");
+    const importReport = document.getElementById("import-report");
+    const importSkipped = document.getElementById("import-skipped");
+
+    /** Files chosen for import, as { fileName, content } pairs. */
+    let importFiles = [];
+
+    /** Guards against sending a payload large enough to stall the plugin thread. */
+    const MAX_IMPORT_BYTES = 5 * 1024 * 1024;
+
+    importDropzone.addEventListener("click", () => importFilesInput.click());
+    importDropzone.addEventListener("keydown", (event) => {
+        if (event.key === "Enter" || event.key === " ") {
+            event.preventDefault();
+            importFilesInput.click();
+        }
+    });
+
+    importDropzone.addEventListener("dragover", (event) => {
+        event.preventDefault();
+        importDropzone.classList.add("dragging");
+    });
+
+    importDropzone.addEventListener("dragleave", () => {
+        importDropzone.classList.remove("dragging");
+    });
+
+    importDropzone.addEventListener("drop", (event) => {
+        event.preventDefault();
+        importDropzone.classList.remove("dragging");
+        readImportFiles(event.dataTransfer.files);
+    });
+
+    importFilesInput.addEventListener("change", () => readImportFiles(importFilesInput.files));
+
+    runImportButton.addEventListener("click", () => {
+        const strategy = document.querySelector("input[name=import-strategy]:checked").value;
+
+        if (strategy === "replace"
+            && !confirm("Replace deletes imported variables and styles that are absent from the selected files. Continue?")) {
+            return;
+        }
+
+        runImportButton.disabled = true;
+        importSkipped.innerHTML = "";
+        importReport.innerHTML = "";
+        clearWarnings();
+        setStatus("Importing tokens...", "pending");
+        parent.postMessage({ pluginMessage: { type: "IMPORT_TOKENS", files: importFiles, strategy } }, "*");
+    });
+
+    async function readImportFiles(fileList) {
+        const selected = Array.from(fileList).filter((file) => file.name.endsWith(".json"));
+        const contents = await Promise.all(selected.map((file) => file.text()));
+
+        importFiles = selected.map((file, index) => ({ fileName: file.name, content: contents[index] }));
+
+        const totalBytes = importFiles.reduce((sum, file) => sum + file.content.length, 0);
+        if (totalBytes > MAX_IMPORT_BYTES) {
+            importFiles = [];
+            setStatus("Selected files exceed the 5 MB import limit.", "error");
+        }
+
+        renderImportFileList();
+    }
+
+    function renderImportFileList() {
+        importFileList.innerHTML = "";
+
+        importFiles.forEach((file) => {
+            const item = document.createElement("li");
+            item.textContent = file.fileName;
+            importFileList.appendChild(item);
+        });
+
+        runImportButton.disabled = importFiles.length === 0;
+    }
+
+    function handleTokensImported(payload) {
+        const summary = payload.summary;
+
+        importReport.innerHTML = "";
+        [
+            ["Collections", summary.collections.length],
+            ["Modes", summary.modes.length],
+            ["Variables created", summary.variablesCreated],
+            ["Variables updated", summary.variablesUpdated],
+            ["Styles created", summary.stylesCreated],
+            ["Skipped", summary.skippedCount],
+        ].forEach(([label, value]) => {
+            importReport.appendChild(createMetric(label, value));
+        });
+
+        renderImportSkipped(payload.skipped);
+        renderWarnings(payload.warnings);
+        runImportButton.disabled = importFiles.length === 0;
+        setStatus(`Imported into ${summary.collections.join(", ")}.`, "success");
+    }
+
+    /** Groups skipped tokens by type so the Figma limitations read at a glance. */
+    function renderImportSkipped(skipped) {
+        importSkipped.innerHTML = "";
+        if (skipped.length === 0) {
+            return;
+        }
+
+        const byType = new Map();
+        skipped.forEach((entry) => {
+            const group = byType.get(entry.type) ?? { reason: entry.reason, paths: [] };
+            group.paths.push(entry.path);
+            byType.set(entry.type, group);
+        });
+
+        const heading = document.createElement("p");
+        heading.className = "help-text";
+        heading.textContent = "Not representable in Figma:";
+        importSkipped.appendChild(heading);
+
+        byType.forEach((group, type) => {
+            const details = document.createElement("details");
+            const summaryElement = document.createElement("summary");
+            const reason = document.createElement("p");
+            const list = document.createElement("ul");
+
+            summaryElement.textContent = `${type} (${group.paths.length})`;
+            reason.className = "help-text";
+            reason.textContent = group.reason;
+
+            group.paths.forEach((path) => {
+                const item = document.createElement("li");
+                item.textContent = path;
+                list.appendChild(item);
+            });
+
+            details.appendChild(summaryElement);
+            details.appendChild(reason);
+            details.appendChild(list);
+            importSkipped.appendChild(details);
         });
     }
 
