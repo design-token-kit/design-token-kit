@@ -14,6 +14,7 @@ import { writeFile } from "node:fs/promises";
 import { dirname, extname, join, parse } from "node:path";
 import { getWriter, toDocumentFormat } from "#commands/formats";
 import { hasErrors, printIssues } from "#commands/issues";
+import { createTarArchive } from "#io/TarArchive";
 
 const EXIT_FAILURE = 1;
 
@@ -161,51 +162,4 @@ function toArchiveBaseName(out: string): string {
         return parsed.base || parsed.name || "tokens";
     }
     return parsed.name || "tokens";
-}
-
-function createTarArchive(files: Array<{ name: string; content: Buffer }>): Buffer {
-    const chunks: Buffer[] = [];
-
-    for (const file of files) {
-        chunks.push(createTarHeader(file.name, file.content.length));
-        chunks.push(file.content);
-
-        const remainder = file.content.length % 512;
-        if (remainder !== 0) {
-            chunks.push(Buffer.alloc(512 - remainder));
-        }
-    }
-
-    chunks.push(Buffer.alloc(1024));
-    return Buffer.concat(chunks);
-}
-
-function createTarHeader(name: string, size: number): Buffer {
-    const header = Buffer.alloc(512);
-
-    writeTarString(header, 0, 100, name);
-    writeTarOctal(header, 100, 8, 0o644);
-    writeTarOctal(header, 108, 8, 0);
-    writeTarOctal(header, 116, 8, 0);
-    writeTarOctal(header, 124, 12, size);
-    writeTarOctal(header, 136, 12, 0);
-    header.fill(0x20, 148, 156);
-    header[156] = "0".charCodeAt(0);
-    writeTarString(header, 257, 6, "ustar");
-    writeTarString(header, 263, 2, "00");
-
-    const checksum = header.reduce((sum, value) => sum + value, 0);
-    const checksumField = `${checksum.toString(8).padStart(6, "0")}\0 `;
-    writeTarString(header, 148, 8, checksumField);
-
-    return header;
-}
-
-function writeTarString(target: Buffer, offset: number, length: number, value: string): void {
-    target.write(value.slice(0, length), offset, Math.min(length, Buffer.byteLength(value)), "utf8");
-}
-
-function writeTarOctal(target: Buffer, offset: number, length: number, value: number): void {
-    const encoded = value.toString(8).padStart(length - 1, "0");
-    writeTarString(target, offset, length, `${encoded}\0`);
 }
