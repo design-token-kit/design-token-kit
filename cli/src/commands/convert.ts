@@ -1,37 +1,30 @@
 import { Command } from "commander";
 import {
-    CssTokenConverter,
     DtcgChecker,
     DtcgList,
     DtcgListLoader,
     Format,
     type ScssTokenOutput,
     ScssTokenConverter,
-    SwiftUiTokenConverter,
-    TailwindTokenConverter,
 } from "@design-token-kit/core";
 import { writeFile } from "node:fs/promises";
 import { dirname, extname, join, parse } from "node:path";
-import { getWriter, toDocumentFormat } from "#commands/formats";
+import { type ConvertSettings, getWriter, toDocumentFormat } from "#commands/formats";
 import { hasErrors, printIssues } from "#commands/issues";
 
 const EXIT_FAILURE = 1;
 
-type ConvertOptions = {
+type ConvertOptions = ConvertSettings & {
     outform?: string;
     out?: string;
     inform?: string;
-    separator?: string;
-    baseSelector?: string;
-    themeSelector?: string;
-    swiftType?: string;
 };
 
 export const convertCommand = new Command("convert")
-    .description("Convert a token file to DTCG JSON, HRDT YAML, DESIGN.md, CSS, SCSS, Tailwind CSS v4, or SwiftUI.")
+    .description("Convert a token file to DTCG JSON, HRDT YAML, DESIGN.md, CSS, SCSS, Tailwind CSS v4, SwiftUI, or a Figma script.")
     .argument("[files...]", "Paths to token files (reads from stdin when omitted or '-')")
     .option("-i, --inform [format]", "Input format: dtcg, hrdt, design-md (default: auto-detect)")
-    .option("-f, --outform [format]", "Output format: dtcg, hrdt, design-md, css, scss, tailwind-v4, swiftui (default: css)")
+    .option("-f, --outform [format]", "Output format: dtcg, hrdt, design-md, css, scss, tailwind-v4, swiftui, figma-script (default: css)")
     .option("--separator [value]", "SCSS only: character used to replace '.' in token paths when generating variable names (default: -)")
     .option("--base-selector [selector]", "Tailwind v4 only: selector for optional mirrored base custom properties")
     .option("--theme-selector [template]", "Tailwind v4 only: selector template for theme overrides with {theme} placeholder")
@@ -86,33 +79,13 @@ async function loadSources(files: string[], forcedFormat?: Format): Promise<Dtcg
 }
 
 function convertList(list: DtcgList, outform: string, options: ConvertOptions): string {
-    if (outform === Format.CSS) {
-        return new CssTokenConverter().convertList(list);
-    }
-    if (outform === Format.SCSS) {
-        return new ScssTokenConverter({
-            separator: options.separator,
-        }).convertList(list);
-    }
-    if (outform === Format.TAILWIND_V4) {
-        return new TailwindTokenConverter({
-            baseSelector: options.baseSelector,
-            themeSelector: options.themeSelector,
-        }).convertList(list);
-    }
-    if (outform === Format.SWIFT_UI) {
-        return new SwiftUiTokenConverter({ swiftType: toSwiftType(options.swiftType) }).convertList(list);
-    }
-    if (list.themes.size > 0) {
-        throw new Error(`Multiple files are only supported with --outform css or tailwind-v4, got ${outform}`);
-    }
-    return getWriter(outform).write(list.base);
-}
+    const writer = getWriter(outform);
 
-function toSwiftType(v?: string): "enum" | "struct" | undefined {
-    if (v === undefined) return undefined;
-    if (v === "enum" || v === "struct") return v;
-    throw new Error(`Unknown --swift-type "${v}", use enum or struct`);
+    if (list.themes.size > 0 && !writer.themes) {
+        throw new Error(`Format "${outform}" accepts a single document, got ${list.themes.size + 1}`);
+    }
+
+    return writer.write(list, options);
 }
 
 async function writeOutput(output: string, out?: string): Promise<void> {

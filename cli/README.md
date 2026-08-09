@@ -191,7 +191,7 @@ Convert token documents between DTCG JSON, HRDT YAML, and DESIGN.md.
 * `-i, --inform [format]` - input format: `dtcg`, `hrdt`, `design-md`
   (default: auto-detect).
 * `-f, --outform [format]` - output format: `dtcg`, `hrdt`, `design-md`,
-  `css`, `scss`, `tailwind-v4`, `swiftui`. Defaults to `css`.
+  `css`, `scss`, `tailwind-v4`, `swiftui`, `figma-script`. Defaults to `css`.
 * `--separator [value]` - scss only: character used to replace `.` in token
   paths when generating flattened variable names. Defaults to `-`.
 * `--base-selector [selector]` - tailwind-v4 only: selector for an optional
@@ -272,8 +272,8 @@ Use `--out` to write the result to a file instead of stdout.
 dtokens convert tokens.json --outform hrdt --out tokens.yaml
 ```
 
-Multiple input sources are only supported when `--outform css`,
-`--outform scss`, `--outform tailwind-v4`, or `--outform swiftui`.
+Multiple input sources are supported by the formats that express theme
+overrides: `css`, `scss`, `tailwind-v4`, `swiftui` and `figma-script`.
 
 ## CSS Conversion
 
@@ -358,6 +358,29 @@ dtokens convert tokens.json tokens.dark.json --outform swiftui --swift-type stru
 The default `enum` form emits one base enum and one enum per theme.
 The `struct` form also emits a `Theme` struct and theme instances.
 
+## Figma Script Conversion
+
+Convert a token set to a script that builds it inside Figma.
+
+```bash
+dtokens convert tokens.json --outform figma-script
+dtokens convert tokens.json tokens.dark.json --outform figma-script --out ./tokens.figma.js
+```
+
+The Figma Plugin API runs only inside the editor, so tokens cannot be written
+from outside. Paste the generated script into a plugin that evaluates code,
+such as [Scripter](https://www.figma.com/community/plugin/757836922707087381),
+and run it.
+
+The script creates one variable collection per token layer, one mode per theme,
+and the variables and styles the tokens describe. References become Figma
+variable aliases rather than copied values, so the layering survives. Running
+the script again updates what it created instead of duplicating it.
+
+Figma represents five of the thirteen DTCG types: `color`, `dimension`,
+`number`, `typography` and `shadow`. The rest are listed in the script header
+and reported when it runs.
+
 ## HTML Showcase
 
 Generate an HTML showcase from token sources or from a single CSS
@@ -390,6 +413,7 @@ dtokens stats tokens.yaml --out ./stats.html --open
 * `scss` - SCSS variables output
 * `tailwind-v4` - Tailwind CSS v4 `@theme` output
 * `swiftui` - SwiftUI source output
+* `figma-script` - script creating Figma variables and styles
 
 The `dtcg` format follows the specification published by the
 Design Tokens Community Group at https://www.designtokens.org.

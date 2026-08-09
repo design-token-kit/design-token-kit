@@ -41,6 +41,8 @@ export { ScssTokenConverter } from "#/core/platforms/scss/ScssTokenConverter";
  * @deprecated Use {@link ScssTokenConverter}.
  */
 export { ScssTokenConverter as DtcgTokenScssConverter } from "#/core/platforms/scss/ScssTokenConverter";
+export { FigmaScriptTokenConverter } from "#/core/platforms/figma-script/FigmaScriptTokenConverter";
+export { FigmaScriptValueConverter } from "#/core/platforms/figma-script/FigmaScriptValueConverter";
 export { SwiftUiTokenConverter } from "#/core/platforms/swiftui/SwiftUiTokenConverter";
 export { SwiftUiColorValueConverter } from "#/core/platforms/swiftui/SwiftUiColorValueConverter";
 export { SwiftUiColorValueConverter as ColorSwiftUiSerializer } from "#/core/platforms/swiftui/SwiftUiColorValueConverter";
