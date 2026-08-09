@@ -150,8 +150,9 @@ Design in Figma: describe the system with variables and styles, export it with
 the plugin, verify it with `dtokens check --scope lint`, hand it to engineering.
 
 Tokens in code: describe the system in DTCG, verify it with the same command,
-import it into Figma with the plugin. This direction suits teams whose source of
-truth is the repository.
+then build it in Figma from a generated script. This direction suits teams whose
+source of truth is the repository. The steps are in
+`examples/playground/README.md`.
 
 [[checklist]]
 == Checklist before handoff
