@@ -12,6 +12,19 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   references become Figma variable aliases, and themes become collection
   modes. Running the script again updates existing entities instead of
   duplicating them.
+- Added Android resource XML output via `convert --outform android`.
+  - Naming: `snake_case` resource names built from the token path.
+  - Colors: converted to the Android `#AARRGGBB` hex form, alpha first.
+  - Sizes: converted to `dp`, font sizes to `sp`, `rem` resolved against a
+    pixel base.
+  - References: preserved as native `@color/...` and `@dimen/...` references.
+  - Composites: decomposed into one resource per field.
+  - Themes: qualified resource directories, `dark` mapped to `values-night`.
+  - File layout: one file per root token group, with resources grouped into
+    commented sections.
+  - `--android-layout type` (optional) splits by Android resource type
+    instead.
+  - `--rem-base` (optional) sets the pixel base resolving `rem` dimensions.
 
 ### Fixed
 

@@ -30,13 +30,19 @@ describe("Format", () => {
         expect(Format.FIGMA_SCRIPT).toBe("figma-script");
     });
 
-    it("has exactly 8 members", () => {
-        expect(Object.keys(Format).filter((k) => isNaN(Number(k)))).toHaveLength(8);
+    it("has exactly 9 members", () => {
+        expect(Object.keys(Format).filter((k) => isNaN(Number(k)))).toHaveLength(9);
     });
 });
 
 describe("Format swiftui", () => {
     it("exposes the swiftui format value", () => {
         expect(Format.SWIFT_UI).toBe("swiftui");
+    });
+});
+
+describe("Format android", () => {
+    it("exposes the android format value", () => {
+        expect(Format.ANDROID).toBe("android");
     });
 });

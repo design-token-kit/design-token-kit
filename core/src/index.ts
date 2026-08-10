@@ -6,6 +6,15 @@ export type { CssColorValueConverterOptions } from "#/core/platforms/css/CssColo
  */
 export type { CssColorValueConverterOptions as ColorCssSerializerOptions } from "#/core/platforms/css/CssColorValueConverter";
 export type { TokenConverter } from "#/core/platforms/TokenConverter";
+export type { AndroidTokenConverterOptions } from "#/core/platforms/android/AndroidTokenConverter";
+export type { AndroidDimensionUnit } from "#/core/platforms/android/AndroidDimensionValueConverter";
+export type { AndroidResource } from "#/core/platforms/android/AndroidResource";
+export type {
+    AndroidResourceLayout,
+    AndroidResourceLayoutName,
+    AndroidResourceFile,
+} from "#/core/platforms/android/AndroidResourceLayout";
+export type { AndroidTokenOutput } from "#/core/platforms/android/AndroidTokenOutput";
 export type { ScssTokenConverterOptions } from "#/core/platforms/scss/ScssTokenConverter";
 /**
  * @deprecated Use {@link ScssTokenConverterOptions}.
@@ -26,6 +35,15 @@ export type { TailwindTokenConverterOptions as DtcgTailwindCssConverterOptions }
 export type { TokenHtmlShowcase } from "#/core/showcase/TokenHtmlShowcase";
 export type { TokenStats } from "#/core/stats/TokenStats";
 
+export { AndroidTokenConverter } from "#/core/platforms/android/AndroidTokenConverter";
+export { AndroidColorValueConverter } from "#/core/platforms/android/AndroidColorValueConverter";
+export { AndroidDimensionValueConverter } from "#/core/platforms/android/AndroidDimensionValueConverter";
+export { AndroidResourceType } from "#/core/platforms/android/AndroidResourceType";
+export {
+    AndroidLayerLayout,
+    AndroidTypeLayout,
+    createResourceLayout,
+} from "#/core/platforms/android/AndroidResourceLayout";
 export { CssTokenConverter } from "#/core/platforms/css/CssTokenConverter";
 export { CssColorValueConverter } from "#/core/platforms/css/CssColorValueConverter";
 /**

@@ -1,5 +1,7 @@
 import { Command } from "commander";
 import {
+    AndroidTokenConverter,
+    type AndroidTokenOutput,
     DtcgChecker,
     DtcgList,
     DtcgListLoader,
@@ -7,9 +9,15 @@ import {
     type ScssTokenOutput,
     ScssTokenConverter,
 } from "@design-token-kit/core";
-import { writeFile } from "node:fs/promises";
+import { mkdir, writeFile } from "node:fs/promises";
 import { dirname, extname, join, parse } from "node:path";
-import { type ConvertSettings, getWriter, toDocumentFormat } from "#commands/formats";
+import {
+    type ConvertSettings,
+    getWriter,
+    toAndroidLayout,
+    toDocumentFormat,
+    toRemBase,
+} from "#commands/formats";
 import { hasErrors, printIssues } from "#commands/issues";
 import { createTarArchive } from "#io/TarArchive";
 
@@ -22,15 +30,17 @@ type ConvertOptions = ConvertSettings & {
 };
 
 export const convertCommand = new Command("convert")
-    .description("Convert a token file to DTCG JSON, HRDT YAML, DESIGN.md, CSS, SCSS, Tailwind CSS v4, SwiftUI, or a Figma script.")
+    .description("Convert a token file to DTCG JSON, HRDT YAML, DESIGN.md, CSS, SCSS, Tailwind CSS v4, SwiftUI, a Figma script, or Android resource XML.")
     .argument("[files...]", "Paths to token files (reads from stdin when omitted or '-')")
     .option("-i, --inform [format]", "Input format: dtcg, hrdt, design-md (default: auto-detect)")
-    .option("-f, --outform [format]", "Output format: dtcg, hrdt, design-md, css, scss, tailwind-v4, swiftui, figma-script (default: css)")
+    .option("-f, --outform [format]", "Output format: dtcg, hrdt, design-md, css, scss, tailwind-v4, swiftui, figma-script, android (default: css)")
     .option("--separator [value]", "SCSS only: character used to replace '.' in token paths when generating variable names (default: -)")
     .option("--base-selector [selector]", "Tailwind v4 only: selector for optional mirrored base custom properties")
     .option("--theme-selector [template]", "Tailwind v4 only: selector template for theme overrides with {theme} placeholder")
     .option("--swift-type [type]", "SwiftUI only: output form 'enum' or 'struct' (default: enum)")
-    .option("-o, --out [file]", "Output file (SCSS multi-theme: omit for tar stdout, use .tar for archive, or .scss for per-theme files)")
+    .option("--android-layout [layout]", "Android only: file layout 'layer' or 'type' (default: layer)")
+    .option("--rem-base [pixels]", "Android only: pixel base used to resolve rem dimensions (default: 16)")
+    .option("-o, --out [file]", "Output file (SCSS multi-theme and Android: omit for tar stdout, use .tar for archive, or a directory for separate files)")
     .addHelpText("after", "\nExit status:\n  0  success\n  1  conversion failed")
     .action(async (files: string[], options: ConvertOptions) => {
         try {
@@ -47,6 +57,11 @@ export const convertCommand = new Command("convert")
                 }
             }
             const list: DtcgList = await loadSources(files, forcedFormat);
+            if (outform === Format.ANDROID) {
+                await writeAndroidOutputs(toAndroidOutputs(list, options), options.out);
+                return;
+            }
+
             if (outform === Format.SCSS && list.themes.size > 0) {
                 const outputs = new ScssTokenConverter({
                     separator: options.separator,
@@ -95,6 +110,45 @@ async function writeOutput(output: string, out?: string): Promise<void> {
     } else {
         process.stdout.write(output);
     }
+}
+
+function toAndroidOutputs(list: DtcgList, options: ConvertOptions): ReadonlyArray<AndroidTokenOutput> {
+    return new AndroidTokenConverter({
+        layout: toAndroidLayout(options.androidLayout),
+        remBase: toRemBase(options.remBase),
+    }).convertResourceList(list);
+}
+
+/**
+ * Writes Android resource files. Without `--out` the resource tree is streamed
+ * to stdout as a tar archive, a `.tar` target writes that archive to a file,
+ * and any other target is treated as the Android resource root directory.
+ */
+async function writeAndroidOutputs(outputs: ReadonlyArray<AndroidTokenOutput>, out?: string): Promise<void> {
+    if (!out) {
+        process.stdout.write(createAndroidArchive(outputs));
+        return;
+    }
+
+    if (extname(out).toLowerCase() === ".tar") {
+        await writeFile(out, createAndroidArchive(outputs));
+        return;
+    }
+
+    for (const output of outputs) {
+        const filePath = join(out, output.filePath);
+        await mkdir(dirname(filePath), { recursive: true });
+        await writeFile(filePath, output.content);
+    }
+}
+
+function createAndroidArchive(outputs: ReadonlyArray<AndroidTokenOutput>): Buffer {
+    return createTarArchive(
+        outputs.map((output) => ({
+            name: output.filePath,
+            content: Buffer.from(output.content, "utf8"),
+        })),
+    );
 }
 
 async function writeScssThemeOutputs(outputs: ReadonlyArray<ScssTokenOutput>, out: string): Promise<void> {

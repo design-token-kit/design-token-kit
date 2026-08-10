@@ -47,3 +47,26 @@ jobs:
       - run: npm run build
 
       - run: npm run verify:swift
+
+  android-resources:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - uses: android-actions/setup-android@v3
+        with:
+          packages: "build-tools;34.0.0"
+
+      - run: npm install
+
+      - run: npm run build
+
+      # Fails the job when aapt2 is missing, so that a broken toolchain setup
+      # cannot turn the check into a silent skip.
+      - run: test -x "$ANDROID_HOME/build-tools/34.0.0/aapt2"
+
+      - run: npm run verify:android
