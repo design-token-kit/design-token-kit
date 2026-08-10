@@ -59,53 +59,53 @@ describe("getReader", () => {
 });
 
 describe("getWriter", () => {
-    const doc = new Dtcg(new TokenGroup());
+    const list = new DtcgList(new Dtcg(new TokenGroup()));
 
     it("writes DTCG JSON", () => {
         const writer = getWriter("dtcg");
-        const out = writer.write(doc);
+        const out = writer.write(list, {});
         expect(typeof out).toBe("string");
     });
 
     it("writes HRDT YAML", () => {
         const writer = getWriter("hrdt");
-        const out = writer.write(doc);
+        const out = writer.write(list, {});
         expect(typeof out).toBe("string");
     });
 
     it("writes DESIGN.md", () => {
         const writer = getWriter("design-md");
-        const out = writer.write(doc);
+        const out = writer.write(list, {});
         expect(typeof out).toBe("string");
     });
 
     it("writes CSS", () => {
         const writer = getWriter("css");
-        const out = writer.write(doc);
+        const out = writer.write(list, {});
         expect(typeof out).toBe("string");
     });
 
     it("writes SCSS", () => {
         const writer = getWriter("scss");
-        const out = writer.write(doc);
+        const out = writer.write(list, {});
         expect(typeof out).toBe("string");
     });
 
     it("writes TAILWIND_V4", () => {
         const writer = getWriter("tailwind-v4");
-        const out = writer.write(doc);
+        const out = writer.write(list, {});
         expect(typeof out).toBe("string");
     });
 
     it("maps 'tailwind' to TAILWIND_V4 writer", () => {
         const writer = getWriter("tailwind");
-        const out = writer.write(doc);
+        const out = writer.write(list, {});
         expect(typeof out).toBe("string");
     });
 
     it("returns CSS writer and writes when format is undefined", () => {
         const writer = getWriter();
-        const out = writer.write(doc);
+        const out = writer.write(list, {});
         expect(typeof out).toBe("string");
     });
 
@@ -114,10 +114,10 @@ describe("getWriter", () => {
     });
 
     it("writes SwiftUI output", () => {
-        const doc = new DtcgJsonReader().parse(
+        const parsed = new DtcgJsonReader().parse(
             JSON.stringify({ spacing: { md: { $type: "dimension", $value: { value: 16, unit: "px" } } } }),
         );
-        const out = getWriter(Format.SWIFT_UI).write(doc);
+        const out = getWriter(Format.SWIFT_UI).write(new DtcgList(parsed), {});
         expect(out).toContain("enum DesignTokens {");
         expect(out).toContain("static let md: CGFloat = 16");
     });

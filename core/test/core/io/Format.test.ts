@@ -26,8 +26,12 @@ describe("Format", () => {
         expect(Format.TAILWIND_V4).toBe("tailwind-v4");
     });
 
-    it("has exactly 7 members", () => {
-        expect(Object.keys(Format).filter((k) => isNaN(Number(k)))).toHaveLength(7);
+    it("defines FIGMA_SCRIPT with value figma-script", () => {
+        expect(Format.FIGMA_SCRIPT).toBe("figma-script");
+    });
+
+    it("has exactly 8 members", () => {
+        expect(Object.keys(Format).filter((k) => isNaN(Number(k)))).toHaveLength(8);
     });
 });
 

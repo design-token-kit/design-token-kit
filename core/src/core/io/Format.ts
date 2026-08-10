@@ -41,4 +41,9 @@ export enum Format {
      * SwiftUI design tokens (namespaced enum of static let).
      */
     SWIFT_UI = "swiftui",
+
+    /**
+     * Figma script creating variables and styles through the Plugin API.
+     */
+    FIGMA_SCRIPT = "figma-script",
 }
