@@ -15,6 +15,7 @@
         "clean": "node scripts/clean.mjs",
         "dtokens": "node --import tsx --conditions development cli/src/index.ts",
         "verify:swift": "node scripts/verify-swift/index.mjs",
+        "verify:android": "node scripts/verify-android/index.mjs",
         "release:prepare": "node scripts/release-prepare.mjs",
         "release:publish": "node scripts/release-publish.mjs"
     },

@@ -1,0 +1,8 @@
+{
+    "primitive": {
+        "color": {
+            "base": { "red": { "$type": "color", "$value": { "colorSpace": "srgb", "components": [0.6, 0.1, 0.1] } } },
+            "overlay": { "$type": "color", "$value": { "colorSpace": "srgb", "components": [0, 0, 0], "alpha": 0.6 } }
+        }
+    }
+}

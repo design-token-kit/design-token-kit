@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Minimal manifest required by `aapt2 link`. It carries no application code:
+  the check only links generated resources to prove they compile as a valid
+  Android resource set.
+-->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.designtokenkit.verify">
+    <application />
+</manifest>

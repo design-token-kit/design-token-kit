@@ -1,0 +1,73 @@
+{
+    "primitive": {
+        "color": {
+            "base": { "red": { "$type": "color", "$value": { "colorSpace": "srgb", "components": [1, 0.2, 0.2] } } },
+            "overlay": { "$type": "color", "$value": { "colorSpace": "srgb", "components": [0, 0, 0], "alpha": 0.4 } }
+        },
+        "dimension": {
+            "space": { "md": { "$type": "dimension", "$value": { "value": 16, "unit": "px" } } },
+            "gutter": { "$type": "dimension", "$value": { "value": 1.5, "unit": "rem" } }
+        },
+        "font": {
+            "size": { "md": { "$type": "dimension", "$value": { "value": 16, "unit": "px" } } },
+            "family": { "body": { "$type": "fontFamily", "$value": ["Inter", "Arial", "sans-serif"] } },
+            "weight": { "bold": { "$type": "fontWeight", "$value": 700 } }
+        },
+        "number": {
+            "lineHeight": { "$type": "number", "$value": 1.5 },
+            "zModal": { "$type": "number", "$value": 1050 }
+        },
+        "motion": { "fast": { "$type": "duration", "$value": { "value": 150, "unit": "ms" } } },
+        "elevation": {
+            "low": {
+                "$type": "shadow",
+                "$value": {
+                    "color": { "colorSpace": "srgb", "components": [0, 0, 0], "alpha": 0.2 },
+                    "offsetX": { "value": 0, "unit": "px" },
+                    "offsetY": { "value": 2, "unit": "px" },
+                    "blur": { "value": 4, "unit": "px" },
+                    "spread": { "value": 0, "unit": "px" }
+                }
+            }
+        },
+        "stroke": {
+            "hairline": {
+                "$type": "border",
+                "$value": {
+                    "color": { "colorSpace": "srgb", "components": [0, 0, 0] },
+                    "width": { "value": 1, "unit": "px" },
+                    "style": "solid"
+                }
+            }
+        },
+        "text": {
+            "body": {
+                "$type": "typography",
+                "$value": {
+                    "fontFamily": ["Inter"],
+                    "fontSize": { "value": 16, "unit": "px" },
+                    "fontWeight": 400,
+                    "letterSpacing": { "value": 0.5, "unit": "px" },
+                    "lineHeight": 1.5
+                }
+            }
+        }
+    },
+    "semantic": {
+        "color": {
+            "$description": "Semantic colors mapped to the primitive palette",
+            "background": { "$type": "color", "$value": "{primitive.color.base.red}" },
+            "scrim": { "$type": "color", "$value": "{primitive.color.overlay}" }
+        },
+        "space": { "inset": { "$type": "dimension", "$value": "{primitive.dimension.space.md}" } },
+        "layer": { "modal": { "$type": "number", "$value": "{primitive.number.zModal}" } },
+        "stroke": { "divider": { "$type": "border", "$value": "{primitive.stroke.hairline}" } }
+    },
+    "component": {
+        "button": {
+            "background": { "$type": "color", "$value": "{semantic.color.background}" },
+            "padding": { "$value": "{semantic.space.inset}" },
+            "default": { "$type": "color", "$value": "{semantic.color.background}" }
+        }
+    }
+}
