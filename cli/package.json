@@ -31,7 +31,8 @@
         "bin"
     ],
     "imports": {
-        "#commands/*": "./src/commands/*"
+        "#commands/*": "./src/commands/*",
+        "#io/*": "./src/io/*"
     },
     "engines": {
         "node": ">=20.19.0"
