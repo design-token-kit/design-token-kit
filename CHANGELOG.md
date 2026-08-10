@@ -4,6 +4,20 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+
+- Added Figma script output via `convert --outform figma-script`. Generates a
+  self-contained script that creates Figma variable collections, modes,
+  variables, text styles and effect styles through the Plugin API. Token
+  references become Figma variable aliases, and themes become collection
+  modes. Running the script again updates existing entities instead of
+  duplicating them.
+
+### Fixed
+
+- `convert` listed only `css` and `tailwind-v4` as accepting multiple input
+  files, omitting `scss` and `swiftui`.
+
 ## [1.7.1] - 2026-07-29
 
 ### Added
