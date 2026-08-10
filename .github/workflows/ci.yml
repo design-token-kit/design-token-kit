@@ -61,6 +61,8 @@ jobs:
         with:
           packages: "build-tools;34.0.0"
 
+      - run: npm install --global npm@11.19.0
+
       - run: npm install
 
       - run: npm run build
