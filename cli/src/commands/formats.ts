@@ -1,4 +1,5 @@
 import {
+    AndroidTokenConverter,
     Dtcg,
     DtcgList,
     CssTokenConverter,
@@ -75,6 +76,9 @@ const writers = {
     [Format.SWIFT_UI]: {
         write: (doc) => new SwiftUiTokenConverter().convertDocument(doc),
     },
+    [Format.ANDROID]: {
+        write: (doc) => new AndroidTokenConverter().convertDocument(doc),
+    },
 } satisfies Record<OutputFormat, DocumentWriter>;
 
 export function toDocumentFormat(format?: string, fallback = Format.DTCG): DocumentFormat {
@@ -93,8 +97,9 @@ function toOutputFormat(format?: string, fallback = Format.CSS): OutputFormat {
         || resolved === Format.SCSS
         || resolved === Format.TAILWIND_V4
         || resolved === Format.SWIFT_UI
+        || resolved === Format.ANDROID
     ) {
         return resolved;
     }
-    throw new Error(`Unknown format "${resolved}". Available: ${Format.DTCG}, ${Format.HRDT}, ${Format.DESIGN_MD}, ${Format.CSS}, ${Format.SCSS}, ${Format.TAILWIND_V4}, ${Format.SWIFT_UI}`);
+    throw new Error(`Unknown format "${resolved}". Available: ${Format.DTCG}, ${Format.HRDT}, ${Format.DESIGN_MD}, ${Format.CSS}, ${Format.SCSS}, ${Format.TAILWIND_V4}, ${Format.SWIFT_UI}, ${Format.ANDROID}`);
 }

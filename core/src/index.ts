@@ -3,6 +3,15 @@ export type { TokenValidator } from "#/core/validation/TokenValidator";
 export type { CssColorValueConverterOptions } from "#/core/platforms/css/CssColorValueConverter";
 export type { CssColorValueConverterOptions as ColorCssSerializerOptions } from "#/core/platforms/css/CssColorValueConverter";
 export type { TokenConverter } from "#/core/platforms/TokenConverter";
+export type { AndroidTokenConverterOptions } from "#/core/platforms/android/AndroidTokenConverter";
+export type { AndroidDimensionUnit } from "#/core/platforms/android/AndroidDimensionValueConverter";
+export type { AndroidResource } from "#/core/platforms/android/AndroidResource";
+export type {
+    AndroidResourceLayout,
+    AndroidResourceLayoutName,
+    AndroidResourceFile,
+} from "#/core/platforms/android/AndroidResourceLayout";
+export type { TokenAndroidOutput } from "#/core/platforms/android/TokenAndroidOutput";
 export type { ScssTokenConverterOptions } from "#/core/platforms/scss/ScssTokenConverter";
 export type { ScssTokenConverterOptions as DtcgTokenScssConverterOptions } from "#/core/platforms/scss/ScssTokenConverter";
 export type { TokenScssOutput } from "#/core/platforms/scss/TokenScssOutput";
@@ -13,6 +22,15 @@ export type { TailwindTokenConverterOptions as DtcgTailwindCssConverterOptions }
 export type { TokenHtmlShowcase } from "#/core/showcase/TokenHtmlShowcase";
 export type { TokenStats } from "#/core/stats/TokenStats";
 
+export { AndroidTokenConverter } from "#/core/platforms/android/AndroidTokenConverter";
+export { AndroidColorValueConverter } from "#/core/platforms/android/AndroidColorValueConverter";
+export { AndroidDimensionValueConverter } from "#/core/platforms/android/AndroidDimensionValueConverter";
+export { AndroidResourceType } from "#/core/platforms/android/AndroidResourceType";
+export {
+    AndroidLayerLayout,
+    AndroidTypeLayout,
+    createResourceLayout,
+} from "#/core/platforms/android/AndroidResourceLayout";
 export { CssTokenConverter } from "#/core/platforms/css/CssTokenConverter";
 export { CssColorValueConverter } from "#/core/platforms/css/CssColorValueConverter";
 export { CssColorValueConverter as ColorCssSerializer } from "#/core/platforms/css/CssColorValueConverter";

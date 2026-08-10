@@ -4,6 +4,21 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+
+- Added Android resource XML output support via `convert --outform android`.
+  Generates `res/values` resource files split by root token group, mirroring
+  the token hierarchy, with `snake_case` names, `#AARRGGBB` colors, `dp`
+  sizes and `sp` font sizes. Inside a file resources are grouped into
+  commented sections carrying the token group path and description. The
+  `--android-layout type` option (optional) splits by Android resource type
+  instead.
+  Token references are preserved as native `@color/...` and `@dimen/...`
+  references, and composite tokens are decomposed into one resource per
+  field. Themes are written to qualified resource directories, with the
+  `dark` theme mapped to `values-night`. The `--rem-base` option (optional)
+  sets the pixel base used to resolve `rem` dimensions.
+
 ## [1.7.1] - 2026-07-29
 
 ### Added

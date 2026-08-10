@@ -113,6 +113,15 @@ describe("getWriter", () => {
         expect(() => getWriter("unknown")).toThrow("Unknown format \"unknown\"");
     });
 
+    it("writes Android resource XML output", () => {
+        const doc = new DtcgJsonReader().parse(
+            JSON.stringify({ spacing: { md: { $type: "dimension", $value: { value: 16, unit: "px" } } } }),
+        );
+        const out = getWriter(Format.ANDROID).write(doc);
+        expect(out).toContain("<resources>");
+        expect(out).toContain("<dimen name=\"spacing_md\">16dp</dimen>");
+    });
+
     it("writes SwiftUI output", () => {
         const doc = new DtcgJsonReader().parse(
             JSON.stringify({ spacing: { md: { $type: "dimension", $value: { value: 16, unit: "px" } } } }),

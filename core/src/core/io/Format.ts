@@ -41,4 +41,9 @@ export enum Format {
      * SwiftUI design tokens (namespaced enum of static let).
      */
     SWIFT_UI = "swiftui",
+
+    /**
+     * Android resource XML (`res/values` colors, dimens, integers, strings).
+     */
+    ANDROID = "android",
 }

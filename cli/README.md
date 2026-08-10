@@ -28,6 +28,8 @@ https://design-token-kit.github.io/
   properties, SCSS variables, or Tailwind CSS v4 `@theme` variables
 * **SwiftUI generation** - token sets rendered as Swift source using a
   namespaced enum API or a `Theme` struct layer
+* **Android generation** - token sets rendered as `res/values` resource XML
+  split by resource type, with theme resource directories
 * **Static showcase** - HTML showcase generation from token sources or existing
   CSS
 * **Token stats** - text and HTML reports with token counts and breakdowns
@@ -65,6 +67,7 @@ dtokens convert tokens.yaml --inform hrdt --outform css --out ./tokens.css
 dtokens convert tokens.json --outform scss --out ./tokens.scss
 dtokens convert tokens.json --outform tailwind-v4 --out ./tokens.tailwind.css
 dtokens convert tokens.json --outform swiftui --out ./DesignTokens.swift
+dtokens convert tokens.json --outform android --out ./app/src/main/res
 dtokens convert tokens.json --outform design-md
 dtokens convert DESIGN.md --inform design-md --outform dtcg
 dtokens showcase tokens.json --out ./showcase.html --open
@@ -143,6 +146,15 @@ By default tokens are emitted as nested enums with `static let` members.
 Use `--swift-type struct` to also emit a `Theme` struct layer and theme
 instances for advanced theme switching.
 
+### Android resource XML
+
+Generate Android resource files from token sources. Resources are split by
+root token group into `values/primitive.xml`, `values/semantic.xml` and so
+on, or by Android resource type with `--android-layout type`.
+
+Themes are written to qualified resource directories holding the overrides
+only, with the `dark` theme mapped to `values-night`.
+
 ### HTML showcase
 
 Generate a static HTML preview from DTCG JSON, HRDT YAML, DESIGN.md, or
@@ -164,7 +176,8 @@ Convert token documents between DTCG JSON, HRDT YAML, and DESIGN.md.
   token files: schema, model correctness, lint.
 * `validate [files...]` - alias for `check`.
 * `convert [options] [files...]` - convert a token file to DTCG JSON,
-  HRDT YAML, DESIGN.md, CSS, SCSS, Tailwind CSS v4 theme CSS, or SwiftUI.
+  HRDT YAML, DESIGN.md, CSS, SCSS, Tailwind CSS v4 theme CSS, SwiftUI, or
+  Android resource XML.
 * `showcase [options] [files...]` - create HTML showcase from DTCG JSON,
   HRDT YAML, DESIGN.md, or CSS.
 * `stats [options] [files...]` - generate token statistics from DTCG JSON,
@@ -191,7 +204,7 @@ Convert token documents between DTCG JSON, HRDT YAML, and DESIGN.md.
 * `-i, --inform [format]` - input format: `dtcg`, `hrdt`, `design-md`
   (default: auto-detect).
 * `-f, --outform [format]` - output format: `dtcg`, `hrdt`, `design-md`,
-  `css`, `scss`, `tailwind-v4`, `swiftui`. Defaults to `css`.
+  `css`, `scss`, `tailwind-v4`, `swiftui`, `android`. Defaults to `css`.
 * `--separator [value]` - scss only: character used to replace `.` in token
   paths when generating flattened variable names. Defaults to `-`.
 * `--base-selector [selector]` - tailwind-v4 only: selector for an optional
@@ -200,11 +213,21 @@ Convert token documents between DTCG JSON, HRDT YAML, and DESIGN.md.
   theme overrides, with `{theme}` placeholder.
 * `--swift-type [type]` - SwiftUI only: output form `enum` or `struct`.
   Defaults to `enum`.
+* `--android-layout [layout]` - android only: how resources are split across
+  files. `layer` creates one file per root token group, `type` one file per
+  Android resource type. Defaults to `layer`.
+* `--rem-base [pixels]` - android only: pixel base used to resolve `rem`
+  dimensions, which Android does not support. Defaults to `16`.
 * `-o, --out [file]` - output file, defaults to stdout.
   For multi-theme SCSS:
   - omit `--out` to write a tar archive to stdout
   - use `--out <name>.tar` to write a tar archive to file
   - use `--out <name>.scss` to write separate per-theme SCSS files
+
+  For Android:
+  - omit `--out` to write a tar archive of the resource tree to stdout
+  - use `--out <name>.tar` to write that archive to file
+  - use `--out <directory>` to write the resource tree into a directory
 
 ### showcase
 
@@ -273,7 +296,8 @@ dtokens convert tokens.json --outform hrdt --out tokens.yaml
 ```
 
 Multiple input sources are only supported when `--outform css`,
-`--outform scss`, `--outform tailwind-v4`, or `--outform swiftui`.
+`--outform scss`, `--outform tailwind-v4`, `--outform swiftui`, or
+`--outform android`.
 
 ## CSS Conversion
 
@@ -358,6 +382,85 @@ dtokens convert tokens.json tokens.dark.json --outform swiftui --swift-type stru
 The default `enum` form emits one base enum and one enum per theme.
 The `struct` form also emits a `Theme` struct and theme instances.
 
+## Android Conversion
+
+Convert a base token set and optional theme overrides to Android resource
+XML.
+
+```bash
+dtokens convert tokens.json --outform android > res.tar
+dtokens convert tokens.json --outform android --out ./app/src/main/res
+dtokens convert tokens.json tokens.dark.json --outform android --out ./app/src/main/res
+dtokens convert tokens.json --outform android --android-layout type --out ./res
+dtokens convert tokens.json --outform android --rem-base 10 --out ./res
+```
+
+Resources are named in `snake_case` from the token path. By default they are
+split by root token group, so the files mirror the token hierarchy and keep
+tokens that belong together in one place:
+
+```
+res/
+  values/
+    primitive.xml
+    semantic.xml
+    component.xml
+  values-night/
+    semantic.xml
+```
+
+Use `--android-layout type` to split by Android resource type instead,
+following the conventional resource file naming:
+
+```
+res/
+  values/
+    colors.xml
+    dimens.xml
+    integers.xml
+    floats.xml
+    strings.xml
+  values-night/
+    colors.xml
+```
+
+Inside a file, resources are grouped into commented sections, one per
+second-level token group, carrying the group description when the tokens
+declare one:
+
+```xml
+<resources>
+
+    <!-- semantic.color
+         Semantic colors mapped to the primitive palette
+    -->
+    <color name="semantic_color_primary">@color/primitive_color_red</color>
+
+    <!-- semantic.space -->
+    <dimen name="semantic_space_md">16dp</dimen>
+
+</resources>
+```
+
+Colors use the Android `#AARRGGBB` form, sizes use `dp`, and font sizes use
+`sp`. Token references become native resource references:
+
+```xml
+<color name="primitive_color_red">#ffff0000</color>
+<color name="semantic_color_primary">@color/primitive_color_red</color>
+<dimen name="spacing_md">16dp</dimen>
+<dimen name="font_size_md">16sp</dimen>
+```
+
+### Limitations
+
+Android resources are scalar, so composite tokens are decomposed into one
+resource per field, named after the composite with a field suffix, for
+example `typography_body_font_size`. Fields without an Android counterpart
+are omitted: `cubicBezier` timing functions, stroke style geometry, and the
+`inset` flag of shadows. A `fontFamily` token keeps its first family, since
+an Android resource names a single family rather than a fallback list.
+
 ## HTML Showcase
 
 Generate an HTML showcase from token sources or from a single CSS
@@ -390,6 +493,7 @@ dtokens stats tokens.yaml --out ./stats.html --open
 * `scss` - SCSS variables output
 * `tailwind-v4` - Tailwind CSS v4 `@theme` output
 * `swiftui` - SwiftUI source output
+* `android` - Android resource XML output
 
 The `dtcg` format follows the specification published by the
 Design Tokens Community Group at https://www.designtokens.org.

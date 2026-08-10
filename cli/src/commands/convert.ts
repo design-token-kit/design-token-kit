@@ -1,5 +1,6 @@
 import { Command } from "commander";
 import {
+    AndroidTokenConverter,
     CssTokenConverter,
     DtcgChecker,
     DtcgList,
@@ -8,9 +9,11 @@ import {
     ScssTokenConverter,
     SwiftUiTokenConverter,
     TailwindTokenConverter,
+    type AndroidResourceLayoutName,
+    type TokenAndroidOutput,
     type TokenScssOutput,
 } from "@design-token-kit/core";
-import { writeFile } from "node:fs/promises";
+import { mkdir, writeFile } from "node:fs/promises";
 import { dirname, extname, join, parse } from "node:path";
 import { getWriter, toDocumentFormat } from "./formats";
 import { hasErrors, printIssues } from "./issues";
@@ -25,18 +28,22 @@ type ConvertOptions = {
     baseSelector?: string;
     themeSelector?: string;
     swiftType?: string;
+    remBase?: string;
+    androidLayout?: string;
 };
 
 export const convertCommand = new Command("convert")
-    .description("Convert a token file to DTCG JSON, HRDT YAML, DESIGN.md, CSS, SCSS, Tailwind CSS v4, or SwiftUI.")
+    .description("Convert a token file to DTCG JSON, HRDT YAML, DESIGN.md, CSS, SCSS, Tailwind CSS v4, SwiftUI, or Android resource XML.")
     .argument("[files...]", "Paths to token files (reads from stdin when omitted or '-')")
     .option("-i, --inform [format]", "Input format: dtcg, hrdt, design-md (default: auto-detect)")
-    .option("-f, --outform [format]", "Output format: dtcg, hrdt, design-md, css, scss, tailwind-v4, swiftui (default: css)")
+    .option("-f, --outform [format]", "Output format: dtcg, hrdt, design-md, css, scss, tailwind-v4, swiftui, android (default: css)")
     .option("--separator [value]", "SCSS only: character used to replace '.' in token paths when generating variable names (default: -)")
     .option("--base-selector [selector]", "Tailwind v4 only: selector for optional mirrored base custom properties")
     .option("--theme-selector [template]", "Tailwind v4 only: selector template for theme overrides with {theme} placeholder")
     .option("--swift-type [type]", "SwiftUI only: output form 'enum' or 'struct' (default: enum)")
-    .option("-o, --out [file]", "Output file (SCSS multi-theme: omit for tar stdout, use .tar for archive, or .scss for per-theme files)")
+    .option("--rem-base [pixels]", "Android only: pixel base used to resolve rem dimensions (default: 16)")
+    .option("--android-layout [layout]", "Android only: file layout 'layer' or 'type' (default: layer)")
+    .option("-o, --out [file]", "Output file (SCSS multi-theme and Android: omit for tar stdout, use .tar for archive, or a directory for separate files)")
     .addHelpText("after", "\nExit status:\n  0  success\n  1  conversion failed")
     .action(async (files: string[], options: ConvertOptions) => {
         try {
@@ -53,6 +60,14 @@ export const convertCommand = new Command("convert")
                 }
             }
             const list: DtcgList = await loadSources(files, forcedFormat);
+            if (outform === Format.ANDROID) {
+                const outputs = new AndroidTokenConverter({
+                    remBase: toRemBase(options.remBase),
+                    layout: toAndroidLayout(options.androidLayout),
+                }).convertResourceList(list);
+                await writeAndroidOutputs(outputs, options.out);
+                return;
+            }
             if (outform === Format.SCSS && list.themes.size > 0) {
                 const outputs = new ScssTokenConverter({
                     separator: options.separator,
@@ -104,7 +119,7 @@ function convertList(list: DtcgList, outform: string, options: ConvertOptions): 
         return new SwiftUiTokenConverter({ swiftType: toSwiftType(options.swiftType) }).convertList(list);
     }
     if (list.themes.size > 0) {
-        throw new Error(`Multiple files are only supported with --outform css or tailwind-v4, got ${outform}`);
+        throw new Error(`Multiple files are only supported with --outform css, scss, tailwind-v4, swiftui or android, got ${outform}`);
     }
     return getWriter(outform).write(list.base);
 }
@@ -115,12 +130,59 @@ function toSwiftType(v?: string): "enum" | "struct" | undefined {
     throw new Error(`Unknown --swift-type "${v}", use enum or struct`);
 }
 
+function toAndroidLayout(v?: string): AndroidResourceLayoutName | undefined {
+    if (v === undefined) return undefined;
+    if (v === "layer" || v === "type") return v;
+    throw new Error(`Unknown --android-layout "${v}", use layer or type`);
+}
+
+function toRemBase(v?: string): number | undefined {
+    if (v === undefined) return undefined;
+    const remBase = Number(v);
+    if (!Number.isFinite(remBase) || remBase <= 0) {
+        throw new Error(`Invalid --rem-base "${v}", use a positive number`);
+    }
+    return remBase;
+}
+
 async function writeOutput(output: string, out?: string): Promise<void> {
     if (out) {
         await writeFile(out, output);
     } else {
         process.stdout.write(output);
     }
+}
+
+/**
+ * Writes Android resource files. Without `--out` the resource tree is streamed
+ * to stdout as a tar archive, a `.tar` target writes that archive to a file,
+ * and any other target is treated as the Android resource root directory.
+ */
+async function writeAndroidOutputs(outputs: ReadonlyArray<TokenAndroidOutput>, out?: string): Promise<void> {
+    if (!out) {
+        process.stdout.write(createAndroidArchive(outputs));
+        return;
+    }
+
+    if (extname(out).toLowerCase() === ".tar") {
+        await writeFile(out, createAndroidArchive(outputs));
+        return;
+    }
+
+    for (const output of outputs) {
+        const filePath = join(out, output.filePath);
+        await mkdir(dirname(filePath), { recursive: true });
+        await writeFile(filePath, output.content);
+    }
+}
+
+function createAndroidArchive(outputs: ReadonlyArray<TokenAndroidOutput>): Buffer {
+    return createTarArchive(
+        outputs.map((output) => ({
+            name: output.filePath,
+            content: Buffer.from(output.content, "utf8"),
+        })),
+    );
 }
 
 async function writeScssThemeOutputs(outputs: ReadonlyArray<TokenScssOutput>, out: string): Promise<void> {
