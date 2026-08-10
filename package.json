@@ -10,7 +10,7 @@
     ],
     "scripts": {
         "build": "npm run build --workspaces",
-        "dist": "npm run build && npm run dist --workspaces",
+        "dist": "npm run build && node scripts/stage-all.mjs",
         "test": "npm run test --workspaces",
         "test:coverage": "npm run test:coverage --workspaces",
         "test:coverage:v8": "npm run test:coverage:v8 --workspaces",

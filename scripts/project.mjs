@@ -52,7 +52,11 @@ class Project {
     }
 
     stageAll() {
-        this.npm(["run", "dist"], this.#dir);
+        for (const ws of this._workspaces) {
+            if (ws.published) {
+                this.npm(["run", "dist", "--workspace", ws.name], this.#dir);
+            }
+        }
     }
 
     async clean() {
@@ -109,6 +113,14 @@ class Workspace {
 
     get name() {
         return this._pkg.name;
+    }
+
+    /**
+     * Whether the workspace is released to the registry. A private workspace
+     * takes part in the build but is never staged or published.
+     */
+    get published() {
+        return this._pkg.private !== true;
     }
 
     get #dir() {
@@ -224,7 +236,7 @@ export class Release {
         this.#project.test();
         this.#project.stageAll();
 
-        for (const ws of this.#project.workspaces()) {
+        for (const ws of this.#published()) {
             ws.packDryRun();
         }
 
@@ -233,8 +245,17 @@ export class Release {
 
     publish() {
         this.#project.npm(["whoami"], this.#project.path());
-        for (const ws of this.#project.workspaces()) {
+        for (const ws of this.#published()) {
             ws.publish();
+        }
+    }
+
+    /** Workspaces released to the registry, skipping the private ones. */
+    *#published() {
+        for (const ws of this.#project.workspaces()) {
+            if (ws.published) {
+                yield ws;
+            }
         }
     }
 
