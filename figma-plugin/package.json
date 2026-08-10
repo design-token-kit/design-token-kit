@@ -1,6 +1,6 @@
 {
     "name": "@design-token-kit/figma-plugin",
-    "version": "0.1.0",
+    "version": "1.8.0",
     "private": true,
     "description": "Figma plugin for exporting file JSON through REST and Plugin API",
     "type": "module",
@@ -21,7 +21,7 @@
         "node": ">=20.19.0"
     },
     "dependencies": {
-        "@design-token-kit/core": "1.7.1"
+        "@design-token-kit/core": "1.8.0"
     },
     "devDependencies": {
         "@eslint/js": "9.39.4",
