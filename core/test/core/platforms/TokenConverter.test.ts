@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { TokenConverter } from "#/core/platforms/TokenConverter";
+import { AndroidTokenConverter } from "#/core/platforms/android/AndroidTokenConverter";
 import { CssTokenConverter } from "#/core/platforms/css/CssTokenConverter";
 import { FigmaScriptTokenConverter } from "#/core/platforms/figma-script/FigmaScriptTokenConverter";
 import { ScssTokenConverter } from "#/core/platforms/scss/ScssTokenConverter";
@@ -9,6 +10,7 @@ import { TailwindTokenConverter } from "#/core/platforms/tailwind/TailwindTokenC
 describe("TokenConverter", () => {
     it("is implemented by every platform converter", () => {
         const converters: TokenConverter[] = [
+            new AndroidTokenConverter(),
             new CssTokenConverter(),
             new FigmaScriptTokenConverter(),
             new ScssTokenConverter(),
@@ -16,6 +18,6 @@ describe("TokenConverter", () => {
             new TailwindTokenConverter(),
         ];
 
-        expect(converters).toHaveLength(5);
+        expect(converters).toHaveLength(6);
     });
 });

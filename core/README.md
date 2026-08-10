@@ -4,7 +4,7 @@ The core package of Design Token Kit provides the runtime foundation
 for working with [DTCG 2025.10 design tokens][dtcg] and [DESIGN.md][designmd].
 It defines the typed token model, performs schema and semantic validation,
 converts tokens into CSS custom properties, SCSS variables,
-Tailwind CSS v4 theme output, and SwiftUI source,
+Tailwind CSS v4 theme output, SwiftUI source, and Android resource XML,
 renders static HTML showcases, and builds token statistics reports.
 
 GitHub repository:
@@ -31,6 +31,8 @@ https://design-token-kit.github.io/
   custom properties, SCSS variables, or Tailwind CSS v4 `@theme` variables
 * **SwiftUI generation** - base and theme token sets rendered as Swift source
   using nested enums or an additional `Theme` struct layer
+* **Android generation** - base and theme token sets rendered as `res/values`
+  resource XML split by resource type
 * **Static showcase** - HTML showcase generation from token sources or
   existing CSS
 * **Token stats** - text and HTML statistics reports for token sources
@@ -54,6 +56,7 @@ import {
   CssTokenConverter,
   ScssTokenConverter,
   SwiftUiTokenConverter,
+  AndroidTokenConverter,
   createTokenHtmlShowcase,
   createTokenStats,
 } from "@design-token-kit/core";
@@ -70,12 +73,14 @@ const list = await new DtcgListLoader().load(sources);
 const css = new CssTokenConverter().convertList(list);
 const scss = await new ScssTokenConverter().convert(["./tokens.json"]);
 const swift = new SwiftUiTokenConverter().convertList(list);
+const android = new AndroidTokenConverter().convertResourceList(list);
 const html = await createTokenHtmlShowcase().showcase(sources);
 const stats = await createTokenStats().stats(sources);
 
 console.log(css);
 console.log(scss);
 console.log(swift.slice(0, 120));
+console.log(android.map((output) => output.filePath));
 console.log(html.slice(0, 120));
 console.log(stats);
 ```
@@ -143,6 +148,12 @@ Generate Swift source from token sets.
 The default output is a nested enum API.
 The optional struct output adds a `Theme` value layer on top of the enum layer.
 
+### Android resource XML
+
+Generate Android resource files from token sets.
+Resources are split by root token group, mirroring the token hierarchy, or by
+Android resource type. Themes are written to qualified resource directories.
+
 ### HTML showcase
 
 Render a static HTML preview from DTCG JSON, HRDT YAML, DESIGN.md, or
@@ -172,9 +183,16 @@ write a parsed document back to any supported source format.
 * `ScssTokenConverter` - generate SCSS variables from tokens
 * `TailwindTokenConverter` - generate Tailwind CSS v4 `@theme` output
 * `SwiftUiTokenConverter` - generate SwiftUI source from tokens
+* `AndroidTokenConverter` - generate Android resource XML from tokens
 * `CssColorValueConverter` - convert color values to CSS color syntax
 * `SwiftUiColorValueConverter` - convert color values to SwiftUI expressions
+* `AndroidColorValueConverter` - convert color values to Android `#AARRGGBB`
+* `AndroidDimensionValueConverter` - convert dimension values to Android
+  `dp` and `sp` literals
+* `AndroidLayerLayout`, `AndroidTypeLayout` - split Android resources across
+  files by token group or by resource type
 * `ScssTokenOutput` - one generated SCSS stylesheet output
+* `AndroidTokenOutput` - one generated Android resource file
 * `createCssTokenConverter()` - create the default CSS converter
 * `createScssTokenConverter()` - create the default SCSS converter
 * `createTailwindTokenConverter()` - create the default Tailwind converter
@@ -445,6 +463,68 @@ The `struct` output keeps the enum layer and adds a `Theme` struct with
 theme instances.
 Use it when consuming tokens through value objects is more convenient than
 referencing enum constants directly.
+
+## Android Conversion
+
+Use `AndroidTokenConverter` to generate Android resource XML from a parsed
+document or a base document with theme overrides.
+
+Android output spans several files, so `convertResourceList()` returns one
+output per resource file, each carrying its path relative to the Android
+resource root.
+
+```ts
+import { AndroidTokenConverter } from "@design-token-kit/core";
+
+const outputs = new AndroidTokenConverter().convertResourceList(list);
+
+for (const output of outputs) {
+  // output.filePath - e.g. "values/colors.xml" or "values-night/colors.xml"
+  // output.content  - resource file content
+}
+```
+
+`convertDocument()` and `convertList()` return a single string and therefore
+only accept input producing exactly one resource file.
+
+```ts
+import { AndroidTokenConverter } from "@design-token-kit/core";
+
+const xml = new AndroidTokenConverter({ remBase: 10 }).convertDocument(doc);
+```
+
+The `remBase` option sets the pixel base used to resolve `rem` dimensions,
+which Android does not support.
+
+The `layout` option decides how resources are split across files. The default
+`layer` layout creates one file per root token group, mirroring the token
+hierarchy, so that a group keeps its colors and dimensions together. The
+`type` layout creates one file per Android resource type instead, following
+the conventional `colors.xml` / `dimens.xml` naming.
+
+```ts
+import { AndroidTokenConverter } from "@design-token-kit/core";
+
+const outputs = new AndroidTokenConverter({ layout: "type" })
+  .convertResourceList(list);
+```
+
+Colors use the Android `#AARRGGBB` form, sizes use `dp`, and font sizes use
+`sp`. Token references are preserved as native `@color/...` and `@dimen/...`
+resource references.
+
+Inside a file, resources are grouped into commented sections, one per
+second-level token group, carrying the group description when the tokens
+declare one.
+
+### Limitations
+
+Android resources are scalar, so composite tokens are decomposed into one
+resource per field, named after the composite with a field suffix. Fields
+without an Android counterpart are omitted: `cubicBezier` timing functions,
+stroke style geometry, and the `inset` flag of shadows. A `fontFamily` token
+keeps its first family, since an Android resource names a single family
+rather than a fallback list.
 
 ## HTML Showcase
 

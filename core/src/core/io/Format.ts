@@ -46,4 +46,9 @@ export enum Format {
      * Figma script creating variables and styles through the Plugin API.
      */
     FIGMA_SCRIPT = "figma-script",
+
+    /**
+     * Android resource XML (`res/values` colors, dimens, integers, strings).
+     */
+    ANDROID = "android",
 }

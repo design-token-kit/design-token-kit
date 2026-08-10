@@ -166,6 +166,131 @@ describe("convert", () => {
         }
     });
 
+    it("writes an Android resource tree when --out is a directory", async () => {
+        const outDir = resolve(tmpdir(), `dtokens-test-${randomUUID()}`);
+        mkdirSync(outDir, { recursive: true });
+        try {
+            const result = await run(
+                convertCommand,
+                resolve(__dirname, "../../../core/test/core/css/fixtures/tokens.json"),
+                resolve(__dirname, "../../../core/test/core/css/fixtures/tokens.dark.json"),
+                "--outform",
+                "android",
+                "--out",
+                outDir,
+            );
+            expect(result.status).toBe(0);
+            const basePrimitive = resolve(outDir, "values/primitive.xml");
+            const nightPrimitive = resolve(outDir, "values-night/primitive.xml");
+            expect(existsSync(basePrimitive)).toBe(true);
+            expect(existsSync(nightPrimitive)).toBe(true);
+            expect(readFileSync(basePrimitive, "utf8")).toContain("<color name=\"primitive_color_white\">");
+            expect(readFileSync(nightPrimitive, "utf8")).toContain("<resources>");
+        } finally {
+            rmSync(outDir, { recursive: true, force: true });
+        }
+    });
+
+    it("writes resource-type files for --android-layout type", async () => {
+        const outDir = resolve(tmpdir(), `dtokens-test-${randomUUID()}`);
+        mkdirSync(outDir, { recursive: true });
+        try {
+            const result = await run(
+                convertCommand,
+                resolve(__dirname, "../../../core/test/core/css/fixtures/tokens.json"),
+                "--outform",
+                "android",
+                "--android-layout",
+                "type",
+                "--out",
+                outDir,
+            );
+            expect(result.status).toBe(0);
+            expect(existsSync(resolve(outDir, "values/colors.xml"))).toBe(true);
+            expect(existsSync(resolve(outDir, "values/primitive.xml"))).toBe(false);
+        } finally {
+            rmSync(outDir, { recursive: true, force: true });
+        }
+    });
+
+    it("rejects an unknown --android-layout", async () => {
+        const result = await run(
+            convertCommand,
+            resolve(__dirname, "valid.json"),
+            "--outform",
+            "android",
+            "--android-layout",
+            "grouped",
+        );
+        expect(result.status).toBe(1);
+        expect(result.stderr).toContain("Unknown --android-layout");
+    });
+
+    it("writes an Android tar archive to stdout when --out is omitted", async () => {
+        const result = await run(
+            convertCommand,
+            resolve(__dirname, "valid.json"),
+            "--outform",
+            "android",
+        );
+        expect(result.status).toBe(0);
+        expect(result.stdout).toContain("values/primitive.xml");
+        expect(result.stdout).toContain("<resources>");
+    });
+
+    it("writes an Android tar archive to a .tar file", async () => {
+        const outDir = resolve(tmpdir(), `dtokens-test-${randomUUID()}`);
+        const outFile = resolve(outDir, "res.tar");
+        mkdirSync(outDir, { recursive: true });
+        try {
+            const result = await run(
+                convertCommand,
+                resolve(__dirname, "valid.json"),
+                "--outform",
+                "android",
+                "--out",
+                outFile,
+            );
+            expect(result.status).toBe(0);
+            expect(readFileSync(outFile, "utf8")).toContain("values/primitive.xml");
+        } finally {
+            rmSync(outDir, { recursive: true, force: true });
+        }
+    });
+
+    it("resolves rem dimensions against --rem-base", async () => {
+        const outDir = resolve(tmpdir(), `dtokens-test-${randomUUID()}`);
+        mkdirSync(outDir, { recursive: true });
+        try {
+            const result = await run(
+                convertCommand,
+                resolve(__dirname, "valid.json"),
+                "--outform",
+                "android",
+                "--rem-base",
+                "10",
+                "--out",
+                outDir,
+            );
+            expect(result.status).toBe(0);
+        } finally {
+            rmSync(outDir, { recursive: true, force: true });
+        }
+    });
+
+    it("rejects a non-positive --rem-base", async () => {
+        const result = await run(
+            convertCommand,
+            resolve(__dirname, "valid.json"),
+            "--outform",
+            "android",
+            "--rem-base",
+            "0",
+        );
+        expect(result.status).toBe(1);
+        expect(result.stderr).toContain("Invalid --rem-base");
+    });
+
     // Subprocess: real stdin piping cannot be faked in-process.
     describe("integration", () => {
         it("converts from stdin", () => {

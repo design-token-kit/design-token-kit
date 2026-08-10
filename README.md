@@ -117,7 +117,8 @@ structure right but misses format details.
   * Missing token description detection (missing-description)
 * Convert between DTCG JSON, HRDT YAML, and DESIGN.md
 * Generate CSS and SCSS from token files, including Tailwind CSS v4 `@theme`
-  output, SwiftUI source, and a Figma script creating variables and styles
+  output, SwiftUI source, Android resource XML, and a Figma script creating
+  variables and styles
 * Generate HTML token showcase page
 * Generate token statistics as text or HTML
 

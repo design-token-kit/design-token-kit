@@ -14,6 +14,8 @@ import {
     TailwindTokenConverter,
     FigmaScriptTokenConverter,
     SwiftUiTokenConverter,
+    AndroidTokenConverter,
+    type AndroidResourceLayoutName,
 } from "@design-token-kit/core";
 
 export { Format };
@@ -58,6 +60,23 @@ export interface ConvertSettings {
      * @defaultValue `"enum"`
      */
     swiftType?: string;
+
+    /**
+     * Android: how resources are split across files, either `layer` for one
+     * file per root token group or `type` for one file per Android resource
+     * type. Any other value is rejected.
+     *
+     * @defaultValue `"layer"`
+     */
+    androidLayout?: string;
+
+    /**
+     * Android: pixel base resolving `rem` dimensions, which Android does not
+     * support. Must be a positive number.
+     *
+     * @defaultValue `"16"`
+     */
+    remBase?: string;
 }
 
 export function getReader(format?: string): DocumentReader {
@@ -162,6 +181,16 @@ const writers = {
         themes: true,
         write: (list) => new FigmaScriptTokenConverter().convertList(list),
     },
+    [Format.ANDROID]: {
+        // Android output normally spans several resource files, which the
+        // convert command writes itself. A writer only serves the single-file
+        // case, so it takes the base document alone.
+        themes: false,
+        write: (list, settings) => new AndroidTokenConverter({
+            layout: toAndroidLayout(settings.androidLayout),
+            remBase: toRemBase(settings.remBase),
+        }).convertDocument(list.base),
+    },
 } satisfies Record<OutputFormat, DocumentWriter>;
 
 export function toDocumentFormat(format?: string, fallback = Format.DTCG): DocumentFormat {
@@ -197,4 +226,29 @@ function toSwiftType(swiftType?: string): "enum" | "struct" | undefined {
     }
 
     throw new Error(`Unknown --swift-type "${swiftType}", use enum or struct`);
+}
+
+export function toAndroidLayout(layout?: string): AndroidResourceLayoutName | undefined {
+    if (layout === undefined) {
+        return undefined;
+    }
+
+    if (layout === "layer" || layout === "type") {
+        return layout;
+    }
+
+    throw new Error(`Unknown --android-layout "${layout}", use layer or type`);
+}
+
+export function toRemBase(remBase?: string): number | undefined {
+    if (remBase === undefined) {
+        return undefined;
+    }
+
+    const parsed = Number(remBase);
+    if (!Number.isFinite(parsed) || parsed <= 0) {
+        throw new Error(`Invalid --rem-base "${remBase}", use a positive number`);
+    }
+
+    return parsed;
 }
