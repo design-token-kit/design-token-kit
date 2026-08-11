@@ -71,8 +71,9 @@ export interface ConvertSettings {
     androidLayout?: string;
 
     /**
-     * Android: pixel base resolving `rem` dimensions, which Android does not
-     * support. Must be a positive number.
+     * Android and SwiftUI: pixel base resolving `rem` dimensions, which these
+     * platforms do not support. Must be a positive number. Overrides the base
+     * declared by the token document.
      *
      * @defaultValue `"16"`
      */
@@ -175,6 +176,7 @@ const writers = {
         themes: true,
         write: (list, settings) => new SwiftUiTokenConverter({
             swiftType: toSwiftType(settings.swiftType),
+            remBase: toRemBase(settings.remBase),
         }).convertList(list),
     },
     [Format.FIGMA_SCRIPT]: {

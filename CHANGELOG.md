@@ -2,6 +2,24 @@
 
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [Unreleased]
+
+### Added
+
+- `--rem-base` now applies to the SwiftUI export as well as Android.
+- Token documents can declare their own `rem` base via
+  `$extensions["design-token-kit"].remBase` on the document root. An explicit
+  `--rem-base` overrides it; the default remains `16`.
+- Added the `bad-rem-base` check, warning about an unusable declared `rem`
+  base.
+
+### Fixed
+
+- SwiftUI export dropped the unit of `dimension` tokens, so `rem` values were
+  emitted as bare numbers: `1.5rem` became `1.5` instead of `24`, and a `1rem`
+  font size became 1pt instead of 16pt. `rem` is now resolved against the
+  pixel base, in scalar dimensions and in composite fields alike.
+
 ## [1.8.0] - 2026-08-10
 
 ### Added

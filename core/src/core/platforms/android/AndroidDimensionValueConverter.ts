@@ -1,4 +1,4 @@
-import { DimensionValue } from "#/core/model/values/DimensionValue";
+import { DEFAULT_REM_BASE, DimensionValue } from "#/core/model/values/DimensionValue";
 
 /**
  * Android dimension units.
@@ -9,11 +9,6 @@ import { DimensionValue } from "#/core/model/values/DimensionValue";
  * @see https://developer.android.com/guide/topics/resources/more-resources#Dimension
  */
 export type AndroidDimensionUnit = "dp" | "sp";
-
-/**
- * Default `rem` base in pixels, matching the CSS root font size.
- */
-const DEFAULT_REM_BASE = 16;
 
 const MAX_FRACTION_DIGITS = 4;
 
@@ -48,7 +43,7 @@ export class AndroidDimensionValueConverter {
      * configured base.
      */
     toPixels(value: DimensionValue): number {
-        return value.unit === "rem" ? value.value * this.#remBase : value.value;
+        return value.toPixels(this.#remBase);
     }
 
     #format(value: number): string {
