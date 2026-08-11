@@ -1,11 +1,12 @@
 import { Dtcg } from "#/core/model/Dtcg";
 import { DtcgList } from "#/core/model/DtcgList";
+import { readRemBase } from "#/core/model/RemBaseExtension";
 import { TokenGroup } from "#/core/model/TokenGroup";
 import { TokenNode } from "#/core/model/TokenNode";
 import { TokenReference } from "#/core/model/TokenReference";
 import type { TokenType } from "#/core/model/TokenType";
 import { ColorValue } from "#/core/model/values/ColorValue";
-import { DimensionValue } from "#/core/model/values/DimensionValue";
+import { DEFAULT_REM_BASE, DimensionValue } from "#/core/model/values/DimensionValue";
 import { DurationValue } from "#/core/model/values/DurationValue";
 import { CubicBezierValue } from "#/core/model/values/CubicBezierValue";
 import { BorderValue } from "#/core/model/values/BorderValue";
@@ -28,6 +29,14 @@ export interface SwiftUiTokenConverterOptions {
      * @defaultValue `"enum"`
      */
     swiftType?: "enum" | "struct";
+
+    /**
+     * Pixel base used to resolve `rem` dimensions, which SwiftUI does not
+     * support. Overrides the base declared by the token document.
+     *
+     * @defaultValue `16`
+     */
+    remBase?: number;
 }
 
 /**
@@ -45,10 +54,13 @@ export interface SwiftUiTokenConverterOptions {
  */
 export class SwiftUiTokenConverter implements TokenConverter {
     readonly #swiftType: "enum" | "struct";
+    readonly #remBase: number | undefined;
     #used = new Set<CompositeKind>();
+    #base = DEFAULT_REM_BASE;
 
     constructor(options: SwiftUiTokenConverterOptions = {}) {
         this.#swiftType = options.swiftType ?? "enum";
+        this.#remBase = options.remBase;
     }
 
     convertDocument(doc: Dtcg): string {
@@ -57,6 +69,7 @@ export class SwiftUiTokenConverter implements TokenConverter {
 
     convertList(list: DtcgList): string {
         this.#used = new Set();
+        this.#base = this.#remBase ?? readRemBase(list.base.root) ?? DEFAULT_REM_BASE;
 
         const enums: string[] = [this.#renderBaseEnum(list.base)];
         for (const [themeName, theme] of list.themes) {
@@ -243,7 +256,7 @@ export class SwiftUiTokenConverter implements TokenConverter {
             this.#used.add("strokeStyle");
             return { expr: strokeStyleToSwift(value) };
         }
-        const scalar = renderScalar(value);
+        const scalar = renderScalar(value, this.#base);
         if (scalar) return scalar;
         return this.#renderComposite(value);
     }
@@ -251,11 +264,11 @@ export class SwiftUiTokenConverter implements TokenConverter {
     #renderComposite(value: unknown): Rendered | undefined {
         if (value instanceof TypographyValue) {
             this.#used.add("typography");
-            return { expr: typographyToSwift(value) };
+            return { expr: typographyToSwift(value, this.#base) };
         }
         if (value instanceof BorderValue) {
             this.#used.add("border");
-            return { expr: borderToSwift(value) };
+            return { expr: borderToSwift(value, this.#base) };
         }
         if (value instanceof TransitionValue) {
             this.#used.add("transition");
@@ -267,7 +280,7 @@ export class SwiftUiTokenConverter implements TokenConverter {
         }
         if (value instanceof ShadowLayer) {
             this.#used.add("shadow");
-            return { expr: `[${shadowLayerToSwift(value)}]`, type: "[ShadowToken]" };
+            return { expr: `[${shadowLayerToSwift(value, this.#base)}]`, type: "[ShadowToken]" };
         }
         if (Array.isArray(value) && value.length > 0) {
             return this.#renderArray(value);
@@ -284,7 +297,7 @@ export class SwiftUiTokenConverter implements TokenConverter {
             && value.some((item) => item instanceof ShadowLayer)) {
             this.#used.add("shadow");
             const layers = value.map((item) =>
-                item instanceof ShadowLayer ? shadowLayerToSwift(item) : refToSwift(item as TokenReference));
+                item instanceof ShadowLayer ? shadowLayerToSwift(item, this.#base) : refToSwift(item as TokenReference));
             return { expr: `[${layers.join(", ")}]`, type: "[ShadowToken]" };
         }
         if (value.every((item) => typeof item === "string" || item instanceof TokenReference)) {
@@ -336,6 +349,7 @@ type CompositeKind = "typography" | "shadow" | "border" | "strokeStyle" | "trans
 
 const ROOT = "DesignTokens";
 const INDENT = "    ";
+const MAX_FRACTION_DIGITS = 4;
 
 /**
  * The enum namespace the current render pass roots its references at.
@@ -542,10 +556,10 @@ function referencedFieldType(type: TokenType | undefined): string {
     return (type && map[type]) ?? "SwiftUI.Color";
 }
 
-function renderScalar(value: unknown): Rendered | undefined {
+function renderScalar(value: unknown, remBase: number): Rendered | undefined {
     if (value instanceof TokenReference) return { expr: refToSwift(value) };
     if (value instanceof ColorValue) return { expr: swiftUiColorValueConverter.convert(value) };
-    if (value instanceof DimensionValue) return { expr: String(value.value), type: "CGFloat" };
+    if (value instanceof DimensionValue) return { expr: dimensionToSwift(value, remBase), type: "CGFloat" };
     if (value instanceof DurationValue) return { expr: String(durationSeconds(value)), type: "TimeInterval" };
     if (value instanceof CubicBezierValue) {
         return { expr: `SwiftUI.UnitCurve.bezier(startControlPoint: SwiftUI.UnitPoint(x: ${value.p1x}, y: ${value.p1y}), endControlPoint: SwiftUI.UnitPoint(x: ${value.p2x}, y: ${value.p2y}))` };
@@ -571,18 +585,35 @@ function indentBlock(block: string, depth: number): string {
     return block.split("\n").map((line) => (line ? indent + line : line)).join("\n");
 }
 
-function dimToSwift(value: DimensionValue | TokenReference): string {
+function dimToSwift(value: DimensionValue | TokenReference, remBase: number): string {
     if (value instanceof TokenReference) return refToSwift(value);
-    return String(value.value);
+    return dimensionToSwift(value, remBase);
+}
+
+/**
+ * Renders a dimension as a Swift numeric literal in points.
+ *
+ * @remarks
+ * SwiftUI has no `rem`; the DTCG specification names `pt` as the iOS
+ * equivalent of `px`, so `px` is emitted as is and `rem` is expanded against
+ * the base.
+ */
+function dimensionToSwift(value: DimensionValue, remBase: number): string {
+    return formatNumber(value.toPixels(remBase));
+}
+
+function formatNumber(value: number): string {
+    if (Number.isInteger(value)) return String(value);
+    return String(Number(value.toFixed(MAX_FRACTION_DIGITS)));
 }
 
 function colorArgToSwift(value: ColorValue | TokenReference): string {
     return value instanceof TokenReference ? refToSwift(value) : swiftUiColorValueConverter.convert(value);
 }
 
-function typographyToSwift(value: TypographyValue): string {
-    const size = dimToSwift(value.fontSize);
-    const tracking = dimToSwift(value.letterSpacing);
+function typographyToSwift(value: TypographyValue, remBase: number): string {
+    const size = dimToSwift(value.fontSize, remBase);
+    const tracking = dimToSwift(value.letterSpacing, remBase);
     const lineSpacing = value.lineHeight instanceof TokenReference ? refToSwift(value.lineHeight) : String(value.lineHeight);
     const font = fontToSwift(value, size);
     return `TypographyToken(font: ${font}, tracking: ${tracking}, lineSpacing: ${lineSpacing})`;
@@ -615,11 +646,11 @@ function fontWeightToSwift(weight: unknown): string {
     return map[String(weight)] ?? ".regular";
 }
 
-function shadowLayerToSwift(layer: ShadowLayer): string {
+function shadowLayerToSwift(layer: ShadowLayer, remBase: number): string {
     const color = colorArgToSwift(layer.color);
-    const radius = dimToSwift(layer.blur);
-    const x = dimToSwift(layer.offsetX);
-    const y = dimToSwift(layer.offsetY);
+    const radius = dimToSwift(layer.blur, remBase);
+    const x = dimToSwift(layer.offsetX, remBase);
+    const y = dimToSwift(layer.offsetY, remBase);
     return `ShadowToken(color: ${color}, radius: ${radius}, x: ${x}, y: ${y})`;
 }
 
@@ -631,9 +662,9 @@ function strokeStyleToSwift(value: unknown): string {
     return `StrokeStyleToken(dashed: ${dashed})`;
 }
 
-function borderToSwift(value: BorderValue): string {
+function borderToSwift(value: BorderValue, remBase: number): string {
     const color = colorArgToSwift(value.color);
-    const width = dimToSwift(value.width);
+    const width = dimToSwift(value.width, remBase);
     return `BorderToken(color: ${color}, width: ${width})`;
 }
 

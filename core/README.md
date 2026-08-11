@@ -464,6 +464,30 @@ theme instances.
 Use it when consuming tokens through value objects is more convenient than
 referencing enum constants directly.
 
+### Dimensions
+
+SwiftUI has no `rem` unit. The DTCG specification names `pt` as the iOS
+equivalent of `px`, so `px` dimensions are emitted as is, while `rem`
+dimensions are resolved to an absolute value against a pixel base. This
+applies to scalar `dimension` tokens and to composite fields such as
+`fontSize`, `letterSpacing`, shadow blur and offsets, and border width.
+
+```ts
+import { SwiftUiTokenConverter } from "@design-token-kit/core";
+
+const swift = new SwiftUiTokenConverter({ remBase: 10 }).convertList(list);
+```
+
+Base resolution order:
+
+1. the `remBase` option
+2. `$extensions["design-token-kit"].remBase` on the document root
+3. fallback to `16`
+
+The option belongs to the target platform, the extension to the design
+system, so an explicit option always wins. An unusable extension value is
+ignored in favor of the default and reported by the `bad-rem-base` check.
+
 ## Android Conversion
 
 Use `AndroidTokenConverter` to generate Android resource XML from a parsed
@@ -494,7 +518,9 @@ const xml = new AndroidTokenConverter({ remBase: 10 }).convertDocument(doc);
 ```
 
 The `remBase` option sets the pixel base used to resolve `rem` dimensions,
-which Android does not support.
+which Android does not support. It follows the same resolution order as the
+SwiftUI export: the option, then
+`$extensions["design-token-kit"].remBase` on the document root, then `16`.
 
 The `layout` option decides how resources are split across files. The default
 `layer` layout creates one file per root token group, mirroring the token

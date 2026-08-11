@@ -402,3 +402,127 @@ describe("SwiftUiTokenConverter struct themes", () => {
         expect(out).not.toContain("DesignTokensDark");
     });
 });
+
+describe("SwiftUiTokenConverter rem dimensions", () => {
+    const REM_TOKENS = {
+        space: {
+            $type: "dimension",
+            md: { $value: { value: 1.5, unit: "rem" } },
+            px: { $value: { value: 24, unit: "px" } },
+        },
+    };
+
+    it("expands rem against the default base", () => {
+        const out = convert(REM_TOKENS);
+        expect(out).toContain("static let md: CGFloat = 24");
+    });
+
+    it("emits px unchanged", () => {
+        const out = convert(REM_TOKENS);
+        expect(out).toContain("static let px: CGFloat = 24");
+    });
+
+    it("renders equal magnitudes identically regardless of unit", () => {
+        const out = convert(REM_TOKENS);
+        expect(out).toContain("static let md: CGFloat = 24");
+        expect(out).toContain("static let px: CGFloat = 24");
+    });
+
+    it("expands rem in typography fontSize", () => {
+        const out = convert({
+            typography: {
+                body: {
+                    $type: "typography",
+                    $value: {
+                        fontFamily: "Inter",
+                        fontSize: { value: 1, unit: "rem" },
+                        fontWeight: 400,
+                        letterSpacing: { value: 0, unit: "px" },
+                        lineHeight: 1.5,
+                    },
+                },
+            },
+        });
+        expect(out).toContain('SwiftUI.Font.custom("Inter", size: 16)');
+    });
+
+    it("expands rem in typography letterSpacing", () => {
+        const out = convert({
+            typography: {
+                body: {
+                    $type: "typography",
+                    $value: {
+                        fontFamily: "Inter",
+                        fontSize: { value: 16, unit: "px" },
+                        fontWeight: 400,
+                        letterSpacing: { value: 0.5, unit: "rem" },
+                        lineHeight: 1.5,
+                    },
+                },
+            },
+        });
+        expect(out).toContain("tracking: 8");
+    });
+
+    it("expands rem in shadow blur and offsets", () => {
+        const out = convert({
+            shadow: {
+                soft: {
+                    $type: "shadow",
+                    $value: {
+                        color: { colorSpace: "srgb", components: [0, 0, 0] },
+                        offsetX: { value: 0.25, unit: "rem" },
+                        offsetY: { value: 0.5, unit: "rem" },
+                        blur: { value: 1, unit: "rem" },
+                        spread: { value: 0, unit: "px" },
+                    },
+                },
+            },
+        });
+        expect(out).toContain("radius: 16");
+        expect(out).toContain("x: 4");
+        expect(out).toContain("y: 8");
+    });
+
+    it("expands rem in border width", () => {
+        const out = convert({
+            border: {
+                thin: {
+                    $type: "border",
+                    $value: {
+                        color: { colorSpace: "srgb", components: [0, 0, 0] },
+                        width: { value: 0.125, unit: "rem" },
+                        style: "solid",
+                    },
+                },
+            },
+        });
+        expect(out).toContain("width: 2");
+    });
+
+    it("uses the rem base declared by the document", () => {
+        const out = convert({ ...REM_TOKENS, $extensions: { "design-token-kit": { remBase: 10 } } });
+        expect(out).toContain("static let md: CGFloat = 15");
+    });
+
+    it("prefers the explicit option over the declared base", () => {
+        const out = convertList(
+            { ...REM_TOKENS, $extensions: { "design-token-kit": { remBase: 10 } } },
+            {},
+            { remBase: 16 },
+        );
+        expect(out).toContain("static let md: CGFloat = 24");
+    });
+
+    it("falls back to the default base when the declared one is unusable", () => {
+        const out = convert({ ...REM_TOKENS, $extensions: { "design-token-kit": { remBase: "sixteen" } } });
+        expect(out).toContain("static let md: CGFloat = 24");
+    });
+
+    it("formats fractional results without a long tail", () => {
+        const out = convert({
+            space: { xs: { $type: "dimension", $value: { value: 0.1, unit: "rem" } } },
+        });
+        expect(out).toContain("static let xs: CGFloat = 1.6");
+    });
+});

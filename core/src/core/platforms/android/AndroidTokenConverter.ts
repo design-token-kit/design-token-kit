@@ -1,5 +1,7 @@
 import { Dtcg } from "#/core/model/Dtcg";
 import { DtcgList } from "#/core/model/DtcgList";
+import { readRemBase } from "#/core/model/RemBaseExtension";
+import { DEFAULT_REM_BASE } from "#/core/model/values/DimensionValue";
 import type { AndroidResource } from "#/core/platforms/android/AndroidResource";
 import { AndroidDimensionValueConverter } from "#/core/platforms/android/AndroidDimensionValueConverter";
 import { AndroidResourceMapper } from "#/core/platforms/android/AndroidResourceMapper";
@@ -29,7 +31,7 @@ const NIGHT_DIRECTORY = "values-night";
 export interface AndroidTokenConverterOptions {
     /**
      * Pixel base used to resolve `rem` dimensions, which Android does not
-     * support.
+     * support. Overrides the base declared by the token document.
      *
      * @defaultValue `16`
      */
@@ -61,12 +63,12 @@ export interface AndroidTokenConverterOptions {
  * other theme to `values-<theme>`.
  */
 export class AndroidTokenConverter implements TokenConverter {
-    readonly #mapper: AndroidResourceMapper;
+    readonly #remBase: number | undefined;
     readonly #layout: AndroidResourceLayout;
     readonly #renderer = new AndroidResourceRenderer();
 
     constructor(options: AndroidTokenConverterOptions = {}) {
-        this.#mapper = new AndroidResourceMapper(new AndroidDimensionValueConverter(options.remBase));
+        this.#remBase = options.remBase;
         this.#layout = createResourceLayout(options.layout ?? "layer");
     }
 
@@ -99,8 +101,10 @@ export class AndroidTokenConverter implements TokenConverter {
      * @returns One output per resource file, in `res` directory layout.
      */
     convertResourceList(list: DtcgList): ReadonlyArray<AndroidTokenOutput> {
+        const mapper = this.#createMapper(list);
+
         const outputs: AndroidTokenOutput[] = this.#toOutputs(
-            this.#mapper.map(list.base),
+            mapper.map(list.base),
             BASE_THEME,
             true,
             BASE_DIRECTORY,
@@ -109,7 +113,7 @@ export class AndroidTokenConverter implements TokenConverter {
 
         for (const [themeName, theme] of list.themes) {
             outputs.push(...this.#toOutputs(
-                this.#mapper.map(theme, list.base),
+                mapper.map(theme, list.base),
                 themeName,
                 false,
                 this.#themeDirectory(themeName),
@@ -118,6 +122,15 @@ export class AndroidTokenConverter implements TokenConverter {
         }
 
         return outputs;
+    }
+
+    /**
+     * Builds a mapper bound to the `rem` base for this document: an explicit
+     * option wins over the base declared by the tokens.
+     */
+    #createMapper(list: DtcgList): AndroidResourceMapper {
+        const remBase = this.#remBase ?? readRemBase(list.base.root) ?? DEFAULT_REM_BASE;
+        return new AndroidResourceMapper(new AndroidDimensionValueConverter(remBase));
     }
 
     #toOutputs(

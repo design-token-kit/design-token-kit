@@ -10,6 +10,7 @@ import { RawValueUsageCheck } from "#/core/check/checks/RawValueUsageCheck";
 import { EmptyGroupCheck } from "#/core/check/checks/EmptyGroupCheck";
 import { MissingDescriptionCheck } from "#/core/check/checks/MissingDescriptionCheck";
 import { TailwindNamespaceCheck } from "#/core/check/checks/TailwindNamespaceCheck";
+import { RemBaseCheck } from "#/core/check/checks/RemBaseCheck";
 
 /**
  * Describes one selectable check for discovery and documentation purposes.
@@ -36,7 +37,13 @@ export interface CheckInfo {
  * token emits its reference diagnostics before any type-mismatch diagnostic.
  */
 export function validationChecks(): Check[] {
-    return [new ReferenceCheck(), new TypeMismatchCheck(), new GradientStopCheck(), new TailwindNamespaceCheck()];
+    return [
+        new ReferenceCheck(),
+        new TypeMismatchCheck(),
+        new GradientStopCheck(),
+        new TailwindNamespaceCheck(),
+        new RemBaseCheck(),
+    ];
 }
 
 /**

@@ -10,6 +10,11 @@ import { TokenReference } from "#/core/model/TokenReference";
 export type DimensionUnit = "px" | "rem";
 
 /**
+ * Default `rem` base in pixels, matching the CSS root font size.
+ */
+export const DEFAULT_REM_BASE = 16;
+
+/**
  * Represents a distance value with a unit.
  *
  * @see https://tr.designtokens.org/format/#dimension
@@ -21,6 +26,22 @@ export class DimensionValue {
     constructor(value: number, unit: DimensionUnit) {
         this.value = value;
         this.unit = unit;
+    }
+
+    /**
+     * Returns the dimension normalized to pixels, expanding `rem` against the
+     * given base.
+     *
+     * @remarks
+     * Platforms without a `rem` unit, such as Android and SwiftUI, need an
+     * absolute magnitude. Unlike `DurationValue.toMs`, the conversion
+     * factor is not fixed: `rem` is a multiple of the consuming system's root
+     * font size, so the base is supplied by the caller.
+     *
+     * @param base - Pixel value of one `rem`.
+     */
+    toPixels(base: number = DEFAULT_REM_BASE): number {
+        return this.unit === "rem" ? this.value * base : this.value;
     }
 
     toString(): string {

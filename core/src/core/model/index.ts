@@ -2,6 +2,7 @@ export type { TokenType } from "#/core/model/TokenType";
 export { TokenReference } from "#/core/model/TokenReference";
 export { TokenNode } from "#/core/model/TokenNode";
 export { TokenGroup } from "#/core/model/TokenGroup";
+export { readRemBase, DTK_EXTENSION, REM_BASE_EXTENSION } from "#/core/model/RemBaseExtension";
 export { Dtcg } from "#/core/model/Dtcg";
 export { DtcgList } from "#/core/model/DtcgList";
 export { DtcgJsonReader, DtcgJsonReaderError } from "#/core/io/DtcgJsonReader";
@@ -28,7 +29,7 @@ export type { ColorSpace, ColorComponent, ColorOrReference } from "#/core/model/
 export { ColorValue } from "#/core/model/values/ColorValue";
 
 export type { DimensionUnit, DimensionOrReference } from "#/core/model/values/DimensionValue";
-export { DimensionValue } from "#/core/model/values/DimensionValue";
+export { DimensionValue, DEFAULT_REM_BASE } from "#/core/model/values/DimensionValue";
 
 export type { DurationUnit, DurationOrReference } from "#/core/model/values/DurationValue";
 export { DurationValue } from "#/core/model/values/DurationValue";
