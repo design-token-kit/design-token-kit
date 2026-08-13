@@ -1,5 +1,6 @@
 import { DtcgJsonReader } from "@design-token-kit/core/core/io/DtcgJsonReader";
 import { DtcgList } from "@design-token-kit/core/core/model/DtcgList";
+import { AndroidTokenConverter } from "@design-token-kit/core/core/platforms/android/AndroidTokenConverter";
 import { CssTokenConverter } from "@design-token-kit/core/core/platforms/css/CssTokenConverter";
 import { ScssTokenConverter } from "@design-token-kit/core/core/platforms/scss/ScssTokenConverter";
 import { SwiftUiTokenConverter } from "@design-token-kit/core/core/platforms/swiftui/SwiftUiTokenConverter";
@@ -45,6 +46,11 @@ export class TokenConversionService {
 
         if (format === "tailwind-v4") {
             return [toFile("tokens.tailwind.css", new TailwindTokenConverter().convertList(list))];
+        }
+
+        if (format === "android") {
+            return new AndroidTokenConverter().convertResourceList(list)
+                .map((output) => toFile(output.filePath, output.content));
         }
 
         return [toFile("DesignTokens.swift", new SwiftUiTokenConverter().convertList(list))];
@@ -110,6 +116,6 @@ function toFile(fileName: string, content: string): ConvertedTokenFile {
     };
 }
 
-type PlatformTokenOutputFormat = "css" | "scss" | "tailwind-v4" | "swiftui";
+type PlatformTokenOutputFormat = "css" | "scss" | "tailwind-v4" | "android" | "swiftui";
 
 export type TokenOutputFormat = PlatformTokenOutputFormat | "dtcg";

@@ -1542,6 +1542,17 @@ describe("message flow", () => {
         expect(payload.files[0].content).toContain("enum DesignTokens");
     });
 
+    it("converts exported tokens to Android resources through core", async () => {
+        const context = loadSingleColorTokenContext();
+
+        await context.sendMessage({ type: "EXPORT_TOKENS_ANDROID" });
+
+        const payload = getTokenExportPayload(context.postedMessages[0]);
+        expect(payload.files).toHaveLength(1);
+        expect(payload.files[0].fileName).toBe("values/primitive.xml");
+        expect(payload.files[0].content).toContain("<color name=\"primitive_color_blue_500\"");
+    });
+
     it("posts a plugin export payload through the plugin message flow", async () => {
         const pageExport = {
             editorType: "figma",
