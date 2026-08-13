@@ -8,7 +8,7 @@ normalizes both into one internal DTO.
 - exports `figma.plugin.json` through Plugin API
 - exports `figma.rest.json` through the real Figma REST API
 - exports `tokens.json` with DTCG tokens from Figma Variables or paint styles
-- converts exported DTCG tokens to CSS, SCSS, Tailwind v4, and SwiftUI through
+- converts exported DTCG tokens to CSS, SCSS, Tailwind v4, Android XML, and SwiftUI through
   `@design-token-kit/core`
 - normalizes both payloads into one internal DTO
 - previews the last exported JSON in the plugin UI

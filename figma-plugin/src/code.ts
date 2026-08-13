@@ -150,6 +150,8 @@ function toTokenOutputFormat(type: PluginMessage["type"]): TokenOutputFormat | u
             return "scss";
         case "EXPORT_TOKENS_TAILWIND":
             return "tailwind-v4";
+        case "EXPORT_TOKENS_ANDROID":
+            return "android";
         case "EXPORT_TOKENS_SWIFTUI":
             return "swiftui";
         default:
@@ -165,5 +167,6 @@ type PluginMessage =
     | { type: "EXPORT_TOKENS_CSS" }
     | { type: "EXPORT_TOKENS_SCSS" }
     | { type: "EXPORT_TOKENS_TAILWIND" }
+    | { type: "EXPORT_TOKENS_ANDROID" }
     | { type: "EXPORT_TOKENS_SWIFTUI" }
     | { type: "EXPORT_REST_JSON"; accessToken: string };

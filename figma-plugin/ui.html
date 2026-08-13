@@ -373,6 +373,10 @@
             color: #f05138;
         }
 
+        .format-button[data-token-export-message="EXPORT_TOKENS_ANDROID"] .format-icon {
+            color: #3ddc84;
+        }
+
         .status {
             display: flex;
             align-items: center;
@@ -650,7 +654,7 @@
             <div>
                 <p class="eyebrow">Design Token Kit</p>
                 <h1 id="export-title" class="title">From Figma tokens to production code</h1>
-                <p class="description">Export DTCG, preserve aliases and themes, generate CSS, SCSS, Tailwind v4, and SwiftUI.</p>
+                <p class="description">Export DTCG, preserve aliases and themes, generate CSS, SCSS, Tailwind v4, Android XML, and SwiftUI.</p>
             </div>
             <img class="hero-logo" data-logo alt="Design Token Kit layered token logo">
         </div>
@@ -718,6 +722,14 @@
                     </svg>
                 </span>
                 <span>SwiftUI</span>
+            </button>
+            <button class="format-button" data-token-export-message="EXPORT_TOKENS_ANDROID" aria-pressed="false">
+                <span class="format-icon solid" aria-hidden="true">
+                    <svg viewBox="0 0 32 32">
+                        <path d="M9.1 11.7h13.8c.7 0 1.2.6 1.2 1.3v9.8c0 .7-.5 1.2-1.2 1.2H9.1c-.7 0-1.2-.5-1.2-1.2V13c0-.7.5-1.3 1.2-1.3Zm2.4 3.3a1.1 1.1 0 1 0 0 2.2 1.1 1.1 0 0 0 0-2.2Zm9 0a1.1 1.1 0 1 0 0 2.2 1.1 1.1 0 0 0 0-2.2ZM12 20h8v1.5h-8V20ZM10.3 9.8l-1.4-2.4.9-.5 1.4 2.4a11 11 0 0 1 9.8 0l1.4-2.4.9.5-1.4 2.4a7.9 7.9 0 0 1 2.4 1.2H7.9a7.9 7.9 0 0 1 2.4-1.2Z" />
+                    </svg>
+                </span>
+                <span>Android XML</span>
             </button>
             <button class="format-button" data-token-export-message="EXPORT_TOKENS_DTCG" aria-pressed="false">
                 <span class="format-icon" aria-hidden="true">
