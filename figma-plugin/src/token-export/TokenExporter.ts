@@ -49,6 +49,15 @@ export interface DtcgNumberToken {
 }
 
 /**
+ * Font weight token in the DTCG JSON format.
+ */
+export interface DtcgFontWeightToken {
+    $type: "fontWeight";
+    $value: number | string;
+    $description?: string;
+}
+
+/**
  * Typography value in the DTCG JSON format.
  */
 export interface DtcgTypographyValue {
@@ -441,6 +450,10 @@ function toTokenType(variable: Variable): DtcgVariableTokenType | undefined {
     }
 
     if (resolvedType === "FLOAT") {
+        if (isFontWeightVariable(variable)) {
+            return "fontWeight";
+        }
+
         return isNumberVariable(variable) ? "number" : "dimension";
     }
 
@@ -449,6 +462,13 @@ function toTokenType(variable: Variable): DtcgVariableTokenType | undefined {
 
 function isNumberVariable(variable: Variable): boolean {
     return getVariableScopes(variable).includes("OPACITY") || variable.name.toLowerCase().includes("opacity");
+}
+
+function isFontWeightVariable(variable: Variable): boolean {
+    const normalizedName = variable.name.toLowerCase().replace(/[^a-z0-9]+/g, "-");
+    return normalizedName.includes("font-weight")
+        || normalizedName.includes("fontweight")
+        || getVariableScopes(variable).some((scope) => String(scope) === "FONT_WEIGHT");
 }
 
 function mapVariableTokenName(
@@ -462,7 +482,11 @@ function mapVariableTokenName(
     return mapTokenName(variable.name, toFloatFallbackPrefix(variable, tokenType));
 }
 
-function toFloatFallbackPrefix(variable: Variable, tokenType: "dimension" | "number"): string[] {
+function toFloatFallbackPrefix(variable: Variable, tokenType: "dimension" | "number" | "fontWeight"): string[] {
+    if (tokenType === "fontWeight") {
+        return ["primitive", "font-weight"];
+    }
+
     if (tokenType === "number") {
         return ["primitive", "opacity"];
     }
@@ -629,7 +653,7 @@ function toTokenValue(
         return value;
     }
 
-    if ((tokenType === "dimension" || tokenType === "number") && typeof value === "number") {
+    if ((tokenType === "dimension" || tokenType === "number" || tokenType === "fontWeight") && typeof value === "number") {
         return value;
     }
 
@@ -684,6 +708,13 @@ function createTokenWithoutDescription(
         return {
             $type: "dimension",
             $value: typeof value === "string" ? value : { value: value as number, unit: "px" },
+        };
+    }
+
+    if (tokenType === "fontWeight") {
+        return {
+            $type: "fontWeight",
+            $value: value as number | string,
         };
     }
 
@@ -821,6 +852,7 @@ function getErrorMessage(error: unknown): string {
 export type DtcgToken =
     | DtcgColorToken
     | DtcgDimensionToken
+    | DtcgFontWeightToken
     | DtcgNumberToken
     | DtcgTypographyToken
     | DtcgShadowToken;
@@ -828,6 +860,7 @@ export type DtcgToken =
 export type DtcgVariableTokenType =
     | DtcgColorToken["$type"]
     | DtcgDimensionToken["$type"]
+    | DtcgFontWeightToken["$type"]
     | DtcgNumberToken["$type"];
 
 type FigmaColor = RGB & Partial<Pick<RGBA, "a">>;

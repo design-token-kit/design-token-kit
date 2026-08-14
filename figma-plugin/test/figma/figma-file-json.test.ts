@@ -543,6 +543,110 @@ describe("message flow", () => {
         });
     });
 
+    it("exports font weight float variables as fontWeight tokens", async () => {
+        const variables = [
+            {
+                id: "variable-font-weight-regular",
+                variableCollectionId: "collection-typography",
+                name: "Primitive/Font Weight/Regular",
+                description: "Regular font weight",
+                resolvedType: "FLOAT",
+                scopes: [],
+                valuesByMode: {
+                    default: 400,
+                },
+            },
+            {
+                id: "variable-font-weight-body",
+                variableCollectionId: "collection-typography",
+                name: "Semantic/Font Weight/Body",
+                description: "",
+                resolvedType: "FLOAT",
+                scopes: [],
+                valuesByMode: {
+                    default: { type: "VARIABLE_ALIAS", id: "variable-font-weight-regular" },
+                },
+            },
+        ];
+        const context = loadPluginContext({
+            figma: {
+                variables: {
+                    getLocalVariablesAsync: async (type: string) => variables.filter((variable) => variable.resolvedType === type),
+                    getLocalVariableCollectionsAsync: async () => [
+                        {
+                            id: "collection-typography",
+                            defaultModeId: "default",
+                            modes: [{ modeId: "default", name: "Default" }],
+                        },
+                    ],
+                },
+                getLocalPaintStylesAsync: async () => [],
+            },
+        });
+
+        await context.sendMessage({ type: "EXPORT_TOKENS_JSON" });
+
+        expect(toPlainJson(context.postedMessages[0])).toEqual({
+            type: "TOKENS_EXPORTED",
+            payload: {
+                files: [
+                    {
+                        fileName: "tokens.json",
+                        content: JSON.stringify({
+                            primitive: {
+                                "font-weight": {
+                                    regular: {
+                                        $type: "fontWeight",
+                                        $value: 400,
+                                        $description: "Regular font weight",
+                                    },
+                                },
+                            },
+                            semantic: {
+                                "font-weight": {
+                                    body: {
+                                        $type: "fontWeight",
+                                        $value: "{primitive.font-weight.regular}",
+                                    },
+                                },
+                            },
+                        }, null, 2),
+                        tokens: {
+                            primitive: {
+                                "font-weight": {
+                                    regular: {
+                                        $type: "fontWeight",
+                                        $value: 400,
+                                        $description: "Regular font weight",
+                                    },
+                                },
+                            },
+                            semantic: {
+                                "font-weight": {
+                                    body: {
+                                        $type: "fontWeight",
+                                        $value: "{primitive.font-weight.regular}",
+                                    },
+                                },
+                            },
+                        },
+                        downloadable: true,
+                    },
+                ],
+                summary: {
+                    source: "variables",
+                    colorTokens: 0,
+                    dimensionTokens: 0,
+                    numberTokens: 0,
+                    typographyTokens: 0,
+                    shadowTokens: 0,
+                    skipped: 0,
+                },
+                warnings: [],
+            },
+        });
+    });
+
     it("exports float variable mode overrides", async () => {
         const variables = [
             {
@@ -1504,6 +1608,18 @@ describe("message flow", () => {
         expect(payload.files[0].content).toContain("--primitive-color-blue-500");
     });
 
+    it("converts exported font weight variables to CSS through core", async () => {
+        const context = loadFontWeightTokenContext();
+
+        await context.sendMessage({ type: "EXPORT_TOKENS_CSS" });
+
+        const payload = getTokenExportPayload(context.postedMessages[0]);
+        expect(payload.files).toHaveLength(1);
+        expect(payload.files[0].fileName).toBe("tokens.css");
+        expect(payload.files[0].content).toContain("--primitive-font-weight-regular: 400;");
+        expect(payload.files[0].content).toContain("--semantic-font-weight-body: var(--primitive-font-weight-regular);");
+    });
+
     it("converts exported token modes to SCSS files through core", async () => {
         const context = loadColorModeTokenContext();
 
@@ -1701,6 +1817,49 @@ function loadSingleColorTokenContext(): ReturnType<typeof loadPluginContext> {
                 getLocalVariableCollectionsAsync: async () => [
                     {
                         id: "collection-colors",
+                        defaultModeId: "default",
+                        modes: [{ modeId: "default", name: "Default" }],
+                    },
+                ],
+            },
+            getLocalPaintStylesAsync: async () => [],
+        },
+    });
+}
+
+function loadFontWeightTokenContext(): ReturnType<typeof loadPluginContext> {
+    const variables = [
+        {
+            id: "variable-font-weight-regular",
+            variableCollectionId: "collection-typography",
+            name: "Primitive/Font Weight/Regular",
+            description: "",
+            resolvedType: "FLOAT",
+            scopes: [],
+            valuesByMode: {
+                default: 400,
+            },
+        },
+        {
+            id: "variable-font-weight-body",
+            variableCollectionId: "collection-typography",
+            name: "Semantic/Font Weight/Body",
+            description: "",
+            resolvedType: "FLOAT",
+            scopes: [],
+            valuesByMode: {
+                default: { type: "VARIABLE_ALIAS", id: "variable-font-weight-regular" },
+            },
+        },
+    ];
+
+    return loadPluginContext({
+        figma: {
+            variables: {
+                getLocalVariablesAsync: async (type: string) => variables.filter((variable) => variable.resolvedType === type),
+                getLocalVariableCollectionsAsync: async () => [
+                    {
+                        id: "collection-typography",
                         defaultModeId: "default",
                         modes: [{ modeId: "default", name: "Default" }],
                     },
