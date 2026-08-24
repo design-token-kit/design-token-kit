@@ -343,7 +343,7 @@ async function readTextStyleTokens(warnings: string[]): Promise<DtcgTokenEntry[]
     const styles = await figma.getLocalTextStylesAsync();
 
     return styles.flatMap((style) => {
-        const nameMapping = mapTokenName(style.name, ["component", "typography"]);
+        const nameMapping = mapTokenName(style.name, ["primitive", "typography"]);
         if (nameMapping === undefined) {
             warnings.push(`Skipped text style "${style.name}" because it does not contain a valid token path.`);
             return [];
@@ -364,7 +364,7 @@ async function readEffectStyleTokens(warnings: string[]): Promise<DtcgTokenEntry
     const styles = await figma.getLocalEffectStylesAsync();
 
     return styles.flatMap((style) => {
-        const nameMapping = mapTokenName(style.name, ["component", "shadow"]);
+        const nameMapping = mapTokenName(style.name, ["primitive", "shadow"]);
         if (nameMapping === undefined) {
             warnings.push(`Skipped effect style "${style.name}" because it does not contain a valid token path.`);
             return [];
