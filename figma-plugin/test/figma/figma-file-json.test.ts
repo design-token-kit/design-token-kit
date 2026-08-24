@@ -779,7 +779,7 @@ describe("message flow", () => {
                     {
                         fileName: "tokens.json",
                         content: JSON.stringify({
-                            component: {
+                            primitive: {
                                 typography: {
                                     heading: {
                                         h1: {
@@ -798,7 +798,7 @@ describe("message flow", () => {
                             },
                         }, null, 2),
                         tokens: {
-                            component: {
+                            primitive: {
                                 typography: {
                                     heading: {
                                         h1: {
@@ -869,7 +869,7 @@ describe("message flow", () => {
                     {
                         fileName: "tokens.json",
                         content: JSON.stringify({
-                            component: {
+                            primitive: {
                                 shadow: {
                                     card: {
                                         shadow: {
@@ -892,7 +892,7 @@ describe("message flow", () => {
                             },
                         }, null, 2),
                         tokens: {
-                            component: {
+                            primitive: {
                                 shadow: {
                                     card: {
                                         shadow: {
@@ -971,7 +971,7 @@ describe("message flow", () => {
                     {
                         fileName: "tokens.json",
                         content: JSON.stringify({
-                            component: {
+                            primitive: {
                                 shadow: {
                                     input: {
                                         shadow: {
@@ -994,7 +994,7 @@ describe("message flow", () => {
                             },
                         }, null, 2),
                         tokens: {
-                            component: {
+                            primitive: {
                                 shadow: {
                                     input: {
                                         shadow: {

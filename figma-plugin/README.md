@@ -79,8 +79,8 @@ When the layer is omitted, the exporter applies a fallback prefix:
 - color variables and paint styles -> `primitive.color`
 - opacity variables -> `primitive.opacity`
 - font-weight variables -> `primitive.font-weight`
-- text styles -> `component.typography`
-- effect styles -> `component.shadow`
+- text styles -> `primitive.typography`
+- effect styles -> `primitive.shadow`
 
 Dimension variables use the Figma scope or name to infer the fallback group:
 
@@ -105,5 +105,4 @@ Examples:
 
 Aliases are not inferred by matching raw values.
 Unresolvable aliases are skipped and reported as warnings.
-
 
