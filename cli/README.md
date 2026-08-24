@@ -55,24 +55,15 @@ npm install @design-token-kit/cli
 
 ## Quick Start
 
-Run with npx:
+Run the basic flow with `npx`:
 
 ```bash
 npx @design-token-kit/cli check tokens.json
+npx @design-token-kit/cli convert tokens.json --out ./tokens.css
+npx @design-token-kit/cli showcase tokens.json --out ./showcase.html --open
 ```
 
-```bash
-dtokens check tokens.json
-dtokens convert tokens.yaml --inform hrdt --outform css --out ./tokens.css
-dtokens convert tokens.json --outform scss --out ./tokens.scss
-dtokens convert tokens.json --outform tailwind-v4 --out ./tokens.tailwind.css
-dtokens convert tokens.json --outform swiftui --out ./DesignTokens.swift
-dtokens convert tokens.json --outform android --out ./app/src/main/res
-dtokens convert tokens.json --outform design-md
-dtokens convert DESIGN.md --inform design-md --outform dtcg
-dtokens showcase tokens.json --out ./showcase.html --open
-dtokens stats tokens.json --out ./stats.html
-```
+For other input and output formats, see the sections below.
 
 ## Input Formats
 

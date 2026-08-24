@@ -50,40 +50,18 @@ npm install @design-token-kit/core
 ## Quick Start
 
 ```ts
-import {
-  DtcgListLoader,
-  DtcgChecker,
-  CssTokenConverter,
-  ScssTokenConverter,
-  SwiftUiTokenConverter,
-  AndroidTokenConverter,
-  createTokenHtmlShowcase,
-  createTokenStats,
-} from "@design-token-kit/core";
+import { CssTokenConverter, DtcgListLoader } from "@design-token-kit/core";
 
-const sources = ["./tokens.json", "./tokens.dark.yaml"];
-
-const issues = await new DtcgChecker().validate(sources);
-if (issues.some((issue) => issue.severity === "error")) {
-  console.error(issues);
-  process.exit(1);
-}
+const sources = ["./tokens.json"];
 
 const list = await new DtcgListLoader().load(sources);
 const css = new CssTokenConverter().convertList(list);
-const scss = await new ScssTokenConverter().convert(["./tokens.json"]);
-const swift = new SwiftUiTokenConverter().convertList(list);
-const android = new AndroidTokenConverter().convertResourceList(list);
-const html = await createTokenHtmlShowcase().showcase(sources);
-const stats = await createTokenStats().stats(sources);
 
 console.log(css);
-console.log(scss);
-console.log(swift.slice(0, 120));
-console.log(android.map((output) => output.filePath));
-console.log(html.slice(0, 120));
-console.log(stats);
 ```
+
+For validation, other output formats, showcase generation, and token
+statistics, see the sections below.
 
 ## Input Formats
 
