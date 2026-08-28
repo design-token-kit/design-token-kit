@@ -313,39 +313,46 @@
 
         .format-button {
             display: grid;
-            grid-template-columns: 30px minmax(0, 1fr) 18px;
+            grid-template-columns: 28px minmax(0, 1fr) 16px;
             align-items: center;
-            gap: 8px;
-            min-height: 43px;
-            border: 1px solid var(--color-border-strong);
+            gap: 10px;
+            min-height: 40px;
+            border: 1px solid #d9e0e7;
             border-radius: 8px;
-            padding: 8px 12px;
+            padding: 8px 10px;
             color: var(--color-text);
-            background: #fffefb;
+            background: rgba(255, 255, 255, 0.86);
             font-size: 13px;
-            font-weight: 800;
+            font-weight: 600;
             text-align: left;
             transition: border-color 120ms ease, background 120ms ease, transform 120ms ease;
         }
 
+        .format-button:hover,
         .format-button:focus-visible {
-            outline: none;
+            border-color: #c6d0da;
+            background: #fbfcfd;
+        }
+
+        .format-button:focus-visible {
+            outline: 2px solid rgba(15, 31, 51, 0.08);
+            outline-offset: 2px;
         }
 
         .format-button::after {
             content: "→";
             justify-self: end;
-            color: var(--color-muted);
-            font-size: 16px;
+            color: #8b96a3;
+            font-size: 15px;
             font-weight: 400;
             line-height: 1;
-            transform: translateX(-4px);
             transition: transform 120ms ease, color 120ms ease;
         }
 
         .format-button:hover::after,
         .format-button:focus-visible::after {
-            transform: translateX(0);
+            color: #6d7885;
+            transform: translateX(1px);
         }
 
         .format-button:active {
@@ -356,15 +363,15 @@
             display: grid;
             place-items: center;
             color: var(--color-orange);
-            font-size: 20px;
+            font-size: 19px;
             line-height: 1;
             text-align: center;
         }
 
         .format-icon svg {
             display: block;
-            width: 24px;
-            height: 24px;
+            width: 23px;
+            height: 23px;
             stroke: currentColor;
             fill: none;
         }
@@ -394,27 +401,22 @@
         .format-button[data-token-export-message="EXPORT_TOKENS_DTCG"],
         .format-button[data-token-export-message="EXPORT_TOKENS_CSS"] {
             --format-accent: #f28a18;
-            --format-surface: #fff8ed;
         }
 
         .format-button[data-token-export-message="EXPORT_TOKENS_SCSS"] {
             --format-accent: #cf649a;
-            --format-surface: #fdf2f7;
         }
 
         .format-button[data-token-export-message="EXPORT_TOKENS_TAILWIND"] {
             --format-accent: #2fb8ad;
-            --format-surface: #effbf9;
         }
 
         .format-button[data-token-export-message="EXPORT_TOKENS_SWIFTUI"] {
             --format-accent: #f05138;
-            --format-surface: #fff4f1;
         }
 
         .format-button[data-token-export-message="EXPORT_TOKENS_ANDROID"] {
             --format-accent: #3aa666;
-            --format-surface: #f3faef;
         }
 
         .summary-panel {
@@ -447,18 +449,19 @@
         .summary-action {
             display: inline-flex;
             align-items: center;
-            gap: 8px;
+            gap: 10px;
             width: auto;
-            height: 36px;
-            border: 1px solid #a9d6ca;
+            height: 40px;
+            border: 1px solid #91cec4;
             border-radius: 8px;
-            padding: 0 14px;
-            color: var(--color-accent-dark);
-            background: var(--color-accent-soft);
+            padding: 0 12px;
+            color: #007a73;
+            background: #effaf7;
             font-size: 13px;
             font-weight: 600;
             line-height: 1.2;
             white-space: nowrap;
+            transition: border-color 120ms ease, background 120ms ease, transform 120ms ease;
         }
 
         .summary-action::before {
@@ -481,8 +484,13 @@
         }
 
         .summary-action:hover {
-            border-color: var(--color-accent);
-            background: #dff0eb;
+            border-color: #70bfb4;
+            background: #e9f7f4;
+        }
+
+        .summary-action:focus-visible {
+            outline: 2px solid rgba(0, 122, 115, 0.14);
+            outline-offset: 2px;
         }
 
         .summary-action:active {
