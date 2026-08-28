@@ -1,6 +1,8 @@
 import type { FigmaFileReader } from "#/figma-plugin/FigmaFileReader";
 import { PluginFigmaFileReader, RestFigmaFileReader } from "#/figma-plugin/index";
 import { TokenConversionService, type TokenOutputFormat } from "#/figma-plugin/token-export/TokenConversionService";
+import { TokenArchitectureAnalyzer } from "#/figma-plugin/token-export/TokenArchitectureAnalyzer";
+import { TokenAnalyticsAnalyzer } from "#/figma-plugin/token-export/TokenAnalyticsAnalyzer";
 import { TokenExporter } from "#/figma-plugin/token-export/TokenExporter";
 
 const MISSING_FILE_KEY_MESSAGE = "REST export requires figma.fileKey. "
@@ -42,12 +44,16 @@ figma.ui.onmessage = async (msg: PluginMessage) => {
 async function analyzeTokens(): Promise<void> {
     try {
         const result = await new TokenExporter().export();
+        const architectureReport = new TokenArchitectureAnalyzer().analyze(result.files);
+        const analyticsReport = new TokenAnalyticsAnalyzer().analyze(result.files, architectureReport.checks);
 
         figma.ui.postMessage({
             type: "TOKENS_ANALYZED",
             payload: {
                 summary: result.summary,
-                warnings: result.warnings,
+                warnings: [...result.warnings, ...architectureReport.warnings],
+                analytics: analyticsReport,
+                architectureChecks: architectureReport.checks,
             },
         });
     } catch (error: unknown) {
