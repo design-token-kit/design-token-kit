@@ -111,6 +111,7 @@ export interface DtcgTokenDocument {
 export interface DtcgTokenEntry {
     path: string[];
     token: DtcgToken;
+    architectureWarnings?: string[];
 }
 
 /**
@@ -121,6 +122,7 @@ export interface ExportedTokenFile {
     content: string;
     tokens: DtcgTokenDocument;
     downloadable: boolean;
+    architectureWarnings: string[];
 }
 
 /**
@@ -186,6 +188,7 @@ export class TokenExporter {
                 content: JSON.stringify(styleDocument, null, 2),
                 tokens: styleDocument,
                 downloadable: baseStyleTokens.length > 0,
+                architectureWarnings: collectArchitectureWarnings(baseStyleTokens),
             }];
         const counts = files.reduce(
             (value, file) => this.#tokenCounter.add(value, this.#tokenCounter.count(file.tokens)),
@@ -253,12 +256,13 @@ async function readColorVariableTokens(
         );
         const document = documentBuilder.build(tokens);
 
-        return {
-            fileName: modeExport.fileName,
-            content: JSON.stringify(document, null, 2),
-            tokens: document,
-            downloadable: tokens.length > 0,
-        };
+            return {
+                fileName: modeExport.fileName,
+                content: JSON.stringify(document, null, 2),
+                tokens: document,
+                downloadable: tokens.length > 0,
+                architectureWarnings: collectArchitectureWarnings(tokens),
+            };
     });
     const downloadableFiles = files.filter((file) => file.downloadable);
 
@@ -308,6 +312,7 @@ function readVariableTokensForMode(
         return [{
             path: nameMapping.path,
             token: createToken(tokenType, tokenValue, variable.description),
+            architectureWarnings: nameMapping.architectureWarnings,
         }];
     });
 }
@@ -331,6 +336,7 @@ async function readColorStyleTokens(warnings: string[]): Promise<DtcgTokenEntry[
         return [{
             path: nameMapping.path,
             token: createToken("color", { ...paint.color, a: paint.opacity ?? 1 }, style.description),
+            architectureWarnings: nameMapping.architectureWarnings,
         }];
     });
 }
@@ -352,6 +358,7 @@ async function readTextStyleTokens(warnings: string[]): Promise<DtcgTokenEntry[]
         return [{
             path: nameMapping.path,
             token: createTypographyToken(style),
+            architectureWarnings: nameMapping.architectureWarnings,
         }];
     });
 }
@@ -386,6 +393,7 @@ async function readEffectStyleTokens(warnings: string[]): Promise<DtcgTokenEntry
         return [{
             path: nameMapping.path,
             token: createShadowToken(shadowLayers, style.description),
+            architectureWarnings: nameMapping.architectureWarnings,
         }];
     });
 }
@@ -407,6 +415,10 @@ function addTokensToBaseFile(
         content: JSON.stringify(document, null, 2),
         tokens: document,
         downloadable: true,
+        architectureWarnings: [
+            ...(baseFileIndex === -1 ? [] : files[baseFileIndex]!.architectureWarnings),
+            ...collectArchitectureWarnings(tokens),
+        ],
     };
 
     if (baseFileIndex === -1) {
@@ -414,6 +426,10 @@ function addTokensToBaseFile(
     }
 
     return files.map((file, index) => index === baseFileIndex ? baseFile : file);
+}
+
+function collectArchitectureWarnings(tokens: DtcgTokenEntry[]): string[] {
+    return tokens.flatMap((token) => token.architectureWarnings ?? []);
 }
 
 function createVariablePathIndex(variables: Variable[]): VariablePathIndex {

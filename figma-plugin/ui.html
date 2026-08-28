@@ -77,32 +77,6 @@
             font-weight: 700;
         }
 
-        .topbar {
-            display: flex;
-            align-items: center;
-            min-height: 48px;
-            padding: 10px 20px;
-            color: #fff;
-            background: #1d1f1f;
-        }
-
-        .brand {
-            display: inline-flex;
-            align-items: center;
-            gap: 10px;
-            min-width: 0;
-            font-size: 16px;
-            font-weight: 800;
-            letter-spacing: -0.03em;
-        }
-
-        .brand-logo {
-            width: 26px;
-            height: 26px;
-            object-fit: contain;
-            flex: 0 0 auto;
-        }
-
         .app {
             display: grid;
             gap: 10px;
@@ -167,10 +141,7 @@
             grid-template-columns: minmax(210px, 0.85fr) minmax(0, 1.45fr);
             gap: 12px;
             align-items: center;
-            border: 1px solid #cfe5df;
-            border-radius: 14px;
             padding: 13px 14px;
-            background: linear-gradient(135deg, #f2fbf8 0%, #fffdf8 100%);
         }
 
         .structure-helper-copy {
@@ -292,11 +263,46 @@
             --marker-color: #9a8cff;
         }
 
-        .structure-arrow {
-            color: #78bdb2;
-            font-size: 16px;
-            line-height: 1;
-            text-align: center;
+        .export-heading {
+            display: grid;
+            gap: 4px;
+            border-top: 1px solid var(--color-border);
+            margin-top: 0;
+            padding-top: 16px;
+        }
+
+        .export-heading h2 {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin: 0;
+            color: var(--color-text);
+            font-size: 15px;
+            line-height: 1.2;
+            font-weight: 900;
+            letter-spacing: -0.02em;
+        }
+
+        .export-heading h2::before {
+            content: "↓";
+            display: grid;
+            place-items: center;
+            width: 13px;
+            height: 13px;
+            border: 2px solid currentColor;
+            border-top: 0;
+            border-radius: 0 0 4px 4px;
+            font-size: 13px;
+            font-weight: 700;
+            line-height: 0.8;
+        }
+
+        .export-heading p {
+            margin: 0;
+            color: var(--color-muted);
+            font-size: 12px;
+            line-height: 1.35;
+            font-weight: 600;
         }
 
         .platform-actions {
@@ -307,35 +313,43 @@
 
         .format-button {
             display: grid;
-            grid-template-columns: 30px minmax(0, 1fr);
+            grid-template-columns: 30px minmax(0, 1fr) 18px;
             align-items: center;
+            gap: 8px;
             min-height: 43px;
             border: 1px solid var(--color-border-strong);
-            border-radius: 12px;
+            border-radius: 8px;
             padding: 8px 12px;
             color: var(--color-text);
             background: #fffefb;
-            box-shadow: var(--shadow-soft);
             font-size: 13px;
             font-weight: 800;
             text-align: left;
-            transition: border-color 120ms ease, background 120ms ease, color 120ms ease, transform 120ms ease;
+            transition: border-color 120ms ease, background 120ms ease, transform 120ms ease;
         }
 
-        .format-button:hover {
-            border-color: #cfc0ae;
-            background: #fffaf0;
+        .format-button:focus-visible {
+            outline: none;
+        }
+
+        .format-button::after {
+            content: "→";
+            justify-self: end;
+            color: var(--color-muted);
+            font-size: 16px;
+            font-weight: 400;
+            line-height: 1;
+            transform: translateX(-4px);
+            transition: transform 120ms ease, color 120ms ease;
+        }
+
+        .format-button:hover::after,
+        .format-button:focus-visible::after {
+            transform: translateX(0);
         }
 
         .format-button:active {
             transform: translateY(1px);
-        }
-
-        .format-button.primary,
-        .format-button[aria-pressed="true"] {
-            border-color: var(--color-border-strong);
-            color: var(--color-text);
-            background: #fffefb;
         }
 
         .format-icon {
@@ -377,49 +391,34 @@
             color: #3ddc84;
         }
 
-        .status {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            min-height: 38px;
-            border-radius: 12px;
-            padding: 8px 12px;
-            color: var(--color-accent-dark);
-            background: var(--color-accent-soft);
-            font-size: 13px;
-            font-weight: 800;
-            line-height: 1.4;
-            overflow-wrap: anywhere;
+        .format-button[data-token-export-message="EXPORT_TOKENS_DTCG"],
+        .format-button[data-token-export-message="EXPORT_TOKENS_CSS"] {
+            --format-accent: #f28a18;
+            --format-surface: #fff8ed;
         }
 
-        .status::before {
-            content: "v";
-            display: grid;
-            place-items: center;
-            width: 20px;
-            height: 20px;
-            border: 2px solid currentColor;
-            border-radius: 50%;
-            font-size: 12px;
-            line-height: 1;
-            flex: 0 0 auto;
+        .format-button[data-token-export-message="EXPORT_TOKENS_SCSS"] {
+            --format-accent: #cf649a;
+            --format-surface: #fdf2f7;
         }
 
-        .status[data-state="loading"]::before {
-            content: "...";
+        .format-button[data-token-export-message="EXPORT_TOKENS_TAILWIND"] {
+            --format-accent: #2fb8ad;
+            --format-surface: #effbf9;
         }
 
-        .status[data-state="error"] {
-            color: #9a3f12;
-            background: #fff0e5;
+        .format-button[data-token-export-message="EXPORT_TOKENS_SWIFTUI"] {
+            --format-accent: #f05138;
+            --format-surface: #fff4f1;
         }
 
-        .status[data-state="error"]::before {
-            content: "!";
+        .format-button[data-token-export-message="EXPORT_TOKENS_ANDROID"] {
+            --format-accent: #3aa666;
+            --format-surface: #f3faef;
         }
 
         .summary-panel {
-            padding: 12px 14px 14px;
+            padding: 18px 22px 20px;
         }
 
         .summary-head {
@@ -429,16 +428,48 @@
             gap: 12px;
         }
 
+        .summary-head .eyebrow {
+            color: var(--color-orange);
+            font-size: 15px;
+            line-height: 1.2;
+            font-weight: 900;
+            letter-spacing: -0.02em;
+            text-transform: none;
+        }
+
         .summary-action {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
             width: auto;
-            border: 1px solid var(--color-border-strong);
-            border-radius: 999px;
-            padding: 6px 12px;
+            border: 1px solid #a9d6ca;
+            border-radius: 8px;
+            padding: 9px 15px;
             color: var(--color-accent-dark);
             background: var(--color-accent-soft);
-            font-size: 12px;
-            font-weight: 800;
+            font-size: 13px;
+            font-weight: 900;
+            line-height: 1.2;
             white-space: nowrap;
+        }
+
+        .summary-action::before {
+            content: "";
+            box-sizing: border-box;
+            flex: 0 0 auto;
+            width: 16px;
+            height: 16px;
+            background: currentColor;
+            clip-path: polygon(12% 88%, 12% 48%, 28% 48%, 28% 88%, 42% 88%, 42% 22%, 58% 22%, 58% 88%, 72% 88%, 72% 36%, 88% 36%, 88% 88%);
+        }
+
+        .summary-action.loading::before {
+            border: 2px solid rgba(0, 102, 95, 0.24);
+            border-top-color: currentColor;
+            border-radius: 50%;
+            background: transparent;
+            clip-path: none;
+            animation: spin 0.8s linear infinite;
         }
 
         .summary-action:hover {
@@ -453,40 +484,312 @@
         .metrics {
             display: grid;
             grid-template-columns: repeat(3, minmax(0, 1fr));
-            gap: 10px;
-            margin-top: 10px;
+            gap: 11px;
+            margin: 14px 0 0;
+            padding: 0;
+            list-style: none;
+        }
+
+        .layer-analytics {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 8px;
+            margin: 14px 0 0;
+            padding: 0;
+            list-style: none;
+        }
+
+        .layer-metric {
+            display: grid;
+            grid-template-columns: 9px minmax(0, 1fr);
+            grid-template-rows: auto auto;
+            column-gap: 7px;
+            align-items: center;
+            border: 1px solid var(--color-border-strong);
+            border-radius: 8px;
+            padding: 7px 8px;
+            background: #fffefb;
+        }
+
+        .layer-metric::before {
+            content: "";
+            grid-row: 1 / -1;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--layer-color);
+        }
+
+        .layer-metric.primitive {
+            --layer-color: #74d6ca;
+        }
+
+        .layer-metric.semantic {
+            --layer-color: #f2ba45;
+        }
+
+        .layer-metric.component {
+            --layer-color: #9a8cff;
+        }
+
+        .layer-metric-value {
+            color: var(--color-text);
+            font-size: 18px;
+            line-height: 1;
+            font-weight: 900;
+        }
+
+        .layer-metric-label {
+            margin-top: 3px;
+            color: var(--color-muted);
+            font-size: 10px;
+            line-height: 1.1;
+            font-weight: 700;
+        }
+
+        .architecture-heading {
+            border-top: 1px solid var(--color-border);
+            margin-top: 16px;
+            padding-top: 16px;
+        }
+
+        .architecture-heading h3 {
+            margin: 0;
+            color: var(--color-text);
+            font-size: 15px;
+            line-height: 1.2;
+            font-weight: 900;
+            letter-spacing: -0.02em;
+        }
+
+        .architecture-heading p {
+            margin-top: 7px;
+            color: var(--color-muted);
+            font-size: 12px;
+            line-height: 1.35;
+            font-weight: 600;
+        }
+
+        .architecture-checks {
+            display: grid;
+            gap: 5px;
+            margin: 8px 0 0;
+            padding: 0;
+            list-style: none;
+        }
+
+        .architecture-check {
+            position: relative;
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) 52px 74px;
+            align-items: center;
+            gap: 8px;
+            border: 1px solid var(--color-border-strong);
+            border-radius: 13px;
+            padding: 8px 10px;
+            background: #fffefb;
+        }
+
+        .architecture-check__row {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) 52px 74px;
+            align-items: center;
+            gap: 8px;
+            grid-column: 1 / -1;
+        }
+
+        .architecture-check__name {
+            color: var(--color-text);
+            font-size: 13px;
+            font-weight: 800;
+            line-height: 1.25;
+            letter-spacing: -0.015em;
+        }
+
+        .architecture-check__copy {
+            display: grid;
+            grid-template-columns: 24px minmax(0, 1fr);
+            align-items: center;
+            column-gap: 7px;
+            min-width: 0;
+        }
+
+        .architecture-check__copy::before {
+            content: "✓";
+            display: grid;
+            place-items: center;
+            width: 18px;
+            height: 18px;
+            border: 2px solid #0c8a61;
+            border-radius: 50%;
+            color: #0c8a61;
+            font-size: 12px;
+            font-weight: 900;
+            line-height: 1;
+        }
+
+        .architecture-check__description {
+            grid-column: 2 / -1;
+            margin-top: 2px;
+            color: var(--color-muted);
+            font-size: 11px;
+            line-height: 1.25;
+            font-weight: 600;
+        }
+
+        .architecture-check__docs {
+            display: inline-grid;
+            place-items: center;
+            justify-self: start;
+            color: var(--color-accent-dark);
+            text-decoration: none;
+        }
+
+        .architecture-check__docs svg {
+            display: block;
+            width: 20px;
+            height: 20px;
+            stroke: currentColor;
+            fill: none;
+        }
+
+        .architecture-check__docs:hover {
+            text-decoration: underline;
+        }
+
+        .architecture-check__state {
+            justify-self: end;
+            min-width: 52px;
+            border-radius: 8px;
+            padding: 5px 9px;
+            color: #00665f;
+            background: #dff5ef;
+            font-size: 11px;
+            font-weight: 900;
+            white-space: nowrap;
+        }
+
+        .architecture-check__issues {
+            grid-column: 1 / -1;
+            border-radius: 10px;
+            margin: 8px 0 2px 25px;
+            padding: 0;
+            color: #5d3515;
+            font-size: 11px;
+            font-weight: 600;
+            line-height: 1.45;
+        }
+
+        .architecture-check__issue-heading {
+            display: block;
+            margin-bottom: 6px;
+            color: #8a4b00;
+            font-weight: 900;
+        }
+
+        .architecture-check__issue-list {
+            margin: 0;
+            padding-left: 18px;
+        }
+
+        .architecture-check__issue-list.single {
+            padding-left: 0;
+            list-style: none;
+        }
+
+        .architecture-check__issue-list li + li {
+            margin-top: 4px;
+        }
+
+        .architecture-check__notes {
+            grid-column: 1 / -1;
+            display: grid;
+            gap: 4px;
+            margin-top: 8px;
+            color: #8a4b00;
+            font-size: 12px;
+            font-weight: 700;
+            line-height: 1.4;
+        }
+
+        .architecture-check__note {
+            border-radius: 999px;
+            padding: 5px 9px;
+            background: #fff0c2;
+        }
+
+        .architecture-check[data-state="warning"] .architecture-check__state {
+            color: #8a4b00;
+            background: #fff0c2;
+        }
+
+        .architecture-check[data-state="warning"] .architecture-check__copy::before {
+            content: "!";
+            border-color: #f2a100;
+            color: #c46b00;
+        }
+
+        .architecture-check[data-state="error"] .architecture-check__state {
+            color: #a31d1d;
+            background: #ffe2e2;
+        }
+
+        .architecture-check[data-state="error"] .architecture-check__copy::before {
+            content: "!";
+            border-color: #d84a4a;
+            color: #a31d1d;
         }
 
         .metric {
             display: grid;
-            grid-template-columns: 32px minmax(0, 1fr);
+            grid-template-columns: 26px minmax(0, 1fr);
             align-items: center;
-            gap: 10px;
-            min-height: 52px;
+            gap: 9px;
+            min-height: 50px;
             border: 1px solid var(--color-border-strong);
-            border-radius: 12px;
+            border-radius: 11px;
             padding: 8px 10px;
             background: #fffefb;
-            box-shadow: var(--shadow-soft);
+        }
+
+        .metric.loading {
+            grid-column: 1 / -1;
+            border-style: dashed;
+            color: var(--color-accent-dark);
+            background: linear-gradient(135deg, #f2fbf8 0%, #fffdf8 100%);
+        }
+
+        .metric.loading .metric-icon::before {
+            content: "";
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(0, 102, 95, 0.18);
+            border-top-color: currentColor;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        .metric.loading .metric-icon svg {
+            display: none;
         }
 
         .metric-icon {
             display: grid;
             place-items: center;
-            width: 32px;
-            height: 32px;
+            width: 24px;
+            height: 24px;
             border-radius: 50%;
             color: var(--color-accent-dark);
             background: var(--color-accent-soft);
-            font-size: 17px;
+            font-size: 13px;
             font-weight: 900;
             line-height: 1;
         }
 
         .metric-icon svg {
             display: block;
-            width: 22px;
-            height: 22px;
+            width: 18px;
+            height: 18px;
             stroke: currentColor;
             fill: none;
         }
@@ -496,23 +799,70 @@
             stroke: none;
         }
 
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
         .metric-value {
             display: block;
             color: var(--color-text);
-            font-size: 19px;
+            font-size: 14px;
             line-height: 1.05;
-            font-weight: 900;
-            letter-spacing: -0.035em;
+            font-weight: 800;
+            letter-spacing: -0.02em;
             overflow-wrap: anywhere;
         }
 
         .metric-label {
             display: block;
-            margin-top: 3px;
+            margin-top: 2px;
             color: var(--color-muted);
-            font-size: 12px;
+            font-size: 10px;
             line-height: 1.1;
             font-weight: 600;
+        }
+
+        .architecture-metric-content {
+            display: grid;
+            gap: 7px;
+        }
+
+        .architecture-metric-label {
+            color: var(--color-muted);
+            font-size: 10px;
+            line-height: 1.1;
+            font-weight: 600;
+        }
+
+        .architecture-metric-badges {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+        }
+
+        .architecture-metric-badge {
+            border-radius: 6px;
+            padding: 4px 7px;
+            font-size: 9px;
+            line-height: 1;
+            font-weight: 800;
+        }
+
+        .architecture-metric-badge.pass {
+            color: #00665f;
+            background: #dff5ef;
+        }
+
+        .architecture-metric-badge.warning {
+            color: #8a4b00;
+            background: #fff0c2;
+        }
+
+        .architecture-metric-badge.error {
+            color: #a31d1d;
+            background: #ffe2e2;
         }
 
         .warnings {
@@ -622,32 +972,23 @@
                 grid-template-columns: minmax(0, 1fr);
             }
 
-            .structure-flow {
-                grid-template-columns: minmax(0, 1fr);
-            }
-
-            .structure-step {
-                grid-template-columns: minmax(0, 1fr);
-            }
-
-            .structure-arrow {
-                transform: rotate(90deg);
-            }
-
             .metrics {
                 grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+
+            .layer-analytics {
+                grid-template-columns: minmax(0, 1fr);
+            }
+        }
+
+        @media (max-width: 420px) {
+            .platform-actions {
+                grid-template-columns: minmax(0, 1fr);
             }
         }
     </style>
 </head>
 <body>
-<header class="topbar">
-    <div class="brand" aria-label="Design Token Kit">
-        <img class="brand-logo" data-logo alt="Design Token Kit logo">
-        <span>Design Token Kit</span>
-    </div>
-</header>
-
 <main class="app">
     <section class="panel hero" aria-labelledby="export-title">
         <div class="hero-head">
@@ -661,9 +1002,9 @@
 
         <section class="structure-helper" aria-labelledby="structure-helper-title">
             <div class="structure-helper-copy">
-                <h2 id="structure-helper-title" class="structure-helper-title">Recommended structure</h2>
+                <h2 id="structure-helper-title" class="structure-helper-title">Recommended architecture</h2>
                 <p class="structure-helper-description">For best results, organize tokens in layers.</p>
-                <a class="structure-helper-link" href="https://design-token-kit.github.io/docs/guides/figma-plugin/" target="_blank" rel="noopener noreferrer">View full token structure guide ↗</a>
+                <a class="structure-helper-link" href="https://design-token-kit.github.io/docs/guides/figma-plugin/" target="_blank" rel="noopener noreferrer">View full token architecture guide ↗</a>
             </div>
             <div class="structure-flow" aria-label="Primitive to Semantic to Component token flow">
                 <div class="structure-step">
@@ -687,8 +1028,22 @@
             </div>
         </section>
 
+        <section class="export-heading" aria-labelledby="export-format-title">
+            <h2 id="export-format-title">Choose export format</h2>
+            <p>Select a format to generate tokens from the current Figma file.</p>
+        </section>
+
         <div class="platform-actions" aria-label="Token export formats">
-            <button class="format-button primary" data-token-export-message="EXPORT_TOKENS_CSS" aria-pressed="true">
+            <button class="format-button primary" data-token-export-message="EXPORT_TOKENS_DTCG" aria-pressed="true">
+                <span class="format-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M9 4c-2.4 0-3.2 1.1-3.2 3.2v2.2c0 1.1-.8 2-1.8 2.2 1 .2 1.8 1.1 1.8 2.2v3c0 2.1.8 3.2 3.2 3.2" />
+                        <path d="M15 4c2.4 0 3.2 1.1 3.2 3.2v2.2c0 1.1.8 2 1.8 2.2-1 .2-1.8 1.1-1.8 2.2v3c0 2.1-.8 3.2-3.2 3.2" />
+                    </svg>
+                </span>
+                <span>DTCG JSON</span>
+            </button>
+            <button class="format-button" data-token-export-message="EXPORT_TOKENS_CSS" aria-pressed="false">
                 <span class="format-icon solid" aria-hidden="true">
                     <svg viewBox="0 0 512 512">
                         <path d="M378.413 0H208.297h-13.182L185.8 9.314 57.02 138.102l-9.314 9.314v13.176 265.514c0 47.36 38.528 85.895 85.896 85.895h244.811c47.353 0 85.881-38.535 85.881-85.895V85.896C464.294 38.528 425.766 0 378.413 0zM432.497 426.105c0 29.877-24.214 54.091-54.084 54.091H133.602c-29.884 0-54.098-24.214-54.098-54.091V160.591h83.716c24.885 0 45.077-20.178 45.077-45.07V31.804h170.116c29.87 0 54.084 24.214 54.084 54.092v340.209z" />
@@ -731,26 +1086,26 @@
                 </span>
                 <span>Android XML</span>
             </button>
-            <button class="format-button" data-token-export-message="EXPORT_TOKENS_DTCG" aria-pressed="false">
-                <span class="format-icon" aria-hidden="true">
-                    <svg viewBox="0 0 24 24" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M9 4c-2.4 0-3.2 1.1-3.2 3.2v2.2c0 1.1-.8 2-1.8 2.2 1 .2 1.8 1.1 1.8 2.2v3c0 2.1.8 3.2 3.2 3.2" />
-                        <path d="M15 4c2.4 0 3.2 1.1 3.2 3.2v2.2c0 1.1.8 2 1.8 2.2-1 .2-1.8 1.1-1.8 2.2v3c0 2.1-.8 3.2-3.2 3.2" />
-                    </svg>
-                </span>
-                <span>DTCG JSON</span>
-            </button>
         </div>
 
-        <p id="status" class="status" data-state="idle" aria-live="polite">Ready.</p>
     </section>
 
     <section class="panel summary-panel" aria-labelledby="summary-title">
         <div class="summary-head">
             <h2 id="summary-title" class="eyebrow">Summary</h2>
-            <button id="analyze-tokens" class="summary-action" type="button">Show summary</button>
+            <button id="analyze-tokens" class="summary-action" type="button">Analyze tokens</button>
         </div>
-        <div id="token-summary" class="metrics" aria-live="polite"></div>
+        <ul id="layer-analytics" class="layer-analytics hidden" aria-label="Token layers">
+            <li class="layer-metric primitive"><span id="primitive-token-count" class="layer-metric-value">0</span><span class="layer-metric-label">Primitive</span></li>
+            <li class="layer-metric semantic"><span id="semantic-token-count" class="layer-metric-value">0</span><span class="layer-metric-label">Semantic</span></li>
+            <li class="layer-metric component"><span id="component-token-count" class="layer-metric-value">0</span><span class="layer-metric-label">Component</span></li>
+        </ul>
+        <ul id="token-analytics" class="metrics analytics-metrics hidden" aria-live="polite"></ul>
+        <div class="architecture-heading">
+            <h3>Architecture checks</h3>
+            <p>Checks token structure, references, layer usage, and naming conventions.</p>
+        </div>
+        <ul id="token-summary" class="architecture-checks" aria-live="polite"></ul>
     </section>
 
     <section id="warnings-panel" class="panel warnings">
@@ -782,7 +1137,8 @@
     const tokenExportButtons = document.querySelectorAll("[data-token-export-message]");
     const downloadRestJsonButton = document.getElementById("download-rest-json");
     const downloadPluginJsonButton = document.getElementById("download-plugin-json");
-    const status = document.getElementById("status");
+    const layerAnalytics = document.getElementById("layer-analytics");
+    const tokenAnalytics = document.getElementById("token-analytics");
     const tokenSummary = document.getElementById("token-summary");
     const warningsPanel = document.getElementById("warnings-panel");
     const warningsList = document.getElementById("warnings-list");
@@ -793,19 +1149,12 @@
         image.src = logoDataUri;
     });
 
-    renderMetrics({
-        colorTokens: 0,
-        dimensionTokens: 0,
-        numberTokens: 0,
-        typographyTokens: 0,
-        shadowTokens: 0,
-        skipped: 0,
-    });
+    renderStructureFlowStats();
+    renderArchitectureChecks([]);
 
     tokenExportButtons.forEach((button) => {
         button.addEventListener("click", () => {
             setActiveFormat(button);
-            setStatus(`Exporting ${button.textContent.trim()}...`, "loading");
             clearWarnings();
 
             parent.postMessage(
@@ -820,22 +1169,10 @@
     });
 
     analyzeTokensButton.addEventListener("click", () => {
-        setStatus("Collecting token summary...", "loading");
-        clearWarnings();
-
-        parent.postMessage(
-            {
-                pluginMessage: {
-                    type: "ANALYZE_TOKENS",
-                },
-            },
-            "*",
-        );
+        requestTokenAnalysis();
     });
 
     downloadRestJsonButton.addEventListener("click", () => {
-        setStatus("Exporting REST JSON...", "loading");
-
         parent.postMessage(
             {
                 pluginMessage: {
@@ -848,8 +1185,6 @@
     });
 
     downloadPluginJsonButton.addEventListener("click", () => {
-        setStatus("Exporting Plugin JSON...", "loading");
-
         parent.postMessage(
             {
                 pluginMessage: {
@@ -864,7 +1199,7 @@
         const message = event.data.pluginMessage;
 
         if (message?.type === "EXPORT_FAILED") {
-            setStatus(`Failed to export ${message.payload.source} JSON: ${message.payload.message}`, "error");
+            setAnalysisLoading(false);
             renderWarnings([message.payload.message]);
             return;
         }
@@ -886,7 +1221,6 @@
         downloadTextFile(message.payload.fileName, message.payload.content);
         renderDiagnosticSummary(message.payload.dto);
         clearWarnings();
-        setStatus(`Downloaded ${message.payload.fileName}.`, "success");
     };
 
     function handleTokensExported(payload) {
@@ -894,23 +1228,206 @@
         const downloadableFiles = files.filter((exportedFile) => exportedFile.downloadable !== false);
 
         downloadableFiles.forEach((exportedFile) => downloadTextFile(exportedFile.fileName, exportedFile.content));
-        renderMetrics(payload.summary);
+        clearTokenAnalytics();
         renderWarnings(payload.warnings);
-        setStatus(
-            downloadableFiles.length > 0
-                ? formatDownloadedFilesMessage(downloadableFiles)
-                : "No token files to download.",
-            "success",
-        );
     }
 
     function handleTokensAnalyzed(payload) {
-        renderMetrics(payload.summary);
-        renderWarnings(payload.warnings);
-        setStatus("Summary updated.", "success");
+        const architectureChecks = payload.architectureChecks ?? [];
+        setAnalysisLoading(false);
+        renderTokenAnalytics(payload.analytics);
+        renderArchitectureChecks(architectureChecks);
+        renderWarnings(payload.warnings.filter((warning) => !warning.startsWith("Token architecture:")));
+    }
+
+    function setAnalysisLoading(isLoading) {
+        analyzeTokensButton.disabled = isLoading;
+        analyzeTokensButton.classList.toggle("loading", isLoading);
+        analyzeTokensButton.textContent = isLoading ? "Analyzing..." : "Analyze tokens";
+    }
+
+    function renderTokenAnalyticsLoading() {
+        tokenAnalytics.innerHTML = "";
+        tokenAnalytics.classList.remove("hidden");
+        tokenAnalytics.appendChild(createLoadingMetric());
+    }
+
+    function renderTokenAnalytics(analytics) {
+        tokenAnalytics.innerHTML = "";
+        tokenAnalytics.classList.toggle("hidden", analytics === undefined);
+        renderStructureFlowStats(analytics);
+        if (analytics === undefined) {
+            return;
+        }
+
+        const metrics = [
+            ["Total tokens", analytics.totalTokens],
+            ["References", analytics.referenceTokens],
+            ["Raw values", analytics.rawValueTokens],
+            ["Themes", analytics.themeFiles],
+        ];
+
+        if (analytics.otherTokens > 0) {
+            metrics.splice(2, 0, ["Other layers", analytics.otherTokens]);
+        }
+
+        metrics.forEach(([label, value]) => {
+            tokenAnalytics.appendChild(createMetric(label, value));
+        });
+
+        tokenAnalytics.appendChild(createArchitectureChecksMetric(analytics));
+    }
+
+    function clearTokenAnalytics() {
+        renderTokenAnalytics(undefined);
+    }
+
+    function renderStructureFlowStats(analytics) {
+        layerAnalytics.classList.toggle("hidden", analytics === undefined);
+        document.getElementById("primitive-token-count").textContent = String(analytics?.primitiveTokens ?? 0);
+        document.getElementById("semantic-token-count").textContent = String(analytics?.semanticTokens ?? 0);
+        document.getElementById("component-token-count").textContent = String(analytics?.componentTokens ?? 0);
+    }
+
+    function createLoadingMetric() {
+        const item = createMetric("Summary", "Analyzing tokens...");
+        item.classList.add("loading");
+
+        return item;
+    }
+
+    function renderArchitectureChecks(checks) {
+        tokenSummary.className = "architecture-checks";
+        tokenSummary.innerHTML = "";
+
+        if (checks.length === 0) {
+            tokenSummary.appendChild(createArchitectureCheck({
+                name: "Analyzing token architecture...",
+                passed: true,
+                severity: "ok",
+            }));
+            return;
+        }
+
+        checks.forEach((check) => tokenSummary.appendChild(createArchitectureCheck(check)));
+    }
+
+    function createArchitectureCheck(check) {
+        const hasIssues = check.issues?.length > 0;
+        const item = document.createElement("li");
+        const row = document.createElement("div");
+        const textElement = document.createElement("span");
+        const nameElement = document.createElement("span");
+        const descriptionElement = document.createElement("span");
+        const stateElement = document.createElement("span");
+
+        item.className = "architecture-check";
+        item.dataset.state = check.severity ?? (check.passed ? "ok" : "warning");
+        row.className = "architecture-check__row";
+        textElement.className = "architecture-check__copy";
+        nameElement.className = "architecture-check__name";
+        nameElement.textContent = check.name;
+        descriptionElement.className = "architecture-check__description";
+        descriptionElement.textContent = check.description;
+        stateElement.className = "architecture-check__state";
+        stateElement.textContent = toArchitectureCheckStateLabel(check);
+
+        textElement.appendChild(nameElement);
+        const docsLink = createArchitectureDocsLink(check);
+        if (check.description !== undefined && check.description !== "") {
+            textElement.appendChild(descriptionElement);
+        }
+        row.appendChild(textElement);
+        if (docsLink !== undefined) {
+            row.appendChild(docsLink);
+        }
+        row.appendChild(stateElement);
+        item.appendChild(row);
+
+        if (check.notes?.length > 0) {
+            item.appendChild(createArchitectureNoteList(check.notes));
+        }
+
+        if (hasIssues) {
+            item.appendChild(createArchitectureIssueList(check));
+        }
+
+        return item;
+    }
+
+    function createArchitectureDocsLink(check) {
+        if (check.docsUrl === undefined) {
+            return undefined;
+        }
+
+        const link = document.createElement("a");
+        link.className = "architecture-check__docs";
+        link.href = check.docsUrl;
+        link.target = "_blank";
+        link.rel = "noopener noreferrer";
+        link.setAttribute("aria-label", "Open documentation");
+        link.title = "Open documentation";
+        link.innerHTML = `<svg viewBox="0 0 28 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M5.8 3.8h7l5 5V20a1.2 1.2 0 0 1-1.2 1.2H5.8A1.2 1.2 0 0 1 4.6 20V5A1.2 1.2 0 0 1 5.8 3.8Z" />
+            <path d="M12.8 3.8V9h5" />
+            <path d="M14.5 14h9" />
+            <path d="m20.8 10.8 3.2 3.2-3.2 3.2" />
+        </svg>`;
+
+        return link;
+    }
+
+    function toArchitectureCheckStateLabel(check) {
+        if (check.passed || check.severity === "ok") {
+            return "Pass";
+        }
+
+        return check.severity === "error" ? "Error" : "Warning";
+    }
+
+    function createArchitectureIssueList(check) {
+        const container = document.createElement("div");
+        const list = document.createElement("ul");
+
+        container.className = "architecture-check__issues";
+        list.className = "architecture-check__issue-list";
+        list.classList.toggle("single", check.issues.length === 1);
+
+        if (check.issueHeading !== undefined && check.issueHeading !== "") {
+            const heading = document.createElement("strong");
+            heading.className = "architecture-check__issue-heading";
+            heading.textContent = check.issueHeading;
+            container.appendChild(heading);
+        }
+
+        check.issues.forEach((issue) => {
+            const item = document.createElement("li");
+            item.textContent = issue;
+            list.appendChild(item);
+        });
+
+        container.appendChild(list);
+
+        return container;
+    }
+
+    function createArchitectureNoteList(notes) {
+        const list = document.createElement("div");
+        list.className = "architecture-check__notes";
+
+        notes.forEach((note) => {
+            const item = document.createElement("span");
+            item.className = "architecture-check__note";
+            item.textContent = note;
+            list.appendChild(item);
+        });
+
+        return list;
     }
 
     function renderMetrics(summary) {
+        clearTokenAnalytics();
+        tokenSummary.className = "metrics";
         tokenSummary.innerHTML = "";
         [
             ["Colors", summary.colorTokens],
@@ -925,6 +1442,8 @@
     }
 
     function renderDiagnosticSummary(dto) {
+        clearTokenAnalytics();
+        tokenSummary.className = "metrics";
         tokenSummary.innerHTML = "";
         [
             ["Pages", dto.pages.length],
@@ -938,7 +1457,7 @@
     }
 
     function createMetric(label, value) {
-        const item = document.createElement("div");
+        const item = document.createElement("li");
         const iconElement = document.createElement("span");
         const textElement = document.createElement("span");
         const valueElement = document.createElement("span");
@@ -959,6 +1478,49 @@
         item.appendChild(textElement);
 
         return item;
+    }
+
+    function createArchitectureChecksMetric(analytics) {
+        const item = document.createElement("li");
+        const iconElement = document.createElement("span");
+        const contentElement = document.createElement("span");
+        const labelElement = document.createElement("span");
+        const badgesElement = document.createElement("span");
+
+        item.className = "metric";
+        iconElement.className = "metric-icon";
+        iconElement.setAttribute("aria-hidden", "true");
+        iconElement.innerHTML = toMetricIconSvg("Architecture checks");
+        contentElement.className = "architecture-metric-content";
+        labelElement.className = "architecture-metric-label";
+        labelElement.textContent = "Architecture checks";
+        badgesElement.className = "architecture-metric-badges";
+
+        appendArchitectureMetricBadge(badgesElement, "pass", analytics.architectureOkChecks, "passed");
+        appendArchitectureMetricBadge(badgesElement, "warning", analytics.architectureWarningChecks, "warnings");
+        appendArchitectureMetricBadge(badgesElement, "error", analytics.architectureErrorChecks, "errors");
+        contentElement.appendChild(labelElement);
+        contentElement.appendChild(badgesElement);
+        item.appendChild(iconElement);
+        item.appendChild(contentElement);
+
+        return item;
+    }
+
+    function appendArchitectureMetricBadge(container, state, value, label) {
+        if (value === 0) {
+            return;
+        }
+
+        container.appendChild(createArchitectureMetricBadge(state, value, label));
+    }
+
+    function createArchitectureMetricBadge(state, value, label) {
+        const badge = document.createElement("span");
+        badge.className = `architecture-metric-badge ${state}`;
+        badge.textContent = `${value} ${label}`;
+
+        return badge;
     }
 
     function toMetricIconSvg(label) {
@@ -1018,11 +1580,6 @@
         });
     }
 
-    function setStatus(message, state) {
-        status.textContent = message;
-        status.dataset.state = state;
-    }
-
     function renderWarnings(warnings) {
         warningsList.innerHTML = "";
         warningsPanel.classList.toggle("visible", warnings.length > 0);
@@ -1038,16 +1595,21 @@
         renderWarnings([]);
     }
 
-    function formatDownloadedFilesMessage(files) {
-        if (files.length === 1) {
-            return `Downloaded ${files[0].fileName}.`;
+    function requestTokenAnalysis() {
+        clearWarnings();
+        setAnalysisLoading(true);
+        if (tokenAnalytics.classList.contains("hidden")) {
+            renderTokenAnalyticsLoading();
         }
 
-        const visibleNames = files.slice(0, 2).map((file) => file.fileName);
-        const remainingCount = files.length - visibleNames.length;
-        return remainingCount > 0
-            ? `Downloaded ${visibleNames.join(", ")} and ${remainingCount} more files.`
-            : `Downloaded ${visibleNames.join(", ")}.`;
+        parent.postMessage(
+            {
+                pluginMessage: {
+                    type: "ANALYZE_TOKENS",
+                },
+            },
+            "*",
+        );
     }
 
     function downloadTextFile(fileName, text) {
@@ -1071,6 +1633,8 @@
 
         return "text/plain";
     }
+
+    requestTokenAnalysis();
 
 </script>
 </body>

@@ -185,6 +185,28 @@ describe("mapColorTokenName", () => {
         expect(mapColorTokenName("Component/Button/Primary/Bg")?.path).toEqual(["component", "button", "primary", "bg"]);
     });
 
+    it("normalizes plural architecture layer names", () => {
+        const componentMapping = mapColorTokenName("Components/Button/Primary/Background");
+
+        expect(mapColorTokenName("Primitives/Color/Blue/500")?.path).toEqual(["primitive", "color", "blue", "500"]);
+        expect(mapColorTokenName("Semantics/Color/Accent/Default")?.path).toEqual([
+            "semantic",
+            "color",
+            "accent",
+            "default",
+        ]);
+        expect(componentMapping?.path).toEqual([
+            "component",
+            "button",
+            "primary",
+            "background",
+        ]);
+        expect(componentMapping?.architectureWarnings).toEqual([
+            "Components/Button/Primary/Background uses architecture layer alias \"components\"; "
+                + "prefer canonical layer \"component\".",
+        ]);
+    });
+
     it("falls back to primitive color path when layer is omitted", () => {
         expect(mapColorTokenName("Blue/500")?.path).toEqual(["primitive", "color", "blue", "500"]);
     });
