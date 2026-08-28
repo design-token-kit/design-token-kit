@@ -679,9 +679,10 @@
         }
 
         .architecture-heading {
+            position: relative;
             border-top: 1px solid var(--color-border);
             margin: 0;
-            padding: 24px 22px 0;
+            padding: 24px 168px 0 22px;
         }
 
         .architecture-heading h3 {
@@ -699,6 +700,27 @@
             font-size: 12px;
             line-height: 1.35;
             font-weight: 600;
+        }
+
+        .architecture-success {
+            display: inline-grid;
+            grid-template-columns: 54px auto;
+            align-items: center;
+            gap: 12px;
+            position: absolute;
+            top: 18px;
+            right: 22px;
+            color: #008774;
+            font-size: 12px;
+            font-weight: 800;
+            white-space: nowrap;
+        }
+
+        .architecture-success svg {
+            display: block;
+            width: 54px;
+            height: 54px;
+            overflow: visible;
         }
 
         .architecture-checks {
@@ -1115,6 +1137,15 @@
             .layer-metric + .layer-metric::after {
                 display: none;
             }
+
+            .architecture-heading {
+                padding-right: 22px;
+            }
+
+            .architecture-success {
+                position: static;
+                margin-top: 12px;
+            }
         }
 
         @media (max-width: 420px) {
@@ -1265,6 +1296,17 @@
         <div class="architecture-heading">
             <h3>Architecture checks</h3>
             <p>Checks token structure, references, layer usage, and naming conventions.</p>
+            <div id="architecture-success" class="architecture-success hidden" aria-live="polite">
+                <svg viewBox="0 0 48 48" aria-hidden="true">
+                    <path d="M24 2.9 40.2 9.5v15.1c0 9.8-6.7 16.2-16.2 20.3C14.5 40.8 7.8 34.4 7.8 24.6V9.5L24 2.9Z" fill="#f7fffd" stroke="#20a493" stroke-width="1.5" />
+                    <path d="M24 11.2 12.9 16.7 24 22.4l11.1-5.7L24 11.2Z" fill="#ffcd64" />
+                    <path d="m12.9 22.3 11.1 5.8 11.1-5.8V18L24 23.7 12.9 18v4.3Z" fill="#f69b31" />
+                    <path d="m12.9 28 11.1 6 11.1-6v-4.4L24 29.5l-11.1-5.9V28Z" fill="#008774" />
+                    <circle cx="38.3" cy="36.3" r="8.2" fill="#05b969" stroke="#f7fffd" stroke-width="2" />
+                    <path d="m34.7 36.1 2.3 2.3 4.7-5" fill="none" stroke="#ffffff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+                <span>All checks passed</span>
+            </div>
         </div>
         <ul id="token-summary" class="architecture-checks" aria-live="polite"></ul>
     </section>
@@ -1302,6 +1344,7 @@
     const layerAnalytics = document.getElementById("layer-analytics");
     const tokenAnalytics = document.getElementById("token-analytics");
     const tokenSummary = document.getElementById("token-summary");
+    const architectureSuccess = document.getElementById("architecture-success");
     const warningsPanel = document.getElementById("warnings-panel");
     const warningsList = document.getElementById("warnings-list");
     const analyzeTokensButton = document.getElementById("analyze-tokens");
@@ -1462,6 +1505,7 @@
     function renderArchitectureChecks(checks) {
         tokenSummary.className = "architecture-checks";
         tokenSummary.innerHTML = "";
+        architectureSuccess.classList.toggle("hidden", !areAllArchitectureChecksPassed(checks));
 
         if (checks.length === 0) {
             tokenSummary.appendChild(createArchitectureCheck({
@@ -1473,6 +1517,10 @@
         }
 
         checks.forEach((check) => tokenSummary.appendChild(createArchitectureCheck(check)));
+    }
+
+    function areAllArchitectureChecksPassed(checks) {
+        return checks.length > 0 && checks.every((check) => check.severity === "ok" || (check.severity === undefined && check.passed));
     }
 
     function createArchitectureCheck(check) {
