@@ -418,7 +418,12 @@
         }
 
         .summary-panel {
-            padding: 18px 22px 20px;
+            overflow: hidden;
+            padding: 0;
+            border-color: #dfe5eb;
+            border-radius: 28px;
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.96) 0%, rgba(250, 253, 255, 0.92) 100%);
+            box-shadow: 0 18px 46px rgba(15, 31, 51, 0.14), inset 0 1px 0 rgba(255, 255, 255, 0.95);
         }
 
         .summary-head {
@@ -426,10 +431,12 @@
             align-items: center;
             justify-content: space-between;
             gap: 12px;
+            margin: 0 0 16px;
+            padding: 14px 18px 0;
         }
 
         .summary-head .eyebrow {
-            color: var(--color-orange);
+            color: var(--color-text);
             font-size: 15px;
             line-height: 1.2;
             font-weight: 900;
@@ -442,13 +449,14 @@
             align-items: center;
             gap: 8px;
             width: auto;
+            height: 36px;
             border: 1px solid #a9d6ca;
             border-radius: 8px;
-            padding: 9px 15px;
+            padding: 0 14px;
             color: var(--color-accent-dark);
             background: var(--color-accent-soft);
             font-size: 13px;
-            font-weight: 900;
+            font-weight: 600;
             line-height: 1.2;
             white-space: nowrap;
         }
@@ -490,34 +498,146 @@
             list-style: none;
         }
 
+        .summary-stat-row {
+            display: grid;
+            grid-template-columns: 92px minmax(0, 1fr);
+            align-items: center;
+            min-height: 54px;
+            gap: 8px;
+            padding: 10px 12px;
+        }
+
+        .summary-stat-row + .summary-stat-row {
+            margin-top: 0;
+            border-top: 1px solid #dfe5eb;
+        }
+
+        .summary-section-label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin: 0;
+            color: var(--summary-accent, #2f6fde);
+            font-size: 9px;
+            line-height: 1.1;
+            font-weight: 900;
+            letter-spacing: 0.055em;
+            text-transform: uppercase;
+        }
+
+        .summary-section-icon {
+            display: grid;
+            place-items: center;
+            width: 28px;
+            height: 28px;
+            flex: 0 0 auto;
+            border-radius: 50%;
+            color: var(--summary-accent, #2f6fde);
+            background: radial-gradient(circle at 34% 25%, rgba(255, 255, 255, 0.88) 0%, rgba(var(--summary-accent-rgb, 47, 111, 222), 0.12) 72%);
+        }
+
+        .summary-section-icon svg {
+            display: block;
+            width: 17px;
+            height: 17px;
+            stroke: currentColor;
+            fill: none;
+        }
+
+        .summary-stat-row.layers {
+            --summary-accent: #2f9184;
+            --summary-accent-rgb: 47, 145, 132;
+        }
+
+        .token-stats {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            align-items: center;
+            gap: 0;
+            margin: 0;
+            padding: 0;
+            list-style: none;
+        }
+
+        .token-stat {
+            position: relative;
+            display: grid;
+            justify-items: center;
+            gap: 3px;
+            min-width: 0;
+            padding: 0 6px;
+        }
+
+        .token-stat:first-child {
+            padding-left: 0;
+        }
+
+        .token-stat + .token-stat::before,
+        .layer-metric + .layer-metric::after {
+            content: "";
+            position: absolute;
+            left: 0;
+            top: 50%;
+            width: 1px;
+            height: 28px;
+            background: #dfe5eb;
+            transform: translate(-50%, -50%);
+        }
+
+        .token-stat-value {
+            color: var(--color-text);
+            font-size: 17px;
+            line-height: 1;
+            font-weight: 800;
+            letter-spacing: -0.045em;
+        }
+
+        .token-stat-label {
+            color: var(--color-muted);
+            font-size: 9px;
+            line-height: 1.1;
+            font-weight: 600;
+            text-align: center;
+        }
+
         .layer-analytics {
             display: grid;
             grid-template-columns: repeat(3, minmax(0, 1fr));
-            gap: 8px;
-            margin: 14px 0 0;
+            align-items: center;
+            gap: 0;
+            margin: 0;
             padding: 0;
             list-style: none;
         }
 
         .layer-metric {
+            position: relative;
             display: grid;
-            grid-template-columns: 9px minmax(0, 1fr);
-            grid-template-rows: auto auto;
-            column-gap: 7px;
-            align-items: center;
-            border: 1px solid var(--color-border-strong);
-            border-radius: 8px;
-            padding: 7px 8px;
-            background: #fffefb;
+            grid-template-columns: auto auto;
+            justify-content: center;
+            align-items: start;
+            column-gap: 5px;
+            row-gap: 3px;
+            border: 0;
+            border-radius: 0;
+            padding: 0 6px;
+            background: transparent;
+        }
+
+        .layer-metric:first-child {
+            padding-left: 0;
         }
 
         .layer-metric::before {
             content: "";
-            grid-row: 1 / -1;
-            width: 8px;
-            height: 8px;
+            position: static;
+            width: 6px;
+            height: 6px;
             border-radius: 50%;
             background: var(--layer-color);
+            flex: 0 0 auto;
+            transform: none;
+            margin-top: 6px;
         }
 
         .layer-metric.primitive {
@@ -525,32 +645,35 @@
         }
 
         .layer-metric.semantic {
-            --layer-color: #f2ba45;
+            --layer-color: #9b8cff;
         }
 
         .layer-metric.component {
-            --layer-color: #9a8cff;
+            --layer-color: #ffa463;
         }
 
         .layer-metric-value {
             color: var(--color-text);
-            font-size: 18px;
+            font-size: 17px;
             line-height: 1;
-            font-weight: 900;
+            font-weight: 800;
+            letter-spacing: -0.045em;
         }
 
         .layer-metric-label {
-            margin-top: 3px;
+            grid-column: 1 / -1;
+            margin-top: 0;
             color: var(--color-muted);
-            font-size: 10px;
+            font-size: 9px;
             line-height: 1.1;
-            font-weight: 700;
+            font-weight: 600;
+            text-align: center;
         }
 
         .architecture-heading {
             border-top: 1px solid var(--color-border);
-            margin-top: 16px;
-            padding-top: 16px;
+            margin: 0;
+            padding: 24px 22px 0;
         }
 
         .architecture-heading h3 {
@@ -572,85 +695,82 @@
 
         .architecture-checks {
             display: grid;
-            gap: 5px;
-            margin: 8px 0 0;
-            padding: 0;
+            gap: 18px;
+            margin: 22px 0 0;
+            padding: 0 22px 22px;
             list-style: none;
         }
 
         .architecture-check {
-            position: relative;
-            display: grid;
-            grid-template-columns: minmax(0, 1fr) 52px 74px;
-            align-items: center;
-            gap: 8px;
-            border: 1px solid var(--color-border-strong);
-            border-radius: 13px;
-            padding: 8px 10px;
-            background: #fffefb;
+            min-width: 0;
         }
 
         .architecture-check__row {
             display: grid;
-            grid-template-columns: minmax(0, 1fr) 52px 74px;
+            grid-template-columns: minmax(0, 1fr) auto;
             align-items: center;
-            gap: 8px;
-            grid-column: 1 / -1;
+            gap: 16px;
         }
 
         .architecture-check__name {
             color: var(--color-text);
-            font-size: 13px;
-            font-weight: 800;
-            line-height: 1.25;
-            letter-spacing: -0.015em;
+            font-size: 14px;
+            font-weight: 900;
+            line-height: 1.2;
+            letter-spacing: -0.02em;
         }
 
         .architecture-check__copy {
             display: grid;
-            grid-template-columns: 24px minmax(0, 1fr);
-            align-items: center;
-            column-gap: 7px;
+            grid-template-columns: 30px minmax(0, 1fr);
+            align-items: start;
+            column-gap: 10px;
             min-width: 0;
         }
 
         .architecture-check__copy::before {
             content: "✓";
             display: grid;
+            grid-row: 1;
             place-items: center;
-            width: 18px;
-            height: 18px;
-            border: 2px solid #0c8a61;
+            width: 24px;
+            height: 24px;
+            border: 0;
             border-radius: 50%;
-            color: #0c8a61;
-            font-size: 12px;
+            color: #fff;
+            background: #22a866;
+            font-size: 18px;
             font-weight: 900;
             line-height: 1;
         }
 
         .architecture-check__description {
             grid-column: 2 / -1;
-            margin-top: 2px;
+            margin-top: 3px;
             color: var(--color-muted);
-            font-size: 11px;
-            line-height: 1.25;
-            font-weight: 600;
+            font-size: 12px;
+            line-height: 1.3;
+            font-weight: 500;
         }
 
         .architecture-check__docs {
             display: inline-grid;
             place-items: center;
-            justify-self: start;
+            align-self: start;
+            margin-top: 1px;
             color: var(--color-accent-dark);
+            font-size: 12px;
+            font-weight: 800;
             text-decoration: none;
+            white-space: nowrap;
+        }
+
+        .architecture-check__docs::after {
+            content: "Docs ↗";
         }
 
         .architecture-check__docs svg {
-            display: block;
-            width: 20px;
-            height: 20px;
-            stroke: currentColor;
-            fill: none;
+            display: none;
         }
 
         .architecture-check__docs:hover {
@@ -658,21 +778,11 @@
         }
 
         .architecture-check__state {
-            justify-self: end;
-            min-width: 52px;
-            border-radius: 8px;
-            padding: 5px 9px;
-            color: #00665f;
-            background: #dff5ef;
-            font-size: 11px;
-            font-weight: 900;
-            white-space: nowrap;
+            display: none;
         }
 
         .architecture-check__issues {
-            grid-column: 1 / -1;
-            border-radius: 10px;
-            margin: 8px 0 2px 25px;
+            margin: 5px 0 0 40px;
             padding: 0;
             color: #5d3515;
             font-size: 11px;
@@ -702,10 +812,9 @@
         }
 
         .architecture-check__notes {
-            grid-column: 1 / -1;
             display: grid;
             gap: 4px;
-            margin-top: 8px;
+            margin: 5px 0 0 40px;
             color: #8a4b00;
             font-size: 12px;
             font-weight: 700;
@@ -725,8 +834,8 @@
 
         .architecture-check[data-state="warning"] .architecture-check__copy::before {
             content: "!";
-            border-color: #f2a100;
-            color: #c46b00;
+            color: #fff;
+            background: #f2a100;
         }
 
         .architecture-check[data-state="error"] .architecture-check__state {
@@ -735,9 +844,9 @@
         }
 
         .architecture-check[data-state="error"] .architecture-check__copy::before {
-            content: "!";
-            border-color: #d84a4a;
-            color: #a31d1d;
+            content: "×";
+            color: #fff;
+            background: #d92d20;
         }
 
         .metric {
@@ -950,9 +1059,18 @@
                 padding: 16px;
             }
 
-            .hero,
-            .summary-panel {
+            .hero {
                 padding: 18px;
+            }
+
+            .summary-stat-row {
+                grid-template-columns: minmax(0, 1fr);
+                gap: 24px;
+                padding: 26px 22px;
+            }
+
+            .summary-head {
+                padding: 14px 14px 0;
             }
 
             .hero-head {
@@ -978,6 +1096,16 @@
 
             .layer-analytics {
                 grid-template-columns: minmax(0, 1fr);
+                gap: 24px;
+            }
+
+            .token-stats {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+                gap: 10px 0;
+            }
+
+            .layer-metric + .layer-metric::after {
+                display: none;
             }
         }
 
@@ -1095,11 +1223,36 @@
             <h2 id="summary-title" class="eyebrow">Summary</h2>
             <button id="analyze-tokens" class="summary-action" type="button">Analyze tokens</button>
         </div>
-        <ul id="layer-analytics" class="layer-analytics hidden" aria-label="Token layers">
-            <li class="layer-metric primitive"><span id="primitive-token-count" class="layer-metric-value">0</span><span class="layer-metric-label">Primitive</span></li>
-            <li class="layer-metric semantic"><span id="semantic-token-count" class="layer-metric-value">0</span><span class="layer-metric-label">Semantic</span></li>
-            <li class="layer-metric component"><span id="component-token-count" class="layer-metric-value">0</span><span class="layer-metric-label">Component</span></li>
-        </ul>
+        <div class="summary-stat-row">
+            <h3 class="summary-section-label">
+                <span class="summary-section-icon" aria-hidden="true">
+                    <svg viewBox="0 0 32 32" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M16 5 5 10.7 16 16.4 27 10.7 16 5Z" />
+                        <path d="m5 15.1 11 5.8 11-5.8" />
+                        <path d="m5 19.5 11 5.8 11-5.8" />
+                    </svg>
+                </span>
+                Tokens
+            </h3>
+            <ul id="token-stats" class="token-stats hidden" aria-label="Token statistics"></ul>
+        </div>
+        <div class="summary-stat-row layers">
+            <h3 class="summary-section-label">
+                <span class="summary-section-icon" aria-hidden="true">
+                    <svg viewBox="0 0 32 32" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M16 5 5 10.7 16 16.4 27 10.7 16 5Z" />
+                        <path d="m5 15.1 11 5.8 11-5.8" />
+                        <path d="m5 19.5 11 5.8 11-5.8" />
+                    </svg>
+                </span>
+                Layers
+            </h3>
+            <ul id="layer-analytics" class="layer-analytics hidden" aria-label="Token layers">
+                <li class="layer-metric primitive"><span id="primitive-token-count" class="layer-metric-value">0</span><span class="layer-metric-label">Primitive</span></li>
+                <li class="layer-metric semantic"><span id="semantic-token-count" class="layer-metric-value">0</span><span class="layer-metric-label">Semantic</span></li>
+                <li class="layer-metric component"><span id="component-token-count" class="layer-metric-value">0</span><span class="layer-metric-label">Component</span></li>
+            </ul>
+        </div>
         <ul id="token-analytics" class="metrics analytics-metrics hidden" aria-live="polite"></ul>
         <div class="architecture-heading">
             <h3>Architecture checks</h3>
@@ -1137,6 +1290,7 @@
     const tokenExportButtons = document.querySelectorAll("[data-token-export-message]");
     const downloadRestJsonButton = document.getElementById("download-rest-json");
     const downloadPluginJsonButton = document.getElementById("download-plugin-json");
+    const tokenStats = document.getElementById("token-stats");
     const layerAnalytics = document.getElementById("layer-analytics");
     const tokenAnalytics = document.getElementById("token-analytics");
     const tokenSummary = document.getElementById("token-summary");
@@ -1254,28 +1408,13 @@
 
     function renderTokenAnalytics(analytics) {
         tokenAnalytics.innerHTML = "";
-        tokenAnalytics.classList.toggle("hidden", analytics === undefined);
+        tokenAnalytics.classList.add("hidden");
         renderStructureFlowStats(analytics);
+        renderTokenStats(analytics);
         if (analytics === undefined) {
             return;
         }
 
-        const metrics = [
-            ["Total tokens", analytics.totalTokens],
-            ["References", analytics.referenceTokens],
-            ["Raw values", analytics.rawValueTokens],
-            ["Themes", analytics.themeFiles],
-        ];
-
-        if (analytics.otherTokens > 0) {
-            metrics.splice(2, 0, ["Other layers", analytics.otherTokens]);
-        }
-
-        metrics.forEach(([label, value]) => {
-            tokenAnalytics.appendChild(createMetric(label, value));
-        });
-
-        tokenAnalytics.appendChild(createArchitectureChecksMetric(analytics));
     }
 
     function clearTokenAnalytics() {
@@ -1287,6 +1426,22 @@
         document.getElementById("primitive-token-count").textContent = String(analytics?.primitiveTokens ?? 0);
         document.getElementById("semantic-token-count").textContent = String(analytics?.semanticTokens ?? 0);
         document.getElementById("component-token-count").textContent = String(analytics?.componentTokens ?? 0);
+    }
+
+    function renderTokenStats(analytics) {
+        tokenStats.innerHTML = "";
+        tokenStats.classList.toggle("hidden", analytics === undefined);
+        if (analytics === undefined) {
+            return;
+        }
+
+        [["total", analytics.totalTokens], ["references", analytics.referenceTokens], ["raw values", analytics.rawValueTokens], ["theme", analytics.themeFiles]]
+            .forEach(([label, value]) => {
+                const item = document.createElement("li");
+                item.className = "token-stat";
+                item.innerHTML = `<span class="token-stat-value">${value}</span><span class="token-stat-label">${label}</span>`;
+                tokenStats.appendChild(item);
+            });
     }
 
     function createLoadingMetric() {
@@ -1598,9 +1753,6 @@
     function requestTokenAnalysis() {
         clearWarnings();
         setAnalysisLoading(true);
-        if (tokenAnalytics.classList.contains("hidden")) {
-            renderTokenAnalyticsLoading();
-        }
 
         parent.postMessage(
             {
