@@ -23,7 +23,7 @@ export class TokenAnalyticsAnalyzer {
             componentTokens: countTokensInLayer(tokens, "component"),
             otherTokens: tokens.filter((token) => !isTokenLayer(token.path[0])).length,
             referenceTokens: tokens.filter((token) => hasReference(token.value)).length,
-            rawValueTokens: tokens.filter((token) => !hasReference(token.value)).length,
+            rawValueTokens: tokens.filter((token) => hasRawValueLeaf(token.value)).length,
             architectureOkChecks: architectureChecks.filter((check) => check.severity === "ok").length,
             architectureWarningChecks: architectureChecks.filter((check) => check.severity === "warning").length,
             architectureErrorChecks: architectureChecks.filter((check) => check.severity === "error").length,
@@ -97,6 +97,26 @@ function hasReference(value: unknown): boolean {
     }
 
     return false;
+}
+
+function hasRawValueLeaf(value: unknown): boolean {
+    if (typeof value === "string") {
+        return !isReferenceValue(value);
+    }
+
+    if (Array.isArray(value)) {
+        return value.some(hasRawValueLeaf);
+    }
+
+    if (isRecord(value)) {
+        return Object.values(value).some(hasRawValueLeaf);
+    }
+
+    return value !== undefined;
+}
+
+function isReferenceValue(value: string): boolean {
+    return /^\{[^{}]+\}$/.test(value);
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {

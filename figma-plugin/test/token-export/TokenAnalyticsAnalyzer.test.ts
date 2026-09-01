@@ -58,6 +58,37 @@ describe("TokenAnalyticsAnalyzer", () => {
             architectureErrorChecks: 1,
         });
     });
+
+    it("counts mixed composite tokens as both references and raw values", () => {
+        const analytics = new TokenAnalyticsAnalyzer().analyze(
+            [
+                tokenFile("tokens.json", {
+                    primitive: {
+                        font: {
+                            size: {
+                                md: token("dimension", { value: 16, unit: "px" }),
+                            },
+                        },
+                    },
+                    semantic: {
+                        typography: {
+                            body: token("typography", {
+                                fontFamily: "Inter",
+                                fontSize: "{primitive.font.size.md}",
+                                fontWeight: 400,
+                                letterSpacing: { value: 0, unit: "px" },
+                                lineHeight: 1.5,
+                            }),
+                        },
+                    },
+                }),
+            ],
+            [],
+        );
+
+        expect(analytics.referenceTokens).toBe(1);
+        expect(analytics.rawValueTokens).toBe(2);
+    });
 });
 
 function token(type: string, value: unknown): Record<string, unknown> {

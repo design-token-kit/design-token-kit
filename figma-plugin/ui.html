@@ -1405,6 +1405,7 @@
 
         if (message?.type === "EXPORT_FAILED") {
             setAnalysisLoading(false);
+            hideArchitectureSuccess();
             renderWarnings([message.payload.message]);
             return;
         }
@@ -1521,6 +1522,10 @@
 
     function areAllArchitectureChecksPassed(checks) {
         return checks.length > 0 && checks.every((check) => check.severity === "ok" || (check.severity === undefined && check.passed));
+    }
+
+    function hideArchitectureSuccess() {
+        architectureSuccess.classList.add("hidden");
     }
 
     function createArchitectureCheck(check) {
@@ -1809,6 +1814,7 @@
     function requestTokenAnalysis() {
         clearWarnings();
         setAnalysisLoading(true);
+        hideArchitectureSuccess();
 
         parent.postMessage(
             {

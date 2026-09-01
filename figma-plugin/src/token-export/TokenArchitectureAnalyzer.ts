@@ -175,7 +175,7 @@ function checkArchitectureLayers(document: TokenArchitectureDocument, architectu
 function checkTokenValues(tokens: TokenEntry[]): string[] {
     const rawValueTokenPaths = tokens.flatMap((token) => {
         const layer = toTokenLayer(token.path);
-        if (layer === "primitive" || layer === undefined || hasReference(token.value)) {
+        if (layer === "primitive" || layer === undefined || !hasRawValueLeaf(token.value)) {
             return [];
         }
 
@@ -270,8 +270,24 @@ function collectTokens(value: unknown, path: string[] = []): TokenEntry[] {
     return Object.entries(value).flatMap(([key, child]) => collectTokens(child, [...path, key]));
 }
 
-function hasReference(value: unknown): boolean {
-    return extractReferencePaths(value).length > 0;
+function hasRawValueLeaf(value: unknown): boolean {
+    if (typeof value === "string") {
+        return !isReferenceValue(value);
+    }
+
+    if (Array.isArray(value)) {
+        return value.some((item) => hasRawValueLeaf(item));
+    }
+
+    if (isRecord(value)) {
+        return Object.values(value).some((child) => hasRawValueLeaf(child));
+    }
+
+    return value !== undefined;
+}
+
+function isReferenceValue(value: string): boolean {
+    return /^\{[^{}]+\}$/.test(value);
 }
 
 function extractReferencePaths(value: unknown): string[][] {

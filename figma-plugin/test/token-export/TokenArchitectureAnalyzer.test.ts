@@ -86,6 +86,34 @@ describe("TokenArchitectureAnalyzer", () => {
         expect(report.checks[2]?.severity).toBe("warning");
     });
 
+    it("reports raw fields inside composite tokens outside primitive", () => {
+        const report = new TokenArchitectureAnalyzer().analyze([tokenFile({
+            primitive: {
+                font: {
+                    size: {
+                        md: token("dimension", { value: 16, unit: "px" }),
+                    },
+                },
+            },
+            semantic: {
+                typography: {
+                    body: token("typography", {
+                        fontFamily: "Inter",
+                        fontSize: "{primitive.font.size.md}",
+                        fontWeight: 400,
+                        letterSpacing: { value: 0, unit: "px" },
+                        lineHeight: 1.5,
+                    }),
+                },
+            },
+        })]);
+
+        expect(report.warnings).toContain(
+            "Token architecture: \"semantic.typography.body\" uses a raw value outside primitive tokens.",
+        );
+        expect(report.checks[2]?.severity).toBe("warning");
+    });
+
     it("reports layer aliases as architecture warnings", () => {
         const report = new TokenArchitectureAnalyzer().analyze([tokenFile(
             {
