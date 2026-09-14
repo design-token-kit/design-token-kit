@@ -429,6 +429,11 @@ const swift = new SwiftUiTokenConverter().convertList(list);
 
 The default `enum` output emits nested enums and `static let` members.
 References are preserved as Swift constant paths.
+Numeric token path segments receive an underscore prefix, so
+`primitive.color.brand.500` becomes
+`DesignTokens.Primitive.Color.Brand._500`.
+For this palette shape, the generated enum also exposes the compatibility alias
+`DesignTokens.Primitive.Color.brand500`.
 
 ```ts
 import { SwiftUiTokenConverter } from "@design-token-kit/core";
@@ -441,6 +446,8 @@ The `struct` output keeps the enum layer and adds a `Theme` struct with
 theme instances.
 Use it when consuming tokens through value objects is more convenient than
 referencing enum constants directly.
+It also exposes the palette compatibility alias as a computed property, for
+example `Themes.base.primitive.color.brand500`.
 
 ## Android Conversion
 

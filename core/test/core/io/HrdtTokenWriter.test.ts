@@ -16,12 +16,14 @@ const SAMPLE: string = `
 primitive:
   color:
     white: "#ffffff"
-    brand-500: "#2549f6"
+    brand:
+      500: "#2549f6"
   dimension:
     space-100: 4px
 semantic:
   color:
     background-page: "{primitive.color.white}"
+    action-primary: "{primitive.color.brand.500}"
 component:
   button:
     primary:
@@ -44,6 +46,13 @@ describe("HrdtTokenWriter", () => {
         it("preserves top-level group keys", () => {
             const doc = new HrdtTokenReader().parse(write(new HrdtTokenReader().parse(SAMPLE)));
             expect([...doc.keys()]).toEqual(["primitive", "semantic", "component"]);
+        });
+
+        it("preserves nested color palette steps", () => {
+            const written = write(new HrdtTokenReader().parse(SAMPLE));
+
+            expect(written).toContain("    brand:\n      500: \"#2549f6\"");
+            expect(written).toContain('action-primary: "{primitive.color.brand.500}"');
         });
     });
 

@@ -74,6 +74,10 @@ Explicit token layers are preserved:
 - `Semantic/Color/Action/Primary` -> `semantic.color.action.primary`
 - `Component/Button/Primary/Bg` -> `component.button.primary.bg`
 
+Use a separate path segment for a palette scale, for example
+`Primitive/Color/Blue/500` rather than `Primitive/Color/Blue-500`.
+The latter remains exportable, but does not use the canonical palette structure.
+
 When the layer is omitted, the exporter applies a fallback prefix:
 
 - color variables and paint styles -> `primitive.color`
@@ -105,4 +109,3 @@ Examples:
 
 Aliases are not inferred by matching raw values.
 Unresolvable aliases are skipped and reported as warnings.
-

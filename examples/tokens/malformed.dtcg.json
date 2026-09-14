@@ -2,25 +2,27 @@
   "$schema": "https://www.designtokens.org/schemas/2025.10/format.json",
   "primitive": {
     "color": {
-      "blue-500": {
-        "$type": "color",
-        "$value": "#2563EB"
-      },
-      "blue-600": {
-        "$type": "color",
-        "$value": 42
-      }
+        "blue": {
+          "500": {
+            "$type": "color",
+            "$value": "#2563EB"
+          },
+          "600": {
+            "$type": "color",
+            "$value": 42
+          }
+        }
     }
   },
   "semantic": {
     "color": {
       "action-primary": {
         "$type": "color",
-        "$value": "{primitive.color.blue-500}"
+        "$value": "{primitive.color.blue.500}"
       },
       "action-danger": {
         "$type": "color",
-        "$value": "{primitive.color.blue-999}"
+        "$value": "{primitive.color.blue.999}"
       }
     }
   },

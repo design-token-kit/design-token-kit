@@ -158,7 +158,7 @@ export class SwiftUiTokenConverter implements TokenConverter {
 
     #renderBaseEnum(doc: Dtcg): string {
         currentRoot = ROOT;
-        const body = this.#renderGroupBody(doc, 1);
+        const body = this.#renderGroupBody(doc, [], 1);
         const desc = doc.root.description
             ? renderDocDescription(doc.root.description, 0)
             : "/// Base theme tokens.\n";
@@ -173,13 +173,14 @@ export class SwiftUiTokenConverter implements TokenConverter {
         return `/// ${themeName} theme.\n` + wrapEnum(enumName, body);
     }
 
-    #renderGroupBody(group: Dtcg | TokenGroup, depth: number): string {
+    #renderGroupBody(group: Dtcg | TokenGroup, path: string[], depth: number): string {
         const indent = INDENT.repeat(depth);
         const parts: string[] = [];
         for (const [key, child] of group.entries()) {
+            const childPath = [...path, key];
             if (child instanceof TokenGroup) {
                 const desc = renderDocDescription(child.description, depth);
-                const inner = this.#renderGroupBody(child, depth + 1);
+                const inner = this.#renderGroupBody(child, childPath, depth + 1);
                 const enumLine = `${indent}enum ${pascal(key)} {`;
                 const block = inner ? `${enumLine}\n${inner}\n${indent}}` : `${enumLine}\n${indent}}`;
                 parts.push(desc + block);
@@ -189,6 +190,7 @@ export class SwiftUiTokenConverter implements TokenConverter {
                 if (decl) parts.push(desc + `${indent}${decl}`);
             }
         }
+        parts.push(...renderLegacyPaletteAliases(group, path, depth));
         return parts.join("\n");
     }
 
@@ -215,6 +217,7 @@ export class SwiftUiTokenConverter implements TokenConverter {
                 if (decl) parts.push(desc + `${indent}${decl}`);
             }
         }
+        parts.push(...renderLegacyPaletteAliases(group, path, depth));
         return parts.join("\n");
     }
 
@@ -302,7 +305,7 @@ export class SwiftUiTokenConverter implements TokenConverter {
             "/// Enables switching themes at runtime through SwiftUI Environment.",
         ].join("\n");
 
-        const structDef = renderStructNamed(list.base.root, "Theme", 0);
+        const structDef = renderStructNamed(list.base.root, "Theme", [], 0);
         const instances = list.themes.size > 0
             ? this.#renderThemeInstances(list)
             : [this.#renderInstance("base", ROOT, list.base.root)];
@@ -330,6 +333,14 @@ export class SwiftUiTokenConverter implements TokenConverter {
 interface Rendered {
     expr: string;
     type?: string;
+}
+
+interface LegacyPaletteAlias {
+    name: string;
+    palette: string;
+    paletteProperty: string;
+    scale: string;
+    type: string;
 }
 
 type CompositeKind = "typography" | "shadow" | "border" | "strokeStyle" | "transition";
@@ -446,14 +457,15 @@ function baseRefPath(path: string[]): string {
  * structs plus a field; leaves become typed fields. The top-level struct is
  * named `Theme`.
  */
-function renderStructNamed(group: TokenGroup, name: string, depth: number): string {
+function renderStructNamed(group: TokenGroup, name: string, path: string[], depth: number): string {
     const indent = INDENT.repeat(depth);
     const inner = INDENT.repeat(depth + 1);
     const lines = [`${indent}struct ${name} {`];
     const fields: string[] = [];
     for (const [key, child] of group.entries()) {
+        const childPath = [...path, key];
         if (child instanceof TokenGroup) {
-            lines.push(renderStructNamed(child, pascal(key), depth + 1));
+            lines.push(renderStructNamed(child, pascal(key), childPath, depth + 1));
             fields.push(`${inner}let ${camel(key)}: ${pascal(key)}`);
         } else if (child instanceof TokenNode) {
             const swiftType = fieldSwiftType(child);
@@ -461,8 +473,67 @@ function renderStructNamed(group: TokenGroup, name: string, depth: number): stri
         }
     }
     lines.push(...fields);
+    lines.push(...renderLegacyPaletteComputedProperties(group, path, depth + 1));
     lines.push(`${indent}}`);
     return lines.join("\n");
+}
+
+/**
+ * Renders compatibility members for palette steps that moved from `brand-500`
+ * to the nested `brand.500` token path.
+ */
+function renderLegacyPaletteAliases(group: Dtcg | TokenGroup, path: string[], depth: number): string[] {
+    const indent = INDENT.repeat(depth);
+    return collectLegacyPaletteAliases(group, path)
+        .map((alias) => `${indent}static let ${alias.name} = ${alias.palette}.${alias.scale}`);
+}
+
+/**
+ * Renders compatibility properties for the struct-based SwiftUI API.
+ */
+function renderLegacyPaletteComputedProperties(group: TokenGroup, path: string[], depth: number): string[] {
+    const indent = INDENT.repeat(depth);
+    return collectLegacyPaletteAliases(group, path)
+        .map((alias) => `${indent}var ${alias.name}: ${alias.type} { ${alias.paletteProperty}.${alias.scale} }`);
+}
+
+function collectLegacyPaletteAliases(group: Dtcg | TokenGroup, path: string[]): LegacyPaletteAlias[] {
+    if (path[path.length - 1] !== "color") {
+        return [];
+    }
+
+    const directTokenNames = new Set(
+        Array.from(group.entries())
+            .filter(([, child]) => child instanceof TokenNode)
+            .map(([key]) => camel(key)),
+    );
+    const aliases: LegacyPaletteAlias[] = [];
+    const aliasNames = new Set<string>();
+
+    for (const [paletteName, palette] of group.entries()) {
+        if (!(palette instanceof TokenGroup)) {
+            continue;
+        }
+
+        for (const [scaleName, token] of palette.entries()) {
+            const type = token instanceof TokenNode ? fieldSwiftType(token) : undefined;
+            const aliasName = camel(`${paletteName}-${scaleName}`);
+            if (!/^\d+$/.test(scaleName) || type === undefined || directTokenNames.has(aliasName) || aliasNames.has(aliasName)) {
+                continue;
+            }
+
+            aliases.push({
+                name: aliasName,
+                palette: pascal(paletteName),
+                paletteProperty: camel(paletteName),
+                scale: camel(scaleName),
+                type,
+            });
+            aliasNames.add(aliasName);
+        }
+    }
+
+    return aliases;
 }
 
 /**
@@ -655,7 +726,9 @@ function gradientToSwift(stops: Array<GradientStop | TokenReference>): string {
 }
 
 function escapeIdentifier(name: string): string {
-    return SWIFT_KEYWORDS.has(name) ? `${name}_` : name;
+    const sanitized = name.replace(/[^A-Za-z0-9_]/g, "_");
+    const prefixed = /^\d/.test(sanitized) ? `_${sanitized}` : sanitized;
+    return SWIFT_KEYWORDS.has(prefixed) ? `${prefixed}_` : prefixed;
 }
 
 function pascal(segment: string): string {

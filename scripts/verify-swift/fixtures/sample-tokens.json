@@ -3,6 +3,13 @@
         "base": { "red": { "$type": "color", "$value": { "colorSpace": "srgb", "components": [1, 0.2, 0.2] } } },
         "semantic": { "primary": { "$type": "color", "$value": "{color.base.red}" } }
     },
+    "primitive": {
+        "color": {
+            "brand": {
+                "500": { "$type": "color", "$value": { "colorSpace": "srgb", "components": [0.145, 0.286, 0.965] } }
+            }
+        }
+    },
     "spacing": { "md": { "$type": "dimension", "$value": { "value": 16, "unit": "px" } } },
     "motion": { "fast": { "$type": "duration", "$value": { "value": 150, "unit": "ms" } } },
     "elevation": {

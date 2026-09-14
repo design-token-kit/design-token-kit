@@ -373,6 +373,10 @@ dtokens convert tokens.json tokens.dark.json --outform swiftui --swift-type stru
 
 The default `enum` form emits one base enum and one enum per theme.
 The `struct` form also emits a `Theme` struct and theme instances.
+For a nested palette step such as `primitive.color.brand.500`, the generated
+Swift member is `Brand._500`.
+Both output forms preserve the former flat `brand500` member as a compatibility
+alias.
 
 ## Figma Script Conversion
 
