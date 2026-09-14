@@ -36,6 +36,20 @@ describe("HrdtTokenValidator", () => {
             const issues = await new HrdtTokenValidator().validate([VALID]);
             expect(issues).toEqual([]);
         });
+
+        it("passes nested color palette steps", async () => {
+            const issues = await new HrdtTokenValidator().validate([source(`
+primitive:
+  color:
+    brand:
+      500: "#2549f6"
+semantic:
+  color:
+    action-primary: "{primitive.color.brand.500}"
+`)]);
+
+            expect(issues).toEqual([]);
+        });
     });
 
     describe("schema errors", () => {

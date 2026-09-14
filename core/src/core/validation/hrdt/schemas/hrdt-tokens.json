@@ -41,6 +41,25 @@
       "type": "string",
       "pattern": "^#(?:[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$"
     },
+    "colorMap": {
+      "type": "object",
+      "propertyNames": {
+        "$ref": "#/definitions/tokenName"
+      },
+      "additionalProperties": {
+        "anyOf": [
+          {
+            "$ref": "#/definitions/hexColor"
+          },
+          {
+            "$ref": "#/definitions/reference"
+          },
+          {
+            "$ref": "#/definitions/colorMap"
+          }
+        ]
+      }
+    },
     "referenceableScalar": {
       "anyOf": [
         {
@@ -89,23 +108,7 @@
       "type": "object",
       "properties": {
         "color": {
-          "allOf": [
-            {
-              "$ref": "#/definitions/tokenMap"
-            },
-            {
-              "additionalProperties": {
-                "anyOf": [
-                  {
-                    "$ref": "#/definitions/hexColor"
-                  },
-                  {
-                    "$ref": "#/definitions/reference"
-                  }
-                ]
-              }
-            }
-          ]
+          "$ref": "#/definitions/colorMap"
         },
         "dimension": {
           "allOf": [

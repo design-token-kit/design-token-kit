@@ -31,7 +31,8 @@ import { TypographyValue } from "#/core/model/values/TypographyValue";
  * Serializes a {@link Dtcg} document to the HRDT token format.
  *
  * The HRDT format uses YAML syntax and mirrors what {@link HrdtTokenReader} accepts:
- * primitive tokens are grouped by type under `primitive.<type>`,
+ * primitive tokens are grouped by type under `primitive.<type>`, including
+ * nested color palettes,
  * all other groups contain only alias references.
  */
 export class HrdtTokenWriter {
@@ -56,21 +57,31 @@ export class HrdtTokenWriter {
         for (const [typeName, child] of group.entries()) {
             if (!(child instanceof TokenGroup)) continue;
             lines.push(`${this.#indent(depth)}${typeName}:`);
-            for (const [name, token] of child.entries()) {
-                if (token instanceof TokenGroup) continue;
-                const serialized = this.#serializePrimitiveToken(token as TokenNode<unknown>);
-                if (typeof serialized === "string" && !serialized.includes("\n")) {
-                    lines.push(`${this.#indent(depth + 1)}${name}: ${serialized}`);
-                } else if (typeof serialized === "string") {
-                    lines.push(`${this.#indent(depth + 1)}${name}:`);
-                    for (const subLine of serialized.split("\n")) {
-                        lines.push(`${this.#indent(depth + 2)}${subLine}`);
-                    }
-                } else {
-                    lines.push(`${this.#indent(depth + 1)}${name}:`);
-                    for (const subLine of serialized) {
-                        lines.push(`${this.#indent(depth + 2)}${subLine}`);
-                    }
+            this.#writePrimitiveTypeGroup(child, lines, depth + 1, typeName === "color");
+        }
+    }
+
+    #writePrimitiveTypeGroup(group: TokenGroup, lines: string[], depth: number, allowNestedGroups: boolean): void {
+        for (const [name, child] of group.entries()) {
+            if (child instanceof TokenGroup) {
+                if (!allowNestedGroups) continue;
+                lines.push(`${this.#indent(depth)}${name}:`);
+                this.#writePrimitiveTypeGroup(child, lines, depth + 1, allowNestedGroups);
+                continue;
+            }
+
+            const serialized = this.#serializePrimitiveToken(child);
+            if (typeof serialized === "string" && !serialized.includes("\n")) {
+                lines.push(`${this.#indent(depth)}${name}: ${serialized}`);
+            } else if (typeof serialized === "string") {
+                lines.push(`${this.#indent(depth)}${name}:`);
+                for (const subLine of serialized.split("\n")) {
+                    lines.push(`${this.#indent(depth + 1)}${subLine}`);
+                }
+            } else {
+                lines.push(`${this.#indent(depth)}${name}:`);
+                for (const subLine of serialized) {
+                    lines.push(`${this.#indent(depth + 1)}${subLine}`);
                 }
             }
         }

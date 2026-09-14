@@ -72,6 +72,24 @@ primitive:
             expect(value.alpha).toBe(1);
         });
 
+        it("parses nested color palette steps", () => {
+            const doc = parse(`
+primitive:
+  color:
+    brand:
+      500: "#2549f6"
+semantic:
+  color:
+    action-primary: "{primitive.color.brand.500}"
+`);
+            const token = getGroup(doc, "primitive", "color", "brand").get("500") as ColorToken;
+
+            expect(token).toBeInstanceOf(ColorToken);
+            expect((token.value as ColorValue).hex).toBe("#2549f6");
+            expect((getGroup(doc, "semantic", "color").get("action-primary") as TokenNode<unknown>).value)
+                .toEqual(new TokenReference("primitive.color.brand.500"));
+        });
+
         it("parses dimension token", () => {
             const doc = parse(`
 primitive:

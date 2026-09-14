@@ -65,10 +65,11 @@ Rules that keep a name predictable on export:
 * the name has at least three segments
 * segments are lowercase, words separated by hyphens
 * no spaces, dots, uppercase letters or punctuation
+* palette names and numeric scale steps are separate segments
 
 These names are correct:
 
-* `primitive/color/brand-500` becomes `primitive.color.brand-500`
+* `primitive/color/brand/500` becomes `primitive.color.brand.500`
 * `semantic/color/action-primary` becomes `semantic.color.action-primary`
 * `component/button/primary/background` becomes `component.button.primary.background`
 
@@ -78,7 +79,8 @@ These names cause trouble:
 * `component/modal/zIndex` becomes `component.modal.z-index`, so a re-export no
   longer matches the name in Figma
 * `Brand 500` gets a layer prepended automatically and becomes
-  `primitive.color.brand-500`, again losing the original name
+  `primitive.color.brand-500`, which does not follow the canonical palette
+  scale structure
 
 The last two work, but break reversibility: the exported token carries a name
 different from the one in Figma. Use only the correct forms.

@@ -75,6 +75,103 @@ describe("SwiftUiTokenConverter scalars", () => {
         expect(out).toContain("static let default_ =");
     });
 
+    it("uses a valid identifier for numeric palette steps and keeps a flat alias", () => {
+        const out = convert({
+            primitive: {
+                color: {
+                    brand: {
+                        "500": {
+                            $type: "color",
+                            $value: { colorSpace: "srgb", components: [0, 0, 1] },
+                        },
+                    },
+                },
+            },
+            semantic: {
+                color: {
+                    action: {
+                        $type: "color",
+                        $value: "{primitive.color.brand.500}",
+                    },
+                },
+            },
+        });
+
+        expect(out).toContain("enum Brand {");
+        expect(out).toContain("static let _500 = SwiftUI.Color(");
+        expect(out).toContain("static let brand500 = Brand._500");
+        expect(out).toContain("static let action = DesignTokens.Primitive.Color.Brand._500");
+        expect(out).not.toContain("static let 500");
+    });
+
+    it("uses valid identifiers in numeric token groups and references", () => {
+        const out = convert({
+            primitive: {
+                spacing: {
+                    "4": {
+                        md: {
+                            $type: "dimension",
+                            $value: { value: 16, unit: "px" },
+                        },
+                    },
+                },
+            },
+            semantic: {
+                spacing: {
+                    md: {
+                        $type: "dimension",
+                        $value: "{primitive.spacing.4.md}",
+                    },
+                },
+            },
+        });
+
+        expect(out).toContain("enum _4 {");
+        expect(out).toContain("static let md: CGFloat = 16");
+        expect(out).toContain("static let md = DesignTokens.Primitive.Spacing._4.md");
+        expect(out).not.toContain("enum 4 {");
+    });
+
+    it("does not generate a palette alias that conflicts with an existing token", () => {
+        const out = convert({
+            primitive: {
+                color: {
+                    brand: {
+                        "500": {
+                            $type: "color",
+                            $value: { colorSpace: "srgb", components: [0, 0, 1] },
+                        },
+                    },
+                    brand500: {
+                        $type: "color",
+                        $value: { colorSpace: "srgb", components: [1, 0, 0] },
+                    },
+                },
+            },
+        });
+
+        expect(out).toContain("static let brand500 = SwiftUI.Color(");
+        expect(out).not.toContain("static let brand500 = Brand._500");
+    });
+
+    it("limits flat compatibility aliases to color palette steps", () => {
+        const out = convert({
+            primitive: {
+                spacing: {
+                    scale: {
+                        "500": {
+                            $type: "dimension",
+                            $value: { value: 16, unit: "px" },
+                        },
+                    },
+                },
+            },
+        });
+
+        expect(out).toContain("static let _500: CGFloat = 16");
+        expect(out).not.toContain("static let scale500");
+    });
+
     it("emits /// doc comment from a token $description", () => {
         const out = convert({
             color: {
@@ -354,6 +451,37 @@ describe("SwiftUiTokenConverter enum themes", () => {
         expect(out).toContain("static let surface = DesignTokensHighContrast.Primitive.Color.background");
     });
 
+    it("keeps flat palette aliases in theme enums", () => {
+        const base = {
+            primitive: {
+                color: {
+                    brand: {
+                        "500": {
+                            $type: "color",
+                            $value: { colorSpace: "srgb", components: [0, 0, 1] },
+                        },
+                    },
+                },
+            },
+        };
+        const dark = {
+            primitive: {
+                color: {
+                    brand: {
+                        "500": {
+                            $type: "color",
+                            $value: { colorSpace: "srgb", components: [1, 1, 1] },
+                        },
+                    },
+                },
+            },
+        };
+
+        const out = convertList(base, { dark });
+
+        expect(out.match(/static let brand500 = Brand\._500/g)).toHaveLength(2);
+    });
+
     it("produces unchanged single-doc output when there are no themes", () => {
         const viaList = convertList(THEMED_BASE);
         const viaDoc = convert(THEMED_BASE);
@@ -364,6 +492,25 @@ describe("SwiftUiTokenConverter enum themes", () => {
 });
 
 describe("SwiftUiTokenConverter struct themes", () => {
+    it("keeps flat palette aliases in the Theme struct", () => {
+        const out = convertList({
+            primitive: {
+                color: {
+                    brand: {
+                        "500": {
+                            $type: "color",
+                            $value: { colorSpace: "srgb", components: [0, 0, 1] },
+                        },
+                    },
+                },
+            },
+        }, {}, { swiftType: "struct" });
+
+        expect(out).toContain("let _500: SwiftUI.Color");
+        expect(out).toContain("var brand500: SwiftUI.Color { brand._500 }");
+        expect(out).toContain("static let brand500 = Brand._500");
+    });
+
     it("emits a Theme struct mirroring the token tree", () => {
         const out = convertList(THEMED_BASE, { dark: DARK_OVERRIDE }, { swiftType: "struct" });
         expect(out).toContain("struct Theme {");

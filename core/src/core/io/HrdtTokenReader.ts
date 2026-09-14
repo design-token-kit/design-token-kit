@@ -121,6 +121,11 @@ export class HrdtTokenReader {
     #parsePrimitiveTypeGroup(raw: JsonObject, tokenType: TokenType): TokenGroup {
         const children = new Map<string, TokenGroup | TokenNode<unknown>>();
         for (const [name, value] of Object.entries(raw)) {
+            if (tokenType === "color" && this.#isObject(value)) {
+                children.set(name, this.#parsePrimitiveTypeGroup(value, tokenType));
+                continue;
+            }
+
             children.set(name, this.#parsePrimitiveToken(value, tokenType));
         }
         return new TokenGroup({ type: tokenType, children });
@@ -354,5 +359,4 @@ export class HrdtTokenReaderError extends Error {
         this.name = "HrdtTokenReaderError";
     }
 }
-
 

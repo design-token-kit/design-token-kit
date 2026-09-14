@@ -132,7 +132,7 @@ function colorSection(variables, layer, title) {
         swatch.strokeWeight = 1;
 
         row.appendChild(swatch);
-        appendFilling(row, captionBlock(leafName(entry), entry.description));
+        appendFilling(row, captionBlock(colorName(entry), entry.description));
         appendFilling(section, row);
     }
 
@@ -452,6 +452,10 @@ function solid(color) {
 
 function leafName(entry) {
     return entry.segments[entry.segments.length - 1];
+}
+
+function colorName(entry) {
+    return entry.segments.slice(2).join("/");
 }
 
 function formatNumber(value) {
