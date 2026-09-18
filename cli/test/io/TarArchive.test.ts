@@ -88,7 +88,7 @@ describe("createTarArchive", () => {
             const archiveFile = resolve(outDir, "tokens.tar");
             writeFileSync(archiveFile, archive);
 
-            execFileSync("tar", ["-xf", archiveFile, "-C", outDir]);
+            execFileSync("tar", ["-xf", "tokens.tar"], { cwd: outDir });
 
             expect(readdirSync(outDir).sort()).toEqual(["tokens.base.scss", "tokens.dark.scss", "tokens.tar"]);
             expect(readFileSync(resolve(outDir, "tokens.base.scss"), "utf8")).toBe("$a: 1;\n");

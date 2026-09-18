@@ -4,6 +4,12 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+
+- Added color format controls to the HTML showcase. Color tokens can be viewed
+  and copied as their source CSS value, HEX, RGBA, or HSLA when representable in
+  sRGB; unsupported color spaces remain available in their original CSS syntax.
+
 ### Fixed
 
 - Added HRDT support for nested primitive color palettes.
