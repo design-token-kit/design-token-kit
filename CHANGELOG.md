@@ -15,8 +15,12 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ### Fixed
 
 - Added HRDT support for nested primitive color palettes.
+- Fixed HRDT parsing of references inside compound token values, preserving
+  writer-reader round trips for borders, shadows, gradients, transitions, and
+  typography.
 - Fixed SwiftUI compatibility for nested color palette paths while preserving
   legacy flat member aliases.
+- Fixed SwiftUI output for gradients composed entirely of token references.
 
 ## [1.8.0] - 2026-08-10
 
