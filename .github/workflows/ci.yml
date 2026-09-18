@@ -27,6 +27,30 @@ jobs:
 
       - run: npm test
 
+  coverage:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - run: npm install --global npm@11.19.0
+
+      - run: npm install
+
+      - run: npm run test:coverage --workspace core
+
+      - run: npm run test:coverage --workspace cli
+
+      - name: Upload coverage
+        uses: codecov/codecov-action@v5
+        with:
+          files: ./core/coverage/lcov.info,./cli/coverage/lcov.info
+          token: ${{ secrets.CODECOV_TOKEN }}
+          fail_ci_if_error: true
+
   swift-compile:
     runs-on: ubuntu-latest
     steps:

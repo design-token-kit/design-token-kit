@@ -3,6 +3,7 @@
 [![AI-Ready](https://img.shields.io/badge/AI-Ready-111827?style=flat-square)](#why-tokens-first)
 [![DTCG Native](https://img.shields.io/badge/DTCG-Native-2563eb?style=flat-square)](https://www.designtokens.org/)
 [![DESIGN.md Compatible](https://img.shields.io/badge/DESIGN.md-Compatible-059669?style=flat-square)](https://github.com/google-labs-code/design.md)
+[![codecov](https://codecov.io/gh/design-token-kit/design-token-kit/branch/main/graph/badge.svg)](https://codecov.io/gh/design-token-kit/design-token-kit)
 
 Website: https://design-token-kit.github.io/
 
@@ -194,4 +195,3 @@ npm run dist
 - [DTCG](https://www.designtokens.org/) — Design Tokens Community Group JSON
 - [HRDT](https://medium.com/@bychinskidm/how-we-made-design-token-kit-an-npm-tool-for-design-tokens-fccf36bd2c65#6821) — Human-Readable Design Tokens YAML
 - [DESIGN.md](https://github.com/google-labs-code/design.md) — Markdown-based format with YAML frontmatter
-
