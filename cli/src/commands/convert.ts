@@ -31,7 +31,7 @@ type ConvertOptions = ConvertSettings & {
 
 export const convertCommand = new Command("convert")
     .description("Convert a token file to DTCG JSON, HRDT YAML, DESIGN.md, CSS, SCSS, Tailwind CSS v4, SwiftUI, a Figma script, or Android resource XML.")
-    .argument("[files...]", "Paths to token files (reads from stdin when omitted or '-')")
+    .argument("[files...]", "Paths or content:<tokens> (reads from stdin when omitted or '-')")
     .option("-i, --inform [format]", "Input format: dtcg, hrdt, design-md (default: auto-detect)")
     .option("-f, --outform [format]", "Output format: dtcg, hrdt, design-md, css, scss, tailwind-v4, swiftui, figma-script, android (default: css)")
     .option("--separator [value]", "SCSS only: character used to replace '.' in token paths when generating variable names (default: -)")
