@@ -120,7 +120,7 @@ structure right but misses format details.
 * Generate CSS and SCSS from token files, including Tailwind CSS v4 `@theme`
   output, SwiftUI source, Android resource XML, and a Figma script creating
   variables and styles
-* Generate HTML token showcase page
+* Generate HTML token showcase page with color format and copy controls
 * Generate token statistics as text or HTML
 
 ## Build

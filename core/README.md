@@ -34,7 +34,7 @@ https://design-token-kit.github.io/
 * **Android generation** - base and theme token sets rendered as `res/values`
   resource XML split by resource type
 * **Static showcase** - HTML showcase generation from token sources or
-  existing CSS
+  existing CSS, with color format selection and copy controls
 * **Token stats** - text and HTML statistics reports for token sources
 * **Source abstraction** - local files, stdin, URLs, and raw token
   content strings
@@ -136,6 +136,10 @@ Android resource type. Themes are written to qualified resource directories.
 
 Render a static HTML preview from DTCG JSON, HRDT YAML, DESIGN.md, or
 existing CSS.
+
+Color cards expose the source CSS value and, when conversion is supported, HEX,
+RGBA, and HSLA values. Each displayed value can be copied from the generated
+page.
 
 ### Token statistics
 

@@ -328,6 +328,10 @@ body {
     grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
+.token-list.token-list--color {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
 .token-item {
     display: flex;
     flex-direction: column;
@@ -353,40 +357,45 @@ body {
 .token-item--color-card {
     position: relative;
     gap: 0;
-    min-height: 205px;
-    padding: 0.5rem;
-    border-radius: 6px;
+    min-height: 238px;
+    padding: 0.75rem;
+    border-color: #e5ebf4;
+    border-radius: 10px;
+    box-shadow: none;
     overflow: hidden;
 }
 
 .token-item--color-card .token-swatch {
-    height: 109px;
+    height: 132px;
     margin-bottom: 0.875rem;
     border: 0;
-    border-radius: 4px;
+    border-radius: 7px;
 }
 
 .token-item--color-card .token-type-badge {
     position: absolute;
     top: 1.375rem;
-    left: 1.4375rem;
-    padding: 0.25rem 0.5rem;
+    left: 1.375rem;
+    padding: 0.3rem 0.6rem;
     border: 0;
-    border-radius: 3px;
-    background: #ffffff;
-    color: #8b5cf6;
+    border-radius: 4px;
+    background: rgba(255, 255, 255, 0.94);
+    color: #3834a8;
     font-size: 0.5625rem;
     font-weight: 700;
-    letter-spacing: 0.14em;
+    letter-spacing: 0.18em;
     line-height: 1;
+    text-transform: uppercase;
 }
 
 .token-item--color-card .token-name {
     width: 100%;
     margin: 0 0 auto;
-    padding: 0 0.875rem 0 0;
-    color: #334155;
+    padding: 0;
+    color: #263752;
     font-size: 0.875rem;
+    font-weight: 400;
+    letter-spacing: 0;
     line-height: 1.45;
     min-height: 0;
     word-break: normal;
@@ -399,6 +408,123 @@ body {
 
 .token-item--color-card .token-meta b {
     color: #334155;
+}
+
+.color-formats {
+    display: grid;
+    grid-template-columns: 5.5rem 2rem minmax(0, 1fr);
+    align-items: center;
+    column-gap: 0.375rem;
+    row-gap: 0.5rem;
+    width: 100%;
+    margin-top: 0.5rem;
+    position: relative;
+    container: color-controls / inline-size;
+    color: #64748b;
+    font-size: 0.6875rem;
+}
+
+.color-format-select,
+.color-format-value,
+.color-copy-button {
+    box-sizing: border-box;
+    min-width: 0;
+    border: 0;
+    border-radius: 4px;
+    background: transparent;
+    color: #2f3d56;
+    font: inherit;
+}
+
+.color-format-select,
+.color-copy-button {
+    height: 2rem;
+    padding: 0 0.375rem;
+}
+
+.color-format-select {
+    grid-column: 1;
+    grid-row: 1;
+    width: 5.5rem;
+    appearance: none;
+    -webkit-appearance: none;
+    padding-right: 1.75rem;
+    border: 1px solid #dbe3ee;
+    background-image: linear-gradient(45deg, transparent 50%, #2f3d56 50%),
+        linear-gradient(135deg, #2f3d56 50%, transparent 50%);
+    background-position: calc(100% - 0.75rem) 50%, calc(100% - 0.5rem) 50%;
+    background-size: 0.25rem 0.25rem, 0.25rem 0.25rem;
+    background-repeat: no-repeat;
+    font-size: 0.625rem;
+    font-weight: 700;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+}
+
+.color-format-select:focus {
+    outline: 0;
+}
+
+.color-format-select:focus-visible,
+.color-copy-button:focus-visible {
+    outline: 1px solid #94a3b8;
+    outline-offset: 1px;
+}
+
+.color-format-value {
+    display: block;
+    grid-column: 1 / -1;
+    grid-row: 2;
+    min-height: 0;
+    padding: 0 0.375rem;
+    color: #3b4a63;
+    font-family: "JetBrains Mono", monospace;
+    font-size: clamp(0.6875rem, 1vw, 0.875rem);
+    line-height: 1.35;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.color-copy-button {
+    display: grid;
+    grid-column: 2;
+    grid-row: 1;
+    place-items: center;
+    justify-self: end;
+    cursor: pointer;
+}
+
+.color-copy-button:hover {
+    background: #f1f5f9;
+}
+
+@container color-controls (max-width: 320px) {
+    .color-format-value {
+        font-size: 0.75rem;
+    }
+}
+
+@container color-controls (max-width: 260px) {
+    .color-format-value {
+        font-size: 0.625rem;
+    }
+}
+
+.color-copy-status {
+    grid-column: 3;
+    grid-row: 1;
+    min-height: 0;
+    height: 2rem;
+    display: flex;
+    align-items: center;
+    justify-self: start;
+    color: #16a34a;
+    font-size: 0.6875rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    pointer-events: none;
 }
 
 .token-name {
@@ -1090,6 +1216,10 @@ body {
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
+    .token-list.token-list--color {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
     .content {
         padding: 1rem;
     }
@@ -1109,6 +1239,10 @@ body {
     }
 
     .token-list.token-list--font {
+        grid-template-columns: 1fr;
+    }
+
+    .token-list.token-list--color {
         grid-template-columns: 1fr;
     }
 
