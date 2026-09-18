@@ -45,5 +45,10 @@ export default defineConfig({
     test: {
         include: ["test/**/*.test.ts"],
         environment: "node",
+        coverage: {
+            provider: "istanbul",
+            include: ["src/**/*.ts"],
+            reporter: ["text", "json", "html", "lcov"],
+        },
     },
 });

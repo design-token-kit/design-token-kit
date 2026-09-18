@@ -44,10 +44,12 @@ jobs:
 
       - run: npm run test:coverage --workspace cli
 
+      - run: npm run test:coverage --workspace figma-plugin
+
       - name: Upload coverage
         uses: codecov/codecov-action@v5
         with:
-          files: ./core/coverage/lcov.info,./cli/coverage/lcov.info
+          files: ./core/coverage/lcov.info,./cli/coverage/lcov.info,./figma-plugin/coverage/lcov.info
           token: ${{ secrets.CODECOV_TOKEN }}
           fail_ci_if_error: true
 
