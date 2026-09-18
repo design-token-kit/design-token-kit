@@ -7,7 +7,7 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ### Added
 
 - Added Codecov coverage reporting for `core` and `cli` in GitHub Actions,
-  including a project coverage badge in the README.
+  including the Figma plugin and a project coverage badge in the README.
 
 ### Fixed
 
