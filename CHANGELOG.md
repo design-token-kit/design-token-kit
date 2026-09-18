@@ -2,6 +2,14 @@
 
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [Unreleased]
+
+### Fixed
+
+- Added HRDT support for nested primitive color palettes.
+- Fixed SwiftUI compatibility for nested color palette paths while preserving
+  legacy flat member aliases.
+
 ## [1.8.0] - 2026-08-10
 
 ### Added
