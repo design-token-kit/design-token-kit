@@ -12,7 +12,7 @@
         "build": "tsc --noEmit && vite build",
         "lint": "eslint .",
         "test": "npm run build && vitest run",
-        "test:coverage": "vitest run --coverage",
+        "test:coverage": "npm run build && vitest run --coverage",
         "lint:fix": "eslint . --fix",
         "watch": "npm run build -- --watch"
     },
