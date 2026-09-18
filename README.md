@@ -3,7 +3,7 @@
 [![AI-Ready](https://img.shields.io/badge/AI-Ready-111827?style=flat-square)](#why-tokens-first)
 [![DTCG Native](https://img.shields.io/badge/DTCG-Native-2563eb?style=flat-square)](https://www.designtokens.org/)
 [![DESIGN.md Compatible](https://img.shields.io/badge/DESIGN.md-Compatible-059669?style=flat-square)](https://github.com/google-labs-code/design.md)
-[![codecov](https://codecov.io/gh/design-token-kit/design-token-kit/branch/main/graph/badge.svg)](https://codecov.io/gh/design-token-kit/design-token-kit)
+<a href="https://codecov.io/gh/design-token-kit/design-token-kit"><img src="https://codecov.io/gh/design-token-kit/design-token-kit/branch/main/graph/badge.svg" alt="codecov" width="125"></a>
 
 Website: https://design-token-kit.github.io/
 
