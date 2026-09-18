@@ -138,6 +138,20 @@ colors:
             expect(value.colorSpace).toBe("oklch");
         });
 
+        it.each([
+            ["hwb(210 7% 11% / 0.5)", "hwb"],
+            ["lab(50 10 -20 / 0.5)", "lab"],
+            ["lch(50 10 20)", "lch"],
+            ["oklab(0.5 0.1 -0.2)", "oklab"],
+            ["rgba(26, 28, 30, 0.5)", "srgb"],
+            ["transparent", "srgb"],
+        ])("parses %s", (color, colorSpace) => {
+            const doc = parse(`---\ncolors:\n  value: "${color}"\n---`);
+            const token = getGroup(doc, "colors").get("value") as ColorToken;
+
+            expect((token.value as ColorValue).colorSpace).toBe(colorSpace);
+        });
+
         it("parses reference in colors", () => {
             const doc = parse(`---
 colors:
@@ -265,6 +279,18 @@ spacing:
         it("returns null for content without frontmatter", () => {
             const raw = new DesignMdReader().parseRaw("just some markdown");
             expect(raw).toBeNull();
+        });
+
+    });
+
+    describe("isDesignMd", () => {
+        it("recognizes frontmatter followed by a heading", () => {
+            expect(DesignMdReader.isDesignMd("---\nname: Test\n---\n\n## Overview")).toBe(true);
+        });
+
+        it("rejects content missing either frontmatter or headings", () => {
+            expect(DesignMdReader.isDesignMd("## Overview")).toBe(false);
+            expect(DesignMdReader.isDesignMd("---\nname: Test\n---")).toBe(false);
         });
     });
 

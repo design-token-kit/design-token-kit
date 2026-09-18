@@ -242,6 +242,9 @@ export class SwiftUiTokenConverter implements TokenConverter {
 
     #renderValue(value: unknown, type: TokenType | undefined): Rendered | undefined {
         if (value instanceof TokenReference) return { expr: refToSwift(value) };
+        if (type === "gradient" && Array.isArray(value)) {
+            return { expr: gradientToSwift(value as Array<GradientStop | TokenReference>) };
+        }
         if (type === "strokeStyle") {
             this.#used.add("strokeStyle");
             return { expr: strokeStyleToSwift(value) };

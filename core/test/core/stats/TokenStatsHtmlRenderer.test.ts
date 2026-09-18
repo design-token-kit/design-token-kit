@@ -107,4 +107,23 @@ describe("TokenStatsHtmlRenderer", () => {
         expect(html).toContain("theme-chip--custom-theme");
         expect(html).toContain("stats-icon");
     });
+
+    it("omits empty breakdowns and escapes labels with all HTML special characters", () => {
+        const html = renderer.render([
+            {
+                label: "<Unsafe> & 'quoted'",
+                value: 0,
+                percentage: 0,
+                breakdowns: [
+                    { label: "Empty", items: [] },
+                    { label: "Other", items: [{ label: "A&B\"'", value: 0, percentage: 0 }] },
+                ],
+            },
+        ]);
+
+        expect(html).toContain("&lt;Unsafe&gt; &amp; &#39;quoted&#39;");
+        expect(html).toContain("0 - 0.0%");
+        expect(html).toContain("A&amp;B&quot;&#39;");
+        expect(html).not.toContain("stats-breakdown--empty");
+    });
 });

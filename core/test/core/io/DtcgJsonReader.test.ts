@@ -74,6 +74,32 @@ describe("DtcgJsonReader", () => {
             const color = (primitive as TokenGroup).get("color");
             expect(color).toBeInstanceOf(TokenGroup);
         });
+
+        it("preserves group and token metadata", () => {
+            const doc = parse(`{
+                "colors": {
+                    "$type": "color",
+                    "$description": "Brand colors",
+                    "$deprecated": true,
+                    "$extensions": { "owner": "design" },
+                    "brand": {
+                        "$description": "Primary brand color",
+                        "$deprecated": "Use accent",
+                        "$extensions": { "source": "figma" },
+                        "$value": { "colorSpace": "srgb", "components": [1, 0, 0] }
+                    }
+                }
+            }`);
+            const colors = doc.get("colors") as TokenGroup;
+            const brand = colors.get("brand") as ColorToken;
+
+            expect(colors.description).toBe("Brand colors");
+            expect(colors.deprecated).toBe(true);
+            expect(colors.extensions).toEqual({ owner: "design" });
+            expect(brand.description).toBe("Primary brand color");
+            expect(brand.deprecated).toBe("Use accent");
+            expect(brand.extensions).toEqual({ source: "figma" });
+        });
     });
 
     describe("color tokens", () => {

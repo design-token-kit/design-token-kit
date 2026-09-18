@@ -368,6 +368,34 @@ describe("SwiftUiTokenConverter composites", () => {
         expect(out).toContain("SwiftUI.Font.custom(");
     });
 
+    it("uses a system font when typography only references its font family", () => {
+        const out = convert({
+            text: {
+                body: {
+                    $type: "typography",
+                    $value: {
+                        fontFamily: "{font.family.body}",
+                        fontSize: { value: 16, unit: "px" },
+                        fontWeight: 700,
+                        letterSpacing: { value: 0, unit: "px" },
+                        lineHeight: 1.5,
+                    },
+                },
+            },
+        });
+
+        expect(out).toContain("SwiftUI.Font.system(size: 16, weight: .bold)");
+    });
+
+    it("renders gradient stop references without flattening them", () => {
+        const out = convert({
+            color: { primary: { $type: "color", $value: { colorSpace: "srgb", components: [1, 0, 0] } } },
+            gradient: { brand: { $type: "gradient", $value: ["{color.primary}"] } },
+        });
+
+        expect(out).toContain("SwiftUI.Gradient.Stop(color: DesignTokens.Color.primary, location: 0)");
+    });
+
     it("emits a standalone fontFamily list token as a [String] literal", () => {
         const out = convert({
             font: {
