@@ -15,6 +15,7 @@ import {
     TokenEntry,
 } from "#/core/showcase/CssTokenParser";
 import { TokenGroupClassifier } from "#/core/showcase/TokenGroupClassifier";
+import { ColorFormatConverter } from "#/core/showcase/ColorFormatConverter";
 import {
     BorderTokenInfo,
     BorderWidthTokenInfo,
@@ -101,6 +102,7 @@ export class TokenHtmlShowcaseRenderer {
     readonly #shadowAggregator = new ShadowTokenAggregator();
     readonly #gradientAggregator = new GradientTokenAggregator();
     readonly #transitionAggregator = new TransitionTokenAggregator();
+    readonly #colorFormatter = new ColorFormatConverter();
 
     constructor(classifier = new TokenGroupClassifier()) {
         this.#classifier = classifier;
@@ -215,6 +217,47 @@ ${this.renderTokens(visibleScopes, visibleThemes, parsed.entries)}
       setMenuPanel(initial.dataset.menuToggle, true);
     }
   }
+  function updateColorFormat(select) {
+    const controls = select.closest("[data-color-controls]");
+    const output = controls ? controls.querySelector("output[data-color-value]") : null;
+    const option = select.options[select.selectedIndex];
+    if (output && option) {
+      output.textContent = option.dataset.colorValue || option.textContent || "";
+    }
+  }
+  function copyColorValue(button) {
+    const controls = button.closest("[data-color-controls]");
+    const output = controls ? controls.querySelector("output[data-color-value]") : null;
+    const status = controls ? controls.querySelector("[data-color-copy-status]") : null;
+    if (!output) return;
+    const text = output.textContent || "";
+    const fallback = () => {
+      const input = document.createElement("textarea");
+      input.value = text;
+      input.setAttribute("readonly", "");
+      input.style.position = "fixed";
+      input.style.opacity = "0";
+      document.body.appendChild(input);
+      input.select();
+      const copied = document.execCommand("copy");
+      input.remove();
+      return copied ? Promise.resolve() : Promise.reject(new Error("Copy failed"));
+    };
+    const copy = navigator.clipboard && navigator.clipboard.writeText
+      ? navigator.clipboard.writeText(text)
+      : fallback();
+    copy.then(() => {
+      if (status) status.textContent = "Copied";
+    }).catch(() => {
+      if (status) status.textContent = "Copy unavailable";
+    });
+  }
+  document.querySelectorAll("[data-color-format]").forEach((select) => {
+    select.addEventListener("change", () => updateColorFormat(select));
+  });
+  document.querySelectorAll("[data-color-copy]").forEach((button) => {
+    button.addEventListener("click", () => copyColorValue(button));
+  });
   document.querySelectorAll("[data-menu-toggle]").forEach((button) => {
     button.addEventListener("click", () => {
       const key = button.dataset.menuToggle;
@@ -481,6 +524,7 @@ ${this.renderTokens(visibleScopes, visibleThemes, parsed.entries)}
         const warningMessages = this.getSemanticWarnings(directRefs, resolved.unresolvedRefs);
         const roleType = this.getSemanticRoleType(groupKey);
         const preview = this.renderSemanticPreview(roleType, resolved.value);
+        const colorFormats = roleType === "color" ? this.renderColorFormats(token.name, resolved.value) : "";
         const aliasLine = directRefs.length > 0
             ? `<div class="semantic-role__meta semantic-role__meta--alias"><span>value:</span> <code>${this.renderLinkedTokenValue(token.value)}</code></div>\n`
             : "";
@@ -494,6 +538,7 @@ ${this.renderTokens(visibleScopes, visibleThemes, parsed.entries)}
             + `${preview}\n`
             + `<div class="semantic-role__content">\n`
             + `<div class="semantic-role__header"><div class="semantic-role__name">${this.esc(roleName)}</div>${warnings}</div>\n`
+            + colorFormats
             + `${aliasLine}`
             + `${references}`
             + `<div class="semantic-role__meta semantic-role__meta--resolved"><span>resolved:</span> <code>${this.esc(resolved.value || "unresolved")}</code></div>\n`
@@ -819,7 +864,9 @@ ${this.renderTokens(visibleScopes, visibleThemes, parsed.entries)}
             html += `<h3 class="token-subgroup-title" id="${this.esc(this.sectionId(`${idPrefix}-group-title`, groupInfo.key))}">${this.esc(groupInfo.title)}</h3>\n`;
             const listClass = groupInfo.group === "fonts" || groupInfo.group === "typography" || groupInfo.kind === "fontCollection"
                 ? "token-list token-list--font"
-                : "token-list";
+                : groupInfo.group === "colors"
+                    ? "token-list token-list--color"
+                    : "token-list";
             html += `<div class="${listClass}">\n`;
             html += groupInfo.kind === "fontCollection"
                 ? groupInfo.tokens
@@ -1372,8 +1419,13 @@ ${this.renderTokens(visibleScopes, visibleThemes, parsed.entries)}
 
 
 
-        if (group === "colors" || TokenHtmlShowcaseRenderer.#COLOR_HEX_RE.test(value) || value.startsWith("rgb") || value.startsWith("hsl")) {
-            preview = `<div class="token-swatch" style="background:${value}"></div>`;
+        const isColorValue = /^(rgb|hsl|hwb|lab|lch|oklab|oklch|color)\(/i.test(value)
+            || value.toLowerCase() === "transparent";
+        if (group === "colors" || TokenHtmlShowcaseRenderer.#COLOR_HEX_RE.test(value) || isColorValue) {
+            preview = `<div class="token-swatch" style="background:${this.esc(value)}"></div>`;
+            if (group === "colors") {
+                details = this.renderColorFormats(name, value);
+            }
         } else if (group === "gradients") {
             preview = `<div class="token-swatch" style="background:${this.esc(value)}"></div>`;
             details = this.renderGradientStopsFromValue(name, value);
@@ -1407,7 +1459,7 @@ ${this.renderTokens(visibleScopes, visibleThemes, parsed.entries)}
         }
 
         const badge = this.renderGroupBadge(group);
-        const valueLine = group === "fonts" || group === "typography"
+        const valueLine = group === "fonts" || group === "typography" || group === "colors"
             ? ""
             : `<div class="token-meta"><span><b>value:</b> <span class="token-meta-value">${this.esc(value)}</span></span></div>`;
 
@@ -1418,6 +1470,22 @@ ${this.renderTokens(visibleScopes, visibleThemes, parsed.entries)}
                 : "";
 
         return `<div class="token-item${itemClass}" id="${this.esc(this.tokenId(name))}">${badge}${preview}<span class="token-name">${this.esc(name)}</span>${details}${valueLine}</div>\n`;
+    }
+
+    private renderColorFormats(name: string, value: string): string {
+        const formats = this.#colorFormatter.convert(value);
+        const options = formats
+            .map((format, index) => `<option value="${this.esc(format.name)}" data-color-value="${this.esc(format.value)}"${index === 0 ? " selected" : ""}>${this.esc(format.label)}</option>`)
+            .join("");
+        const initialValue = formats[0]?.value ?? value;
+
+        const tokenId = this.tokenId(name);
+        return `<div class="color-formats" data-color-controls>`
+            + `<select class="color-format-select" id="${this.esc(tokenId)}-format" data-color-format aria-label="Color format">${options}</select>`
+            + `<output class="color-format-value" data-color-value>${this.esc(initialValue)}</output>`
+            + `<button class="color-copy-button" type="button" data-color-copy aria-label="Copy color value" title="Copy color value"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="13" height="13" x="9" y="9" rx="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg></button>`
+            + `<span class="color-copy-status" data-color-copy-status aria-live="polite"></span>`
+            + `</div>`;
     }
 
     private renderGradientStopsFromValue(name: string, value: string): string {
