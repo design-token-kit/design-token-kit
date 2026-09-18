@@ -1,3 +1,6 @@
+import { mkdtemp, rm, writeFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { describe, it, expect } from "vitest";
 import { TokenFile, TokenFiles } from "#/core/io/TokenFile";
 
@@ -53,5 +56,41 @@ describe("TokenFiles", () => {
 
     it("throws for unknown theme", () => {
         expect(() => TokenFiles.fromNames(["tokens.json"]).getToken("dark")).toThrow("Unknown token theme");
+    });
+
+    it("returns selectors for base and named themes", () => {
+        const catalog = TokenFiles.fromNames(["tokens.json", "tokens.dark.json"]);
+
+        expect(catalog.getSelector("ignored", true)).toBe(":root");
+        expect(catalog.getSelector("dark", false)).toBe(':root[data-theme="dark"]');
+    });
+
+    it("scans JSON files in sorted order", async () => {
+        const directory = await mkdtemp(join(tmpdir(), "design-token-kit-"));
+        try {
+            await writeFile(join(directory, "tokens.dark.json"), "{}");
+            await writeFile(join(directory, "tokens.json"), "{}");
+            await writeFile(join(directory, "tokens.light.JSON"), "{}");
+            await writeFile(join(directory, "README.md"), "ignored");
+
+            const catalog = await TokenFiles.scan(directory);
+
+            expect(catalog.files.map((file) => file.themeName)).toEqual(["dark", "tokens", "light"]);
+            expect(catalog.baseToken.themeName).toBe("dark");
+            expect(catalog.hasBaseToken).toBe(true);
+        } finally {
+            await rm(directory, { recursive: true, force: true });
+        }
+    });
+
+    it("rejects a directory without JSON files", async () => {
+        const directory = await mkdtemp(join(tmpdir(), "design-token-kit-"));
+        try {
+            await writeFile(join(directory, "README.md"), "ignored");
+
+            await expect(TokenFiles.scan(directory)).rejects.toThrow("No token files found");
+        } finally {
+            await rm(directory, { recursive: true, force: true });
+        }
     });
 });

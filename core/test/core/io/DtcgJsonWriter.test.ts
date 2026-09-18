@@ -3,12 +3,29 @@ import { DtcgJsonReader } from "#/core/io/DtcgJsonReader";
 import { DtcgJsonWriter } from "#/core/io/DtcgJsonWriter";
 import { Dtcg } from "#/core/model/Dtcg";
 import { TokenGroup } from "#/core/model/TokenGroup";
+import { TokenNode } from "#/core/model/TokenNode";
 import { TokenReference } from "#/core/model/TokenReference";
 import { ColorToken } from "#/core/model/tokens/ColorToken";
+import { BorderToken } from "#/core/model/tokens/BorderToken";
+import { CubicBezierToken } from "#/core/model/tokens/CubicBezierToken";
 import { DimensionToken } from "#/core/model/tokens/DimensionToken";
+import { DurationToken } from "#/core/model/tokens/DurationToken";
+import { GradientToken } from "#/core/model/tokens/GradientToken";
 import { NumberToken } from "#/core/model/tokens/NumberToken";
+import { ShadowToken } from "#/core/model/tokens/ShadowToken";
+import { StrokeStyleToken } from "#/core/model/tokens/StrokeStyleToken";
+import { TransitionToken } from "#/core/model/tokens/TransitionToken";
+import { TypographyToken } from "#/core/model/tokens/TypographyToken";
+import { BorderValue } from "#/core/model/values/BorderValue";
 import { ColorValue } from "#/core/model/values/ColorValue";
+import { CubicBezierValue } from "#/core/model/values/CubicBezierValue";
 import { DimensionValue } from "#/core/model/values/DimensionValue";
+import { DurationValue } from "#/core/model/values/DurationValue";
+import { GradientStop } from "#/core/model/values/GradientValue";
+import { ShadowLayer } from "#/core/model/values/ShadowValue";
+import { StrokeStyleObject } from "#/core/model/values/StrokeStyleValue";
+import { TransitionValue } from "#/core/model/values/TransitionValue";
+import { TypographyValue } from "#/core/model/values/TypographyValue";
 
 // A small but representative DTCG document: three layers, a couple of token
 // types, and an alias - enough to exercise reader <-> writer round-trips.
@@ -145,6 +162,21 @@ describe("DtcgJsonWriter", () => {
             expect(obj).not.toHaveProperty("$description");
             expect(obj).not.toHaveProperty("$deprecated");
         });
+
+        it("writes group extensions, inheritance, and root token", () => {
+            const group = new TokenGroup({
+                extends: new TokenReference("base.colors"),
+                extensions: { owner: "design" },
+                root: new ColorToken(new ColorValue("srgb", [1, 0, 0])),
+            });
+            const root = new TokenGroup({ children: new Map([["colors", group]]) });
+            const result = write(new Dtcg(root));
+            const colors = result.colors as Record<string, unknown>;
+
+            expect(colors["$extends"]).toBe("{base.colors}");
+            expect(colors["$extensions"]).toEqual({ owner: "design" });
+            expect(colors["$root"]).toMatchObject({ $type: "color" });
+        });
     });
 
     describe("writes token metadata", () => {
@@ -160,6 +192,72 @@ describe("DtcgJsonWriter", () => {
             const root = new TokenGroup({ children: new Map([["old", token]]) });
             const result = write(new Dtcg(root));
             expect((result["old"] as Record<string, unknown>)["$deprecated"]).toBe(true);
+        });
+    });
+
+    describe("writes compound token values", () => {
+        it("writes compound values and nested references in DTCG format", () => {
+            const black = new ColorValue("srgb", [0, 0, 0], 0.5, "#000000");
+            const pixel = new DimensionValue(2, "px");
+            const duration = new DurationValue(150, "ms");
+            const easing = new CubicBezierValue(0.2, 0, 0, 1);
+            const tokens = new Map<string, TokenNode<unknown>>([
+                ["border", new BorderToken(new BorderValue(black, pixel, "solid"))],
+                ["cubicBezier", new CubicBezierToken(easing)],
+                ["duration", new DurationToken(duration)],
+                ["gradient", new GradientToken([
+                    new GradientStop(black, new TokenReference("primitive.number.start")),
+                    new TokenReference("primitive.gradient.end"),
+                ])],
+                ["shadow", new ShadowToken([
+                    new ShadowLayer(black, pixel, pixel, pixel, pixel, true),
+                    new TokenReference("primitive.shadow.subtle"),
+                ])],
+                ["stroke", new StrokeStyleToken(new StrokeStyleObject([
+                    pixel,
+                    new TokenReference("primitive.dimension.gap"),
+                ], "round"))],
+                ["transition", new TransitionToken(new TransitionValue(
+                    duration,
+                    new TokenReference("primitive.duration.fast"),
+                    easing,
+                ))],
+                ["typography", new TypographyToken(new TypographyValue(
+                    new TokenReference("primitive.fontFamily.body"),
+                    pixel,
+                    new TokenReference("primitive.fontWeight.regular"),
+                    pixel,
+                    new TokenReference("primitive.number.line-height"),
+                ))],
+            ]);
+            const root = new TokenGroup({ children: tokens });
+
+            const result = write(new Dtcg(root));
+
+            expect((result.border as Record<string, unknown>)["$value"]).toEqual({
+                color: { colorSpace: "srgb", components: [0, 0, 0], alpha: 0.5, hex: "#000000" },
+                width: { value: 2, unit: "px" },
+                style: "solid",
+            });
+            expect((result.cubicBezier as Record<string, unknown>)["$value"]).toEqual([0.2, 0, 0, 1]);
+            expect((result.gradient as Record<string, unknown>)["$value"]).toEqual([
+                { color: { colorSpace: "srgb", components: [0, 0, 0], alpha: 0.5, hex: "#000000" }, position: "{primitive.number.start}" },
+                "{primitive.gradient.end}",
+            ]);
+            expect((result.shadow as Record<string, unknown>)["$value"]).toContain("{primitive.shadow.subtle}");
+            expect((result.stroke as Record<string, unknown>)["$value"]).toEqual({
+                dashArray: [{ value: 2, unit: "px" }, "{primitive.dimension.gap}"],
+                lineCap: "round",
+            });
+            expect((result.transition as Record<string, unknown>)["$value"]).toMatchObject({
+                delay: "{primitive.duration.fast}",
+                timingFunction: [0.2, 0, 0, 1],
+            });
+            expect((result.typography as Record<string, unknown>)["$value"]).toMatchObject({
+                fontFamily: "{primitive.fontFamily.body}",
+                fontWeight: "{primitive.fontWeight.regular}",
+                lineHeight: "{primitive.number.line-height}",
+            });
         });
     });
 });

@@ -56,6 +56,26 @@ primitive:
             const color = (primitive as TokenGroup).get("color");
             expect(color).toBeInstanceOf(TokenGroup);
         });
+
+        it("parses multiple documents and preserves their source", () => {
+            const documents = new HrdtTokenReader().parseAll(`
+primitive:
+  number:
+    value: 1
+---
+primitive:
+  number:
+    value: 2
+`, "tokens.hrdt");
+
+            expect(documents).toHaveLength(2);
+            expect(documents[0].source).toBe("tokens.hrdt");
+            expect(documents[1].get("primitive")).toBeInstanceOf(TokenGroup);
+        });
+
+        it("returns raw YAML values without converting tokens", () => {
+            expect(new HrdtTokenReader().parseRaw("value: 1")).toEqual({ value: 1 });
+        });
     });
 
     describe("tokens", () => {
@@ -131,6 +151,32 @@ primitive:
             expect(() => new HrdtTokenReader().parse(`
 - value
 `)).toThrow(HrdtTokenReaderError);
+        });
+
+        it("rejects unknown primitive token types", () => {
+            expect(() => parse(`
+primitive:
+  unsupported:
+    token: value
+`)).toThrow('Unknown primitive token type: "unsupported"');
+        });
+
+        it("rejects malformed compound values", () => {
+            expect(() => parse(`
+primitive:
+  transition:
+    enter:
+      duration: 100ms
+      delay: 0ms
+      timingFunction: [0, 1]
+`)).toThrow("Expected cubicBezier");
+        });
+
+        it.each([
+            ["dimension", "space: not-a-dimension", "Expected dimension"],
+            ["duration", "fast: 100frames", "Expected duration"],
+        ])("rejects invalid %s values", (type, value, message) => {
+            expect(() => parse(`primitive:\n  ${type}:\n    ${value}`)).toThrow(message);
         });
     });
 });

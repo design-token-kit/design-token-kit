@@ -102,6 +102,10 @@ describe("DesignMdWriter", () => {
     });
 
     describe("output format", () => {
+        it("writes an empty frontmatter block for a document without supported groups", () => {
+            expect(write(new Dtcg(new TokenGroup())).startsWith("---\n---\n")).toBe(true);
+        });
+
         it("wraps YAML in --- delimiters", () => {
             const doc = parse(SAMPLE);
             const result = write(doc);
@@ -145,6 +149,21 @@ describe("DesignMdWriter", () => {
             expect(result).toContain('semi: "#ff000080"');
         });
 
+        it("writes transparent and component-based sRGB colors", () => {
+            const transparent = new ColorToken(new ColorValue("srgb", [1, 0, 0], 0));
+            const computed = new ColorToken(new ColorValue("srgb", [0.1, "none", 1], 0.5));
+            const colors = new TokenGroup({ children: new Map([
+                ["transparent", transparent],
+                ["computed", computed],
+            ]) });
+            const root = new TokenGroup({ children: new Map([["colors", colors]]) });
+
+            const result = write(new Dtcg(root));
+
+            expect(result).toContain("transparent: transparent");
+            expect(result).toContain('computed: "#1a00ff80"');
+        });
+
         it("writes dimension token", () => {
             const token = new DimensionToken(new DimensionValue(8, "px"));
             const dims = new TokenGroup({ children: new Map([["sm", token]]) });
@@ -172,6 +191,26 @@ describe("DesignMdWriter", () => {
             expect(result).toContain("fontWeight: 400");
             expect(result).toContain("letterSpacing: 0px");
             expect(result).toContain("lineHeight: 1.5");
+        });
+
+        it("writes typography font fallback arrays and references", () => {
+            const typo = new TypographyValue(
+                ["Public Sans", new TokenReference("fontFamily.fallback")],
+                new TokenReference("spacing.md"),
+                new TokenReference("fontWeight.regular"),
+                new DimensionValue(0, "px"),
+                new TokenReference("lineHeight.body"),
+            );
+            const token = new TypographyToken(typo);
+            const typography = new TokenGroup({ children: new Map([["body", token]]) });
+            const root = new TokenGroup({ children: new Map([["typography", typography]]) });
+
+            const result = write(new Dtcg(root));
+
+            expect(result).toContain('fontFamily: ["Public Sans", "{fontFamily.fallback}"]');
+            expect(result).toContain('fontSize: "{spacing.md}"');
+            expect(result).toContain('fontWeight: "{fontWeight.regular}"');
+            expect(result).toContain('lineHeight: "{lineHeight.body}"');
         });
     });
 
@@ -209,6 +248,14 @@ describe("DesignMdWriter", () => {
             const root = new TokenGroup({ children: new Map([["colors", colors]]) });
             const result = write(new Dtcg(root));
             expect(result).toContain('vibrant: "oklch(0.62 0.18 250)"');
+        });
+
+        it("writes non-sRGB alpha and missing components", () => {
+            const token = new ColorToken(new ColorValue("hwb", [200, "none", 30], 0.25));
+            const colors = new TokenGroup({ children: new Map([["tint", token]]) });
+            const root = new TokenGroup({ children: new Map([["colors", colors]]) });
+
+            expect(write(new Dtcg(root))).toContain('tint: "hwb(200 none 30 / 0.25)"');
         });
     });
 });

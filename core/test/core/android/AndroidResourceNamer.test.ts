@@ -32,4 +32,18 @@ describe("AndroidResourceNamer", () => {
         expect(namer.parts("fontSize")).toEqual(["font", "size"]);
         expect(namer.parts("brand-500")).toEqual(["brand", "500"]);
     });
+
+    it("ignores empty separators and forbidden characters", () => {
+        expect(namer.parts("--Brand__Primary!!")).toEqual(["brand", "primary"]);
+        expect(namer.parts("%%%")).toEqual([]);
+    });
+
+    it("prefixes an empty or digit-only normalized path", () => {
+        expect(namer.name([])).toBe("token_");
+        expect(namer.name(["%%%", "500"])).toBe("token_500");
+    });
+
+    it("escapes normalized keyword names", () => {
+        expect(namer.name(["Class"])).toBe("class_");
+    });
 });

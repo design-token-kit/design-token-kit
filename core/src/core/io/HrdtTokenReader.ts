@@ -265,7 +265,9 @@ export class HrdtTokenReader {
         if (typeof value === "string") return value as StrokeStyleValue;
         if (this.#isObject(value)) {
             const obj = value as JsonObject;
-            const dashArray = (obj["dashArray"] as JsonValue[]).map((d) => this.#parseDimension(d));
+            const dashArray = (obj["dashArray"] as JsonValue[]).map((dash) =>
+                this.#parseReference(dash) ?? this.#parseDimension(dash),
+            );
             return new StrokeStyleObject(dashArray, obj["lineCap"] as "round" | "butt" | "square");
         }
         throw new HrdtTokenReaderError(`Expected strokeStyle, got: ${JSON.stringify(value)}`);
@@ -277,9 +279,9 @@ export class HrdtTokenReader {
         }
         const obj = value as JsonObject;
         return new BorderValue(
-            this.#parseColor(obj["color"]),
-            this.#parseDimension(obj["width"]),
-            this.#parseStrokeStyle(obj["style"]),
+            this.#parseReference(obj["color"]) ?? this.#parseColor(obj["color"]),
+            this.#parseReference(obj["width"]) ?? this.#parseDimension(obj["width"]),
+            this.#parseReference(obj["style"]) ?? this.#parseStrokeStyle(obj["style"]),
         );
     }
 
@@ -289,15 +291,17 @@ export class HrdtTokenReader {
         }
         const obj = value as JsonObject;
         return new TransitionValue(
-            this.#parseDuration(obj["duration"]),
-            this.#parseDuration(obj["delay"]),
-            this.#parseCubicBezier(obj["timingFunction"]),
+            this.#parseReference(obj["duration"]) ?? this.#parseDuration(obj["duration"]),
+            this.#parseReference(obj["delay"]) ?? this.#parseDuration(obj["delay"]),
+            this.#parseReference(obj["timingFunction"]) ?? this.#parseCubicBezier(obj["timingFunction"]),
         );
     }
 
-    #parseShadow(value: JsonValue): ShadowLayer | (ShadowLayer | TokenReference)[] {
-        if (Array.isArray(value)) return value.map((item) => this.#parseShadowLayer(item));
-        return this.#parseShadowLayer(value);
+    #parseShadow(value: JsonValue): ShadowLayer | TokenReference | (ShadowLayer | TokenReference)[] {
+        if (Array.isArray(value)) {
+            return value.map((item) => this.#parseReference(item) ?? this.#parseShadowLayer(item));
+        }
+        return this.#parseReference(value) ?? this.#parseShadowLayer(value);
     }
 
     #parseShadowLayer(value: JsonValue): ShadowLayer {
@@ -306,24 +310,30 @@ export class HrdtTokenReader {
         }
         const obj = value as JsonObject;
         return new ShadowLayer(
-            this.#parseColor(obj["color"]),
-            this.#parseDimension(obj["offsetX"]),
-            this.#parseDimension(obj["offsetY"]),
-            this.#parseDimension(obj["blur"]),
-            this.#parseDimension(obj["spread"]),
+            this.#parseReference(obj["color"]) ?? this.#parseColor(obj["color"]),
+            this.#parseReference(obj["offsetX"]) ?? this.#parseDimension(obj["offsetX"]),
+            this.#parseReference(obj["offsetY"]) ?? this.#parseDimension(obj["offsetY"]),
+            this.#parseReference(obj["blur"]) ?? this.#parseDimension(obj["blur"]),
+            this.#parseReference(obj["spread"]) ?? this.#parseDimension(obj["spread"]),
+            obj["inset"] === true,
         );
     }
 
-    #parseGradient(value: JsonValue): GradientStop[] {
+    #parseGradient(value: JsonValue): (GradientStop | TokenReference)[] {
         if (!Array.isArray(value)) {
             throw new HrdtTokenReaderError(`Expected gradient stops array, got: ${JSON.stringify(value)}`);
         }
         return value.map((item) => {
+            const reference = this.#parseReference(item);
+            if (reference) return reference;
             if (!this.#isObject(item)) {
                 throw new HrdtTokenReaderError(`Expected gradient stop object, got: ${JSON.stringify(item)}`);
             }
             const obj = item as JsonObject;
-            return new GradientStop(this.#parseColor(obj["color"]), this.#parseNumber(obj["position"]));
+            return new GradientStop(
+                this.#parseReference(obj["color"]) ?? this.#parseColor(obj["color"]),
+                this.#parseReference(obj["position"]) ?? this.#parseNumber(obj["position"]),
+            );
         });
     }
 
@@ -333,12 +343,19 @@ export class HrdtTokenReader {
         }
         const obj = value as JsonObject;
         return new TypographyValue(
-            this.#parseFontFamily(obj["fontFamily"]),
-            this.#parseDimension(obj["fontSize"]),
-            this.#parseFontWeight(obj["fontWeight"]),
-            this.#parseDimension(obj["letterSpacing"]),
-            this.#parseNumber(obj["lineHeight"]),
+            this.#parseReference(obj["fontFamily"]) ?? this.#parseFontFamily(obj["fontFamily"]),
+            this.#parseReference(obj["fontSize"]) ?? this.#parseDimension(obj["fontSize"]),
+            this.#parseReference(obj["fontWeight"]) ?? this.#parseFontWeight(obj["fontWeight"]),
+            this.#parseReference(obj["letterSpacing"]) ?? this.#parseDimension(obj["letterSpacing"]),
+            this.#parseReference(obj["lineHeight"]) ?? this.#parseNumber(obj["lineHeight"]),
         );
+    }
+
+    #parseReference(value: JsonValue): TokenReference | undefined {
+        if (typeof value === "string" && REFERENCE_RE.test(value)) {
+            return new TokenReference(value.slice(1, -1));
+        }
+        return undefined;
     }
 
     #isObject(value: JsonValue): value is JsonObject {
@@ -359,4 +376,3 @@ export class HrdtTokenReaderError extends Error {
         this.name = "HrdtTokenReaderError";
     }
 }
-

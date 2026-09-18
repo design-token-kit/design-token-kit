@@ -198,6 +198,17 @@ describe("AndroidTokenConverter references", () => {
 });
 
 describe("AndroidTokenConverter composites", () => {
+    it("skips cubic bezier and stroke geometry without approximating them", () => {
+        const outputs = convertResources({
+            motion: {
+                easing: { $type: "cubicBezier", $value: [0.2, 0, 0, 1] },
+                stroke: { $type: "strokeStyle", $value: { dashArray: [{ value: 2, unit: "px" }], lineCap: "round" } },
+            },
+        });
+
+        expect(outputs).toEqual([]);
+    });
+
     it("decomposes typography into one resource per field", () => {
         const outputs = convertTyped({
             typography: {
@@ -223,6 +234,34 @@ describe("AndroidTokenConverter composites", () => {
             .toContain("<integer name=\"typography_body_font_weight\">400</integer>");
         expect(fileNamed(outputs, "values/strings.xml"))
             .toContain("<string name=\"typography_body_font_family\">Inter</string>");
+    });
+
+    it("maps typography keyword weights and field references", () => {
+        const outputs = convertTyped({
+            primitive: {
+                dimension: { body: { $type: "dimension", $value: { value: 16, unit: "px" } } },
+                number: { lineHeight: { $type: "number", $value: 1.5 } },
+            },
+            typography: {
+                body: {
+                    $type: "typography",
+                    $value: {
+                        fontFamily: "Inter",
+                        fontSize: "{primitive.dimension.body}",
+                        fontWeight: "bold",
+                        letterSpacing: { value: 0, unit: "px" },
+                        lineHeight: "{primitive.number.lineHeight}",
+                    },
+                },
+            },
+        });
+
+        expect(fileNamed(outputs, "values/strings.xml"))
+            .toContain("<string name=\"typography_body_font_weight\">bold</string>");
+        expect(fileNamed(outputs, "values/dimens.xml"))
+            .toContain("@dimen/primitive_dimension_body");
+        expect(fileNamed(outputs, "values/floats.xml"))
+            .toContain("@dimen/primitive_number_line_height");
     });
 
     it("decomposes a shadow into color and dimension resources", () => {
