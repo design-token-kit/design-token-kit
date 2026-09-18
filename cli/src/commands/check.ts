@@ -40,7 +40,7 @@ interface CheckOptions {
 export const checkCommand = new Command("check")
     .alias("validate")
     .description("Check token files: schema, model correctness and architecture.")
-    .argument("[files...]", "Paths to token files (reads from stdin when omitted). Supported formats: DTCG, HRDT, DESIGN.md.")
+    .argument("[files...]", "Paths or content:<tokens> (stdin when omitted). Formats: DTCG, HRDT, DESIGN.md.")
     .addOption(
         new Option("--scope <scope>", "How deep to check: schema, validate or lint. Each includes the previous.")
             .choices(CheckScope.names())

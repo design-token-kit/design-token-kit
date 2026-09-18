@@ -92,6 +92,11 @@ overrides.
 
 Pass `-` or omit source arguments to read from standard input.
 
+### Raw content
+
+Prefix an inline token document with `content:` to pass it directly instead of
+reading a file, for example `dtokens check 'content:{"token":{"$value":1}}'`.
+
 ## Output Formats
 
 ### CSS custom properties
@@ -227,7 +232,9 @@ Convert token documents between DTCG JSON, HRDT YAML, and DESIGN.md.
 
 ### showcase
 
-* `-o, --out <file>` - output HTML file name or path.
+* `-o, --out <file>` - output HTML file name or path. A bare file name is
+  written to the system temporary directory. Use `./<file>` to write in the
+  current directory.
 * `--open` - open the generated HTML in browser, only with `--out`.
 
 ### stats
@@ -254,9 +261,9 @@ The `--scope` option selects how deep the pipeline runs.
 
 Scopes:
 
-* `schema`: load and validate against the DTCG schema only.
+* `schema`: load and validate against the selected input format schema only.
 * `validate`: schema plus model-correctness checks.
-* `lint`: model-correctness plus lint checks.
+* `lint`: schema, model-correctness, and lint checks.
 
 Run `dtokens check --help` to list the available check ids with their
 scope, severity, and description.
