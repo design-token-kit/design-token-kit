@@ -97,6 +97,14 @@ describe("TokenHtmlShowcaseRenderer", () => {
             expect(html).toContain("#2549f6");
         });
 
+        it("recognizes CSS color functions as color tokens", () => {
+            const html = renderer.renderPage(parsed([
+                entry("--primitive-brand", "oklch(60% 0.2 30)"),
+            ]));
+            expect(html).toContain("token-item--color-card");
+            expect(html).toContain("oklch(60% 0.2 30)");
+        });
+
         it("renders color type badge", () => {
             const html = renderer.renderPage(parsed([
                 entry("--primitive-color-brand", "#2549f6"),
@@ -110,6 +118,26 @@ describe("TokenHtmlShowcaseRenderer", () => {
                 entry("--primitive-color-brand", "#2549f6"),
             ]));
             expect(html).toContain("--primitive-color-brand");
+        });
+
+        it("renders color format selection and copy controls", () => {
+            const html = renderer.renderPage(parsed([
+                entry("--primitive-color-brand", "#336699"),
+            ]));
+            expect(html).toContain("data-color-controls");
+            expect(html).toContain("data-color-format");
+            expect(html).toContain("<option value=\"hex\"");
+            expect(html).toContain("data-color-value=\"rgba(51, 102, 153, 1)\"");
+            expect(html).toContain("data-color-copy");
+            expect(html).toContain("Copy");
+        });
+
+        it("keeps an unsupported color space copyable as CSS", () => {
+            const html = renderer.renderPage(parsed([
+                entry("--primitive-color-brand", "color(display-p3 1 0 0)"),
+            ]));
+            expect(html).toContain("data-color-value=\"color(display-p3 1 0 0)\"");
+            expect(html).not.toContain("<option value=\"rgb\"");
         });
     });
 
@@ -255,6 +283,15 @@ describe("TokenHtmlShowcaseRenderer", () => {
                 entry("--semantic-color-text-primary", "var(--primitive-color-brand)", "semantic"),
             ]));
             expect(html).toContain("semantic-role__swatch");
+        });
+
+        it("renders color format controls for semantic colors", () => {
+            const html = renderer.renderPage(parsed([
+                entry("--primitive-color-brand", "#2549f6", "primitive"),
+                entry("--semantic-color-text-primary", "var(--primitive-color-brand)", "semantic"),
+            ]));
+            expect(html).toContain("data-color-controls");
+            expect(html).toContain("data-color-copy");
         });
 
         it("renders resolved value for semantic token", () => {

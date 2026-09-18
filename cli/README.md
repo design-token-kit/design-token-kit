@@ -31,7 +31,7 @@ https://design-token-kit.github.io/
 * **Android generation** - token sets rendered as `res/values` resource XML
   split by token group or resource type, with theme resource directories
 * **Static showcase** - HTML showcase generation from token sources or existing
-  CSS
+  CSS, with color format selection and copy controls
 * **Token stats** - text and HTML reports with token counts and breakdowns
 * **Source abstraction** - local files, stdin, URLs, and raw token content
   strings
@@ -151,6 +151,10 @@ only, with the `dark` theme mapped to `values-night`.
 Generate a static HTML preview from DTCG JSON, HRDT YAML, DESIGN.md, or
 existing CSS. Existing CSS input may be either classic `:root` output or
 Tailwind CSS v4 output with `@theme` and theme override selectors.
+
+Color cards include a format selector and a copy button. Supported conversions
+are CSS, HEX, RGBA, and HSLA for colors that can be represented in sRGB. Other
+color spaces remain available in their original CSS syntax.
 
 ### Token statistics
 

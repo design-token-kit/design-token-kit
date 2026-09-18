@@ -119,7 +119,7 @@ structure right but misses format details.
 * Generate CSS and SCSS from token files, including Tailwind CSS v4 `@theme`
   output, SwiftUI source, Android resource XML, and a Figma script creating
   variables and styles
-* Generate HTML token showcase page
+* Generate HTML token showcase page with color format and copy controls
 * Generate token statistics as text or HTML
 
 ## Build
@@ -194,4 +194,3 @@ npm run dist
 - [DTCG](https://www.designtokens.org/) — Design Tokens Community Group JSON
 - [HRDT](https://medium.com/@bychinskidm/how-we-made-design-token-kit-an-npm-tool-for-design-tokens-fccf36bd2c65#6821) — Human-Readable Design Tokens YAML
 - [DESIGN.md](https://github.com/google-labs-code/design.md) — Markdown-based format with YAML frontmatter
-

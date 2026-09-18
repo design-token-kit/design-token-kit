@@ -137,8 +137,8 @@ export class TokenGroupClassifier {
         if (
             lowerName.includes("color")
             || TokenGroupClassifier.#COLOR_HEX_RE.test(value)
-            || lowerValue.startsWith("rgb")
-            || lowerValue.startsWith("hsl")
+            || /^(rgb|hsl|hwb|lab|lch|oklab|oklch|color)\(/.test(lowerValue)
+            || lowerValue === "transparent"
         ) {
             return "colors";
         }
