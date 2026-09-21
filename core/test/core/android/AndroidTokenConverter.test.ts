@@ -87,6 +87,25 @@ describe("AndroidTokenConverter scalars", () => {
         expect(out).toContain("<dimen name=\"spacing_md\">15dp</dimen>");
     });
 
+    it("resolves rem against the base declared by the document", () => {
+        const out = convert({
+            "$extensions": { "design-token-kit": { "remBase": 10 } },
+            "spacing": { md: { $type: "dimension", $value: { value: 1.5, unit: "rem" } } },
+        });
+        expect(out).toContain("<dimen name=\"spacing_md\">15dp</dimen>");
+    });
+
+    it("prefers an explicit pixel base over the declared one", () => {
+        const out = convert(
+            {
+                "$extensions": { "design-token-kit": { "remBase": 10 } },
+                "spacing": { md: { $type: "dimension", $value: { value: 1.5, unit: "rem" } } },
+            },
+            { remBase: 16 },
+        );
+        expect(out).toContain("<dimen name=\"spacing_md\">24dp</dimen>");
+    });
+
     it("emits durations as integers in milliseconds", () => {
         const out = convert({ motion: { fast: { $type: "duration", $value: { value: 0.2, unit: "s" } } } });
         expect(out).toContain("<integer name=\"motion_fast\">200</integer>");

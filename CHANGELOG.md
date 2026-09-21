@@ -4,6 +4,15 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+
+- `--rem-base` now applies to the SwiftUI export as well as Android.
+- Token documents can declare their own `rem` base via
+  `$extensions["design-token-kit"].remBase` on the document root. An explicit
+  `--rem-base` overrides it; the default remains `16`.
+- Added the `bad-rem-base` check, warning about an unusable declared `rem`
+  base.
+
 ### Fixed
 
 - Fixed DTCG schema validation for tokens inheriting `$type` from a group (#88).
@@ -11,6 +20,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   strokeStyle composite tokens (#63).
 - Fixed SwiftUI export generating invalid identifiers for numeric token path
   segments (#85).
+- Fixed SwiftUI export dropping the unit of `dimension` tokens. `rem` values
+  are now resolved against the pixel base in scalar dimensions and composite
+  fields alike (#78).
 
 ## [1.9.0] - 2026-09-19
 

@@ -39,7 +39,7 @@ export const convertCommand = new Command("convert")
     .option("--theme-selector [template]", "Tailwind v4 only: selector template for theme overrides with {theme} placeholder")
     .option("--swift-type [type]", "SwiftUI only: output form 'enum' or 'struct' (default: enum)")
     .option("--android-layout [layout]", "Android only: file layout 'layer' or 'type' (default: layer)")
-    .option("--rem-base [pixels]", "Android only: pixel base used to resolve rem dimensions (default: 16)")
+    .option("--rem-base [pixels]", "Android and SwiftUI only: pixel base used to resolve rem dimensions (default: 16)")
     .option("-o, --out [file]", "Output file (SCSS multi-theme and Android: omit for tar stdout, use .tar for archive, or a directory for separate files)")
     .addHelpText("after", "\nExit status:\n  0  success\n  1  conversion failed")
     .action(async (files: string[], options: ConvertOptions) => {
