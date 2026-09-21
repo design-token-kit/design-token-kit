@@ -217,8 +217,10 @@ Convert token documents between DTCG JSON, HRDT YAML, and DESIGN.md.
 * `--android-layout [layout]` - android only: how resources are split across
   files. `layer` creates one file per root token group, `type` one file per
   Android resource type. Defaults to `layer`.
-* `--rem-base [pixels]` - android only: pixel base used to resolve `rem`
-  dimensions, which Android does not support. Defaults to `16`.
+* `--rem-base [pixels]` - android and swiftui only: pixel base used to resolve
+  `rem` dimensions, which these platforms do not support. Overrides
+  `$extensions["design-token-kit"].remBase` declared by the token document.
+  Defaults to `16`.
 * `-o, --out [file]` - output file, defaults to stdout.
   For multi-theme SCSS:
   - omit `--out` to write a tar archive to stdout
@@ -388,6 +390,16 @@ For a nested palette step such as `primitive.color.brand.500`, the generated
 Swift member is `Brand._500`.
 Both output forms preserve the former flat `brand500` member as a compatibility
 alias.
+
+SwiftUI has no `rem` unit, so `rem` dimensions are resolved against a pixel
+base while `px` is emitted as is, `pt` being its iOS equivalent. The base is
+taken from `--rem-base`, then from
+`$extensions["design-token-kit"].remBase` in the token document, then
+defaults to `16`.
+
+```bash
+dtokens convert tokens.json --outform swiftui --rem-base 10
+```
 
 ## Figma Script Conversion
 

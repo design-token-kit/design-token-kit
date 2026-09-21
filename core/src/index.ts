@@ -96,6 +96,7 @@ export { RawValueUsageCheck } from "#/core/check/checks/RawValueUsageCheck";
 export { EmptyGroupCheck } from "#/core/check/checks/EmptyGroupCheck";
 export { MissingDescriptionCheck } from "#/core/check/checks/MissingDescriptionCheck";
 export { TailwindNamespaceCheck } from "#/core/check/checks/TailwindNamespaceCheck";
+export { RemBaseCheck } from "#/core/check/checks/RemBaseCheck";
 
 import { CssTokenConverter } from "#/core/platforms/css/CssTokenConverter";
 import { ScssTokenConverter } from "#/core/platforms/scss/ScssTokenConverter";
