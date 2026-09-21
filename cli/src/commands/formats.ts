@@ -17,6 +17,7 @@ import {
     AndroidTokenConverter,
     type AndroidResourceLayoutName,
 } from "@design-token-kit/core";
+import type { Command } from "commander";
 
 export { Format };
 
@@ -78,6 +79,83 @@ export interface ConvertSettings {
      * @defaultValue `"16"`
      */
     remBase?: string;
+}
+
+interface FormatOptionDefinition {
+    readonly key: keyof ConvertSettings;
+    readonly flags: string;
+    readonly name: string;
+    readonly description: string;
+    readonly formats: readonly OutputFormat[];
+}
+
+const FORMAT_OPTION_DEFINITIONS: readonly FormatOptionDefinition[] = [
+    {
+        key: "separator",
+        flags: "--separator [value]",
+        name: "--separator",
+        description: "SCSS only: character used to replace '.' in token paths when generating variable names (default: -)",
+        formats: [Format.SCSS],
+    },
+    {
+        key: "baseSelector",
+        flags: "--base-selector [selector]",
+        name: "--base-selector",
+        description: "Tailwind v4 only: selector for optional mirrored base custom properties",
+        formats: [Format.TAILWIND_V4],
+    },
+    {
+        key: "themeSelector",
+        flags: "--theme-selector [template]",
+        name: "--theme-selector",
+        description: "Tailwind v4 only: selector template for theme overrides with {theme} placeholder",
+        formats: [Format.TAILWIND_V4],
+    },
+    {
+        key: "swiftType",
+        flags: "--swift-type [type]",
+        name: "--swift-type",
+        description: "SwiftUI only: output form 'enum' or 'struct' (default: enum)",
+        formats: [Format.SWIFT_UI],
+    },
+    {
+        key: "androidLayout",
+        flags: "--android-layout [layout]",
+        name: "--android-layout",
+        description: "Android only: file layout 'layer' or 'type' (default: layer)",
+        formats: [Format.ANDROID],
+    },
+    {
+        key: "remBase",
+        flags: "--rem-base [pixels]",
+        name: "--rem-base",
+        description: "Android and SwiftUI only: pixel base used to resolve rem dimensions (default: 16)",
+        formats: [Format.ANDROID, Format.SWIFT_UI],
+    },
+];
+
+/**
+ * Adds all format-specific convert options to the command.
+ */
+export function addFormatOptions(command: Command): void {
+    for (const option of FORMAT_OPTION_DEFINITIONS) {
+        command.option(option.flags, option.description);
+    }
+}
+
+/**
+ * Rejects options that do not belong to the selected output format.
+ */
+export function validateFormatOptions(outform: string | undefined, settings: ConvertSettings): void {
+    const outputFormat = toOutputFormat(outform);
+    for (const option of FORMAT_OPTION_DEFINITIONS) {
+        if (settings[option.key] === undefined || option.formats.includes(outputFormat)) {
+            continue;
+        }
+
+        const expectedFormats = option.formats.map((format) => `"${format}"`).join(" or ");
+        throw new Error(`${option.name} is only valid for ${expectedFormats}; got "${outputFormat}"`);
+    }
 }
 
 export function getReader(format?: string): DocumentReader {

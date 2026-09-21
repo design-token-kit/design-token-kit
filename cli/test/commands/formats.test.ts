@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { Dtcg, Format, TokenGroup, DtcgJsonReader, DtcgList, SwiftUiTokenConverter } from "@design-token-kit/core";
-import { getReader, getWriter, toDocumentFormat } from "#commands/formats";
+import { getReader, getWriter, toDocumentFormat, validateFormatOptions } from "#commands/formats";
 
 describe("toDocumentFormat", () => {
     it("returns DTCG for 'dtcg'", () => {
@@ -129,6 +129,22 @@ describe("getWriter", () => {
         const out = getWriter(Format.SWIFT_UI).write(new DtcgList(parsed), {});
         expect(out).toContain("enum DesignTokens {");
         expect(out).toContain("static let md: CGFloat = 16");
+    });
+});
+
+describe("validateFormatOptions", () => {
+    it("accepts an option for its output format", () => {
+        expect(() => validateFormatOptions("scss", { separator: "_" })).not.toThrow();
+    });
+
+    it("rejects an option for another output format", () => {
+        expect(() => validateFormatOptions("css", { swiftType: "struct" }))
+            .toThrow('--swift-type is only valid for "swiftui"; got "css"');
+    });
+
+    it("accepts rem base for both supported output formats", () => {
+        expect(() => validateFormatOptions("android", { remBase: "10" })).not.toThrow();
+        expect(() => validateFormatOptions("swiftui", { remBase: "10" })).not.toThrow();
     });
 });
 
