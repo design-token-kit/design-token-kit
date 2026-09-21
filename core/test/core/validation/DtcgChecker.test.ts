@@ -51,6 +51,24 @@ const SCHEMA_INVALID_COLOR: string = source({
     primitive: { bad: { "$type": "color", "$value": 42 } },
 });
 
+const INHERITED_SCALAR_TYPES: string = source({
+    primitive: {
+        fontWeight: { "$type": "fontWeight", regular: { "$value": "regular" } },
+        number: { "$type": "number", opacity: { "$value": 0.5 } },
+        duration: { "$type": "duration", fast: { "$value": { value: 100, unit: "ms" } } },
+        fontFamily: { "$type": "fontFamily", body: { "$value": ["Inter", "sans-serif"] } },
+        nested: {
+            "$type": "number",
+            "$root": { "$value": 1 },
+            child: { value: { "$value": 2 } },
+        },
+        overridden: {
+            "$type": "number",
+            fontWeight: { "$type": "fontWeight", regular: { "$value": "regular" } },
+        },
+    },
+});
+
 // No defect: passes schema, model and lint.
 const VALID: string = source({
     primitive: { color: { "$type": "color", brand: { "$description": "Brand color.", "$value": { colorSpace: "srgb", components: [0, 0, 1] } } } },
@@ -75,6 +93,11 @@ describe("DtcgChecker", () => {
     describe("scope gating", () => {
         it("schema scope skips model checks", async () => {
             const issues = await new DtcgChecker({ scope: CheckScope.SCHEMA }).validate([ALIAS_TO_MISSING_TOKEN]);
+            expect(issues).toEqual([]);
+        });
+
+        it("accepts scalar tokens that inherit their type from a group", async () => {
+            const issues = await new DtcgChecker({ scope: CheckScope.SCHEMA }).validate([INHERITED_SCALAR_TYPES]);
             expect(issues).toEqual([]);
         });
 
