@@ -274,7 +274,7 @@ describe("SwiftUiTokenConverter composites", () => {
         expect(out.match(/ShadowToken\(/g)?.length).toBe(2);
     });
 
-    it("renders a strokeStyle object with dashed derived from dashArray", () => {
+    it("preserves a strokeStyle object in the generated wrapper", () => {
         const out = convert({
             stroke: {
                 dashed: {
@@ -283,7 +283,9 @@ describe("SwiftUiTokenConverter composites", () => {
                 },
             },
         });
-        expect(out).toContain("StrokeStyleToken(dashed: true)");
+        expect(out).toContain("StrokeStyleToken(dashed: true, dashArray: [2, 2], lineCap: .butt, keyword: nil)");
+        expect(out).toContain("let dashArray: [CGFloat]");
+        expect(out).toContain("let lineCap: StrokeLineCap?");
     });
 
     it("does not emit composite structs when no composite tokens exist", () => {
@@ -311,6 +313,31 @@ describe("SwiftUiTokenConverter composites", () => {
         });
         expect(out).toContain("struct TypographyToken {");
         expect(out).toContain("static let body = TypographyToken(");
+        expect(out).toContain("fontFamily: FontFamilyToken([\"Inter\"])");
+        expect(out).toContain("fontSize: 16");
+        expect(out).toContain("fontWeight: FontWeightToken(Int(400))");
+        expect(out).toContain("letterSpacing: 0");
+        expect(out).toContain("lineHeight: 1.5");
+    });
+
+    it("preserves transition delay and timing function", () => {
+        const out = convert({
+            motion: {
+                enter: {
+                    $type: "transition",
+                    $value: {
+                        duration: { value: 200, unit: "ms" },
+                        delay: { value: 50, unit: "ms" },
+                        timingFunction: [0.2, 0, 0.8, 1],
+                    },
+                },
+            },
+        });
+
+        expect(out).toContain("struct TransitionToken {");
+        expect(out).toContain("let delay: TimeInterval");
+        expect(out).toContain("let timingFunction: SwiftUI.UnitCurve");
+        expect(out).toContain("TransitionToken(duration: 0.2, delay: 0.05, timingFunction: SwiftUI.UnitCurve.bezier");
     });
 
     it("qualifies SwiftUI types so a group named 'color' does not shadow SwiftUI.Color", () => {
@@ -331,12 +358,12 @@ describe("SwiftUiTokenConverter composites", () => {
         const dashed = convert({
             stroke: { a: { $type: "strokeStyle", $value: "dashed" } },
         });
-        expect(dashed).toContain("StrokeStyleToken(dashed: true)");
+        expect(dashed).toContain("StrokeStyleToken(dashed: true, dashArray: [], lineCap: nil, keyword: \"dashed\")");
 
         const solid = convert({
             stroke: { b: { $type: "strokeStyle", $value: "solid" } },
         });
-        expect(solid).toContain("StrokeStyleToken(dashed: false)");
+        expect(solid).toContain("StrokeStyleToken(dashed: false, dashArray: [], lineCap: nil, keyword: \"solid\")");
     });
 
     it("preserves a strokeStyle reference instead of flattening it", () => {
@@ -366,6 +393,77 @@ describe("SwiftUiTokenConverter composites", () => {
             },
         });
         expect(out).toContain("SwiftUI.Font.custom(");
+        expect(out).toContain(".weight(.bold)");
+    });
+
+    it("preserves string font families and keyword font weights", () => {
+        const out = convert({
+            text: {
+                body: {
+                    $type: "typography",
+                    $value: {
+                        fontFamily: "Inter",
+                        fontSize: { value: 16, unit: "px" },
+                        fontWeight: "semi-bold",
+                        letterSpacing: { value: 0, unit: "px" },
+                        lineHeight: 1.5,
+                    },
+                },
+            },
+        });
+
+        expect(out).toContain("fontFamily: FontFamilyToken(\"Inter\")");
+        expect(out).toContain("fontWeight: FontWeightToken(\"semi-bold\")");
+        expect(out).toContain("SwiftUI.Font.custom(\"Inter\", size: 16).weight(.semibold)");
+    });
+
+    it("preserves references for transition fields", () => {
+        const out = convert({
+            duration: {
+                fast: { $type: "duration", $value: { value: 200, unit: "ms" } },
+                pause: { $type: "duration", $value: { value: 50, unit: "ms" } },
+            },
+            cubicBezier: {
+                standard: { $type: "cubicBezier", $value: [0.2, 0, 0.8, 1] },
+            },
+            motion: {
+                enter: {
+                    $type: "transition",
+                    $value: {
+                        duration: "{duration.fast}",
+                        delay: "{duration.pause}",
+                        timingFunction: "{cubicBezier.standard}",
+                    },
+                },
+            },
+        });
+
+        expect(out).toContain(
+            "TransitionToken(duration: DesignTokens.Duration.fast, delay: DesignTokens.Duration.pause, timingFunction: DesignTokens.Cubicbezier.standard)",
+        );
+    });
+
+    it("emits composite wrappers in the struct-based output", () => {
+        const out = convertList(
+            {
+                motion: {
+                    enter: {
+                        $type: "transition",
+                        $value: {
+                            duration: { value: 200, unit: "ms" },
+                            delay: { value: 50, unit: "ms" },
+                            timingFunction: [0.2, 0, 0.8, 1],
+                        },
+                    },
+                },
+            },
+            {},
+            { swiftType: "struct" },
+        );
+
+        expect(out).toContain("struct Theme {");
+        expect(out).toContain("let enter: TransitionToken");
+        expect(out).toContain("static let base = Theme(");
     });
 
     it("uses a system font when typography only references its font family", () => {

@@ -375,9 +375,28 @@ const STRUCT_DEFINITIONS: Record<CompositeKind, string> = {
         "/// Design token typography structure.",
         "///",
         "/// SwiftUI Font covers weight and size, not tracking or line spacing.",
+        "struct FontFamilyToken {",
+        `${INDENT}let names: [String]`,
+        `${INDENT}init(_ name: String) { names = [name] }`,
+        `${INDENT}init(_ names: [String]) { self.names = names }`,
+        "}",
+        "",
+        "struct FontWeightToken {",
+        `${INDENT}enum Value { case numeric(CGFloat); case keyword(String) }`,
+        `${INDENT}let value: Value`,
+        `${INDENT}init(_ value: CGFloat) { self.value = .numeric(value) }`,
+        `${INDENT}init(_ value: Int) { self.value = .numeric(CGFloat(value)) }`,
+        `${INDENT}init(_ value: String) { self.value = .keyword(value) }`,
+        "}",
+        "",
         "struct TypographyToken {",
         `${INDENT}let font: SwiftUI.Font`,
+        `${INDENT}let fontFamily: FontFamilyToken`,
+        `${INDENT}let fontSize: CGFloat`,
+        `${INDENT}let fontWeight: FontWeightToken`,
         `${INDENT}let tracking: CGFloat`,
+        `${INDENT}let letterSpacing: CGFloat`,
+        `${INDENT}let lineHeight: CGFloat`,
         `${INDENT}let lineSpacing: CGFloat`,
         "}",
     ].join("\n"),
@@ -405,8 +424,13 @@ const STRUCT_DEFINITIONS: Record<CompositeKind, string> = {
         "/// Design token stroke style structure.",
         "///",
         "/// SwiftUI StrokeStyle is a drawing attribute, not a token value.",
+        "enum StrokeLineCap { case round, butt, square }",
+        "",
         "struct StrokeStyleToken {",
         `${INDENT}let dashed: Bool`,
+        `${INDENT}let dashArray: [CGFloat]`,
+        `${INDENT}let lineCap: StrokeLineCap?`,
+        `${INDENT}let keyword: String?`,
         "}",
     ].join("\n"),
     transition: [
@@ -415,6 +439,8 @@ const STRUCT_DEFINITIONS: Record<CompositeKind, string> = {
         "/// SwiftUI has no stand-alone transition type, only animation methods.",
         "struct TransitionToken {",
         `${INDENT}let duration: TimeInterval`,
+        `${INDENT}let delay: TimeInterval`,
+        `${INDENT}let timingFunction: SwiftUI.UnitCurve`,
         "}",
     ].join("\n"),
 };
@@ -622,7 +648,7 @@ function renderScalar(value: unknown): Rendered | undefined {
     if (value instanceof DimensionValue) return { expr: String(value.value), type: "CGFloat" };
     if (value instanceof DurationValue) return { expr: String(durationSeconds(value)), type: "TimeInterval" };
     if (value instanceof CubicBezierValue) {
-        return { expr: `SwiftUI.UnitCurve.bezier(startControlPoint: SwiftUI.UnitPoint(x: ${value.p1x}, y: ${value.p1y}), endControlPoint: SwiftUI.UnitPoint(x: ${value.p2x}, y: ${value.p2y}))` };
+        return { expr: cubicBezierToSwift(value) };
     }
     if (typeof value === "number") return { expr: String(value) };
     if (typeof value === "string") return { expr: JSON.stringify(value) };
@@ -657,18 +683,38 @@ function colorArgToSwift(value: ColorValue | TokenReference): string {
 function typographyToSwift(value: TypographyValue): string {
     const size = dimToSwift(value.fontSize);
     const tracking = dimToSwift(value.letterSpacing);
-    const lineSpacing = value.lineHeight instanceof TokenReference ? refToSwift(value.lineHeight) : String(value.lineHeight);
+    const lineHeight = numberToSwift(value.lineHeight);
     const font = fontToSwift(value, size);
-    return `TypographyToken(font: ${font}, tracking: ${tracking}, lineSpacing: ${lineSpacing})`;
+    const fontFamily = fontFamilyToSwift(value.fontFamily);
+    const fontWeight = fontWeightValueToSwift(value.fontWeight);
+    return [
+        `TypographyToken(font: ${font}, fontFamily: ${fontFamily}, fontSize: ${size},`,
+        `fontWeight: ${fontWeight}, tracking: ${tracking}, letterSpacing: ${tracking},`,
+        `lineHeight: ${lineHeight}, lineSpacing: ${lineHeight})`,
+    ].join(" ");
 }
 
 function fontToSwift(value: TypographyValue, size: string): string {
     const family = concreteFontFamily(value.fontFamily);
-    if (family !== undefined) {
-        return `SwiftUI.Font.custom(${JSON.stringify(family)}, size: ${size})`;
-    }
     const weight = fontWeightToSwift(value.fontWeight);
+    if (family !== undefined) {
+        return `SwiftUI.Font.custom(${JSON.stringify(family)}, size: ${size}).weight(${weight})`;
+    }
     return `SwiftUI.Font.system(size: ${size}, weight: ${weight})`;
+}
+
+function fontFamilyToSwift(value: TypographyValue["fontFamily"]): string {
+    if (value instanceof TokenReference) return `FontFamilyToken(${refToSwift(value)})`;
+    if (typeof value === "string") return `FontFamilyToken(${JSON.stringify(value)})`;
+    const names = value.map((entry) => entry instanceof TokenReference ? refToSwift(entry) : JSON.stringify(entry));
+    return `FontFamilyToken([${names.join(", ")}])`;
+}
+
+function fontWeightValueToSwift(value: TypographyValue["fontWeight"]): string {
+    if (value instanceof TokenReference) return `FontWeightToken(${refToSwift(value)})`;
+    if (typeof value === "string") return `FontWeightToken(${JSON.stringify(value)})`;
+    const numericValue = Number.isInteger(value) ? `Int(${value})` : `CGFloat(${value})`;
+    return `FontWeightToken(${numericValue})`;
 }
 
 function concreteFontFamily(fontFamily: TypographyValue["fontFamily"]): string | undefined {
@@ -680,11 +726,16 @@ function concreteFontFamily(fontFamily: TypographyValue["fontFamily"]): string |
     return undefined;
 }
 
-function fontWeightToSwift(weight: unknown): string {
+function fontWeightToSwift(weight: TypographyValue["fontWeight"]): string {
     if (weight instanceof TokenReference) return refToSwift(weight);
     const map: Record<string, string> = {
         "100": ".ultraLight", "200": ".thin", "300": ".light", "400": ".regular",
         "500": ".medium", "600": ".semibold", "700": ".bold", "800": ".heavy", "900": ".black",
+        thin: ".thin", hairline: ".thin", "extra-light": ".ultraLight", "ultra-light": ".ultraLight",
+        light: ".light", normal: ".regular", regular: ".regular", book: ".regular",
+        medium: ".medium", "semi-bold": ".semibold", "demi-bold": ".semibold", bold: ".bold",
+        "extra-bold": ".heavy", "ultra-bold": ".heavy", black: ".black", heavy: ".black",
+        "extra-black": ".black", "ultra-black": ".black",
     };
     return map[String(weight)] ?? ".regular";
 }
@@ -699,10 +750,14 @@ function shadowLayerToSwift(layer: ShadowLayer): string {
 
 function strokeStyleToSwift(value: unknown): string {
     if (value instanceof StrokeStyleObject) {
-        return `StrokeStyleToken(dashed: ${value.dashArray.length > 0})`;
+        const dashArray = value.dashArray.map(dimToSwift).join(", ");
+        return [
+            `StrokeStyleToken(dashed: ${value.dashArray.length > 0}, dashArray: [${dashArray}],`,
+            `lineCap: .${value.lineCap}, keyword: nil)`,
+        ].join(" ");
     }
     const dashed = value === "dashed" || value === "dotted";
-    return `StrokeStyleToken(dashed: ${dashed})`;
+    return `StrokeStyleToken(dashed: ${dashed}, dashArray: [], lineCap: nil, keyword: ${JSON.stringify(value)})`;
 }
 
 function borderToSwift(value: BorderValue): string {
@@ -715,7 +770,25 @@ function transitionToSwift(value: TransitionValue): string {
     const duration = value.duration instanceof TokenReference
         ? refToSwift(value.duration)
         : String(durationSeconds(value.duration));
-    return `TransitionToken(duration: ${duration})`;
+    const delay = value.delay instanceof TokenReference
+        ? refToSwift(value.delay)
+        : String(durationSeconds(value.delay));
+    const timingFunction = timingFunctionToSwift(value.timingFunction);
+    return `TransitionToken(duration: ${duration}, delay: ${delay}, timingFunction: ${timingFunction})`;
+}
+
+function timingFunctionToSwift(value: TransitionValue["timingFunction"]): string {
+    return value instanceof TokenReference ? refToSwift(value) : cubicBezierToSwift(value);
+}
+
+function cubicBezierToSwift(value: CubicBezierValue): string {
+    const start = `SwiftUI.UnitPoint(x: ${value.p1x}, y: ${value.p1y})`;
+    const end = `SwiftUI.UnitPoint(x: ${value.p2x}, y: ${value.p2y})`;
+    return `SwiftUI.UnitCurve.bezier(startControlPoint: ${start}, endControlPoint: ${end})`;
+}
+
+function numberToSwift(value: number | TokenReference): string {
+    return value instanceof TokenReference ? `CGFloat(${refToSwift(value)})` : String(value);
 }
 
 function gradientToSwift(stops: Array<GradientStop | TokenReference>): string {

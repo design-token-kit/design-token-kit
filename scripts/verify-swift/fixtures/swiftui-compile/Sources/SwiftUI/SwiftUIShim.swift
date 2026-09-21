@@ -34,6 +34,7 @@ public struct Font {
     }
     public static func system(size: CGFloat, weight: Weight = .regular) -> Font { Font() }
     public static func custom(_ name: String, size: CGFloat) -> Font { Font() }
+    public func weight(_ weight: Weight) -> Font { self }
     init() {}
 }
 
