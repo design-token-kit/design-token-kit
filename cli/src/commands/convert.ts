@@ -13,10 +13,12 @@ import { mkdir, writeFile } from "node:fs/promises";
 import { dirname, extname, join, parse } from "node:path";
 import {
     type ConvertSettings,
+    addFormatOptions,
     getWriter,
     toAndroidLayout,
     toDocumentFormat,
     toRemBase,
+    validateFormatOptions,
 } from "#commands/formats";
 import { hasErrors, printIssues } from "#commands/issues";
 import { createTarArchive } from "#io/TarArchive";
@@ -34,17 +36,16 @@ export const convertCommand = new Command("convert")
     .argument("[files...]", "Paths or content:<tokens> (reads from stdin when omitted or '-')")
     .option("-i, --inform [format]", "Input format: dtcg, hrdt, design-md (default: auto-detect)")
     .option("-f, --outform [format]", "Output format: dtcg, hrdt, design-md, css, scss, tailwind-v4, swiftui, figma-script, android (default: css)")
-    .option("--separator [value]", "SCSS only: character used to replace '.' in token paths when generating variable names (default: -)")
-    .option("--base-selector [selector]", "Tailwind v4 only: selector for optional mirrored base custom properties")
-    .option("--theme-selector [template]", "Tailwind v4 only: selector template for theme overrides with {theme} placeholder")
-    .option("--swift-type [type]", "SwiftUI only: output form 'enum' or 'struct' (default: enum)")
-    .option("--android-layout [layout]", "Android only: file layout 'layer' or 'type' (default: layer)")
-    .option("--rem-base [pixels]", "Android and SwiftUI only: pixel base used to resolve rem dimensions (default: 16)")
-    .option("-o, --out [file]", "Output file (SCSS multi-theme and Android: omit for tar stdout, use .tar for archive, or a directory for separate files)")
+    .option("-o, --out [file]", "Output file (SCSS multi-theme and Android: omit for tar stdout, use .tar for archive, or a directory for separate files)");
+
+addFormatOptions(convertCommand);
+
+convertCommand
     .addHelpText("after", "\nExit status:\n  0  success\n  1  conversion failed")
     .action(async (files: string[], options: ConvertOptions) => {
         try {
             const outform = options.outform ?? Format.CSS;
+            validateFormatOptions(outform, options);
             const forcedFormat = options.inform !== undefined
                 ? toDocumentFormat(options.inform)
                 : undefined;
