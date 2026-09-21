@@ -43,6 +43,20 @@ describe("convert", () => {
         expect(result.stdout).toContain("$primitive_color_white");
     });
 
+    it("rejects a format-specific option before reading input", async () => {
+        const result = await run(
+            convertCommand,
+            resolve(__dirname, "missing-input.json"),
+            "--outform",
+            "css",
+            "--swift-type",
+            "struct",
+        );
+        expect(result.status).toBe(1);
+        expect(result.stderr).toContain('--swift-type is only valid for "swiftui"');
+        expect(result.stderr).not.toContain("missing-input.json");
+    });
+
     it("writes one scss file per theme for multi-file conversion", async () => {
         const outDir = resolve(tmpdir(), `dtokens-test-${randomUUID()}`);
         const outFile = resolve(outDir, "tokens.scss");
