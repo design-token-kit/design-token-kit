@@ -2,6 +2,16 @@
 
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [Unreleased]
+
+### Fixed
+
+- Fixed DTCG schema validation for tokens inheriting `$type` from a group (#88).
+- Fixed SwiftUI export dropping fields from typography, transition, and
+  strokeStyle composite tokens (#63).
+- Fixed SwiftUI export generating invalid identifiers for numeric token path
+  segments (#85).
+
 ## [1.9.0] - 2026-09-19
 
 ### Added
