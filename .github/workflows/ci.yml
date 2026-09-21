@@ -62,8 +62,11 @@ jobs:
         with:
           node-version: 22
 
-      - uses: swift-actions/setup-swift@v2
+      - uses: swift-actions/setup-swift@v3
         with:
+          # setup-swift@v2 fails when the external GPG keyserver is unavailable.
+          # Swift compilation below remains the required verification step.
+          skip-verify-signature: true
           swift-version: "6.0"
 
       - run: npm install --global npm@11.19.0
