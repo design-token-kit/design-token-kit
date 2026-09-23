@@ -26,15 +26,27 @@ export class DesignMdTokenValidator implements TokenValidator {
 
         const issues: CheckIssue[] = [];
         for (const source of sources) {
-            const content = await new Source(source).getContent();
-            const sourceObj = new DesignMdReader().parseRaw(content);
-            const isValid = validator(sourceObj);
-            if (isValid) {
-                continue;
-            }
-            const errors = validator.errors ?? [];
-            for (const error of errors) {
-                issues.push(this.#toCheckIssue(source, error));
+            try {
+                const content = await new Source(source).getContent();
+                const reader = new DesignMdReader();
+                const sourceObj = reader.parseRaw(content);
+                const isValid = validator(sourceObj);
+                if (isValid) {
+                    reader.parse(content, source);
+                    continue;
+                }
+                const errors = validator.errors ?? [];
+                for (const error of errors) {
+                    issues.push(this.#toCheckIssue(source, error));
+                }
+            } catch (error) {
+                issues.push({
+                    id: "schema",
+                    sourcePath: source,
+                    severity: "error",
+                    message: error instanceof Error ? error.message : "Unable to parse DESIGN.md content.",
+                    raw: error,
+                });
             }
         }
 

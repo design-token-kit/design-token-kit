@@ -15,16 +15,16 @@
       "type": "string"
     },
     "colors": {
-      "$ref": "#/definitions/tokenMap"
+      "$ref": "#/definitions/stringTokenMap"
     },
     "typography": {
       "$ref": "#/definitions/typographyMap"
     },
     "rounded": {
-      "$ref": "#/definitions/tokenMap"
+      "$ref": "#/definitions/dimensionTokenMap"
     },
     "spacing": {
-      "$ref": "#/definitions/tokenMap"
+      "$ref": "#/definitions/spacingTokenMap"
     },
     "components": {
       "$ref": "#/definitions/componentsMap"
@@ -56,12 +56,39 @@
         "$ref": "#/definitions/scalarValue"
       }
     },
+    "stringTokenMap": {
+      "type": "object",
+      "propertyNames": { "$ref": "#/definitions/tokenName" },
+      "additionalProperties": { "type": "string" }
+    },
+    "dimensionTokenMap": {
+      "type": "object",
+      "propertyNames": { "$ref": "#/definitions/tokenName" },
+      "additionalProperties": {
+        "anyOf": [
+          { "$ref": "#/definitions/dimensionString" },
+          { "$ref": "#/definitions/reference" }
+        ]
+      }
+    },
+    "spacingTokenMap": {
+      "type": "object",
+      "propertyNames": { "$ref": "#/definitions/tokenName" },
+      "additionalProperties": {
+        "anyOf": [
+          { "type": "number" },
+          { "$ref": "#/definitions/dimensionString" },
+          { "$ref": "#/definitions/reference" }
+        ]
+      }
+    },
     "dimensionString": {
       "type": "string",
       "pattern": "^-?\\d+(?:\\.\\d+)?(?:px|em|rem)$"
     },
     "typographyValue": {
       "type": "object",
+      "required": ["fontFamily", "fontSize", "fontWeight", "lineHeight", "letterSpacing"],
       "properties": {
         "fontFamily": {
           "anyOf": [
@@ -84,7 +111,6 @@
         "lineHeight": {
           "anyOf": [
             { "type": "number" },
-            { "$ref": "#/definitions/dimensionString" },
             { "$ref": "#/definitions/reference" }
           ]
         },
@@ -119,32 +145,47 @@
       "type": "object",
       "properties": {
         "backgroundColor": {
-          "$ref": "#/definitions/scalarValue"
+          "type": "string"
         },
         "textColor": {
-          "$ref": "#/definitions/scalarValue"
+          "type": "string"
         },
         "typography": {
-          "$ref": "#/definitions/scalarValue"
+          "$ref": "#/definitions/reference"
         },
         "rounded": {
-          "$ref": "#/definitions/scalarValue"
+          "anyOf": [
+            { "$ref": "#/definitions/dimensionString" },
+            { "$ref": "#/definitions/reference" }
+          ]
         },
         "padding": {
-          "$ref": "#/definitions/scalarValue"
+          "anyOf": [
+            { "$ref": "#/definitions/dimensionString" },
+            { "$ref": "#/definitions/reference" }
+          ]
         },
         "size": {
-          "$ref": "#/definitions/scalarValue"
+          "anyOf": [
+            { "$ref": "#/definitions/dimensionString" },
+            { "$ref": "#/definitions/reference" }
+          ]
         },
         "height": {
-          "$ref": "#/definitions/scalarValue"
+          "anyOf": [
+            { "$ref": "#/definitions/dimensionString" },
+            { "$ref": "#/definitions/reference" }
+          ]
         },
         "width": {
-          "$ref": "#/definitions/scalarValue"
+          "anyOf": [
+            { "$ref": "#/definitions/dimensionString" },
+            { "$ref": "#/definitions/reference" }
+          ]
         }
       },
       "additionalProperties": {
-        "$ref": "#/definitions/scalarValue"
+        "$ref": "#/definitions/reference"
       }
     },
     "componentsMap": {
