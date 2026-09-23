@@ -88,7 +88,8 @@ describe("DtcgToDesignMdMapper", () => {
         const list = new DtcgList(new Dtcg(root), new Map([["dark", new Dtcg(new TokenGroup())]]));
         const mapped = new DtcgToDesignMdMapper().map(list);
 
-        expect(mapped.themes.size).toBe(0);
+        expect(mapped.themes.size).toBe(1);
+        expect(mapped.themes.get("dark")).toBeDefined();
         expect([...mapped.base.keys()]).toContain("colors");
         expect([...mapped.base.keys()]).toContain("typography");
         expect([...mapped.base.keys()]).toContain("rounded");

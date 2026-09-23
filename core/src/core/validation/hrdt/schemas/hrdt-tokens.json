@@ -70,12 +70,6 @@
         },
         {
           "type": "number"
-        },
-        {
-          "type": "boolean"
-        },
-        {
-          "type": "null"
         }
       ]
     },
@@ -86,9 +80,7 @@
         },
         {
           "type": "array",
-          "items": {
-            "$ref": "#/definitions/referenceGroup"
-          }
+          "items": { "type": "string" }
         },
         {
           "type": "object",

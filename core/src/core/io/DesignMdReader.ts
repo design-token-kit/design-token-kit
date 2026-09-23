@@ -1,9 +1,4 @@
 import { parse as parseYaml } from "yaml";
-import { unified } from "unified";
-import remarkParse from "remark-parse";
-import remarkFrontmatter from "remark-frontmatter";
-import { visit } from "unist-util-visit";
-import type { Root, Yaml } from "mdast";
 import { Dtcg } from "#/core/model/Dtcg";
 import { TokenGroup } from "#/core/model/TokenGroup";
 import { TokenNode } from "#/core/model/TokenNode";
@@ -60,39 +55,13 @@ export class DesignMdReader {
      * followed by markdown prose with {@code ##} section headings.
      */
     static isDesignMd(content: string): boolean {
-        if (!content.trimStart().startsWith("---")) return false;
-
-        const processor = unified()
-            .use(remarkParse)
-            .use(remarkFrontmatter, ["yaml"]);
-        const ast = processor.parse(content) as Root;
-
-        let hasFrontmatter = false;
-        let hasHeading = false;
-        visit(ast, (node) => {
-            if (node.type === "yaml") {
-                hasFrontmatter = true;
-            }
-            if (node.type === "heading") {
-                hasHeading = true;
-            }
-        });
-
-        return hasFrontmatter && hasHeading;
+        const frontmatter = extractFrontmatter(content);
+        return frontmatter !== undefined && hasMarkdownHeading(frontmatter.body);
     }
 
     #extractYamlBlocks(content: string): string[] {
-        const processor = unified()
-            .use(remarkParse)
-            .use(remarkFrontmatter, ["yaml"]);
-        const ast = processor.parse(content) as Root;
-        const blocks: string[] = [];
-        visit(ast, (node) => {
-            if (node.type === "yaml") {
-                blocks.push((node as Yaml).value);
-            }
-        });
-        return blocks;
+        const frontmatter = extractFrontmatter(content);
+        return frontmatter === undefined ? [] : [frontmatter.yaml];
     }
 
     #parseRoot(raw: JsonObject): TokenGroup {
@@ -433,6 +402,35 @@ export class DesignMdReader {
     #isObject(value: JsonValue): value is JsonObject {
         return typeof value === "object" && value !== null && !Array.isArray(value);
     }
+}
+
+function extractFrontmatter(content: string): { yaml: string; body: string } | undefined {
+    const lines = content.replace(/^\uFEFF/, "").split(/\r?\n/);
+    const openingIndex = lines.findIndex((line) => line.trim() !== "");
+    if (openingIndex < 0 || !/^---[ \t]*$/.test(lines[openingIndex])) return undefined;
+
+    const closingOffset = lines.slice(openingIndex + 1)
+        .findIndex((line) => /^---[ \t]*$/.test(line));
+    if (closingOffset < 0) return undefined;
+    const closingIndex = openingIndex + closingOffset + 1;
+    return {
+        yaml: lines.slice(openingIndex + 1, closingIndex).join("\n"),
+        body: lines.slice(closingIndex + 1).join("\n"),
+    };
+}
+
+function hasMarkdownHeading(body: string): boolean {
+    let fence: "`" | "~" | undefined;
+    for (const line of body.split(/\r?\n/)) {
+        const fenceMatch = line.match(/^\s*(`{3,}|~{3,})/);
+        if (fenceMatch !== null) {
+            const marker = fenceMatch[1][0] as "`" | "~";
+            fence = fence === marker ? undefined : fence ?? marker;
+            continue;
+        }
+        if (fence === undefined && /^\s{0,3}#{1,6}\s+\S/.test(line)) return true;
+    }
+    return false;
 }
 
 /**

@@ -255,6 +255,34 @@ for (const issue of issues) {
 Use `DtcgSchemaValidator` when you only need DTCG schema validation
 without semantic checks.
 
+## Browser API
+
+Use the browser entry point for local, in-memory token content.
+It bundles the DTCG, HRDT, and DESIGN.md schemas and never accesses paths,
+stdin, or temporary files.
+
+```ts
+import { BrowserTokenToolkit, CheckScope, Format } from "@design-token-kit/core/browser";
+
+const toolkit = new BrowserTokenToolkit();
+const input = {
+  base: {
+    source: "tokens.json",
+    format: Format.DTCG,
+    content: await file.text(),
+  },
+};
+
+const issues = toolkit.check(input, { scope: CheckScope.LINT });
+const css = toolkit.convert(input, Format.CSS)[0]?.content;
+```
+
+The browser entry accepts DTCG JSON, HRDT YAML, and DESIGN.md input.
+It supports all built-in conversion formats, HTML showcase generation, and
+token statistics.
+For browser security and compatibility, URL loading is owned by the host app
+and depends on the source server's CORS policy.
+
 ## Document Conversion
 
 Use readers and writers to convert token documents between DTCG JSON

@@ -62,7 +62,8 @@ const SCHEMA_EXTRA_TYPO_KEY = source({
     typography: { h1: { fontFamily: "Arial", unknownExtra: "value" } },
 });
 
-// Schema defect: unknown component property (allowed by schema, no error).
+// Schema defect: unknown component properties must be references because their
+// value type cannot be inferred safely.
 const UNKNOWN_COMPONENT_PROP = source({
     name: "Test",
     components: { btn: { borderColor: "#ff0000" } },
@@ -131,9 +132,9 @@ describe("DesignMdTokenValidator", () => {
             expect(issues).toEqual([]);
         });
 
-        it("passes unknown component property with valid value", async () => {
+        it("rejects an unknown component property with an untyped raw value", async () => {
             const issues = await new DesignMdTokenValidator().validate([UNKNOWN_COMPONENT_PROP]);
-            expect(issues).toEqual([]);
+            expect(issues.length).toBeGreaterThan(0);
         });
     });
 

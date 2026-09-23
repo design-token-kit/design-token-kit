@@ -92,14 +92,14 @@ export class FormatDetector {
      * alone would be ambiguous.
      */
     static detectWithContentAndFilename(content: string, filename?: string): Format {
-        const trimmed = content.trimStart();
-        const contentStartsWithDash = trimmed.startsWith("---");
-
-        if (contentStartsWithDash && filename && /\.md$/i.test(filename)) {
+        if (filename && /\.md$/i.test(filename)) {
             return Format.DESIGN_MD;
         }
-        if (contentStartsWithDash && filename && /\.(ya?ml)$/i.test(filename)) {
+        if (filename && /\.(ya?ml)$/i.test(filename)) {
             return Format.HRDT;
+        }
+        if (filename && /\.json$/i.test(filename)) {
+            return Format.DTCG;
         }
 
         return this.detect(content);

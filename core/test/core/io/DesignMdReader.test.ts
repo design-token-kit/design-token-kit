@@ -281,6 +281,10 @@ spacing:
             expect(raw).toBeNull();
         });
 
+        it("parses empty frontmatter emitted by DesignMdWriter", () => {
+            expect(new DesignMdReader().parseRaw("---\n---\n\n## Overview\n")).toEqual({});
+        });
+
     });
 
     describe("isDesignMd", () => {
@@ -291,6 +295,11 @@ spacing:
         it("rejects content missing either frontmatter or headings", () => {
             expect(DesignMdReader.isDesignMd("## Overview")).toBe(false);
             expect(DesignMdReader.isDesignMd("---\nname: Test\n---")).toBe(false);
+        });
+
+        it("does not treat a heading inside a code fence as markdown prose", () => {
+            const content = "---\nname: Test\n---\n\n```md\n# Example\n```";
+            expect(DesignMdReader.isDesignMd(content)).toBe(false);
         });
     });
 
