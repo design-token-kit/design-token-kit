@@ -103,8 +103,11 @@ export class DtcgChecker implements TokenValidator {
      */
     async validate(sources: string[]): Promise<CheckIssue[]> {
         let list: DtcgList;
+        const issues: CheckIssue[] = [];
         try {
-            list = await this.#loader.load(sources, this.#inform);
+            const loaded = await this.#loader.loadWithWarnings(sources, this.#inform);
+            list = loaded.list;
+            issues.push(...loaded.warnings);
         } catch (error) {
             if (error instanceof TokenSyntaxError) {
                 return error.issues;
@@ -112,7 +115,6 @@ export class DtcgChecker implements TokenValidator {
             throw error;
         }
 
-        const issues: CheckIssue[] = [];
         if (this.#scope.includes(CheckScope.VALIDATE)) {
             issues.push(...this.#run(validationChecks(), list));
         }

@@ -56,15 +56,28 @@ export class DtcgListLoader {
      * @throws TokenSyntaxError when schema validation fails.
      */
     async load(sources: string[], forcedFormat?: Format): Promise<DtcgList> {
+        return (await this.loadWithWarnings(sources, forcedFormat)).list;
+    }
+
+    /**
+     * Same as {@link load}, but also returns schema-stage warnings, such as
+     * DESIGN.md values that conversion ignores. Warnings do not stop loading.
+     *
+     * @throws TokenSyntaxError when schema validation reports errors.
+     */
+    async loadWithWarnings(
+        sources: string[],
+        forcedFormat?: Format,
+    ): Promise<{ list: DtcgList; warnings: CheckIssue[] }> {
         const sourceList = sources.map((s) => new Source(s));
 
         const issues = await this.#validate(sourceList, forcedFormat);
-        if (issues.length > 0) {
+        if (issues.some((issue) => issue.severity === "error")) {
             throw new TokenSyntaxError(issues);
         }
 
         const allDocs = await this.#parse(sourceList, forcedFormat);
-        return this.#buildDtcgList(allDocs);
+        return { list: this.#buildDtcgList(allDocs), warnings: issues };
     }
 
     async #validate(sourceList: Source[], forcedFormat?: Format): Promise<CheckIssue[]> {

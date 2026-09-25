@@ -1,4 +1,4 @@
-import { parse as parseYaml, parseAllDocuments } from "yaml";
+import { parse as parseYaml, parseAllDocuments, type Document } from "yaml";
 import { Dtcg } from "#/core/model/Dtcg";
 import { TokenGroup } from "#/core/model/TokenGroup";
 import { TokenNode } from "#/core/model/TokenNode";
@@ -56,7 +56,7 @@ export class HrdtTokenParser {
     }
 
     parseAllRaw(hrdtContent: string): unknown[] {
-        return parseAllDocuments(hrdtContent).map((document) => document.toJS());
+        return this.#parseAllDocuments(hrdtContent).map((document) => document.toJS());
     }
 
     parse(hrdtContent: string, source?: string): Dtcg {
@@ -68,7 +68,7 @@ export class HrdtTokenParser {
     }
 
     parseAll(hrdtContent: string, source?: string): Dtcg[] {
-        const documents = parseAllDocuments(hrdtContent);
+        const documents = this.#parseAllDocuments(hrdtContent);
         return documents.map((document) => {
             const raw = document.toJS();
             if (!this.#isObject(raw)) {
@@ -76,6 +76,19 @@ export class HrdtTokenParser {
             }
             return new Dtcg(this.#parseRoot(raw), source);
         });
+    }
+
+    /**
+     * Unlike {@code parse}, {@code parseAllDocuments} keeps syntax errors on
+     * each document instead of throwing, so they are surfaced here.
+     */
+    #parseAllDocuments(hrdtContent: string): Document.Parsed[] {
+        const documents = parseAllDocuments(hrdtContent);
+        const error = documents.flatMap((document) => document.errors)[0];
+        if (error !== undefined) {
+            throw new HrdtTokenReaderError(error.message);
+        }
+        return documents;
     }
 
     #parseRoot(raw: JsonObject): TokenGroup {

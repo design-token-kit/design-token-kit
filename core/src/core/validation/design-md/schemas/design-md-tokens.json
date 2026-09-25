@@ -14,6 +14,23 @@
     "description": {
       "type": "string"
     },
+    "omitted": {
+      "type": "array",
+      "items": {
+        "anyOf": [
+          { "type": "string" },
+          {
+            "type": "object",
+            "required": ["section"],
+            "properties": {
+              "section": { "type": "string" },
+              "reason": { "type": "string" }
+            },
+            "additionalProperties": false
+          }
+        ]
+      }
+    },
     "colors": {
       "$ref": "#/definitions/stringTokenMap"
     },
@@ -75,11 +92,7 @@
       "type": "object",
       "propertyNames": { "$ref": "#/definitions/tokenName" },
       "additionalProperties": {
-        "anyOf": [
-          { "type": "number" },
-          { "$ref": "#/definitions/dimensionString" },
-          { "$ref": "#/definitions/reference" }
-        ]
+        "type": ["number", "string"]
       }
     },
     "dimensionString": {
@@ -88,7 +101,7 @@
     },
     "typographyValue": {
       "type": "object",
-      "required": ["fontFamily", "fontSize", "fontWeight", "lineHeight", "letterSpacing"],
+      "required": ["fontFamily", "fontSize", "fontWeight", "lineHeight"],
       "properties": {
         "fontFamily": {
           "anyOf": [
@@ -111,6 +124,7 @@
         "lineHeight": {
           "anyOf": [
             { "type": "number" },
+            { "$ref": "#/definitions/dimensionString" },
             { "$ref": "#/definitions/reference" }
           ]
         },
@@ -185,7 +199,7 @@
         }
       },
       "additionalProperties": {
-        "$ref": "#/definitions/reference"
+        "$ref": "#/definitions/scalarValue"
       }
     },
     "componentsMap": {

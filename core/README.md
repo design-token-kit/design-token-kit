@@ -283,6 +283,11 @@ token statistics.
 For browser security and compatibility, URL loading is owned by the host app
 and depends on the source server's CORS policy.
 
+Schema validation uses AJV, which compiles schemas into functions at
+runtime. A page with a Content Security Policy must allow `'unsafe-eval'`
+in `script-src`, or validation fails. Compiled schemas are cached per page,
+so only the first check pays the compilation cost.
+
 ## Document Conversion
 
 Use readers and writers to convert token documents between DTCG JSON

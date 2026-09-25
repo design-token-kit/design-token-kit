@@ -62,12 +62,43 @@ const SCHEMA_EXTRA_TYPO_KEY = source({
     typography: { h1: { fontFamily: "Arial", unknownExtra: "value" } },
 });
 
-// Schema defect: unknown component properties must be references because their
-// value type cannot be inferred safely.
+// Spec: an unknown component property is accepted with a warning.
 const UNKNOWN_COMPONENT_PROP = source({
     name: "Test",
     components: { btn: { borderColor: "#ff0000" } },
 });
+
+// Frontmatter from the DESIGN.md specification: `body-md` omits letterSpacing,
+// lineHeight uses a dimension, and `omitted` lists skipped sections.
+const SPEC_EXAMPLE = "content:" + `---
+version: alpha
+name: Heritage
+omitted:
+  - spacing
+  - section: rounded
+    reason: "No rounded corners defined in brand book"
+colors:
+  primary: "#1A1C1E"
+typography:
+  h1:
+    fontFamily: Public Sans
+    fontSize: 48px
+    fontWeight: 600
+    lineHeight: 1.1
+    letterSpacing: -0.02em
+  body-md:
+    fontFamily: Public Sans
+    fontSize: 16px
+    fontWeight: 400
+    lineHeight: 24px
+components:
+  button-primary:
+    backgroundColor: "{colors.primary}"
+    padding: 12px
+---
+
+## Overview
+`;
 
 // Edge case: name with special characters needs quoting.
 const NAME_WITH_SPECIAL_CHARS = source({
@@ -132,9 +163,29 @@ describe("DesignMdTokenValidator", () => {
             expect(issues).toEqual([]);
         });
 
-        it("rejects an unknown component property with an untyped raw value", async () => {
+        it("warns about an unknown component property with a literal value", async () => {
             const issues = await new DesignMdTokenValidator().validate([UNKNOWN_COMPONENT_PROP]);
-            expect(issues.length).toBeGreaterThan(0);
+            expect(issues).toEqual([
+                expect.objectContaining({
+                    id: "design-md-ignored-value",
+                    severity: "warning",
+                    message: expect.stringContaining("components.btn.borderColor"),
+                }),
+            ]);
+        });
+
+        it("warns about a spacing value that is not a dimension", async () => {
+            const issues = await new DesignMdTokenValidator().validate([
+                source({ name: "Test", spacing: { "grid-columns": "'5'" } }),
+            ]);
+            expect(issues).toEqual([
+                expect.objectContaining({ id: "design-md-ignored-value", severity: "warning" }),
+            ]);
+        });
+
+        it("accepts the example document from the DESIGN.md specification", async () => {
+            const issues = await new DesignMdTokenValidator().validate([SPEC_EXAMPLE]);
+            expect(issues).toEqual([]);
         });
     });
 

@@ -6,6 +6,7 @@ import path from "node:path";
 import { Source } from "#/core/io/Source";
 import { DesignMdReader } from "#/core/io/DesignMdReader";
 import { TokenValidator } from "#/core/validation/TokenValidator";
+import { ignoredValueIssues } from "#/core/validation/design-md/DesignMdIgnoredValues";
 import type { CheckIssue } from "#/core/check/CheckIssue";
 
 type AjvFormatsPlugin = (ajv: Ajv) => Ajv;
@@ -33,6 +34,7 @@ export class DesignMdTokenValidator implements TokenValidator {
                 const isValid = validator(sourceObj);
                 if (isValid) {
                     reader.parse(content, source);
+                    issues.push(...ignoredValueIssues(reader, sourceObj, source));
                     continue;
                 }
                 const errors = validator.errors ?? [];

@@ -361,6 +361,24 @@ describe("TokenHtmlShowcaseRenderer", () => {
             expect(html).toContain("Overrides");
         });
 
+        it("exposes unthemed tokens as a base theme next to other themes", () => {
+            const html = renderer.renderPage({
+                entries: [
+                    entry("--primitive-color-brand-500", "#2549f6"),
+                    entry("--primitive-color-brand-500", "#4865f5", "primitive", "dark"),
+                ],
+                themes: [
+                    {
+                        name: "dark",
+                        entries: [entry("--primitive-color-brand-500", "#4865f5", "primitive", "dark")],
+                    },
+                ],
+            });
+            expect(html).toContain("Theme: base");
+            expect(html).toContain("#2549f6");
+            expect(html).toContain("Theme: dark");
+        });
+
         it("does not render theme statistics when no themes", () => {
             const html = renderer.renderPage(parsed([
                 entry("--primitive-color-brand", "#fff"),
