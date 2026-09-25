@@ -1,5 +1,3 @@
-import Ajv, { type ErrorObject } from "ajv";
-import addFormats from "ajv-formats";
 import { CheckRunner } from "#/core/check/CheckRunner";
 import { CheckScope } from "#/core/check/CheckScope";
 import { TokenLayers } from "#/core/check/TokenLayers";
@@ -26,12 +24,14 @@ import { TailwindTokenConverter } from "#/core/platforms/tailwind/TailwindTokenC
 import { CssTokenParser } from "#/core/showcase/CssTokenParser";
 import { TokenHtmlShowcaseRenderer } from "#/core/showcase/TokenHtmlShowcaseRenderer";
 import { TokenStatsCalculator, type TokenStat } from "#/core/stats/TokenStatsCalculator";
-import { ignoredValueIssues } from "#/core/validation/design-md/DesignMdIgnoredValues";
+import { DesignMdContentValidator } from "#/core/validation/design-md/DesignMdContentValidator";
+import { DtcgContentValidator } from "#/core/validation/dtcg/DtcgContentValidator";
+import { HrdtContentValidator } from "#/core/validation/hrdt/HrdtContentValidator";
+import { syntaxIssue, type JsonSchema } from "#/core/validation/SchemaValidation";
 
 import designMdSchema from "#/core/validation/design-md/schemas/design-md-tokens.json";
 import hrdtSchema from "#/core/validation/hrdt/schemas/hrdt-tokens.json";
 
-const DTCG_SCHEMA_ID = "https://www.designtokens.org/schemas/2025.10/format.json";
 const DTCG_SCHEMAS = import.meta.glob<JsonSchema>(
     "../core/validation/dtcg/schemas/*/**/*.json",
     { eager: true, import: "default" },
@@ -262,38 +262,24 @@ export class BrowserTokenToolkit {
         return [input.base, ...Object.values(input.themes ?? {})];
     }
 
-    #validateSchema(document: BrowserTokenDocument, schemaName?: BrowserDtcgSchema): CheckIssue[] {
+    #validateSchema(document: BrowserTokenDocument, schemaName: BrowserDtcgSchema = "2025.10"): CheckIssue[] {
+        const source = document.source ?? "browser-input";
         try {
             const format = detectFormat(document);
-            const source = document.source ?? "browser-input";
             if (format === Format.DTCG) {
-                const content = addInheritedTokenTypes(JSON.parse(document.content) as unknown);
-                return validateWithAjv(dtcgAjv(schemaName), DTCG_SCHEMA_ID, content, source);
+                return cached(`dtcg:${schemaName}`, () => new DtcgContentValidator(dtcgSchemas(schemaName)))
+                    .validate(document.content, source);
             }
             if (format === Format.HRDT) {
-                const ajv = cachedAjv("hrdt", () => createAjv([hrdtSchema]));
-                return new HrdtTokenParser().parseAllRaw(document.content).flatMap((value) => (
-                    validateWithAjv(ajv, hrdtSchema.$id ?? "hrdt", value, source)
-                ));
+                return cached("hrdt", () => new HrdtContentValidator(hrdtSchema)).validate(document.content, source);
             }
-            const reader = new DesignMdReader();
-            const raw = reader.parseRaw(document.content);
-            const issues = validateWithAjv(
-                cachedAjv("design-md", () => createAjv([designMdSchema])),
-                designMdSchema.$id ?? "design-md",
-                raw,
-                source,
-            );
-            if (issues.length > 0) return issues;
-            reader.parse(document.content, source);
-            return ignoredValueIssues(reader, raw, source);
+            return cached("design-md", () => new DesignMdContentValidator(designMdSchema))
+                .validate(document.content, source);
         } catch (error) {
-            return [toSyntaxIssue(document.source, error)];
+            return [syntaxIssue(source, error)];
         }
     }
 }
-
-type JsonSchema = { readonly $id?: string; readonly [key: string]: unknown };
 
 class BrowserDocumentError extends Error {
     readonly source: string | undefined;
@@ -307,44 +293,21 @@ class BrowserDocumentError extends Error {
     }
 }
 
-/** Compiled schemas are reused because compilation dominates a check run. */
-const AJV_CACHE = new Map<string, Ajv>();
+/** Validators are reused because schema compilation dominates a check run. */
+const VALIDATORS = new Map<string, unknown>();
 
-function cachedAjv(key: string, create: () => Ajv): Ajv {
-    let ajv = AJV_CACHE.get(key);
-    if (ajv === undefined) {
-        ajv = create();
-        AJV_CACHE.set(key, ajv);
+function cached<T>(key: string, create: () => T): T {
+    if (!VALIDATORS.has(key)) {
+        VALIDATORS.set(key, create());
     }
-    return ajv;
+    return VALIDATORS.get(key) as T;
 }
 
-function dtcgAjv(schemaName: BrowserDtcgSchema = "2025.10"): Ajv {
-    return cachedAjv(`dtcg:${schemaName}`, () => {
-        const prefix = `/schemas/${schemaName}/`;
-        const schemas = Object.entries(DTCG_SCHEMAS)
-            .filter(([path]) => path.replaceAll("\\", "/").includes(prefix))
-            .map(([, schema]) => schema);
-        return createAjv(schemas);
-    });
-}
-
-function createAjv(schemas: readonly JsonSchema[]): Ajv {
-    const ajv = new Ajv({ allErrors: true, strict: false });
-    addFormats(ajv);
-    for (const schema of schemas) {
-        ajv.addSchema(schema, schema.$id);
-    }
-    return ajv;
-}
-
-function validateWithAjv(ajv: Ajv, schemaId: string, value: unknown, sourcePath: string): CheckIssue[] {
-    const validator = ajv.getSchema(schemaId);
-    if (validator === undefined) {
-        throw new Error(`AJV schema "${schemaId}" was not loaded.`);
-    }
-    if (validator(value)) return [];
-    return (validator.errors ?? []).map((error) => toSchemaIssue(sourcePath, error));
+function dtcgSchemas(schemaName: BrowserDtcgSchema): JsonSchema[] {
+    const prefix = `/schemas/${schemaName}/`;
+    return Object.entries(DTCG_SCHEMAS)
+        .filter(([path]) => path.replaceAll("\\", "/").includes(prefix))
+        .map(([, schema]) => schema);
 }
 
 function runChecks(
@@ -394,54 +357,14 @@ function documentOutputs(
     return outputs;
 }
 
-function toSchemaIssue(sourcePath: string, error: ErrorObject): CheckIssue {
-    return {
-        id: "schema",
-        sourcePath,
-        severity: "error",
-        message: `${error.instancePath || "/"}: ${error.message ?? "Validation error."}`,
-        raw: error,
-    };
-}
-
-function toSyntaxIssue(source: string | undefined, error: unknown, id = "schema"): CheckIssue {
-    return {
-        id,
-        sourcePath: source ?? "browser-input",
-        severity: "error",
-        message: error instanceof Error ? error.message : "Unable to parse token content.",
-    };
-}
-
 function toDocumentIssue(error: unknown, fallbackSource: string | undefined): CheckIssue {
     if (error instanceof BrowserDocumentError) {
-        return toSyntaxIssue(error.source, error, error.issueId);
+        return syntaxIssue(error.source ?? "browser-input", error, error.issueId);
     }
-    return toSyntaxIssue(fallbackSource, error);
+    return syntaxIssue(fallbackSource ?? "browser-input", error);
 }
 
 function toValidationError(error: unknown): BrowserTokenValidationError {
     if (error instanceof BrowserTokenValidationError) return error;
     return new BrowserTokenValidationError([toDocumentIssue(error, undefined)]);
-}
-
-function addInheritedTokenTypes(value: unknown, inheritedType?: string): unknown {
-    if (!isJsonObject(value)) return value;
-    const effectiveType = typeof value["$type"] === "string" ? value["$type"] : inheritedType;
-    if ("$value" in value || "$ref" in value) {
-        return value["$type"] !== undefined || effectiveType === undefined ? value : { ...value, "$type": effectiveType };
-    }
-
-    const normalized: Record<string, unknown> = { ...value };
-    if (isJsonObject(value["$root"])) normalized["$root"] = addInheritedTokenTypes(value["$root"], effectiveType);
-    for (const [key, child] of Object.entries(value)) {
-        if (!key.startsWith("$") && key !== "$root" && isJsonObject(child)) {
-            normalized[key] = addInheritedTokenTypes(child, effectiveType);
-        }
-    }
-    return normalized;
-}
-
-function isJsonObject(value: unknown): value is Record<string, unknown> {
-    return typeof value === "object" && value !== null && !Array.isArray(value);
 }
