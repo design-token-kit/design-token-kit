@@ -1,22 +1,9 @@
 import path from "node:path";
-import { cp } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
-import { defineConfig, type Plugin } from "vite";
+import { defineConfig } from "vite";
+import dts from "vite-plugin-dts";
 
 const currentDir = path.dirname(fileURLToPath(import.meta.url));
-
-function copyBrowserTypes(): Plugin {
-    return {
-        name: "copy-browser-types",
-        apply: "build",
-        async closeBundle() {
-            await cp(
-                path.resolve(currentDir, "src/browser.d.ts"),
-                path.resolve(currentDir, "lib/browser.d.ts"),
-            );
-        },
-    };
-}
 
 export default defineConfig({
     resolve: {
@@ -41,5 +28,20 @@ export default defineConfig({
             fileName: () => "browser.js",
         },
     },
-    plugins: [copyBrowserTypes()],
+    plugins: [
+        dts({
+            // The bundled types entry is taken from the nearest package.json
+            // "types" field, which here is the main lib/index.d.ts. The
+            // workspace root has none, so the entry falls back to the
+            // library file name: lib/browser.d.ts.
+            root: path.resolve(currentDir, ".."),
+            tsconfigPath: path.resolve(currentDir, "tsconfig.json"),
+            outDirs: path.resolve(currentDir, "lib"),
+            entryRoot: path.resolve(currentDir, "src"),
+            include: [path.resolve(currentDir, "src/**/*.ts")],
+            // src/index.ts would emit lib/index.d.ts over the main build types.
+            exclude: [path.resolve(currentDir, "src/**/*.test.ts"), path.resolve(currentDir, "src/index.ts")],
+            bundleTypes: true,
+        }),
+    ],
 });
