@@ -104,12 +104,16 @@ export class DtcgListLoader {
 
     #buildDtcgList(allDocs: Array<{ source: string; doc: Dtcg }>): DtcgList {
         const [baseEntry, ...themeEntries] = allDocs;
-        const themes = new Map(
-            themeEntries.map((entry, i) => [
-                extractThemeName(entry.source, i),
-                entry.doc,
-            ]),
-        );
+        const themes = new Map<string, Dtcg>();
+        themeEntries.forEach((entry, i) => {
+            // Documents of one multi-document source share its file name.
+            const name = extractThemeName(entry.source, i);
+            let uniqueName = name;
+            for (let suffix = 2; themes.has(uniqueName); suffix++) {
+                uniqueName = `${name}-${suffix}`;
+            }
+            themes.set(uniqueName, entry.doc);
+        });
         return new DtcgList(baseEntry.doc, themes);
     }
 }

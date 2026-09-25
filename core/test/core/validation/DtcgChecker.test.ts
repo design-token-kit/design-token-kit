@@ -216,6 +216,15 @@ describe("DtcgChecker", () => {
         });
     });
 
+    describe("syntax errors", () => {
+        it("reports malformed DTCG JSON as a schema issue", async () => {
+            const issues = await new DtcgChecker().validate(['content:{"primitive": ']);
+            expect(issues).toEqual([
+                expect.objectContaining({ id: "schema", severity: "error" }),
+            ]);
+        });
+    });
+
     describe("schema warnings", () => {
         it("reports DESIGN.md ignored values and still runs model checks", async () => {
             // borderColor is ignored with a warning; the missing reference is a model error.

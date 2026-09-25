@@ -34,6 +34,8 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   arrays in reference groups. Such files used to fail later, during parsing.
 - Schema warnings no longer stop loading; `check` reports them together with
   the other issues.
+- Malformed JSON or YAML is now reported as a `schema` issue, so `check`
+  exits with status 2 (issues found) instead of 1 (unexpected error).
 - `DtcgToDesignMdMapper.map()` now maps themes as well as the base document.
 - `@design-token-kit/core` no longer depends on `unified` and `remark`.
 
@@ -54,6 +56,11 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Fixed the showcase hiding tokens without a theme when the document has
   themes. They are shown as the `base` theme.
 - Fixed YAML syntax errors in multi-document HRDT content being ignored.
+- Fixed multi-document HRDT files failing validation with "Source contains
+  multiple documents". Each document is validated, and schema errors name the
+  failing document.
+- Fixed themes from one multi-document source overwriting each other. Later
+  documents get a numbered name, such as `tokens-2`.
 - Fixed DESIGN.md detection treating headings inside code blocks as prose, and
   added support for setext headings.
 

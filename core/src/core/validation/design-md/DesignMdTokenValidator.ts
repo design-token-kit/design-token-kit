@@ -1,88 +1,32 @@
-import Ajv, { ErrorObject } from "ajv";
-import addFormats from "ajv-formats";
 import { readFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
 import { Source } from "#/core/io/Source";
-import { DesignMdReader } from "#/core/io/DesignMdReader";
 import { TokenValidator } from "#/core/validation/TokenValidator";
-import { ignoredValueIssues } from "#/core/validation/design-md/DesignMdIgnoredValues";
+import { DesignMdContentValidator } from "#/core/validation/design-md/DesignMdContentValidator";
+import type { JsonSchema } from "#/core/validation/SchemaValidation";
 import type { CheckIssue } from "#/core/check/CheckIssue";
-
-type AjvFormatsPlugin = (ajv: Ajv) => Ajv;
-
-const SCHEMA_ID = "https://designtokens.local/schemas/design-md-tokens.json";
 
 /**
  * Validates DESIGN.md YAML frontmatter against its JSON Schema.
+ *
+ * Reads sources and the schema file from disk; validation itself is done by
+ * {@link DesignMdContentValidator}.
  */
 export class DesignMdTokenValidator implements TokenValidator {
     async validate(sources: string[]): Promise<CheckIssue[]> {
-        const ajv = await this.#createAjv();
-
-        const validator = ajv.getSchema(SCHEMA_ID);
-        if (!validator) {
-            throw new Error(`AJV schema "${SCHEMA_ID}" was not loaded.`);
-        }
-
+        const validator = new DesignMdContentValidator(await readSchema());
         const issues: CheckIssue[] = [];
         for (const source of sources) {
-            try {
-                const content = await new Source(source).getContent();
-                const reader = new DesignMdReader();
-                const sourceObj = reader.parseRaw(content);
-                const isValid = validator(sourceObj);
-                if (isValid) {
-                    reader.parse(content, source);
-                    issues.push(...ignoredValueIssues(reader, sourceObj, source));
-                    continue;
-                }
-                const errors = validator.errors ?? [];
-                for (const error of errors) {
-                    issues.push(this.#toCheckIssue(source, error));
-                }
-            } catch (error) {
-                issues.push({
-                    id: "schema",
-                    sourcePath: source,
-                    severity: "error",
-                    message: error instanceof Error ? error.message : "Unable to parse DESIGN.md content.",
-                    raw: error,
-                });
-            }
+            const content = await new Source(source).getContent();
+            issues.push(...validator.validate(content, source));
         }
-
         return issues;
-    }
-
-    async #createAjv(): Promise<Ajv> {
-        const moduleDir = path.dirname(fileURLToPath(import.meta.url));
-        const schemaPath = path.resolve(moduleDir, "schemas/design-md-tokens.json");
-
-        const ajv = new Ajv({ allErrors: true, strict: false });
-        (addFormats as AjvFormatsPlugin)(ajv);
-
-        const rawSchema = await readFile(schemaPath, "utf8");
-        const schema = JSON.parse(rawSchema) as JsonSchema;
-        ajv.addSchema(schema, schema.$id ?? schemaPath);
-
-        return ajv;
-    }
-
-    #toCheckIssue(sourcePath: string, error: ErrorObject): CheckIssue {
-        const instancePath = error.instancePath || "/";
-        const message = error.message ?? "Validation error.";
-        return {
-            id: "schema",
-            sourcePath,
-            severity: "error",
-            message: `${instancePath}: ${message}`,
-            raw: error,
-        };
     }
 }
 
-interface JsonSchema {
-    $id?: string;
-    [key: string]: unknown;
+async function readSchema(): Promise<JsonSchema> {
+    const moduleDir = path.dirname(fileURLToPath(import.meta.url));
+    const schemaPath = path.resolve(moduleDir, "schemas/design-md-tokens.json");
+    return JSON.parse(await readFile(schemaPath, "utf8")) as JsonSchema;
 }

@@ -94,6 +94,14 @@ describe("DtcgListLoader", () => {
         expect([...list.themes.keys()]).toEqual(["dark"]);
     });
 
+    it("keeps every theme of a multi-document HRDT source", async () => {
+        const tokens = tempFile("tokens.yaml", [HRDT_THEME, HRDT_THEME, HRDT_THEME].join("---\n"));
+
+        const list = await new DtcgListLoader().load([tokens]);
+
+        expect([...list.themes.keys()]).toEqual(["tokens", "tokens-2"]);
+    });
+
     it("throws TokenSyntaxError for invalid sources", async () => {
         const bad = tempFile("bad.yaml", `primitive:\n  color:\n    bad: \"not-a-color\"\n`);
 
