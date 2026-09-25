@@ -122,8 +122,6 @@ structure right but misses format details.
   variables and styles
 * Generate HTML token showcase page with color format and copy controls
 * Generate token statistics as text or HTML
-* Run validation, conversion, showcase generation, and statistics entirely
-  in the browser through the `@design-token-kit/core/browser` entry point
 
 ## Build
 

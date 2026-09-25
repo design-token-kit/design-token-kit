@@ -12,9 +12,10 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   `--rem-base` overrides it; the default remains `16`.
 - Added the `bad-rem-base` check, warning about an unusable declared `rem`
   base.
-- Added the `@design-token-kit/core/browser` entry point. `BrowserTokenToolkit`
-  checks, converts, showcases, and measures token content in memory, without a
-  file system or backend (#61).
+- Added the experimental `@design-token-kit/core/browser` entry point.
+  `BrowserTokenToolkit` checks, converts, showcases, and measures token content
+  in memory, without a file system or backend. The API may change in minor
+  releases (#61).
 - DESIGN.md frontmatter accepts the `omitted` field from the specification.
 - Added the `design-md-ignored-value` warning. As the DESIGN.md specification
   requires, unknown component properties with literal values and spacing

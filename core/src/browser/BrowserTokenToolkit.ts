@@ -98,6 +98,8 @@ export class BrowserTokenValidationError extends Error {
  *
  * The toolkit never reads paths, uses temporary files, or sends token content
  * over the network. The UI owns file picking, URL fetching, and downloads.
+ *
+ * @experimental The browser API may change in minor releases.
  */
 export class BrowserTokenToolkit {
 

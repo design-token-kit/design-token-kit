@@ -257,6 +257,10 @@ without semantic checks.
 
 ## Browser API
 
+> **Experimental.** The browser entry point is built for the Design Token Kit
+> website and may change in minor releases. Pin an exact version if you
+> depend on it.
+
 Use the browser entry point for local, in-memory token content.
 It bundles the DTCG, HRDT, and DESIGN.md schemas and never accesses paths,
 stdin, or temporary files.
