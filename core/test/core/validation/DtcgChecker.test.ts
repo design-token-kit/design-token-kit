@@ -215,4 +215,28 @@ describe("DtcgChecker", () => {
             expect(issues).toEqual([]);
         });
     });
+
+    describe("schema warnings", () => {
+        it("reports DESIGN.md ignored values and still runs model checks", async () => {
+            // borderColor is ignored with a warning; the missing reference is a model error.
+            const designMd = `content:---
+name: Test
+colors:
+  primary: "#1A1C1E"
+components:
+  button:
+    backgroundColor: "{colors.missing}"
+    borderColor: "#ff0000"
+---
+
+## Overview
+`;
+            const issues = await new DtcgChecker().validate([designMd]);
+            expect(issues).toContainEqual(expect.objectContaining({
+                id: "design-md-ignored-value",
+                severity: "warning",
+            }));
+            expect(issues.some((issue) => issue.severity === "error" && issue.id !== "schema")).toBe(true);
+        });
+    });
 });

@@ -188,6 +188,34 @@ typography:
             expect(token.isAlias()).toBe(true);
             expect((token.value as TokenReference).value).toBe("typography.h1");
         });
+
+        // A typography token without letterSpacing, as in the DESIGN.md spec example.
+        function typography(fontSize: string, lineHeight: string): TypographyValue {
+            const doc = parse(`---
+typography:
+  body:
+    fontFamily: Inter
+    fontSize: ${fontSize}
+    fontWeight: 400
+    lineHeight: ${lineHeight}
+---`);
+            return (getGroup(doc, "typography").get("body") as TypographyToken).value as TypographyValue;
+        }
+
+        it("defaults a missing letterSpacing to 0px", () => {
+            expect(typography("16px", "1.6").letterSpacing).toEqual(new DimensionValue(0, "px"));
+        });
+
+        it("converts a dimension lineHeight to a multiplier of fontSize", () => {
+            expect(typography("16px", "24px").lineHeight).toBe(1.5);
+            expect(typography("1rem", "1.5rem").lineHeight).toBe(1.5);
+            expect(typography("16px", "1.5em").lineHeight).toBe(1.5);
+        });
+
+        it("rejects a dimension lineHeight that cannot be related to fontSize", () => {
+            expect(() => typography("1rem", "24px")).toThrow(DesignMdReaderError);
+            expect(() => typography('"{typography.base}"', "24px")).toThrow(DesignMdReaderError);
+        });
     });
 
     describe("rounded", () => {
@@ -230,6 +258,36 @@ spacing:
             const token = getGroup(doc, "spacing").get("ratio") as NumberToken;
             expect(token).toBeInstanceOf(NumberToken);
             expect(token.value).toBe(1.5);
+        });
+
+        it("skips a string that is not a dimension", () => {
+            const doc = parse(`---
+spacing:
+  md: 16px
+  grid-columns: '5'
+---`);
+            expect(getGroup(doc, "spacing").has("grid-columns")).toBe(false);
+            expect(getGroup(doc, "spacing").has("md")).toBe(true);
+        });
+    });
+
+    describe("ignoredValues", () => {
+        it("lists literal unknown component properties and non-dimension spacing", () => {
+            const reader = new DesignMdReader();
+            const raw = reader.parseRaw(`---
+spacing:
+  grid-columns: '5'
+  md: 16px
+components:
+  button:
+    borderColor: "#ff0000"
+    outline: "{colors.primary}"
+    padding: 12px
+---`);
+            expect(reader.ignoredValues(raw)).toEqual([
+                expect.stringContaining("spacing.grid-columns"),
+                expect.stringContaining("components.button.borderColor"),
+            ]);
         });
     });
 
@@ -300,6 +358,16 @@ spacing:
         it("does not treat a heading inside a code fence as markdown prose", () => {
             const content = "---\nname: Test\n---\n\n```md\n# Example\n```";
             expect(DesignMdReader.isDesignMd(content)).toBe(false);
+        });
+
+        it("does not close a code fence with a line that has an info string", () => {
+            const content = "---\nname: Test\n---\n\n````md\n```js\n# Example\n````";
+            expect(DesignMdReader.isDesignMd(content)).toBe(false);
+        });
+
+        it("recognizes setext headings", () => {
+            expect(DesignMdReader.isDesignMd("---\nname: Test\n---\n\nOverview\n========\n")).toBe(true);
+            expect(DesignMdReader.isDesignMd("---\nname: Test\n---\n\nOverview\n---\n")).toBe(true);
         });
     });
 

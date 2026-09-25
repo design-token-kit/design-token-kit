@@ -25,6 +25,8 @@ jobs:
 
       - run: npm run build
 
+      - run: node scripts/verify-browser-bundle.mjs
+
       - run: npm test
 
   coverage:

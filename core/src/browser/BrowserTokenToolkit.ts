@@ -23,9 +23,10 @@ import { FigmaScriptTokenConverter } from "#/core/platforms/figma-script/FigmaSc
 import { ScssTokenConverter } from "#/core/platforms/scss/ScssTokenConverter";
 import { SwiftUiTokenConverter } from "#/core/platforms/swiftui/SwiftUiTokenConverter";
 import { TailwindTokenConverter } from "#/core/platforms/tailwind/TailwindTokenConverter";
-import { CssTokenParser, type ParsedTokenCss } from "#/core/showcase/CssTokenParser";
+import { CssTokenParser } from "#/core/showcase/CssTokenParser";
 import { TokenHtmlShowcaseRenderer } from "#/core/showcase/TokenHtmlShowcaseRenderer";
 import { TokenStatsCalculator, type TokenStat } from "#/core/stats/TokenStatsCalculator";
+import { ignoredValueIssues } from "#/core/validation/design-md/DesignMdIgnoredValues";
 
 import designMdSchema from "#/core/validation/design-md/schemas/design-md-tokens.json";
 import hrdtSchema from "#/core/validation/hrdt/schemas/hrdt-tokens.json";
@@ -101,36 +102,7 @@ export class BrowserTokenValidationError extends Error {
 export class BrowserTokenToolkit {
 
     check(input: BrowserTokenSet, options: BrowserCheckOptions = {}): CheckIssue[] {
-        const documents = this.#documents(input);
-        const schemaIssues = [
-            ...validateThemeNames(input),
-            ...documents.flatMap((document) => this.#validateSchema(document, options.schema)),
-        ];
-        if (schemaIssues.length > 0 || options.scope === CheckScope.SCHEMA) {
-            return schemaIssues;
-        }
-
-        let list: DtcgList;
-        try {
-            list = this.#parseList(input);
-        } catch (error) {
-            const source = error instanceof BrowserDocumentError ? error.source : input.base.source;
-            return [toSyntaxIssue(source, error)];
-        }
-
-        const scope = options.scope ?? CheckScope.VALIDATE;
-        const layers = options.layers?.length ? new TokenLayers([...options.layers]) : TokenLayers.default();
-        const validationIssues = scope.includes(CheckScope.VALIDATE)
-            ? runChecks(validationChecks(), list, layers, options.checks)
-            : [];
-        if (hasErrors(validationIssues) || !scope.includes(CheckScope.LINT)) {
-            return validationIssues;
-        }
-
-        return [
-            ...validationIssues,
-            ...runChecks(lintingChecks(), list, layers, options.checks),
-        ];
+        return this.#analyze(input, options).issues;
     }
 
     convert(
@@ -138,28 +110,69 @@ export class BrowserTokenToolkit {
         format: BrowserOutputFormat,
         options: BrowserCheckOptions = {},
     ): BrowserTokenOutput[] {
-        const issues = this.check(input, { ...options, scope: CheckScope.VALIDATE });
-        if (hasErrors(issues)) {
-            throw new BrowserTokenValidationError(issues);
-        }
-
+        const list = this.#validatedList(input, options);
         try {
-            return this.#convertList(this.#parseList(input), format);
+            return this.#convertList(list, format);
         } catch (error) {
             throw toValidationError(error);
         }
     }
 
     stats(input: BrowserTokenSet, options: BrowserCheckOptions = {}): readonly TokenStat[] {
-        const issues = this.check(input, { ...options, scope: CheckScope.VALIDATE });
-        if (hasErrors(issues)) {
-            throw new BrowserTokenValidationError(issues);
-        }
+        const list = this.#validatedList(input, options);
         try {
-            return new TokenStatsCalculator().calculate(this.#parseList(input));
+            return new TokenStatsCalculator().calculate(list);
         } catch (error) {
             throw toValidationError(error);
         }
+    }
+
+    /**
+     * Runs the check pipeline and keeps the parsed list, so callers that
+     * continue after validation do not parse the documents again.
+     */
+    #analyze(input: BrowserTokenSet, options: BrowserCheckOptions): { issues: CheckIssue[]; list?: DtcgList } {
+        const documents = this.#documents(input);
+        const schemaIssues = [
+            ...validateThemeNames(input),
+            ...documents.flatMap((document) => this.#validateSchema(document, options.schema)),
+        ];
+        if (hasErrors(schemaIssues) || options.scope === CheckScope.SCHEMA) {
+            return { issues: schemaIssues };
+        }
+
+        let list: DtcgList;
+        try {
+            list = this.#parseList(input);
+        } catch (error) {
+            return { issues: [toDocumentIssue(error, input.base.source)] };
+        }
+
+        const scope = options.scope ?? CheckScope.VALIDATE;
+        const layers = options.layers?.length ? new TokenLayers([...options.layers]) : TokenLayers.default();
+        const validationIssues = [
+            ...schemaIssues,
+            ...(scope.includes(CheckScope.VALIDATE) ? runChecks(validationChecks(), list, layers, options.checks) : []),
+        ];
+        if (hasErrors(validationIssues) || !scope.includes(CheckScope.LINT)) {
+            return { issues: validationIssues, list };
+        }
+
+        return {
+            issues: [
+                ...validationIssues,
+                ...runChecks(lintingChecks(), list, layers, options.checks),
+            ],
+            list,
+        };
+    }
+
+    #validatedList(input: BrowserTokenSet, options: BrowserCheckOptions): DtcgList {
+        const { issues, list } = this.#analyze(input, { ...options, scope: CheckScope.VALIDATE });
+        if (list === undefined || hasErrors(issues)) {
+            throw new BrowserTokenValidationError(issues);
+        }
+        return list;
     }
 
     #convertList(list: DtcgList, format: BrowserOutputFormat): BrowserTokenOutput[] {
@@ -198,7 +211,7 @@ export class BrowserTokenToolkit {
                 const parsedCss = new CssTokenParser().parse(new CssTokenConverter().convertList(list));
                 return [{
                     fileName: "showcase.html",
-                    content: new TokenHtmlShowcaseRenderer().renderPage(withBaseTheme(parsedCss)),
+                    content: new TokenHtmlShowcaseRenderer().renderPage(parsedCss),
                 }];
             }
         }
@@ -210,12 +223,24 @@ export class BrowserTokenToolkit {
             throw new BrowserDocumentError(input.base.source, "Token source contains no documents.");
         }
         const themes = new Map<string, Dtcg>();
-        embeddedThemes.forEach((document, index) => themes.set(`theme-${index + 1}`, document));
+        const addTheme = (name: string, document: Dtcg, source: string | undefined): void => {
+            if (themes.has(name)) {
+                throw new BrowserDocumentError(
+                    source,
+                    `Theme name "${name}" is already used by another document. Rename the theme.`,
+                    "theme-name",
+                );
+            }
+            themes.set(name, document);
+        };
+        embeddedThemes.forEach((document, index) => addTheme(`theme-${index + 1}`, document, input.base.source));
         for (const [name, document] of Object.entries(input.themes ?? {})) {
+            const source = document.source ?? name;
             const documents = this.#parseDocuments(document);
-            documents.forEach((parsed, index) => {
-                themes.set(index === 0 ? name : `${name}-${index + 1}`, parsed);
-            });
+            if (documents.length === 0) {
+                throw new BrowserDocumentError(source, `Theme "${name}" contains no documents.`, "theme-name");
+            }
+            documents.forEach((parsed, index) => addTheme(index === 0 ? name : `${name}-${index + 1}`, parsed, source));
         }
         return new DtcgList(base, themes);
     }
@@ -243,23 +268,25 @@ export class BrowserTokenToolkit {
             const source = document.source ?? "browser-input";
             if (format === Format.DTCG) {
                 const content = addInheritedTokenTypes(JSON.parse(document.content) as unknown);
-                return validateWithAjv(createDtcgAjv(schemaName), DTCG_SCHEMA_ID, content, source);
+                return validateWithAjv(dtcgAjv(schemaName), DTCG_SCHEMA_ID, content, source);
             }
             if (format === Format.HRDT) {
-                const ajv = createAjv([hrdtSchema]);
+                const ajv = cachedAjv("hrdt", () => createAjv([hrdtSchema]));
                 return new HrdtTokenParser().parseAllRaw(document.content).flatMap((value) => (
                     validateWithAjv(ajv, hrdtSchema.$id ?? "hrdt", value, source)
                 ));
             }
             const reader = new DesignMdReader();
+            const raw = reader.parseRaw(document.content);
             const issues = validateWithAjv(
-                createAjv([designMdSchema]),
+                cachedAjv("design-md", () => createAjv([designMdSchema])),
                 designMdSchema.$id ?? "design-md",
-                reader.parseRaw(document.content),
+                raw,
                 source,
             );
-            if (issues.length === 0) reader.parse(document.content, source);
-            return issues;
+            if (issues.length > 0) return issues;
+            reader.parse(document.content, source);
+            return ignoredValueIssues(reader, raw, source);
         } catch (error) {
             return [toSyntaxIssue(document.source, error)];
         }
@@ -270,20 +297,36 @@ type JsonSchema = { readonly $id?: string; readonly [key: string]: unknown };
 
 class BrowserDocumentError extends Error {
     readonly source: string | undefined;
+    readonly issueId: string;
 
-    constructor(source: string | undefined, message: string) {
+    constructor(source: string | undefined, message: string, issueId = "schema") {
         super(message);
         this.name = "BrowserDocumentError";
         this.source = source;
+        this.issueId = issueId;
     }
 }
 
-function createDtcgAjv(schemaName: BrowserDtcgSchema = "2025.10"): Ajv {
-    const prefix = `/schemas/${schemaName}/`;
-    const schemas = Object.entries(DTCG_SCHEMAS)
-        .filter(([path]) => path.replaceAll("\\", "/").includes(prefix))
-        .map(([, schema]) => schema);
-    return createAjv(schemas);
+/** Compiled schemas are reused because compilation dominates a check run. */
+const AJV_CACHE = new Map<string, Ajv>();
+
+function cachedAjv(key: string, create: () => Ajv): Ajv {
+    let ajv = AJV_CACHE.get(key);
+    if (ajv === undefined) {
+        ajv = create();
+        AJV_CACHE.set(key, ajv);
+    }
+    return ajv;
+}
+
+function dtcgAjv(schemaName: BrowserDtcgSchema = "2025.10"): Ajv {
+    return cachedAjv(`dtcg:${schemaName}`, () => {
+        const prefix = `/schemas/${schemaName}/`;
+        const schemas = Object.entries(DTCG_SCHEMAS)
+            .filter(([path]) => path.replaceAll("\\", "/").includes(prefix))
+            .map(([, schema]) => schema);
+        return createAjv(schemas);
+    });
 }
 
 function createAjv(schemas: readonly JsonSchema[]): Ajv {
@@ -361,31 +404,25 @@ function toSchemaIssue(sourcePath: string, error: ErrorObject): CheckIssue {
     };
 }
 
-function toSyntaxIssue(source: string | undefined, error: unknown): CheckIssue {
+function toSyntaxIssue(source: string | undefined, error: unknown, id = "schema"): CheckIssue {
     return {
-        id: "schema",
+        id,
         sourcePath: source ?? "browser-input",
         severity: "error",
         message: error instanceof Error ? error.message : "Unable to parse token content.",
     };
 }
 
-function toValidationError(error: unknown): BrowserTokenValidationError {
-    if (error instanceof BrowserTokenValidationError) return error;
-    const source = error instanceof BrowserDocumentError ? error.source : undefined;
-    return new BrowserTokenValidationError([toSyntaxIssue(source, error)]);
+function toDocumentIssue(error: unknown, fallbackSource: string | undefined): CheckIssue {
+    if (error instanceof BrowserDocumentError) {
+        return toSyntaxIssue(error.source, error, error.issueId);
+    }
+    return toSyntaxIssue(fallbackSource, error);
 }
 
-function withBaseTheme(parsed: ParsedTokenCss): ParsedTokenCss {
-    if (parsed.themes.length === 0) return parsed;
-    const baseEntries = parsed.entries
-        .filter((entry) => entry.themeName === undefined)
-        .map((entry) => ({ ...entry, themeName: "base" }));
-    if (baseEntries.length === 0) return parsed;
-    return {
-        entries: [...baseEntries, ...parsed.entries.filter((entry) => entry.themeName !== undefined)],
-        themes: [{ name: "base", entries: baseEntries }, ...parsed.themes],
-    };
+function toValidationError(error: unknown): BrowserTokenValidationError {
+    if (error instanceof BrowserTokenValidationError) return error;
+    return new BrowserTokenValidationError([toDocumentIssue(error, undefined)]);
 }
 
 function addInheritedTokenTypes(value: unknown, inheritedType?: string): unknown {

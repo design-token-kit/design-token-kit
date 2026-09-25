@@ -197,6 +197,77 @@ describe("BrowserTokenToolkit", () => {
         expect(outputs[0]?.content).toContain('data-theme="theme-1"');
     });
 
+    it("reports HRDT YAML syntax errors instead of partial schema errors", () => {
+        const toolkit = new BrowserTokenToolkit();
+        const issues = toolkit.check({
+            base: {
+                source: "tokens.yaml",
+                format: Format.HRDT,
+                content: "primitive:\n  number:\n    opacity: [1, 2\n  bad: : :\n",
+            },
+        });
+
+        expect(issues).toEqual([
+            expect.objectContaining({ id: "schema", sourcePath: "tokens.yaml" }),
+        ]);
+        expect(issues[0]?.message).not.toMatch(/^\//);
+    });
+
+    it("rejects a theme name that collides with a generated theme", () => {
+        const toolkit = new BrowserTokenToolkit();
+        const hrdt = "primitive:\n  number:\n    opacity: 1";
+        const input: BrowserTokenSet = {
+            base: { source: "tokens.yaml", format: Format.HRDT, content: `${hrdt}\n---\n${hrdt}` },
+            themes: {
+                "theme-1": { source: "tokens.theme-1.yaml", format: Format.HRDT, content: hrdt },
+            },
+        };
+
+        expect(toolkit.check(input)).toEqual([
+            expect.objectContaining({ id: "theme-name", sourcePath: "tokens.theme-1.yaml" }),
+        ]);
+        expect(() => toolkit.convert(input, Format.DTCG)).toThrow(BrowserTokenValidationError);
+    });
+
+    it("warns about ignored DESIGN.md values without blocking conversion", () => {
+        const toolkit = new BrowserTokenToolkit();
+        const input: BrowserTokenSet = {
+            base: {
+                source: "DESIGN.md",
+                format: Format.DESIGN_MD,
+                content: `---
+name: Test
+colors:
+  primary: "#1A1C1E"
+components:
+  button:
+    backgroundColor: "{colors.primary}"
+    borderColor: "#ff0000"
+---
+
+## Overview
+`,
+            },
+        };
+
+        expect(toolkit.check(input)).toEqual([
+            expect.objectContaining({ id: "design-md-ignored-value", severity: "warning", sourcePath: "DESIGN.md" }),
+        ]);
+        expect(toolkit.convert(input, Format.CSS)[0]?.content).toContain("--colors-primary");
+    });
+
+    it("rejects a theme without documents", () => {
+        const toolkit = new BrowserTokenToolkit();
+        const issues = toolkit.check({
+            base: { source: "tokens.yaml", format: Format.HRDT, content: "primitive:\n  number:\n    opacity: 1" },
+            themes: { dark: { source: "tokens.dark.yaml", format: Format.HRDT, content: "" } },
+        });
+
+        expect(issues).toEqual([
+            expect.objectContaining({ id: "theme-name", sourcePath: "tokens.dark.yaml" }),
+        ]);
+    });
+
     it("attributes parser errors to the failing theme source", () => {
         const toolkit = new BrowserTokenToolkit();
         const issues = toolkit.check({

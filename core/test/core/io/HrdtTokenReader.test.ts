@@ -73,6 +73,12 @@ primitive:
             expect(documents[1].get("primitive")).toBeInstanceOf(TokenGroup);
         });
 
+        it("rejects YAML syntax errors in multi-document content", () => {
+            const broken = "primitive:\n  number:\n    value: [1, 2\n---\nprimitive: {}\n";
+            expect(() => new HrdtTokenReader().parseAll(broken)).toThrow(HrdtTokenReaderError);
+            expect(() => new HrdtTokenReader().parseAllRaw(broken)).toThrow(HrdtTokenReaderError);
+        });
+
         it("returns raw YAML values without converting tokens", () => {
             expect(new HrdtTokenReader().parseRaw("value: 1")).toEqual({ value: 1 });
         });

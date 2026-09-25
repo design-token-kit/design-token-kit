@@ -12,6 +12,30 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   `--rem-base` overrides it; the default remains `16`.
 - Added the `bad-rem-base` check, warning about an unusable declared `rem`
   base.
+- Added the `@design-token-kit/core/browser` entry point. `BrowserTokenToolkit`
+  checks, converts, showcases, and measures token content in memory, without a
+  file system or backend (#61).
+- DESIGN.md frontmatter accepts the `omitted` field from the specification.
+- Added the `design-md-ignored-value` warning. As the DESIGN.md specification
+  requires, unknown component properties with literal values and spacing
+  strings that are not dimensions are accepted; conversion ignores them.
+
+### Changed
+
+- The file extension now decides the input format: `.json` is DTCG, `.yaml`
+  and `.yml` are HRDT, `.md` is DESIGN.md. Content detection applies only to
+  other names and stdin.
+- DESIGN.md schema validation now rejects values that conversion cannot read:
+  non-string colors, `rounded` values that are not dimensions or references,
+  component `typography` that is not a `{reference}`, and component sizes that
+  are not dimensions or references. Such files used to pass `check` and then
+  fail or lose values during conversion.
+- HRDT schema validation now rejects boolean and `null` values and nested
+  arrays in reference groups. Such files used to fail later, during parsing.
+- Schema warnings no longer stop loading; `check` reports them together with
+  the other issues.
+- `DtcgToDesignMdMapper.map()` now maps themes as well as the base document.
+- `@design-token-kit/core` no longer depends on `unified` and `remark`.
 
 ### Fixed
 
@@ -23,6 +47,15 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Fixed SwiftUI export dropping the unit of `dimension` tokens. `rem` values
   are now resolved against the pixel base in scalar dimensions and composite
   fields alike (#78).
+- Fixed DESIGN.md typography requiring `letterSpacing`. As in the
+  specification, it is optional and defaults to `0px`.
+- Fixed DESIGN.md rejecting a dimension `lineHeight` such as `24px`. It is
+  converted to a multiplier of `fontSize`.
+- Fixed the showcase hiding tokens without a theme when the document has
+  themes. They are shown as the `base` theme.
+- Fixed YAML syntax errors in multi-document HRDT content being ignored.
+- Fixed DESIGN.md detection treating headings inside code blocks as prose, and
+  added support for setext headings.
 
 ## [1.9.0] - 2026-09-19
 

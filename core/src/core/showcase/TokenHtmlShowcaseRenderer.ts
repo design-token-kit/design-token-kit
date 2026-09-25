@@ -108,7 +108,8 @@ export class TokenHtmlShowcaseRenderer {
         this.#classifier = classifier;
     }
 
-    renderPage(parsed: ParsedTokenCss): string {
+    renderPage(parsedCss: ParsedTokenCss): string {
+        const parsed = this.withBaseTheme(parsedCss);
         const scopes = this.#classifier.groupEntriesByScope(parsed.entries);
         const visibleScopes = this.getVisibleScopes(scopes);
         const visibleThemes = this.getVisibleThemes(parsed.themes);
@@ -294,6 +295,22 @@ ${this.renderTokens(visibleScopes, visibleThemes, parsed.entries)}
 
     private getVisibleScopes(scopes: Map<string, TokenEntry[]>): Map<string, TokenEntry[]> {
         return new Map([...scopes.entries()].filter(([scope]) => scope !== "component"));
+    }
+
+    /**
+     * Exposes unthemed tokens as a "base" theme when other themes exist,
+     * because themed pages render theme buckets only.
+     */
+    private withBaseTheme(parsed: ParsedTokenCss): ParsedTokenCss {
+        if (parsed.themes.length === 0 || parsed.themes.some((theme) => theme.name === "base")) return parsed;
+        const baseEntries = parsed.entries
+            .filter((entry) => entry.themeName === undefined)
+            .map((entry) => ({ ...entry, themeName: "base" }));
+        if (baseEntries.length === 0) return parsed;
+        return {
+            entries: [...baseEntries, ...parsed.entries.filter((entry) => entry.themeName !== undefined)],
+            themes: [{ name: "base", entries: baseEntries }, ...parsed.themes],
+        };
     }
 
     private getVisibleThemes(themes: ThemeBucket[]): ThemeBucket[] {
