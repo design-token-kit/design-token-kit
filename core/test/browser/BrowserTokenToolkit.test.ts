@@ -29,6 +29,110 @@ const validDtcg = JSON.stringify({
 });
 
 describe("BrowserTokenToolkit", () => {
+    it("reserves the base theme name before producing ambiguous output", () => {
+        const toolkit = new BrowserTokenToolkit();
+        const input: BrowserTokenSet = {
+            base: { content: validDtcg },
+            themes: { base: { content: "{}" } },
+        };
+
+        expect(toolkit.check(input)).toEqual([
+            expect.objectContaining({ id: "theme-name", sourcePath: "base", severity: "error" }),
+        ]);
+        expect(() => toolkit.convert(input, Format.SCSS)).toThrow(BrowserTokenValidationError);
+    });
+
+    it.each(["schema", "parser", "semantic"] as const)("attributes %s errors to unnamed sources", (stage) => {
+        const toolkit = new BrowserTokenToolkit();
+        const documents = {
+            schema: { format: Format.DTCG, content: "{" },
+            parser: { format: Format.DESIGN_MD, content: "---\ncolors:\n  bad: not-a-color\n---\n" },
+            semantic: {
+                format: Format.DTCG,
+                content: '{"semantic":{"bad":{"$type":"color","$value":"{primitive.missing}"}}}',
+            },
+        } as const;
+        const issues = toolkit.check({
+            base: { content: validDtcg },
+            themes: { dark: documents[stage] },
+        });
+
+        expect(issues.length).toBeGreaterThan(0);
+        expect(issues.every((issue) => issue.sourcePath === "dark")).toBe(true);
+    });
+
+    it("does not let a check allow-list bypass conversion or statistics validation", () => {
+        const toolkit = new BrowserTokenToolkit();
+        const input: BrowserTokenSet = {
+            base: {
+                content: '{"semantic":{"bad":{"$type":"color","$value":"{primitive.missing}"}}}',
+            },
+        };
+        const options = { scope: CheckScope.SCHEMA, checks: ["missing-description"] };
+
+        expect(() => toolkit.convert(input, Format.CSS, options)).toThrow(BrowserTokenValidationError);
+        expect(() => toolkit.stats(input, options)).toThrow(BrowserTokenValidationError);
+    });
+
+    it("rejects colliding Android output paths", () => {
+        const toolkit = new BrowserTokenToolkit();
+        const input: BrowserTokenSet = {
+            base: { content: validDtcg },
+            themes: { dark: { content: validDtcg }, night: { content: validDtcg } },
+        };
+
+        expect(() => toolkit.convert(input, Format.ANDROID)).toThrow(expect.objectContaining({
+            issues: [expect.objectContaining({ id: "output-name", sourcePath: "night" })],
+        }));
+    });
+
+    it.each(["invalid", "toString", "__proto__"])("rejects runtime output format %s explicitly", (format) => {
+        const toolkit = new BrowserTokenToolkit();
+
+        // JavaScript consumers and UI selections are not protected by TypeScript unions.
+        expect(() => toolkit.convert({ base: { content: validDtcg } }, format as Format.CSS))
+            .toThrow(expect.objectContaining({
+                issues: [expect.objectContaining({ id: "output-format" })],
+            }));
+    });
+
+    it.each(Object.values(Format))("produces nonempty %s output through the browser facade", (format) => {
+        const toolkit = new BrowserTokenToolkit();
+        const outputs = toolkit.convert({ base: { content: validDtcg } }, format);
+
+        expect(outputs.length).toBeGreaterThan(0);
+        expect(outputs.every((output) => output.content.trim().length > 0)).toBe(true);
+        expect(new Set(outputs.map((output) => output.fileName)).size).toBe(outputs.length);
+    });
+
+    it("keeps schema warnings when a later document fails to parse", () => {
+        const toolkit = new BrowserTokenToolkit();
+        const issues = toolkit.check({
+            base: {
+                source: "DESIGN.md",
+                content: '---\ncolors:\n  primary: "#1A1C1E"\ncomponents:\n  button:\n    borderColor: "#ff0000"\n---\n',
+            },
+            themes: {
+                dark: { format: Format.DESIGN_MD, content: "---\ncolors:\n  bad: not-a-color\n---\n" },
+            },
+        });
+
+        expect(issues).toEqual(expect.arrayContaining([
+            expect.objectContaining({ id: "design-md-ignored-value", sourcePath: "DESIGN.md" }),
+            expect.objectContaining({ id: "schema", severity: "error", sourcePath: "dark" }),
+        ]));
+    });
+
+    it("does not mutate caller documents when assigning diagnostic sources", () => {
+        const toolkit = new BrowserTokenToolkit();
+        const base = Object.freeze({ content: validDtcg });
+        const dark = Object.freeze({ content: validDtcg });
+
+        expect(toolkit.check({ base, themes: { dark } })).toEqual([]);
+        expect(base).not.toHaveProperty("source");
+        expect(dark).not.toHaveProperty("source");
+    });
+
     it("runs schema, semantic, and lint checks against browser content", () => {
         const toolkit = new BrowserTokenToolkit();
         const issues = toolkit.check({

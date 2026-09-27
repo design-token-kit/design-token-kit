@@ -287,6 +287,19 @@ token statistics.
 For browser security and compatibility, URL loading is owned by the host app
 and depends on the source server's CORS policy.
 
+Optional `themes` map names to override documents.
+Theme names may contain letters, numbers, hyphens, and underscores.
+The name `base` is reserved for the base document.
+If `source` is omitted, diagnostics use `browser-input` for the base document
+and the map key for a theme.
+
+`check()` respects the `scope` and `checks` options.
+`convert()` and `stats()` always run all schema and model checks, regardless
+of those options, and throw `BrowserTokenValidationError` on errors.
+Its `issues` property contains the diagnostics.
+Conversion also rejects duplicate output paths, such as Android themes
+`dark` and `night` both mapping to `values-night`.
+
 Schema validation uses AJV, which compiles schemas into functions at
 runtime. A page with a Content Security Policy must allow `'unsafe-eval'`
 in `script-src`, or validation fails. Compiled schemas are cached per page,
