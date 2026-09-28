@@ -261,6 +261,9 @@ without semantic checks.
 > website and may change in minor releases. Pin an exact version if you
 > depend on it.
 
+See the [Browser API guide on the website](https://design-token-kit.github.io/docs/core/browser-api/)
+for installation and integration instructions.
+
 Use the browser entry point for local, in-memory token content.
 It bundles the DTCG, HRDT, and DESIGN.md schemas and never accesses paths,
 stdin, or temporary files.
