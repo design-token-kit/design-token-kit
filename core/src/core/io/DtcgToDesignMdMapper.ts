@@ -35,14 +35,25 @@ const UNSUPPORTED = new Set(["border", "fontFamily", "fontWeight", "shadow", "tr
 export class DtcgToDesignMdMapper {
 
     /**
-     * Produces a {@link DtcgList} whose {@code base} tree uses the flat
-     * DESIGN.md section keys. Themes are not mapped.
+     * Produces a {@link DtcgList} whose documents use the flat DESIGN.md
+     * section keys. Theme references are mapped against the base document.
      */
     map(list: DtcgList): DtcgList {
+        const base = this.#mapDocument(list.base);
+        const themes = new Map<string, Dtcg>();
+        for (const [name, theme] of list.themes) {
+            themes.set(name, this.#mapDocument(theme, list.base));
+        }
+        return new DtcgList(base, themes);
+    }
+
+    #mapDocument(document: Dtcg, referenceDocument?: Dtcg): Dtcg {
         const collector = new TokenCollector();
-        collector.walk(list.base.root, "");
-        const root = collector.build(list.base.root);
-        return new DtcgList(new Dtcg(root));
+        if (referenceDocument !== undefined) {
+            collector.index(referenceDocument.root, "");
+        }
+        collector.walk(document.root, "");
+        return new Dtcg(collector.build(document.root), document.source);
     }
 }
 
@@ -51,6 +62,20 @@ class TokenCollector {
     readonly #components = new Map<string, TokenGroup>();
     readonly #pathMap = new Map<string, string>();
     readonly #removed = new Set<string>();
+
+    index(group: TokenGroup, parentPath: string): void {
+        for (const [name, child] of group.entries()) {
+            const childPath = parentPath ? `${parentPath}.${name}` : name;
+            if (child instanceof TokenGroup) {
+                this.index(child, childPath);
+                continue;
+            }
+            const mappedPath = this.#mappedPath(childPath, name);
+            if (mappedPath !== undefined) {
+                this.#pathMap.set(childPath, mappedPath);
+            }
+        }
+    }
 
     walk(group: TokenGroup, parentPath: string): void {
         for (const [name, child] of group.entries()) {
@@ -153,47 +178,11 @@ class TokenCollector {
     }
 
     #collectToken(path: string, name: string, token: TokenNode<unknown>): void {
-        const parts = path.split(".");
-        const root = parts[0];
-        if (root !== "primitive" && root !== "semantic") return;
-
-        const typeName = parts[1];
-
-        if (UNSUPPORTED.has(typeName)) {
-            console.warn(`warning: skipping ${path} — type not supported in DESIGN.md`);
-            return;
-        }
-
-        switch (typeName) {
-            case "color":
-                this.#add("colors", name, token);
-                this.#pathMap.set(path, `colors.${name}`);
-                break;
-            case "typography":
-                this.#add("typography", name, token);
-                this.#pathMap.set(path, `typography.${name}`);
-                break;
-            case "dimension":
-            case "number": {
-                const section = this.#dimensionSection(name);
-                this.#add(section, name, token);
-                this.#pathMap.set(path, `${section}.${name}`);
-                break;
-            }
-            case "text":
-                this.#add("typography", name, token);
-                this.#pathMap.set(path, `typography.${name}`);
-                break;
-            case "shape":
-            case "space":
-            case "motion":
-            case "layer": {
-                const section = this.#dimensionSection(name);
-                this.#add(section, name, token);
-                this.#pathMap.set(path, `${section}.${name}`);
-                break;
-            }
-        }
+        const mappedPath = this.#mappedPath(path, name);
+        if (mappedPath === undefined) return;
+        const section = mappedPath.split(".")[0] as SectionName;
+        this.#add(section, name, token);
+        this.#pathMap.set(path, mappedPath);
     }
 
     #collectComponent(group: TokenGroup, path: string): void {
@@ -231,5 +220,23 @@ class TokenCollector {
         const lower = name.toLowerCase();
         if (/radius|rounded|border-width/.test(lower)) return "rounded";
         return "spacing";
+    }
+
+    #mappedPath(path: string, name: string): string | undefined {
+        if (path.startsWith("component.")) {
+            const parts = path.split(".");
+            return `components.${parts.slice(1, -1).join("-")}.${name}`;
+        }
+
+        const parts = path.split(".");
+        if (parts[0] !== "primitive" && parts[0] !== "semantic") return undefined;
+        const typeName = parts[1];
+        if (UNSUPPORTED.has(typeName)) return undefined;
+        if (typeName === "color") return `colors.${name}`;
+        if (typeName === "typography" || typeName === "text") return `typography.${name}`;
+        if (["dimension", "number", "shape", "space", "motion", "layer"].includes(typeName)) {
+            return `${this.#dimensionSection(name)}.${name}`;
+        }
+        return undefined;
     }
 }

@@ -1,9 +1,4 @@
 import { parse as parseYaml } from "yaml";
-import { unified } from "unified";
-import remarkParse from "remark-parse";
-import remarkFrontmatter from "remark-frontmatter";
-import { visit } from "unist-util-visit";
-import type { Root, Yaml } from "mdast";
 import { Dtcg } from "#/core/model/Dtcg";
 import { TokenGroup } from "#/core/model/TokenGroup";
 import { TokenNode } from "#/core/model/TokenNode";
@@ -54,45 +49,58 @@ export class DesignMdReader {
     }
 
     /**
+     * Lists values that the DESIGN.md specification accepts but {@link parse}
+     * drops because the token model has no type for them: unknown component
+     * properties with literal values and non-dimension spacing strings.
+     *
+     * @param raw - Frontmatter returned by {@link parseRaw}.
+     */
+    ignoredValues(raw: unknown): string[] {
+        if (!this.#isObject(raw)) return [];
+        const messages: string[] = [];
+
+        const spacing = raw["spacing"];
+        if (this.#isObject(spacing)) {
+            for (const [name, value] of Object.entries(spacing)) {
+                if (typeof value === "string" && !REFERENCE_RE.test(value) && !DIMENSION_RE.test(value)) {
+                    messages.push(`spacing.${name}: "${value}" is not a dimension and is ignored.`);
+                }
+            }
+        }
+
+        const components = raw["components"];
+        if (this.#isObject(components)) {
+            for (const [component, properties] of Object.entries(components)) {
+                if (!this.#isObject(properties)) continue;
+                for (const [property, value] of Object.entries(properties)) {
+                    const isReference = typeof value === "string" && REFERENCE_RE.test(value);
+                    if (COMPONENT_PROPERTY_TYPES[property] === undefined && !isReference) {
+                        messages.push(
+                            `components.${component}.${property}: unknown component property is ignored. `
+                            + "Use a token reference to keep it.",
+                        );
+                    }
+                }
+            }
+        }
+
+        return messages;
+    }
+
+    /**
      * Returns `true` when the content looks like a DESIGN.md file.
      *
      * DESIGN.md files contain YAML frontmatter between {@code ---} delimiters
      * followed by markdown prose with {@code ##} section headings.
      */
     static isDesignMd(content: string): boolean {
-        if (!content.trimStart().startsWith("---")) return false;
-
-        const processor = unified()
-            .use(remarkParse)
-            .use(remarkFrontmatter, ["yaml"]);
-        const ast = processor.parse(content) as Root;
-
-        let hasFrontmatter = false;
-        let hasHeading = false;
-        visit(ast, (node) => {
-            if (node.type === "yaml") {
-                hasFrontmatter = true;
-            }
-            if (node.type === "heading") {
-                hasHeading = true;
-            }
-        });
-
-        return hasFrontmatter && hasHeading;
+        const frontmatter = extractFrontmatter(content);
+        return frontmatter !== undefined && hasMarkdownHeading(frontmatter.body);
     }
 
     #extractYamlBlocks(content: string): string[] {
-        const processor = unified()
-            .use(remarkParse)
-            .use(remarkFrontmatter, ["yaml"]);
-        const ast = processor.parse(content) as Root;
-        const blocks: string[] = [];
-        visit(ast, (node) => {
-            if (node.type === "yaml") {
-                blocks.push((node as Yaml).value);
-            }
-        });
-        return blocks;
+        const frontmatter = extractFrontmatter(content);
+        return frontmatter === undefined ? [] : [frontmatter.yaml];
     }
 
     #parseRoot(raw: JsonObject): TokenGroup {
@@ -163,7 +171,7 @@ export class DesignMdReader {
         for (const [name, value] of Object.entries(raw)) {
             if (typeof value === "string" && REFERENCE_RE.test(value)) {
                 children.set(name, new AliasToken(new TokenReference(value.slice(1, -1))));
-            } else if (typeof value === "string") {
+            } else if (typeof value === "string" && DIMENSION_RE.test(value)) {
                 children.set(name, new DimensionToken(this.#parseDimension(value)));
             } else if (typeof value === "number") {
                 children.set(name, new NumberToken(value));
@@ -223,9 +231,34 @@ export class DesignMdReader {
         const fontFamily = this.#parseFontFamilyOrRef(raw["fontFamily"]);
         const fontSize = this.#parseDimensionOrRef(raw["fontSize"]);
         const fontWeight = this.#parseFontWeightOrRef(raw["fontWeight"]);
-        const letterSpacing = this.#parseDimensionOrRef(raw["letterSpacing"]);
-        const lineHeight = this.#parseNumberOrRef(raw["lineHeight"]);
+        // DESIGN.md allows omitting letterSpacing; DTCG typography requires it.
+        const letterSpacing = raw["letterSpacing"] === undefined
+            ? new DimensionValue(0, "px")
+            : this.#parseDimensionOrRef(raw["letterSpacing"]);
+        const lineHeight = this.#parseLineHeight(raw["lineHeight"], fontSize);
         return new TypographyValue(fontFamily, fontSize, fontWeight, letterSpacing, lineHeight);
+    }
+
+    /**
+     * DESIGN.md accepts a dimension lineHeight, while the model stores a
+     * multiplier of fontSize, so a dimension is divided by fontSize.
+     */
+    #parseLineHeight(raw: unknown, fontSize: DimensionValue | TokenReference): number | TokenReference {
+        if (typeof raw !== "string" || !DIMENSION_RE.test(raw)) return this.#parseNumberOrRef(raw);
+
+        const lineHeight = this.#parseDimension(raw);
+        // "em" is already relative to fontSize; the model unit type omits it.
+        if ((lineHeight.unit as string) === "em") return lineHeight.value;
+        if (!(fontSize instanceof DimensionValue)) {
+            throw new DesignMdReaderError(`Cannot convert lineHeight "${raw}" to a multiplier: fontSize is a reference.`);
+        }
+        if (fontSize.unit !== lineHeight.unit || fontSize.value === 0) {
+            throw new DesignMdReaderError(
+                `Cannot convert lineHeight "${raw}" to a multiplier of fontSize "${fontSize.value}${fontSize.unit}". `
+                + "Use a unitless number or the fontSize unit.",
+            );
+        }
+        return this.#round(lineHeight.value / fontSize.value);
     }
 
     #parseColor(value: string): ColorValue {
@@ -430,9 +463,49 @@ export class DesignMdReader {
         return Number(value.toFixed(3));
     }
 
-    #isObject(value: JsonValue): value is JsonObject {
+    #isObject(value: unknown): value is JsonObject {
         return typeof value === "object" && value !== null && !Array.isArray(value);
     }
+}
+
+function extractFrontmatter(content: string): { yaml: string; body: string } | undefined {
+    const lines = content.replace(/^\uFEFF/, "").split(/\r?\n/);
+    const openingIndex = lines.findIndex((line) => line.trim() !== "");
+    if (openingIndex < 0 || !/^---[ \t]*$/.test(lines[openingIndex])) return undefined;
+
+    const closingOffset = lines.slice(openingIndex + 1)
+        .findIndex((line) => /^---[ \t]*$/.test(line));
+    if (closingOffset < 0) return undefined;
+    const closingIndex = openingIndex + closingOffset + 1;
+    return {
+        yaml: lines.slice(openingIndex + 1, closingIndex).join("\n"),
+        body: lines.slice(closingIndex + 1).join("\n"),
+    };
+}
+
+function hasMarkdownHeading(body: string): boolean {
+    let fence: string | undefined;
+    let paragraphLine = false;
+    for (const line of body.split(/\r?\n/)) {
+        const fenceMatch = line.match(/^ {0,3}(`{3,}|~{3,})(.*)$/);
+        if (fence !== undefined) {
+            // A closing fence repeats the opening marker, at least as long, without an info string.
+            if (fenceMatch !== null && fenceMatch[1][0] === fence[0]
+                && fenceMatch[1].length >= fence.length && fenceMatch[2].trim() === "") {
+                fence = undefined;
+            }
+            continue;
+        }
+        if (fenceMatch !== null) {
+            fence = fenceMatch[1];
+            paragraphLine = false;
+            continue;
+        }
+        if (/^ {0,3}#{1,6}\s+\S/.test(line)) return true;
+        if (paragraphLine && /^ {0,3}(?:=+|-+)[ \t]*$/.test(line)) return true;
+        paragraphLine = line.trim() !== "";
+    }
+    return false;
 }
 
 /**

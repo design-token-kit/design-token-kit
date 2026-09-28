@@ -64,6 +64,42 @@ semantic:
             expect(issues.length).toBeGreaterThan(0);
             expect(ids(issues)).toContain("schema");
         });
+
+        it("reports a YAML syntax error as an issue", async () => {
+            const issues = await new HrdtTokenValidator().validate([source("primitive:\n  color: [1, 2\n")]);
+            expect(issues).toEqual([
+                expect.objectContaining({ id: "schema", severity: "error" }),
+            ]);
+        });
+    });
+
+    describe("multi-document sources", () => {
+        it("passes a base document followed by a theme", async () => {
+            const issues = await new HrdtTokenValidator().validate([source(`
+primitive:
+  color:
+    white: "#ffffff"
+---
+primitive:
+  color:
+    white: "#000000"
+`)]);
+            expect(issues).toEqual([]);
+        });
+
+        it("names the document that fails validation", async () => {
+            const issues = await new HrdtTokenValidator().validate([source(`
+primitive:
+  color:
+    white: "#ffffff"
+---
+primitive:
+  color:
+    bad: "not-a-color"
+`)]);
+            expect(issues.length).toBeGreaterThan(0);
+            expect(issues.every((issue) => issue.message.startsWith("document 2 "))).toBe(true);
+        });
     });
 
     describe("issue structure", () => {
