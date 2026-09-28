@@ -4,6 +4,8 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.10.0] - 2026-09-28
+
 ### Added
 
 - `--rem-base` now applies to the SwiftUI export as well as Android.
