@@ -123,6 +123,8 @@ structure right but misses format details.
   variables and styles
 * Generate HTML token showcase page with color format and copy controls
 * Generate token statistics as text or HTML
+* Use the experimental browser API to validate, convert, showcase, and measure
+  in-memory token content without file-system access
 
 ## Build
 
@@ -189,6 +191,7 @@ npm run dist
 ## Package Documentation
 
 - Core library usage and main exports: [`core/README.md`](core/README.md)
+- Browser API usage: [`core/README.md#browser-api`](core/README.md#browser-api)
 - CLI installation, commands, and options: [`cli/README.md`](cli/README.md)
 
 ## Internal Repository
