@@ -38,6 +38,10 @@ Examples:
   $ dtokens stats tokens.yaml
   $ dtokens stats - < tokens.yaml
   $ dtokens stats tokens.yaml --out ./dist/stats.html --open
+
+Browser API:
+  Import BrowserTokenToolkit from @design-token-kit/core/browser to validate,
+  convert, showcase, and measure in-memory token content in a browser.
 ` : "");
 
 if (process.argv.length <= 2) {
