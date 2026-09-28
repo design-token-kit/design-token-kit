@@ -14,17 +14,34 @@
     "description": {
       "type": "string"
     },
+    "omitted": {
+      "type": "array",
+      "items": {
+        "anyOf": [
+          { "type": "string" },
+          {
+            "type": "object",
+            "required": ["section"],
+            "properties": {
+              "section": { "type": "string" },
+              "reason": { "type": "string" }
+            },
+            "additionalProperties": false
+          }
+        ]
+      }
+    },
     "colors": {
-      "$ref": "#/definitions/tokenMap"
+      "$ref": "#/definitions/stringTokenMap"
     },
     "typography": {
       "$ref": "#/definitions/typographyMap"
     },
     "rounded": {
-      "$ref": "#/definitions/tokenMap"
+      "$ref": "#/definitions/dimensionTokenMap"
     },
     "spacing": {
-      "$ref": "#/definitions/tokenMap"
+      "$ref": "#/definitions/spacingTokenMap"
     },
     "components": {
       "$ref": "#/definitions/componentsMap"
@@ -56,12 +73,35 @@
         "$ref": "#/definitions/scalarValue"
       }
     },
+    "stringTokenMap": {
+      "type": "object",
+      "propertyNames": { "$ref": "#/definitions/tokenName" },
+      "additionalProperties": { "type": "string" }
+    },
+    "dimensionTokenMap": {
+      "type": "object",
+      "propertyNames": { "$ref": "#/definitions/tokenName" },
+      "additionalProperties": {
+        "anyOf": [
+          { "$ref": "#/definitions/dimensionString" },
+          { "$ref": "#/definitions/reference" }
+        ]
+      }
+    },
+    "spacingTokenMap": {
+      "type": "object",
+      "propertyNames": { "$ref": "#/definitions/tokenName" },
+      "additionalProperties": {
+        "type": ["number", "string"]
+      }
+    },
     "dimensionString": {
       "type": "string",
       "pattern": "^-?\\d+(?:\\.\\d+)?(?:px|em|rem)$"
     },
     "typographyValue": {
       "type": "object",
+      "required": ["fontFamily", "fontSize", "fontWeight", "lineHeight"],
       "properties": {
         "fontFamily": {
           "anyOf": [
@@ -119,28 +159,43 @@
       "type": "object",
       "properties": {
         "backgroundColor": {
-          "$ref": "#/definitions/scalarValue"
+          "type": "string"
         },
         "textColor": {
-          "$ref": "#/definitions/scalarValue"
+          "type": "string"
         },
         "typography": {
-          "$ref": "#/definitions/scalarValue"
+          "$ref": "#/definitions/reference"
         },
         "rounded": {
-          "$ref": "#/definitions/scalarValue"
+          "anyOf": [
+            { "$ref": "#/definitions/dimensionString" },
+            { "$ref": "#/definitions/reference" }
+          ]
         },
         "padding": {
-          "$ref": "#/definitions/scalarValue"
+          "anyOf": [
+            { "$ref": "#/definitions/dimensionString" },
+            { "$ref": "#/definitions/reference" }
+          ]
         },
         "size": {
-          "$ref": "#/definitions/scalarValue"
+          "anyOf": [
+            { "$ref": "#/definitions/dimensionString" },
+            { "$ref": "#/definitions/reference" }
+          ]
         },
         "height": {
-          "$ref": "#/definitions/scalarValue"
+          "anyOf": [
+            { "$ref": "#/definitions/dimensionString" },
+            { "$ref": "#/definitions/reference" }
+          ]
         },
         "width": {
-          "$ref": "#/definitions/scalarValue"
+          "anyOf": [
+            { "$ref": "#/definitions/dimensionString" },
+            { "$ref": "#/definitions/reference" }
+          ]
         }
       },
       "additionalProperties": {

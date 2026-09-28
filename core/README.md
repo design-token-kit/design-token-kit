@@ -255,6 +255,56 @@ for (const issue of issues) {
 Use `DtcgSchemaValidator` when you only need DTCG schema validation
 without semantic checks.
 
+## Browser API
+
+> **Experimental.** The browser entry point is built for the Design Token Kit
+> website and may change in minor releases. Pin an exact version if you
+> depend on it.
+
+Use the browser entry point for local, in-memory token content.
+It bundles the DTCG, HRDT, and DESIGN.md schemas and never accesses paths,
+stdin, or temporary files.
+
+```ts
+import { BrowserTokenToolkit, CheckScope, Format } from "@design-token-kit/core/browser";
+
+const toolkit = new BrowserTokenToolkit();
+const input = {
+  base: {
+    source: "tokens.json",
+    format: Format.DTCG,
+    content: await file.text(),
+  },
+};
+
+const issues = toolkit.check(input, { scope: CheckScope.LINT });
+const css = toolkit.convert(input, Format.CSS)[0]?.content;
+```
+
+The browser entry accepts DTCG JSON, HRDT YAML, and DESIGN.md input.
+It supports all built-in conversion formats, HTML showcase generation, and
+token statistics.
+For browser security and compatibility, URL loading is owned by the host app
+and depends on the source server's CORS policy.
+
+Optional `themes` map names to override documents.
+Theme names may contain letters, numbers, hyphens, and underscores.
+The name `base` is reserved for the base document.
+If `source` is omitted, diagnostics use `browser-input` for the base document
+and the map key for a theme.
+
+`check()` respects the `scope` and `checks` options.
+`convert()` and `stats()` always run all schema and model checks, regardless
+of those options, and throw `BrowserTokenValidationError` on errors.
+Its `issues` property contains the diagnostics.
+Conversion also rejects duplicate output paths, such as Android themes
+`dark` and `night` both mapping to `values-night`.
+
+Schema validation uses AJV, which compiles schemas into functions at
+runtime. A page with a Content Security Policy must allow `'unsafe-eval'`
+in `script-src`, or validation fails. Compiled schemas are cached per page,
+so only the first check pays the compilation cost.
+
 ## Document Conversion
 
 Use readers and writers to convert token documents between DTCG JSON
