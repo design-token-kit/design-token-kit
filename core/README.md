@@ -1,4 +1,4 @@
-# @design-token-kit/core
+щз# @design-token-kit/core
 
 The core package of Design Token Kit provides the runtime foundation
 for working with [DTCG 2025.10 design tokens][dtcg] and [DESIGN.md][designmd].
