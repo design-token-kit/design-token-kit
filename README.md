@@ -17,6 +17,7 @@ convert, and showcase design tokens for consistent, AI-native design systems.
 - [Publish](#publish)
 - [Packages](#packages)
 - [Package Documentation](#package-documentation)
+- [Internal Repository](#internal-repository)
 - [Supported Formats](#supported-formats)
 
 ## Overview
@@ -189,6 +190,23 @@ npm run dist
 
 - Core library usage and main exports: [`core/README.md`](core/README.md)
 - CLI installation, commands, and options: [`cli/README.md`](cli/README.md)
+
+## Internal Repository
+
+The [`design-token-kit/internal`](https://github.com/design-token-kit/internal)
+repository is the project's internal workspace for research, documentation, and
+planning. It is not a runtime package or a second implementation of the toolkit.
+
+It contains:
+
+- articles about Design Token Kit, design tokens, and the HRDT format;
+- experiments comparing tokens-first workflows with direct HTML/CSS generation;
+- the Figma designer guide for the `primitive -> semantic -> component` token
+  architecture;
+- technical notes, comparisons, backlog items, and ideas for future features.
+
+Use the main repository for the implementation and package documentation. Use
+the internal repository for project context, experiments, and working materials.
 
 ## Supported Formats
 
