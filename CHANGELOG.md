@@ -6,8 +6,8 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Changed
 
-- The `missing-description` lint check is now opt-in (#83) and no longer runs
-  by default with `--scope lint`.
+- The `missing-description` lint check is now opt-in and no longer runs by
+  default with `--scope lint`.
 
 ## [1.10.0] - 2026-09-28
 
