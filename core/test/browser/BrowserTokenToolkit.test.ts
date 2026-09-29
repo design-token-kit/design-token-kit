@@ -4,6 +4,7 @@ import { Format } from "#/core/io/Format";
 import { BrowserTokenToolkit } from "#/browser/BrowserTokenToolkit";
 import {
     BrowserTokenValidationError,
+    type BrowserInputFormat,
     type BrowserTokenSet,
 } from "#/browser/BrowserTokenToolkit";
 
@@ -90,9 +91,9 @@ describe("BrowserTokenToolkit", () => {
         const toolkit = new BrowserTokenToolkit();
 
         // JavaScript consumers and UI selections are not protected by TypeScript unions.
-        expect(() => toolkit.convert({ base: { content: validDtcg } }, format as Format.CSS))
+        expect(() => toolkit.convert({ base: { source: "tokens.json", content: validDtcg } }, format as Format.CSS))
             .toThrow(expect.objectContaining({
-                issues: [expect.objectContaining({ id: "output-format" })],
+                issues: [expect.objectContaining({ id: "output-format", sourcePath: "tokens.json" })],
             }));
     });
 
@@ -157,6 +158,61 @@ describe("BrowserTokenToolkit", () => {
 
         expect(issues.map((issue) => issue.id)).toContain("bad-reference");
         expect(issues.map((issue) => issue.id)).not.toContain("missing-description");
+    });
+
+    it("runs missing descriptions only when explicitly selected", () => {
+        const toolkit = new BrowserTokenToolkit();
+        const input: BrowserTokenSet = {
+            base: {
+                format: Format.DTCG,
+                content: JSON.stringify({
+                    primitive: {
+                        color: {
+                            "$type": "color",
+                            brand: { "$value": { colorSpace: "srgb", components: [0, 0, 1] } },
+                        },
+                    },
+                }),
+            },
+        };
+
+        expect(toolkit.check(input, { scope: CheckScope.LINT })
+            .map((issue) => issue.id)).not.toContain("missing-description");
+        expect(toolkit.check(input, {
+            scope: CheckScope.LINT,
+            checks: ["missing-description"],
+        }).map((issue) => issue.id)).toContain("missing-description");
+        expect(toolkit.check(input, {
+            scope: CheckScope.LINT,
+            checks: [],
+        }).map((issue) => issue.id)).toContain("missing-description");
+    });
+
+    it("uses custom layer order for architecture checks", () => {
+        const toolkit = new BrowserTokenToolkit();
+        const input: BrowserTokenSet = {
+            base: {
+                format: Format.DTCG,
+                content: JSON.stringify({
+                    primitive: {
+                        color: {
+                            "$type": "color",
+                            brand: { "$value": { colorSpace: "srgb", components: [0, 0, 1] } },
+                        },
+                    },
+                    component: {
+                        button: { "$value": "{primitive.color.brand}" },
+                    },
+                }),
+            },
+        };
+
+        expect(toolkit.check(input, { scope: CheckScope.LINT })
+            .map((issue) => issue.id)).toContain("layer-reference");
+        expect(toolkit.check(input, {
+            scope: CheckScope.LINT,
+            layers: ["primitive", "component"],
+        }).map((issue) => issue.id)).not.toContain("layer-reference");
     });
 
     it("validates HRDT and DESIGN.md with bundled schemas", () => {
@@ -438,6 +494,40 @@ components:
 
         expect(issues[0]?.sourcePath).toBe("broken.json");
         expect(issues[0]?.message).toMatch(/JSON|position|property name/i);
+    });
+
+    it("rejects output-only runtime input formats", () => {
+        const toolkit = new BrowserTokenToolkit();
+        const issues = toolkit.check({
+            base: {
+                source: "tokens.css",
+                format: "css" as BrowserInputFormat,
+                content: ":root { --brand: blue; }",
+            },
+        });
+
+        expect(issues).toEqual([
+            expect.objectContaining({
+                id: "schema",
+                sourcePath: "tokens.css",
+                message: expect.stringContaining("Unsupported browser token input format"),
+            }),
+        ]);
+    });
+
+    it("reports an empty base source as a structured browser issue", () => {
+        const toolkit = new BrowserTokenToolkit();
+        const issues = toolkit.check({
+            base: { source: "empty.yaml", format: Format.HRDT, content: "" },
+        });
+
+        expect(issues).toEqual([
+            expect.objectContaining({
+                id: "schema",
+                sourcePath: "empty.yaml",
+                message: "Token source contains no documents.",
+            }),
+        ]);
     });
 
     it("rejects DESIGN.md values that the reader cannot preserve", () => {

@@ -45,6 +45,19 @@ describe("plugin entrypoint", () => {
         );
     });
 
+    it("reports REST export failures through the message handler", async () => {
+        (figma as unknown as { fileKey: string }).fileKey = "file-key";
+        vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: false, status: 403 }));
+
+        await pluginUi.onmessage?.({ type: "EXPORT_REST_JSON", accessToken: "token" });
+
+        expect(notify).toHaveBeenCalledWith("REST export failed: HTTP 403.", { error: true });
+        expect(postMessage).toHaveBeenCalledWith({
+            type: "EXPORT_FAILED",
+            payload: { source: "plugin", message: "REST export failed: HTTP 403." },
+        });
+    });
+
     it("exports empty DTCG tokens through the message handler", async () => {
         await pluginUi.onmessage?.({ type: "EXPORT_TOKENS_JSON" });
 
@@ -63,6 +76,62 @@ describe("plugin entrypoint", () => {
                 },
                 warnings: [],
             },
+        });
+    });
+
+    it("converts empty tokens through the CSS export handler", async () => {
+        await pluginUi.onmessage?.({ type: "EXPORT_TOKENS_CSS" });
+
+        expect(postMessage).toHaveBeenCalledWith(expect.objectContaining({
+            type: "TOKENS_EXPORTED",
+            payload: expect.objectContaining({ files: [] }),
+        }));
+    });
+
+    it.each([
+        "EXPORT_TOKENS_DTCG",
+        "EXPORT_TOKENS_SCSS",
+        "EXPORT_TOKENS_TAILWIND",
+        "EXPORT_TOKENS_ANDROID",
+        "EXPORT_TOKENS_SWIFTUI",
+    ])("handles %s through the token export handler", async (type) => {
+        await pluginUi.onmessage?.({ type });
+
+        expect(postMessage).toHaveBeenCalledWith(expect.objectContaining({ type: "TOKENS_EXPORTED" }));
+    });
+
+    it("exports plugin JSON through the message handler", async () => {
+        (figma.root as unknown as { children: unknown[] }).children = [{
+            loadAsync: vi.fn().mockResolvedValue(undefined),
+            exportAsync: vi.fn().mockResolvedValue({
+                editorType: "figma",
+                document: { id: "page", type: "CANVAS", children: [] },
+            }),
+        }];
+
+        await pluginUi.onmessage?.({ type: "EXPORT_PLUGIN_JSON" });
+
+        expect(postMessage).toHaveBeenCalledWith(expect.objectContaining({
+            type: "FILE_EXPORTED",
+            payload: expect.objectContaining({
+                source: "plugin",
+                fileName: "my-token-file.plugin.json",
+            }),
+        }));
+    });
+
+    it("reports plugin JSON export failures to the UI", async () => {
+        (figma.root as unknown as { children: unknown[] }).children = [{
+            loadAsync: vi.fn().mockResolvedValue(undefined),
+            exportAsync: vi.fn().mockRejectedValue(new Error("page export failed")),
+        }];
+
+        await pluginUi.onmessage?.({ type: "EXPORT_PLUGIN_JSON" });
+
+        expect(notify).toHaveBeenCalledWith("page export failed", { error: true });
+        expect(postMessage).toHaveBeenCalledWith({
+            type: "EXPORT_FAILED",
+            payload: { source: "plugin", message: "page export failed" },
         });
     });
 

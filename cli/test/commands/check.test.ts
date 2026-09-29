@@ -35,6 +35,7 @@ describe("check", () => {
             expect(result.status).toBe(2);
             expect(result.stderr).toContain("[layer-reference]");
             expect(result.stderr).toContain("[raw-value-usage]");
+            expect(result.stderr).not.toContain("[missing-description]");
         });
 
         it("reports root-layer violations with exit code 2", async () => {
@@ -47,6 +48,36 @@ describe("check", () => {
             const result = await run(checkCommand, resolve(__dirname, "invalid-lint.json"), "--scope", "lint", "--checks", "layer-reference");
             expect(result.status).toBe(2);
             expect(result.stderr).toContain("[layer-reference]");
+            expect(result.stderr).not.toContain("[raw-value-usage]");
+        });
+
+        it("runs every check in a mixed allow-list", async () => {
+            const result = await run(
+                checkCommand,
+                resolve(__dirname, "invalid-lint.json"),
+                "--scope",
+                "lint",
+                "--checks",
+                "missing-description,layer-reference",
+            );
+            expect(result.status).toBe(2);
+            expect(result.stderr).toContain("[missing-description]");
+            expect(result.stderr).toContain("[layer-reference]");
+            expect(result.stderr).not.toContain("[raw-value-usage]");
+        });
+
+        it("runs opt-in missing-description when explicitly selected", async () => {
+            const result = await run(
+                checkCommand,
+                resolve(__dirname, "invalid-lint.json"),
+                "--scope",
+                "lint",
+                "--checks",
+                "missing-description",
+            );
+            expect(result.status).toBe(0);
+            expect(result.stderr).toContain("[missing-description]");
+            expect(result.stderr).not.toContain("[layer-reference]");
             expect(result.stderr).not.toContain("[raw-value-usage]");
         });
     });
@@ -64,6 +95,13 @@ describe("check", () => {
             const result = await run(checkCommand, resolve(__dirname, "invalid-lint.json"), "--checks", "layer-reference");
             expect(result.status).toBe(0);
             expect(result.stderr).toContain("check 'layer-reference' requires --scope lint");
+        });
+
+        it("warns when opt-in missing-description is selected outside lint scope", async () => {
+            const result = await run(checkCommand, resolve(__dirname, "invalid-lint.json"), "--checks", "missing-description");
+            expect(result.status).toBe(0);
+            expect(result.stderr).toContain("check 'missing-description' requires --scope lint");
+            expect(result.stderr).not.toContain("[missing-description]");
         });
 
         it("warns about an unknown check id", async () => {

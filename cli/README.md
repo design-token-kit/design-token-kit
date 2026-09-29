@@ -193,7 +193,9 @@ Convert token documents between DTCG JSON, HRDT YAML, and DESIGN.md.
 * `--layers <names>` - comma-separated layer order, lowest first.
   Defaults to `primitive,semantic,component`.
 * `--checks <ids>` - comma-separated allow-list of active check ids.
-  Defaults to all.
+  When omitted, default-enabled checks run.
+  An explicit list runs only the listed checks.
+  `missing-description` is opt-in and must be listed explicitly.
 * `--schema <path>` - DTCG JSON Schema: directory path or built-in resource
   (`2025.10`, `2025.10-design.md`). Defaults to `2025.10`.
 * `-i, --inform [format]` - input format: `dtcg`, `hrdt`, `design-md`
@@ -280,6 +282,7 @@ Exit status:
 dtokens check tokens.json --scope schema
 dtokens check tokens.json --scope lint
 dtokens check tokens.json --scope lint --checks layer-reference
+dtokens check tokens.json --scope lint --checks missing-description
 dtokens check DESIGN.md --inform design-md --scope validate
 ```
 
