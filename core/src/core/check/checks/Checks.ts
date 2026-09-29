@@ -27,6 +27,9 @@ export interface CheckInfo {
 
     /** One-line, human-readable summary of what the check enforces. */
     readonly description: string;
+
+    /** Whether the check runs when no explicit allow-list is provided. */
+    readonly enabledByDefault: boolean;
 }
 
 /**
@@ -72,5 +75,6 @@ function toCheckInfo(check: Check, scope: CheckScope): CheckInfo {
         scope,
         severity: check.defaultSeverity,
         description: check.description,
+        enabledByDefault: check.enabledByDefault !== false,
     };
 }

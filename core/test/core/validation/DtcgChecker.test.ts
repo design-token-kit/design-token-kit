@@ -135,10 +135,26 @@ describe("DtcgChecker", () => {
             expect(issues.find((issue) => issue.id === "empty-group")?.severity).toBe("warning");
         });
 
-        it("lint scope reports missing token descriptions as warnings", async () => {
+        it("lint scope skips missing token descriptions by default", async () => {
             const issues = await new DtcgChecker({ scope: CheckScope.LINT }).validate([MISSING_DESCRIPTION]);
+            expect(ids(issues)).not.toContain("missing-description");
+        });
+
+        it("lint scope runs missing descriptions when explicitly selected", async () => {
+            const issues = await new DtcgChecker({
+                scope: CheckScope.LINT,
+                checks: ["missing-description"],
+            }).validate([MISSING_DESCRIPTION]);
             expect(ids(issues)).toContain("missing-description");
             expect(issues.find((issue) => issue.id === "missing-description")?.severity).toBe("warning");
+        });
+
+        it("runs all checks when the allow-list is empty", async () => {
+            const issues = await new DtcgChecker({
+                scope: CheckScope.LINT,
+                checks: [],
+            }).validate([MISSING_DESCRIPTION]);
+            expect(ids(issues)).toContain("missing-description");
         });
 
         it("returns no issues for a valid document at lint scope", async () => {

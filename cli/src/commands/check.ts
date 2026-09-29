@@ -47,7 +47,7 @@ export const checkCommand = new Command("check")
             .default(CheckScope.VALIDATE.name),
     )
     .option("--layers <names>", "Comma-separated layer order, lowest first", "primitive,semantic,component")
-    .option("--checks <ids>", "Comma-separated allow-list of active check ids (default: all). See 'Available checks' below.")
+    .option("--checks <ids>", "Comma-separated allow-list of active check ids (default: default-enabled checks). See 'Available checks' below.")
     .option("--schema <path>", schemaOptionDescription())
     .option("-i, --inform [format]", "Input format: dtcg, hrdt, design-md (default: auto-detect)")
     .addHelpText("after", formatAvailableChecks(listChecks()))
@@ -97,7 +97,8 @@ function formatAvailableChecks(checks: CheckInfo[]): string {
 
 function formatCheck(check: CheckInfo, idWidth: number): string {
     const id = check.id.padEnd(idWidth);
-    return `  ${id}  (${check.scope.name}, ${check.severity})\n    ${check.description}`;
+    const mode = check.enabledByDefault ? "" : ", opt-in";
+    return `  ${id}  (${check.scope.name}, ${check.severity}${mode})\n    ${check.description}`;
 }
 
 function schemaOptionDescription(): string {

@@ -110,8 +110,10 @@ function runChecks(
     layers: TokenLayers,
     selectedIds?: readonly string[],
 ): CheckIssue[] {
-    const selected: readonly Check[] = selectedIds?.length
-        ? checks.filter((check) => selectedIds.includes(check.id)) : checks;
+    const selected: readonly Check[] = selectedIds === undefined
+        ? checks.filter((check) => check.enabledByDefault !== false)
+        : selectedIds.length
+            ? checks.filter((check) => selectedIds.includes(check.id)) : checks;
     return new CheckRunner(selected, layers).runList(list);
 }
 

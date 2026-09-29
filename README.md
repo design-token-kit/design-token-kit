@@ -116,7 +116,7 @@ structure right but misses format details.
   * Cross-layer reference rules (layer-reference)
   * Raw value placement rules (raw-value-usage)
   * Empty group detection (empty-group)
-  * Missing token description detection (missing-description)
+  * Optional missing token description detection (missing-description)
 * Convert between DTCG JSON, HRDT YAML, and DESIGN.md
 * Generate CSS and SCSS from token files, including Tailwind CSS v4 `@theme`
   output, SwiftUI source, Android resource XML, and a Figma script creating
