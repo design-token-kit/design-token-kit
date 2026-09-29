@@ -47,8 +47,8 @@ export interface CheckerOptions {
     layers?: string[];
 
     /**
-     * Allow-list of check ids to run. When omitted or empty, all checks for the
-     * selected scope run.
+     * Allow-list of check ids to run. When omitted, default-enabled checks for
+     * the selected scope run. An empty list runs all checks for that scope.
      */
     checks?: string[];
 
@@ -165,7 +165,10 @@ export class DtcgChecker implements TokenValidator {
     }
 
     #select(checks: Check[]): Check[] {
-        if (this.#allowList === undefined || this.#allowList.length === 0) {
+        if (this.#allowList === undefined) {
+            return checks.filter((check) => check.enabledByDefault !== false);
+        }
+        if (this.#allowList.length === 0) {
             return checks;
         }
         const enabled = new Set(this.#allowList);

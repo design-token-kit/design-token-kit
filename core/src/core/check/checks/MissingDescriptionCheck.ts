@@ -11,6 +11,7 @@ export class MissingDescriptionCheck extends TokenCheck {
     readonly id = "missing-description";
     readonly description = "Token has no $description.";
     readonly defaultSeverity: IssueSeverity = "warning";
+    readonly enabledByDefault = false;
 
     protected checkToken(token: TokenNode<unknown>, path: TokenPath, _ctx: CheckContext): CheckIssue[] {
         if (token.description !== undefined && token.description.trim().length > 0) return [];

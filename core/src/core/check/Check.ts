@@ -28,6 +28,13 @@ export interface Check {
     readonly defaultSeverity: IssueSeverity;
 
     /**
+     * Whether the check runs when no explicit check allow-list is provided.
+     *
+     * Omit the property for checks enabled by default.
+     */
+    readonly enabledByDefault?: boolean;
+
+    /**
      * Checks a single node.
      *
      * @param node - The group or token being checked.
