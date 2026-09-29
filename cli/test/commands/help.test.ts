@@ -22,6 +22,12 @@ describe("help", () => {
         expect(result.stdout).toContain("--scope");
     });
 
+    it("marks missing-description as opt-in in check help", () => {
+        const result = dtokens("check --help");
+        expect(result.stdout).toContain("missing-description");
+        expect(result.stdout).toContain("opt-in");
+    });
+
     it("shows exit codes in convert help", () => {
         const result = dtokens("convert --help");
         expect(result.stdout).toContain("Exit status:");

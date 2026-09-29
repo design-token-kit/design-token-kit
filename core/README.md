@@ -19,8 +19,8 @@ https://design-token-kit.github.io/
   documents
 * **Semantic checks** - unresolved references, circular references,
   group references, type mismatches, and deprecated token usage
-* **Lint checks** - cross-layer references, raw value placement, empty groups,
-  and missing token descriptions
+ * **Lint checks** - cross-layer references, raw value placement, empty groups,
+   and optional missing token descriptions
 * **[HRDT YAML support][hrdt]** - a compact, human-readable alternative to
   DTCG JSON
 * **[DESIGN.md support][designmd]** -
@@ -297,6 +297,8 @@ If `source` is omitted, diagnostics use `browser-input` for the base document
 and the map key for a theme.
 
 `check()` respects the `scope` and `checks` options.
+The `missing-description` check is opt-in and must be included in `checks` when
+you want to run it.
 `convert()` and `stats()` always run all schema and model checks, regardless
 of those options, and throw `BrowserTokenValidationError` on errors.
 Its `issues` property contains the diagnostics.

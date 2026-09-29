@@ -104,6 +104,49 @@ describe("TokenExporter", () => {
         ]);
     });
 
+    it("uses a single export when variable collections cannot be read", async () => {
+        const variable = colorVariable("blue", "Primitive/Color/Blue", {
+            default: { r: 0, g: 0, b: 1, a: 1 },
+        });
+        stubFigma({
+            variables: {
+                getLocalVariablesAsync: vi.fn().mockResolvedValue([variable]),
+                getLocalVariableCollectionsAsync: vi.fn().mockRejectedValue("collections unavailable"),
+            },
+        });
+
+        const result = await new TokenExporter().export();
+
+        expect(result.files).toHaveLength(1);
+        expect(result.files[0]?.fileName).toBe("tokens.json");
+        expect(result.warnings).toContain(
+            "Could not read Figma variable collections: collections unavailable. Exporting a single tokens.json file.",
+        );
+    });
+
+    it("skips variables with invalid paths and unresolved aliases", async () => {
+        const invalidPath = colorVariable("invalid", " / ", {
+            default: { r: 1, g: 0, b: 0, a: 1 },
+        });
+        const unresolved = colorVariable("unresolved", "Primitive/Color/Unresolved", {
+            default: { type: "VARIABLE_ALIAS", id: "missing" },
+        });
+        stubFigma({
+            variables: {
+                getLocalVariablesAsync: vi.fn().mockResolvedValue([invalidPath, unresolved]),
+                getLocalVariableCollectionsAsync: vi.fn().mockResolvedValue([]),
+            },
+        });
+
+        const result = await new TokenExporter().export();
+
+        expect(result.summary).toMatchObject({ source: "variables", skipped: 2 });
+        expect(result.warnings).toEqual(expect.arrayContaining([
+            'Skipped color variable " / " because it does not contain a valid token path.',
+            'Skipped color variable "Primitive/Color/Unresolved" in tokens.json because it has no raw value or resolvable alias.',
+        ]));
+    });
+
     it("exports variables, aliases, and typography into the base file", async () => {
         const blue = colorVariable("blue", "Primitive/Color/Blue", { default: { r: 0, g: 0, b: 1, a: 1 } });
         const action = colorVariable("action", "Semantic/Color/Action", {

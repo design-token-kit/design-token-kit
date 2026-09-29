@@ -49,7 +49,8 @@ export interface BrowserCheckOptions {
     readonly scope?: CheckScope;
     readonly layers?: readonly string[];
     /**
-     * Check allow-list for check(); conversion and statistics run all model checks.
+     * Check allow-list for check(). Omitted uses default-enabled checks, while
+     * an empty list runs all checks. Conversion and statistics run all model checks.
      */
     readonly checks?: readonly string[];
     readonly schema?: BrowserDtcgSchema;

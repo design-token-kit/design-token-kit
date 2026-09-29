@@ -28,4 +28,12 @@ describe("listChecks", () => {
             expect(info.description.length).toBeGreaterThan(0);
         }
     });
+
+    it("marks missing-description as opt-in", () => {
+        expect(listChecks().find((info) => info.id === "missing-description"))
+            .toMatchObject({ enabledByDefault: false });
+        expect(listChecks()
+            .filter((info) => info.id !== "missing-description")
+            .every((info) => info.enabledByDefault)).toBe(true);
+    });
 });
