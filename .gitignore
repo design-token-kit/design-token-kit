@@ -23,3 +23,4 @@ logs/
 coverage/
 package-lock.json
 undefined/
+AGENTS.md
