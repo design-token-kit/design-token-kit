@@ -1,5 +1,4 @@
-import type { CheckIssue } from "#/core/check/CheckIssue";
-import { syntaxIssue } from "#/core/validation/SchemaValidation";
+import { syntaxIssue, type CheckIssue } from "#/core/check/CheckIssue";
 
 /**
  * Raised when a browser operation cannot proceed because of token issues.

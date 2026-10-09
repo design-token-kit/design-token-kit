@@ -360,11 +360,23 @@ With `--out ./tokens.scss`, the command writes separate files:
 ./tokens.dark.scss
 ```
 
-Theme file names are derived from source file names after stripping technical
-suffixes such as `.dtcg`, `.hrdt`, `.valid`, and `.invalid`. For example:
+Theme file names come from source file names, read as `<role>[.theme].<format>`:
 
-- `showcase.dark.valid.dtcg.json` -> `dark`
+- `tokens.json` -> base document
 - `tokens.dark.json` -> `dark`
+- `showcase.dark.dtcg.json` -> `dark`
+- `sample.dark.design.md` -> `dark`
+
+The format segment is optional - an extension already names the format while
+only one format claims it. Each format declares both forms, so `.json` and
+`.dtcg.json` are equally understood; spell the format out when a directory
+holds the same tokens in several formats. A segment no format declares is a
+theme like any other word, so `tokens.super_dtcg.json` yields theme
+`super_dtcg`.
+
+DESIGN.md is read from `.md` and from the compound `.design.md`. The latter is
+this project's own convention: the specification names only `DESIGN.md` and
+says nothing about themes or multiple files.
 
 ## Tailwind CSS v4 Conversion
 

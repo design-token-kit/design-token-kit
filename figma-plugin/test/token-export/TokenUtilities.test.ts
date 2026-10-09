@@ -5,7 +5,7 @@ import { TokenCounter } from "#/figma-plugin/token-export/TokenCounter";
 import { TokenDocumentBuilder } from "#/figma-plugin/token-export/TokenDocumentBuilder";
 
 describe("TokenCounter", () => {
-    it("returns empty counts for non-record values", () => {
+    it("returns empty counts for non-record values", async () => {
         const counter = new TokenCounter();
 
         expect(counter.count(null)).toEqual(counter.empty());
@@ -13,7 +13,7 @@ describe("TokenCounter", () => {
         expect(counter.count(["token"])).toEqual(counter.empty());
     });
 
-    it("counts supported token types in nested documents", () => {
+    it("counts supported token types in nested documents", async () => {
         const counts = new TokenCounter().count({
             primitive: {
                 color: { blue: { $type: "color", $value: "#00f" } },
@@ -34,7 +34,7 @@ describe("TokenCounter", () => {
         });
     });
 
-    it("adds all token counters without mutating the inputs", () => {
+    it("adds all token counters without mutating the inputs", async () => {
         const counter = new TokenCounter();
         const left = { colorTokens: 1, dimensionTokens: 2, numberTokens: 3, typographyTokens: 4, shadowTokens: 5 };
         const right = { colorTokens: 5, dimensionTokens: 4, numberTokens: 3, typographyTokens: 2, shadowTokens: 1 };
@@ -51,7 +51,7 @@ describe("TokenCounter", () => {
 });
 
 describe("TokenDocumentBuilder", () => {
-    it("builds nested documents from flat token paths", () => {
+    it("builds nested documents from flat token paths", async () => {
         const document = new TokenDocumentBuilder().build([
             { path: ["primitive", "color", "brand"], token: { $type: "color", $value: "#00f" } },
             { path: ["semantic", "color", "action"], token: { $value: "{primitive.color.brand}" } },
@@ -63,7 +63,7 @@ describe("TokenDocumentBuilder", () => {
         });
     });
 
-    it("clones the base document and replaces conflicting path segments", () => {
+    it("clones the base document and replaces conflicting path segments", async () => {
         const baseDocument = {
             existing: { keep: true },
             primitive: "replace-me",
@@ -80,7 +80,7 @@ describe("TokenDocumentBuilder", () => {
         expect(baseDocument).toEqual({ existing: { keep: true }, primitive: "replace-me" });
     });
 
-    it("overwrites an existing token and preserves an empty clone", () => {
+    it("overwrites an existing token and preserves an empty clone", async () => {
         const builder = new TokenDocumentBuilder();
         const baseDocument = { primitive: { color: { brand: { $value: "#000" } } } };
 
@@ -92,10 +92,10 @@ describe("TokenDocumentBuilder", () => {
 });
 
 describe("TokenConversionService", () => {
-    it("preserves DTCG files without converting them", () => {
+    it("preserves DTCG files without converting them", async () => {
         const file = exportedFile("tokens.json", '{"primitive":{}}', { primitive: {} }, true);
 
-        expect(new TokenConversionService().convert({ files: [file], format: "dtcg" })).toEqual([{
+        expect(await new TokenConversionService().convert({ files: [file], format: "dtcg" })).toEqual([{
             fileName: file.fileName,
             content: file.content,
             tokens: file.tokens,
@@ -103,21 +103,21 @@ describe("TokenConversionService", () => {
         }]);
     });
 
-    it("returns no platform files when no downloadable source exists", () => {
+    it("returns no platform files when no downloadable source exists", async () => {
         const file = exportedFile("tokens.json", "{}", {}, false);
 
-        expect(new TokenConversionService().convert({ files: [file], format: "css" })).toEqual([]);
+        expect(await new TokenConversionService().convert({ files: [file], format: "css" })).toEqual([]);
     });
 
-    it("converts a base file and a theme to CSS and SCSS outputs", () => {
+    it("converts a base file and a theme to CSS and SCSS outputs", async () => {
         const files = [
             exportedFile("tokens.dark.json", tokenDocument("#111111"), {}, true),
             exportedFile("tokens.json", tokenDocument("#ffffff"), {}, true),
         ];
         const service = new TokenConversionService();
 
-        const css = service.convert({ files, format: "css" });
-        const scss = service.convert({ files, format: "scss" });
+        const css = await service.convert({ files, format: "css" });
+        const scss = await service.convert({ files, format: "scss" });
 
         expect(css).toHaveLength(1);
         expect(css[0]?.fileName).toBe("tokens.css");
@@ -125,13 +125,13 @@ describe("TokenConversionService", () => {
         expect(scss.map((file) => file.fileName)).toEqual(["tokens.scss", "tokens.dark.scss"]);
     });
 
-    it("converts platform formats from the first downloadable file when base is absent", () => {
+    it("converts platform formats from the first downloadable file when base is absent", async () => {
         const file = exportedFile("brand.json", tokenDocument("#ffffff"), {}, true);
         const service = new TokenConversionService();
 
-        expect(service.convert({ files: [file], format: "tailwind-v4" })[0]?.fileName).toBe("tokens.tailwind.css");
-        expect(service.convert({ files: [file], format: "android" }).length).toBeGreaterThan(0);
-        expect(service.convert({ files: [file], format: "swiftui" })[0]?.fileName).toBe("DesignTokens.swift");
+        expect((await service.convert({ files: [file], format: "tailwind-v4" }))[0]?.fileName).toBe("tokens.tailwind.css");
+        expect((await service.convert({ files: [file], format: "android" })).length).toBeGreaterThan(0);
+        expect((await service.convert({ files: [file], format: "swiftui" }))[0]?.fileName).toBe("DesignTokens.swift");
     });
 });
 

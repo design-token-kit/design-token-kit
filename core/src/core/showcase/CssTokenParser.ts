@@ -27,6 +27,20 @@ export type ThemeBucket = {
  * - a list of tokens grouped by themes.
  */
 export class CssTokenParser {
+    /**
+     * Returns `true` when the content looks like CSS rather than a token
+     * document.
+     *
+     * Looks for CSS custom properties (`--name:`), the `:root` selector, or an
+     * `@layer` at-rule. CSS carries no tokens and has no reader, so the
+     * showcase renders it as it stands instead of parsing it as a format.
+     */
+    static isCss(content: string): boolean {
+        return /(^|\s)--[a-zA-Z0-9_-]+\s*:/.test(content)
+            || /(^|\s):root\b/.test(content)
+            || /(^|\s)@layer\b/.test(content);
+    }
+
     parse(cssString: string): ParsedTokenCss {
         const entries: ScopedTokenEntry[] = [];
         const themeMap = new Map<string, ScopedTokenEntry[]>();

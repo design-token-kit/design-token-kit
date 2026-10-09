@@ -1,5 +1,4 @@
 export type { IssueSeverity, CheckIssue } from "#/core/check/CheckIssue";
-export type { TokenValidator } from "#/core/validation/TokenValidator";
 export type { CssColorValueConverterOptions } from "#/core/platforms/css/CssColorValueConverter";
 /**
  * @deprecated Use {@link CssColorValueConverterOptions}.
@@ -74,10 +73,8 @@ export { TokenHtmlShowcaseBuilder } from "#/core/showcase/TokenHtmlShowcaseBuild
 export { TokenStatsBuilder } from "#/core/stats/TokenStatsBuilder";
 export { TokenStatsCalculator } from "#/core/stats/TokenStatsCalculator";
 export { TokenStatsHtmlRenderer } from "#/core/stats/TokenStatsHtmlRenderer";
-export { DtcgSchemaValidator } from "#/core/validation/dtcg/DtcgSchemaValidator";
-export { HrdtTokenValidator } from "#/core/validation/hrdt/HrdtTokenValidator";
-export { DtcgChecker } from "#/core/validation/DtcgChecker";
-export type { CheckerOptions, CheckSelectionWarning, CheckSelectionProblem } from "#/core/validation/DtcgChecker";
+export { TokenChecker } from "#/core/check/TokenChecker";
+export type { CheckerOptions, CheckSelectionWarning, CheckSelectionProblem } from "#/core/check/TokenChecker";
 export { CheckScope } from "#/core/check/CheckScope";
 
 export { CheckRunner } from "#/core/check/CheckRunner";
@@ -103,7 +100,7 @@ import { ScssTokenConverter } from "#/core/platforms/scss/ScssTokenConverter";
 import { TailwindTokenConverter } from "#/core/platforms/tailwind/TailwindTokenConverter";
 import type { ScssTokenConverterOptions } from "#/core/platforms/scss/ScssTokenConverter";
 import type { TailwindTokenConverterOptions } from "#/core/platforms/tailwind/TailwindTokenConverter";
-import { DtcgChecker } from "#/core/validation/DtcgChecker";
+import { TokenChecker } from "#/core/check/TokenChecker";
 import { TokenStatsBuilder } from "#/core/stats/TokenStatsBuilder";
 import type { TokenStats } from "#/core/stats/TokenStats";
 import { TokenHtmlShowcaseBuilder } from "#/core/showcase/TokenHtmlShowcaseBuilder";
@@ -144,11 +141,10 @@ export function createTailwindCssConverter(options?: TailwindTokenConverterOptio
 
 export function createTokenHtmlShowcase(): TokenHtmlShowcase {
     return new TokenHtmlShowcaseBuilder(
-        new DtcgChecker(),
+        new TokenChecker(),
         new CssTokenConverter(),
     );
 }
-export { TokenFile, TokenFiles } from "#/core/io/TokenFile";
 
 export function createTokenStats(): TokenStats {
     return new TokenStatsBuilder();
@@ -166,12 +162,23 @@ export type { ValueLeaf, LeafVisitor } from "#/core/model/TokenValueWalker";
 export { Dtcg } from "#/core/model/Dtcg";
 export { DtcgList } from "#/core/model/DtcgList";
 export { DtcgListLoader, TokenSyntaxError } from "#/core/io/DtcgListLoader";
-export { DtcgJsonReader, DtcgJsonReaderError } from "#/core/io/DtcgJsonReader";
-export { DtcgJsonWriter } from "#/core/io/DtcgJsonWriter";
-export { HrdtTokenReader, HrdtTokenReaderError } from "#/core/io/HrdtTokenReader";
-export { HrdtTokenWriter } from "#/core/io/HrdtTokenWriter";
-export { DesignMdReader, DesignMdReaderError } from "#/core/io/DesignMdReader";
-export { DesignMdWriter } from "#/core/io/DesignMdWriter";
-export { DtcgToDesignMdMapper } from "#/core/io/DtcgToDesignMdMapper";
-export { FormatDetector } from "#/core/io/FormatDetector";
-export { Format } from "#/core/io/Format";
+export type { LoadResult, LoadSuccess, LoadFailure } from "#/core/io/DtcgListLoader";
+
+export { tokenFormats } from "#/core/formats/tokenFormats";
+export { FormatRegistry } from "#/core/formats/FormatRegistry";
+export { TokenFileName } from "#/core/formats/TokenFileName";
+export type { FormatDescriptor, FormatOptions } from "#/core/formats/FormatDescriptor";
+export type { ReadResult, ReadSuccess, ReadFailure, TokenReader } from "#/core/formats/TokenReader";
+export type { TokenWriter } from "#/core/formats/TokenWriter";
+export { noSchemaValidator, type JsonSchema, type SchemaValidator } from "#/core/formats/support/SchemaValidator";
+export { AjvSchemaValidator } from "#/core/formats/support/AjvSchemaValidator";
+export { TokenReadError } from "#/core/formats/support/TokenReadError";
+export { DtcgReader, DtcgReaderError } from "#/core/formats/dtcg/DtcgReader";
+export { DtcgWriter } from "#/core/formats/dtcg/DtcgWriter";
+export { HrdtReader, HrdtReaderError } from "#/core/formats/hrdt/HrdtReader";
+export { HrdtWriter } from "#/core/formats/hrdt/HrdtWriter";
+export { DesignMdReader, DesignMdReaderError } from "#/core/formats/design-md/DesignMdReader";
+export { DesignMdWriter } from "#/core/formats/design-md/DesignMdWriter";
+export { DtcgToDesignMdMapper } from "#/core/formats/design-md/DtcgToDesignMdMapper";
+export { TokenFormat } from "#/core/formats/TokenFormat";
+export { PlatformFormat } from "#/core/platforms/PlatformFormat";

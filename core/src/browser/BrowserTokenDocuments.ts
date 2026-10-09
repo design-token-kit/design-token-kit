@@ -1,8 +1,8 @@
 import type { CheckIssue } from "#/core/check/CheckIssue";
-import { DesignMdReader } from "#/core/io/DesignMdReader";
-import { DtcgJsonReader } from "#/core/io/DtcgJsonReader";
-import { Format } from "#/core/io/Format";
-import { HrdtTokenParser } from "#/core/io/HrdtTokenParser";
+import { DesignMdReader } from "#/core/formats/design-md/DesignMdReader";
+import { DtcgReader } from "#/core/formats/dtcg/DtcgReader";
+import { TokenFormat } from "#/core/formats/TokenFormat";
+import { HrdtReader } from "#/core/formats/hrdt/HrdtReader";
 import type { Dtcg } from "#/core/model/Dtcg";
 import { DtcgList } from "#/core/model/DtcgList";
 import { BrowserTokenSchemaValidator, detectBrowserInputFormat } from "#/browser/BrowserTokenSchemaValidator";
@@ -83,15 +83,24 @@ function withSource(document: BrowserTokenDocument, fallback: string): SourcedTo
 }
 
 function parseDocuments(document: SourcedTokenDocument): Dtcg[] {
-    try {
-        const format: BrowserInputFormat = detectBrowserInputFormat(document);
-        if (format === Format.DTCG) return [new DtcgJsonReader().parse(document.content, document.source)];
-        if (format === Format.HRDT) return new HrdtTokenParser().parseAll(document.content, document.source);
-        return [new DesignMdReader().parse(document.content, document.source)];
-    } catch (error) {
-        const message: string = error instanceof Error ? error.message : "Unable to parse token content.";
-        throw new BrowserDocumentError(document.source, message, "schema", { cause: error });
+    const format: BrowserInputFormat = detectBrowserInputFormat(document);
+    const reader = format === TokenFormat.DTCG
+        ? DtcgReader.noSchema()
+        : format === TokenFormat.HRDT
+            ? HrdtReader.noSchema()
+            : DesignMdReader.noSchema();
+
+    // The schema stage already ran in `validate`, so the reader only has to
+    // build the model here; its diagnostics become the document error.
+    const result = reader.read(document.content, document.source);
+    if (!result.ok) {
+        throw new BrowserDocumentError(
+            document.source,
+            result.issues.map((issue) => issue.message).join("\n"),
+            "schema",
+        );
     }
+    return result.documents;
 }
 
 function addTheme(themes: Map<string, Dtcg>, name: string, document: Dtcg): void {

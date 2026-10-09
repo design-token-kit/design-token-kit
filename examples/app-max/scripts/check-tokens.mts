@@ -2,9 +2,9 @@
  * Validates the example DTCG token files and prints every reported issue.
  * Exits with code 2 when at least one validation error is found.
  */
-import { DtcgChecker, type CheckIssue } from "@design-token-kit/core";
+import { TokenChecker, type CheckIssue } from "@design-token-kit/core";
 
-const issues = await new DtcgChecker().validate([
+const issues = await new TokenChecker().check([
     "./src/styles/tokens/tokens.json",
     "./src/styles/tokens/tokens.dark.json",
 ]);

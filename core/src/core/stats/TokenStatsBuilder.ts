@@ -1,9 +1,8 @@
-import { DtcgListLoader, TokenSyntaxError } from "#/core/io/DtcgListLoader";
+import { DtcgListLoader } from "#/core/io/DtcgListLoader";
 import type { TokenStats } from "#/core/stats/TokenStats";
 import { TokenStatsCalculator, type TokenStat } from "#/core/stats/TokenStatsCalculator";
 import type { CheckIssue } from "#/core/check/CheckIssue";
-import { DtcgChecker } from "#/core/validation/DtcgChecker";
-import type { TokenValidator } from "#/core/validation/TokenValidator";
+import { TokenChecker } from "#/core/check/TokenChecker";
 
 /**
  * Builds a text stats report from token sources.
@@ -13,16 +12,16 @@ import type { TokenValidator } from "#/core/validation/TokenValidator";
  */
 export class TokenStatsBuilder implements TokenStats {
     readonly #loader: DtcgListLoader;
-    readonly #validator: TokenValidator;
+    readonly #checker: TokenChecker;
     readonly #calculator: TokenStatsCalculator;
 
     constructor(
         loader = new DtcgListLoader(),
-        validator = new DtcgChecker(),
+        checker = new TokenChecker(),
         calculator = new TokenStatsCalculator(),
     ) {
         this.#loader = loader;
-        this.#validator = validator;
+        this.#checker = checker;
         this.#calculator = calculator;
     }
 
@@ -35,19 +34,15 @@ export class TokenStatsBuilder implements TokenStats {
             throw new Error("No token sources provided");
         }
 
-        try {
-            const issues = await this.#validator.validate(sources);
-            if (this.#hasValidationErrors(issues)) {
-                throw new Error(this.#formatValidationIssues(issues));
-            }
-            const list = await this.#loader.load(sources);
-            return this.#calculator.calculate(list);
-        } catch (error) {
-            if (error instanceof TokenSyntaxError) {
-                throw new Error(error.formatIssues());
-            }
-            throw error;
+        const issues = await this.#checker.check(sources);
+        if (this.#hasErrors(issues)) {
+            throw new Error(this.#formatIssues(issues));
         }
+
+        // The product here is the model, so a source that cannot be read is an
+        // exception rather than a value: `load` raises one that already names
+        // every diagnostic it collected.
+        return this.#calculator.calculate(await this.#loader.load(sources));
     }
 
     #buildReport(stats: readonly TokenStat[]): string {
@@ -91,11 +86,11 @@ export class TokenStatsBuilder implements TokenStats {
         return `${lines.join("\n")}\n`;
     }
 
-    #hasValidationErrors(issues: CheckIssue[]): boolean {
+    #hasErrors(issues: CheckIssue[]): boolean {
         return issues.some((issue) => issue.severity === "error");
     }
 
-    #formatValidationIssues(issues: CheckIssue[]): string {
+    #formatIssues(issues: CheckIssue[]): string {
         return issues
             .filter((issue) => issue.severity === "error")
             .map((issue) => `[${issue.id}] ${issue.sourcePath} - ${issue.message}`)

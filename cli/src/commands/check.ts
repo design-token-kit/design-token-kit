@@ -1,6 +1,6 @@
 import { Command, Option } from "commander";
 import {
-    DtcgChecker,
+    TokenChecker,
     listChecks,
     CheckScope,
     type CheckInfo,
@@ -55,7 +55,7 @@ export const checkCommand = new Command("check")
     .action(async (files: string[], options: CheckOptions) => {
         try {
             const sources = files.length > 0 ? files : ["-"];
-            const checker = new DtcgChecker({
+            const checker = new TokenChecker({
                 scope: CheckScope.fromName(options.scope ?? CheckScope.VALIDATE.name),
                 layers: splitList(options.layers),
                 checks: splitList(options.checks),
@@ -63,7 +63,7 @@ export const checkCommand = new Command("check")
                 inform: options.inform !== undefined ? toDocumentFormat(options.inform) : undefined,
             });
             printSelectionWarnings(checker.checkSelectionWarnings());
-            const issues = await checker.validate(sources);
+            const issues = await checker.check(sources);
             printIssues(issues);
             if (hasErrors(issues)) {
                 process.exit(EXIT_ISSUES);

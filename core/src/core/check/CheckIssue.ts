@@ -49,3 +49,21 @@ export interface CheckIssue {
      */
     readonly raw?: unknown;
 }
+
+/**
+ * Reports content that could not be parsed at all.
+ *
+ * The thrown value is whatever the parser raised, so it is narrowed here rather
+ * than at each call site.
+ *
+ * @param id - Identifier of the stage that failed, when it is not the schema.
+ */
+export function syntaxIssue(sourcePath: string, error: unknown, id = "schema"): CheckIssue {
+    return {
+        id,
+        sourcePath,
+        severity: "error",
+        message: error instanceof Error ? error.message : "Unable to parse token content.",
+        raw: error,
+    };
+}

@@ -3,7 +3,7 @@ import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import os from "node:os";
 import { DtcgListLoader, TokenSyntaxError } from "#/core/io/DtcgListLoader";
-import { Format } from "#/core/io/Format";
+import { TokenFormat } from "#/core/formats/TokenFormat";
 import { Dtcg } from "#/core/model/Dtcg";
 import { DtcgList } from "#/core/model/DtcgList";
 import { TokenGroup } from "#/core/model/TokenGroup";
@@ -78,28 +78,31 @@ describe("DtcgListLoader", () => {
         const base = tempFile("base.yaml", HRDT_THEME);
         const dark = tempFile("dark.yaml", HRDT_THEME);
 
-        const list = await new DtcgListLoader().load([base, dark], Format.HRDT);
+        const list = await new DtcgListLoader().load([base, dark], TokenFormat.HRDT);
 
         expect(list.base).toBeInstanceOf(Dtcg);
         expect([...list.themes.keys()]).toEqual(["dark"]);
         expect(list.base.get("primitive")).toBeInstanceOf(TokenGroup);
     });
 
-    it("ignores non-theme filename suffixes when extracting theme names", async () => {
-        const base = tempFile("showcase.valid.dtcg.json", DTCG_BASE);
-        const dark = tempFile("showcase.dark.valid.dtcg.json", DTCG_BASE);
+    it("reads the theme past a format segment in the file name", async () => {
+        const base = tempFile("showcase.dtcg.json", DTCG_BASE);
+        const dark = tempFile("showcase.dark.dtcg.json", DTCG_BASE);
 
         const list = await new DtcgListLoader().load([base, dark]);
 
         expect([...list.themes.keys()]).toEqual(["dark"]);
     });
 
-    it("keeps every theme of a multi-document HRDT source", async () => {
-        const tokens = tempFile("tokens.yaml", [HRDT_THEME, HRDT_THEME, HRDT_THEME].join("---\n"));
+    // A base document listed after the first carries no theme, so it is named
+    // by its role and several of them stay apart.
+    it("names a themeless source by its role", async () => {
+        const base = tempFile("tokens.json", DTCG_BASE);
+        const other = tempFile("overrides.json", DTCG_BASE);
 
-        const list = await new DtcgListLoader().load([tokens]);
+        const list = await new DtcgListLoader().load([base, other]);
 
-        expect([...list.themes.keys()]).toEqual(["tokens", "tokens-2"]);
+        expect([...list.themes.keys()]).toEqual(["overrides"]);
     });
 
     it("throws TokenSyntaxError for invalid sources", async () => {
@@ -115,7 +118,7 @@ describe("DtcgListLoader", () => {
             if (error instanceof TokenSyntaxError) {
                 expect(error.issues.length).toBeGreaterThan(0);
                 expect(error.issues[0].sourcePath).toBe(bad);
-                expect(error.formatIssues()).toContain("schema");
+                expect(error.formatIssues()).toContain("Expected hex color");
                 expect(error.formatIssues()).toContain("bad.yaml");
             }
         }

@@ -1,0 +1,274 @@
+import { describe, it, expect } from "vitest";
+import { TokenChecker } from "#/core/check/TokenChecker";
+import { CheckScope } from "#/core/check/CheckScope";
+
+// Wraps a document as a `content:` source, so the checker runs straight from a
+// string with no file on disk.
+function source(doc: object): string {
+    return "content:" + JSON.stringify({ "$schema": "", ...doc });
+}
+
+function ids(issues: { id: string }[]): string[] {
+    return [...new Set(issues.map((i) => i.id))];
+}
+
+// Each document below carries exactly ONE defect, named and commented, so a
+// failing check points to an obvious cause.
+
+// Model defect: passes schema, fails model checks.
+const ALIAS_TO_MISSING_TOKEN: string = source({
+    primitive: { red: { "$type": "color", "$value": { colorSpace: "srgb", components: [1, 0, 0] } } },
+    // bad-reference: alias target {primitive.missing} does not exist.
+    broken: { "$type": "color", "$value": "{primitive.missing}" },
+});
+
+// Lint defect: passes schema and model, fails lint checks.
+const LINT_VIOLATIONS: string = source({
+    primitive: { color: { "$type": "color", brand: { "$value": { colorSpace: "srgb", components: [0, 0, 1] } } } },
+    // raw-value-usage: only primitive may hold a raw value; semantic must alias.
+    semantic: { color: { raw: { "$type": "color", "$value": { colorSpace: "srgb", components: [0, 0, 0] } } } },
+    // layer-reference: component must go through semantic, not straight to primitive.
+    component: { btn: { "$value": "{primitive.color.brand}" } },
+});
+
+// Lint warning: passes schema and model, reports an empty named group.
+const EMPTY_GROUP: string = source({
+    // empty-group: the group has no tokens or child groups.
+    semantic: {},
+});
+
+// Lint warning: passes schema and model, reports a token missing $description.
+const MISSING_DESCRIPTION: string = source({
+    primitive: {
+        // missing-description: the token has no $description.
+        red: { "$type": "color", "$value": { colorSpace: "srgb", components: [1, 0, 0] } },
+    },
+});
+
+// Schema defect: fails at the schema stage, before model checks run.
+const SCHEMA_INVALID_COLOR: string = source({
+    // schema: a color $value must be an object, not a number.
+    primitive: { bad: { "$type": "color", "$value": 42 } },
+});
+
+const INHERITED_SCALAR_TYPES: string = source({
+    primitive: {
+        fontWeight: { "$type": "fontWeight", regular: { "$value": "regular" } },
+        number: { "$type": "number", opacity: { "$value": 0.5 } },
+        duration: { "$type": "duration", fast: { "$value": { value: 100, unit: "ms" } } },
+        fontFamily: { "$type": "fontFamily", body: { "$value": ["Inter", "sans-serif"] } },
+        nested: {
+            "$type": "number",
+            "$root": { "$value": 1 },
+            child: { value: { "$value": 2 } },
+        },
+        overridden: {
+            "$type": "number",
+            fontWeight: { "$type": "fontWeight", regular: { "$value": "regular" } },
+        },
+    },
+});
+
+// No defect: passes schema, model and lint.
+const VALID: string = source({
+    primitive: { color: { "$type": "color", brand: { "$description": "Brand color.", "$value": { colorSpace: "srgb", components: [0, 0, 1] } } } },
+    semantic: { color: { action: { "$description": "Action color.", "$type": "color", "$value": "{primitive.color.brand}" } } },
+});
+
+const INVALID_TAILWIND_NAMESPACE: string = source({
+    layout: {
+        desktop: {
+            "$type": "dimension",
+            "$value": { "value": 1920, "unit": "px" },
+            "$extensions": {
+                "design-token-kit": {
+                    "tailwindNamespace": "spacing",
+                },
+            },
+        },
+    },
+});
+
+describe("TokenChecker", () => {
+    describe("scope gating", () => {
+        it("schema scope skips model checks", async () => {
+            const issues = await new TokenChecker({ scope: CheckScope.SCHEMA }).check([ALIAS_TO_MISSING_TOKEN]);
+            expect(issues).toEqual([]);
+        });
+
+        it("accepts scalar tokens that inherit their type from a group", async () => {
+            const issues = await new TokenChecker({ scope: CheckScope.SCHEMA }).check([INHERITED_SCALAR_TYPES]);
+            expect(issues).toEqual([]);
+        });
+
+        it("validate scope runs model checks", async () => {
+            const issues = await new TokenChecker({ scope: CheckScope.VALIDATE }).check([ALIAS_TO_MISSING_TOKEN]);
+            expect(ids(issues)).toContain("bad-reference");
+        });
+
+        it("validate scope reports unsupported tailwind namespace markers as warnings", async () => {
+            const issues = await new TokenChecker({ scope: CheckScope.VALIDATE }).check([INVALID_TAILWIND_NAMESPACE]);
+            expect(ids(issues)).toContain("bad-tailwind-namespace");
+            expect(issues.find((issue) => issue.id === "bad-tailwind-namespace")?.severity).toBe("warning");
+        });
+
+        it("validate scope skips lint checks", async () => {
+            const issues = await new TokenChecker({ scope: CheckScope.VALIDATE }).check([LINT_VIOLATIONS]);
+            expect(ids(issues)).not.toContain("layer-reference");
+            expect(ids(issues)).not.toContain("raw-value-usage");
+        });
+
+        it("defaults to the validate scope", async () => {
+            const issues = await new TokenChecker().check([LINT_VIOLATIONS]);
+            expect(ids(issues)).not.toContain("layer-reference");
+        });
+
+        it("lint scope runs lint checks", async () => {
+            const issues = await new TokenChecker({ scope: CheckScope.LINT }).check([LINT_VIOLATIONS]);
+            expect(ids(issues)).toContain("layer-reference");
+            expect(ids(issues)).toContain("raw-value-usage");
+        });
+
+        it("lint scope reports empty groups as warnings", async () => {
+            const issues = await new TokenChecker({ scope: CheckScope.LINT }).check([EMPTY_GROUP]);
+            expect(ids(issues)).toContain("empty-group");
+            expect(issues.find((issue) => issue.id === "empty-group")?.severity).toBe("warning");
+        });
+
+        it("lint scope skips missing token descriptions by default", async () => {
+            const issues = await new TokenChecker({ scope: CheckScope.LINT }).check([MISSING_DESCRIPTION]);
+            expect(ids(issues)).not.toContain("missing-description");
+        });
+
+        it("lint scope runs missing descriptions when explicitly selected", async () => {
+            const issues = await new TokenChecker({
+                scope: CheckScope.LINT,
+                checks: ["missing-description"],
+            }).check([MISSING_DESCRIPTION]);
+            expect(ids(issues)).toContain("missing-description");
+            expect(issues.find((issue) => issue.id === "missing-description")?.severity).toBe("warning");
+        });
+
+        it("runs all checks when the allow-list is empty", async () => {
+            const issues = await new TokenChecker({
+                scope: CheckScope.LINT,
+                checks: [],
+            }).check([MISSING_DESCRIPTION]);
+            expect(ids(issues)).toContain("missing-description");
+        });
+
+        it("returns no issues for a valid document at lint scope", async () => {
+            const issues = await new TokenChecker({ scope: CheckScope.LINT }).check([VALID]);
+            expect(issues).toEqual([]);
+        });
+    });
+
+    describe("fail-fast", () => {
+        // Reading now covers syntax, model and schema, and a source that fails
+        // it yields no document - so the model checks never run. The model
+        // stage reports first, naming the token rather than the schema branch
+        // that did not match.
+        it("stops at the reading stage and skips model checks", async () => {
+            const issues = await new TokenChecker({ scope: CheckScope.LINT }).check([SCHEMA_INVALID_COLOR]);
+            expect(issues.length).toBeGreaterThan(0);
+            expect(ids(issues)).toContain("invalid-color");
+            expect(ids(issues)).not.toContain("bad-reference");
+        });
+
+        it("stops at the model stage and skips lint checks", async () => {
+            const issues = await new TokenChecker({ scope: CheckScope.LINT }).check([ALIAS_TO_MISSING_TOKEN]);
+            expect(ids(issues)).toContain("bad-reference");
+            expect(ids(issues)).not.toContain("layer-reference");
+            expect(ids(issues)).not.toContain("raw-value-usage");
+        });
+    });
+
+    describe("checks allow-list", () => {
+        it("runs only the listed checks", async () => {
+            const issues = await new TokenChecker({ scope: CheckScope.LINT, checks: ["layer-reference"] }).check([LINT_VIOLATIONS]);
+            expect(ids(issues)).toEqual(["layer-reference"]);
+        });
+    });
+
+    describe("checkSelectionWarnings", () => {
+        it("returns no warnings without an allow-list", () => {
+            expect(new TokenChecker({ scope: CheckScope.VALIDATE }).checkSelectionWarnings()).toEqual([]);
+        });
+
+        it("returns no warnings for an empty allow-list", () => {
+            expect(new TokenChecker({ scope: CheckScope.VALIDATE, checks: [] }).checkSelectionWarnings()).toEqual([]);
+        });
+
+        it("warns that a lint check is inactive at the validate scope", () => {
+            const warnings = new TokenChecker({ scope: CheckScope.VALIDATE, checks: ["layer-reference"] }).checkSelectionWarnings();
+            expect(warnings).toEqual([{ id: "layer-reference", problem: "inactive", requiredScope: CheckScope.LINT }]);
+        });
+
+        it("warns about an unknown check id", () => {
+            const warnings = new TokenChecker({ scope: CheckScope.LINT, checks: ["nope"] }).checkSelectionWarnings();
+            expect(warnings).toEqual([{ id: "nope", problem: "unknown" }]);
+        });
+
+        it("does not warn about an active check", () => {
+            const warnings = new TokenChecker({ scope: CheckScope.LINT, checks: ["layer-reference"] }).checkSelectionWarnings();
+            expect(warnings).toEqual([]);
+        });
+
+        it("treats every check as inactive at the schema scope", () => {
+            const warnings = new TokenChecker({ scope: CheckScope.SCHEMA, checks: ["bad-reference"] }).checkSelectionWarnings();
+            expect(warnings).toEqual([{ id: "bad-reference", problem: "inactive", requiredScope: CheckScope.VALIDATE }]);
+        });
+
+        it("reports inactive and unknown ids together, in order", () => {
+            const warnings = new TokenChecker({ scope: CheckScope.VALIDATE, checks: ["layer-reference", "foo"] }).checkSelectionWarnings();
+            expect(warnings).toEqual([
+                { id: "layer-reference", problem: "inactive", requiredScope: CheckScope.LINT },
+                { id: "foo", problem: "unknown" },
+            ]);
+        });
+    });
+
+    // One end-to-end pass: a valid document goes through the full pipeline
+    // (load -> schema -> model -> lint) and comes out clean.
+    describe("integration", () => {
+        it("a valid document passes the whole pipeline", async () => {
+            const issues = await new TokenChecker({ scope: CheckScope.LINT }).check([VALID]);
+            expect(issues).toEqual([]);
+        });
+    });
+
+    describe("syntax errors", () => {
+        // A JSON file that does not parse is a syntax error, not a schema
+        // violation: the schema never gets a document to check.
+        it("reports malformed DTCG JSON as a syntax issue", async () => {
+            const issues = await new TokenChecker().check(['content:{"primitive": ']);
+            expect(issues).toEqual([
+                expect.objectContaining({ id: "json-syntax", severity: "error" }),
+            ]);
+        });
+    });
+
+    describe("schema warnings", () => {
+        it("reports DESIGN.md ignored values and still runs model checks", async () => {
+            // borderColor is ignored with a warning; the missing reference is a model error.
+            const designMd = `content:---
+name: Test
+colors:
+  primary: "#1A1C1E"
+components:
+  button:
+    backgroundColor: "{colors.missing}"
+    borderColor: "#ff0000"
+---
+
+## Overview
+`;
+            const issues = await new TokenChecker().check([designMd]);
+            expect(issues).toContainEqual(expect.objectContaining({
+                id: "design-md-ignored-value",
+                severity: "warning",
+            }));
+            expect(issues.some((issue) => issue.severity === "error" && issue.id !== "schema")).toBe(true);
+        });
+    });
+});

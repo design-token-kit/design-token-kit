@@ -1,32 +1,26 @@
 import { describe, it, expect } from "vitest";
-import { DtcgJsonReader } from "#/core/io/DtcgJsonReader";
-import { DtcgList } from "#/core/model/DtcgList";
+import { readDtcg, readDtcgList } from "../../support/readDtcg";
 import {
     SwiftUiTokenConverter,
     type SwiftUiTokenConverterOptions,
 } from "#/core/platforms/swiftui/SwiftUiTokenConverter";
 
-function convert(json: object): string {
-    const doc = new DtcgJsonReader().parse(JSON.stringify(json));
+async function convert(json: object): Promise<string> {
+    const doc = await readDtcg(json);
     return new SwiftUiTokenConverter().convertDocument(doc);
 }
 
-function convertList(
+async function convertList(
     base: object,
     themes: Record<string, object> = {},
     options?: SwiftUiTokenConverterOptions,
-): string {
-    const reader = new DtcgJsonReader();
-    const baseDoc = reader.parse(JSON.stringify(base));
-    const themeMap = new Map(
-        Object.entries(themes).map(([name, doc]) => [name, reader.parse(JSON.stringify(doc))]),
-    );
-    return new SwiftUiTokenConverter(options).convertList(new DtcgList(baseDoc, themeMap));
+): Promise<string> {
+    return new SwiftUiTokenConverter(options).convertList(await readDtcgList(base, themes));
 }
 
 describe("SwiftUiTokenConverter scalars", () => {
-    it("wraps output in a DesignTokens enum with SwiftUI import", () => {
-        const out = convert({
+    it("wraps output in a DesignTokens enum with SwiftUI import", async () => {
+        const out = await convert({
             color: {
                 base: {
                     red: {
@@ -40,16 +34,16 @@ describe("SwiftUiTokenConverter scalars", () => {
         expect(out).toContain("enum DesignTokens {");
     });
 
-    it("emits nested enums for groups and static let for tokens", () => {
-        const out = convert({
+    it("emits nested enums for groups and static let for tokens", async () => {
+        const out = await convert({
             spacing: { md: { $type: "dimension", $value: { value: 16, unit: "px" } } },
         });
         expect(out).toContain("enum Spacing {");
         expect(out).toContain("static let md: CGFloat = 16");
     });
 
-    it("preserves references as Swift constant paths", () => {
-        const out = convert({
+    it("preserves references as Swift constant paths", async () => {
+        const out = await convert({
             color: {
                 base: {
                     red: {
@@ -63,8 +57,8 @@ describe("SwiftUiTokenConverter scalars", () => {
         expect(out).toContain("static let primary = DesignTokens.Color.Base.red");
     });
 
-    it("escapes Swift reserved words in identifiers", () => {
-        const out = convert({
+    it("escapes Swift reserved words in identifiers", async () => {
+        const out = await convert({
             color: {
                 default: {
                     $type: "color",
@@ -75,8 +69,8 @@ describe("SwiftUiTokenConverter scalars", () => {
         expect(out).toContain("static let default_ =");
     });
 
-    it("uses a valid identifier for numeric palette steps and keeps a flat alias", () => {
-        const out = convert({
+    it("uses a valid identifier for numeric palette steps and keeps a flat alias", async () => {
+        const out = await convert({
             primitive: {
                 color: {
                     brand: {
@@ -104,8 +98,8 @@ describe("SwiftUiTokenConverter scalars", () => {
         expect(out).not.toContain("static let 500");
     });
 
-    it("uses valid identifiers in numeric token groups and references", () => {
-        const out = convert({
+    it("uses valid identifiers in numeric token groups and references", async () => {
+        const out = await convert({
             primitive: {
                 spacing: {
                     "4": {
@@ -132,8 +126,8 @@ describe("SwiftUiTokenConverter scalars", () => {
         expect(out).not.toContain("enum 4 {");
     });
 
-    it("does not generate a palette alias that conflicts with an existing token", () => {
-        const out = convert({
+    it("does not generate a palette alias that conflicts with an existing token", async () => {
+        const out = await convert({
             primitive: {
                 color: {
                     brand: {
@@ -154,8 +148,8 @@ describe("SwiftUiTokenConverter scalars", () => {
         expect(out).not.toContain("static let brand500 = Brand._500");
     });
 
-    it("limits flat compatibility aliases to color palette steps", () => {
-        const out = convert({
+    it("limits flat compatibility aliases to color palette steps", async () => {
+        const out = await convert({
             primitive: {
                 spacing: {
                     scale: {
@@ -172,8 +166,8 @@ describe("SwiftUiTokenConverter scalars", () => {
         expect(out).not.toContain("static let scale500");
     });
 
-    it("emits /// doc comment from a token $description", () => {
-        const out = convert({
+    it("emits /// doc comment from a token $description", async () => {
+        const out = await convert({
             color: {
                 $description: "Full color palette.",
                 white: {
@@ -187,8 +181,8 @@ describe("SwiftUiTokenConverter scalars", () => {
         expect(out).toContain("/// Pure white for backgrounds.");
     });
 
-    it("emits /// doc comment from a group $description", () => {
-        const out = convert({
+    it("emits /// doc comment from a group $description", async () => {
+        const out = await convert({
             primitive: {
                 $description: "Raw design values.",
                 color: {
@@ -200,8 +194,8 @@ describe("SwiftUiTokenConverter scalars", () => {
         expect(out).toContain("/// Raw design values.");
     });
 
-    it("handles multi-line descriptions", () => {
-        const out = convert({
+    it("handles multi-line descriptions", async () => {
+        const out = await convert({
             color: {
                 $description: "Full color palette.\nIncludes brand, status, and neutral colors.",
                 white: {
@@ -213,8 +207,8 @@ describe("SwiftUiTokenConverter scalars", () => {
         expect(out).toContain("/// Full color palette.\n    /// Includes brand, status, and neutral colors.");
     });
 
-    it("does not emit /// when description is absent", () => {
-        const out = convert({
+    it("does not emit /// when description is absent", async () => {
+        const out = await convert({
             color: {
                 white: {
                     $type: "color",
@@ -225,13 +219,13 @@ describe("SwiftUiTokenConverter scalars", () => {
         expect(out).not.toContain("/// Pure white");
     });
 
-    it("emits auto-generated file header", () => {
-        const out = convert({});
+    it("emits auto-generated file header", async () => {
+        const out = await convert({});
         expect(out).toMatch(/^\/\/ Auto-generated by design-token-kit\. DO NOT EDIT\.\n/);
     });
 
-    it("returns an empty DesignTokens enum for empty input", () => {
-        const out = convert({});
+    it("returns an empty DesignTokens enum for empty input", async () => {
+        const out = await convert({});
         expect(out).toContain("enum DesignTokens {");
         const body = out.slice(out.indexOf("enum DesignTokens {"));
         expect(body).not.toContain("static let");
@@ -239,8 +233,8 @@ describe("SwiftUiTokenConverter scalars", () => {
 });
 
 describe("SwiftUiTokenConverter composites", () => {
-    it("emits a ShadowToken struct and value when a shadow token exists", () => {
-        const out = convert({
+    it("emits a ShadowToken struct and value when a shadow token exists", async () => {
+        const out = await convert({
             elevation: {
                 low: {
                     $type: "shadow",
@@ -258,8 +252,8 @@ describe("SwiftUiTokenConverter composites", () => {
         expect(out).toContain("static let low: [ShadowToken] = [ShadowToken(");
     });
 
-    it("renders a multi-layer shadow as an array of ShadowToken", () => {
-        const out = convert({
+    it("renders a multi-layer shadow as an array of ShadowToken", async () => {
+        const out = await convert({
             elevation: {
                 high: {
                     $type: "shadow",
@@ -274,8 +268,8 @@ describe("SwiftUiTokenConverter composites", () => {
         expect(out.match(/ShadowToken\(/g)?.length).toBe(2);
     });
 
-    it("preserves a strokeStyle object in the generated wrapper", () => {
-        const out = convert({
+    it("preserves a strokeStyle object in the generated wrapper", async () => {
+        const out = await convert({
             stroke: {
                 dashed: {
                     $type: "strokeStyle",
@@ -288,16 +282,16 @@ describe("SwiftUiTokenConverter composites", () => {
         expect(out).toContain("let lineCap: StrokeLineCap?");
     });
 
-    it("does not emit composite structs when no composite tokens exist", () => {
-        const out = convert({
+    it("does not emit composite structs when no composite tokens exist", async () => {
+        const out = await convert({
             spacing: { md: { $type: "dimension", $value: { value: 16, unit: "px" } } },
         });
         expect(out).not.toContain("struct ShadowToken");
         expect(out).not.toContain("struct TypographyToken");
     });
 
-    it("emits a TypographyToken struct and value", () => {
-        const out = convert({
+    it("emits a TypographyToken struct and value", async () => {
+        const out = await convert({
             text: {
                 body: {
                     $type: "typography",
@@ -320,8 +314,8 @@ describe("SwiftUiTokenConverter composites", () => {
         expect(out).toContain("lineHeight: 1.5");
     });
 
-    it("preserves transition delay and timing function", () => {
-        const out = convert({
+    it("preserves transition delay and timing function", async () => {
+        const out = await convert({
             motion: {
                 enter: {
                     $type: "transition",
@@ -340,8 +334,8 @@ describe("SwiftUiTokenConverter composites", () => {
         expect(out).toContain("TransitionToken(duration: 0.2, delay: 0.05, timingFunction: SwiftUI.UnitCurve.bezier");
     });
 
-    it("qualifies SwiftUI types so a group named 'color' does not shadow SwiftUI.Color", () => {
-        const out = convert({
+    it("qualifies SwiftUI types so a group named 'color' does not shadow SwiftUI.Color", async () => {
+        const out = await convert({
             color: {
                 brand: {
                     $type: "color",
@@ -354,20 +348,20 @@ describe("SwiftUiTokenConverter composites", () => {
         expect(out).not.toMatch(/= Color\(/);
     });
 
-    it("routes a strokeStyle keyword through StrokeStyleToken", () => {
-        const dashed = convert({
+    it("routes a strokeStyle keyword through StrokeStyleToken", async () => {
+        const dashed = await convert({
             stroke: { a: { $type: "strokeStyle", $value: "dashed" } },
         });
         expect(dashed).toContain("StrokeStyleToken(dashed: true, dashArray: [], lineCap: nil, keyword: \"dashed\")");
 
-        const solid = convert({
+        const solid = await convert({
             stroke: { b: { $type: "strokeStyle", $value: "solid" } },
         });
         expect(solid).toContain("StrokeStyleToken(dashed: false, dashArray: [], lineCap: nil, keyword: \"solid\")");
     });
 
-    it("preserves a strokeStyle reference instead of flattening it", () => {
-        const out = convert({
+    it("preserves a strokeStyle reference instead of flattening it", async () => {
+        const out = await convert({
             stroke: {
                 base: { $type: "strokeStyle", $value: "dashed" },
                 alias: { $type: "strokeStyle", $value: "{stroke.base}" },
@@ -377,8 +371,8 @@ describe("SwiftUiTokenConverter composites", () => {
         expect(out).not.toContain("static let alias = StrokeStyleToken(dashed");
     });
 
-    it("uses SwiftUI.Font.custom when typography has a concrete fontFamily", () => {
-        const out = convert({
+    it("uses SwiftUI.Font.custom when typography has a concrete fontFamily", async () => {
+        const out = await convert({
             text: {
                 heading: {
                     $type: "typography",
@@ -396,8 +390,8 @@ describe("SwiftUiTokenConverter composites", () => {
         expect(out).toContain(".weight(.bold)");
     });
 
-    it("preserves string font families and keyword font weights", () => {
-        const out = convert({
+    it("preserves string font families and keyword font weights", async () => {
+        const out = await convert({
             text: {
                 body: {
                     $type: "typography",
@@ -417,8 +411,8 @@ describe("SwiftUiTokenConverter composites", () => {
         expect(out).toContain("SwiftUI.Font.custom(\"Inter\", size: 16).weight(.semibold)");
     });
 
-    it("preserves references for transition fields", () => {
-        const out = convert({
+    it("preserves references for transition fields", async () => {
+        const out = await convert({
             duration: {
                 fast: { $type: "duration", $value: { value: 200, unit: "ms" } },
                 pause: { $type: "duration", $value: { value: 50, unit: "ms" } },
@@ -443,8 +437,8 @@ describe("SwiftUiTokenConverter composites", () => {
         );
     });
 
-    it("emits composite wrappers in the struct-based output", () => {
-        const out = convertList(
+    it("emits composite wrappers in the struct-based output", async () => {
+        const out = await convertList(
             {
                 motion: {
                     enter: {
@@ -466,8 +460,8 @@ describe("SwiftUiTokenConverter composites", () => {
         expect(out).toContain("static let base = Theme(");
     });
 
-    it("uses a system font when typography only references its font family", () => {
-        const out = convert({
+    it("uses a system font when typography only references its font family", async () => {
+        const out = await convert({
             text: {
                 body: {
                     $type: "typography",
@@ -485,8 +479,8 @@ describe("SwiftUiTokenConverter composites", () => {
         expect(out).toContain("SwiftUI.Font.system(size: 16, weight: .bold)");
     });
 
-    it("renders gradient stop references without flattening them", () => {
-        const out = convert({
+    it("renders gradient stop references without flattening them", async () => {
+        const out = await convert({
             color: { primary: { $type: "color", $value: { colorSpace: "srgb", components: [1, 0, 0] } } },
             gradient: { brand: { $type: "gradient", $value: ["{color.primary}"] } },
         });
@@ -494,8 +488,8 @@ describe("SwiftUiTokenConverter composites", () => {
         expect(out).toContain("SwiftUI.Gradient.Stop(color: DesignTokens.Color.primary, location: 0)");
     });
 
-    it("emits a standalone fontFamily list token as a [String] literal", () => {
-        const out = convert({
+    it("emits a standalone fontFamily list token as a [String] literal", async () => {
+        const out = await convert({
             font: {
                 family: {
                     body: { $type: "fontFamily", $value: ["Inter", "Arial", "sans-serif"] },
@@ -506,8 +500,8 @@ describe("SwiftUiTokenConverter composites", () => {
         expect(out).toMatch(/static let body/);
     });
 
-    it("preserves a reference to a fontFamily list token", () => {
-        const out = convert({
+    it("preserves a reference to a fontFamily list token", async () => {
+        const out = await convert({
             font: {
                 family: {
                     body: { $type: "fontFamily", $value: ["Inter", "Arial", "sans-serif"] },
@@ -544,40 +538,40 @@ const DARK_OVERRIDE = {
 };
 
 describe("SwiftUiTokenConverter enum themes", () => {
-    it("emits a base enum and a full per-theme enum", () => {
-        const out = convertList(THEMED_BASE, { dark: DARK_OVERRIDE });
+    it("emits a base enum and a full per-theme enum", async () => {
+        const out = await convertList(THEMED_BASE, { dark: DARK_OVERRIDE });
         expect(out).toContain("enum DesignTokens {");
         expect(out).toContain("enum DesignTokensDark {");
         expect((out.match(/import SwiftUI/g) ?? []).length).toBe(1);
     });
 
-    it("renders an overridden token as a value in the theme enum", () => {
-        const out = convertList(THEMED_BASE, { dark: DARK_OVERRIDE });
+    it("renders an overridden token as a value in the theme enum", async () => {
+        const out = await convertList(THEMED_BASE, { dark: DARK_OVERRIDE });
         expect(out).toContain("SwiftUI.Color(.sRGB, red: 0.1, green: 0.1, blue: 0.1");
     });
 
-    it("renders a non-overridden token as a reference to the base enum", () => {
-        const out = convertList(THEMED_BASE, { dark: DARK_OVERRIDE });
+    it("renders a non-overridden token as a reference to the base enum", async () => {
+        const out = await convertList(THEMED_BASE, { dark: DARK_OVERRIDE });
         expect(out).toContain("static let text = DesignTokens.Primitive.Color.text");
     });
 
-    it("roots an intra-theme reference at the theme's own namespace", () => {
-        const out = convertList(THEMED_BASE, { dark: DARK_OVERRIDE });
+    it("roots an intra-theme reference at the theme's own namespace", async () => {
+        const out = await convertList(THEMED_BASE, { dark: DARK_OVERRIDE });
         expect(out).toContain("static let surface = DesignTokensDark.Primitive.Color.background");
     });
 
-    it("keeps base semantic references rooted at the base enum", () => {
-        const out = convertList(THEMED_BASE, { dark: DARK_OVERRIDE });
+    it("keeps base semantic references rooted at the base enum", async () => {
+        const out = await convertList(THEMED_BASE, { dark: DARK_OVERRIDE });
         expect(out).toContain("static let surface = DesignTokens.Primitive.Color.background");
     });
 
-    it("pascalizes a multi-word theme name in the enum name", () => {
-        const out = convertList(THEMED_BASE, { "high-contrast": DARK_OVERRIDE });
+    it("pascalizes a multi-word theme name in the enum name", async () => {
+        const out = await convertList(THEMED_BASE, { "high-contrast": DARK_OVERRIDE });
         expect(out).toContain("enum DesignTokensHighContrast {");
         expect(out).toContain("static let surface = DesignTokensHighContrast.Primitive.Color.background");
     });
 
-    it("keeps flat palette aliases in theme enums", () => {
+    it("keeps flat palette aliases in theme enums", async () => {
         const base = {
             primitive: {
                 color: {
@@ -603,14 +597,14 @@ describe("SwiftUiTokenConverter enum themes", () => {
             },
         };
 
-        const out = convertList(base, { dark });
+        const out = await convertList(base, { dark });
 
         expect(out.match(/static let brand500 = Brand\._500/g)).toHaveLength(2);
     });
 
-    it("produces unchanged single-doc output when there are no themes", () => {
-        const viaList = convertList(THEMED_BASE);
-        const viaDoc = convert(THEMED_BASE);
+    it("produces unchanged single-doc output when there are no themes", async () => {
+        const viaList = await convertList(THEMED_BASE);
+        const viaDoc = await convert(THEMED_BASE);
         expect(viaList).toBe(viaDoc);
         expect(viaList).not.toContain("DesignTokensDark");
         expect(viaList).not.toContain("struct Theme");
@@ -618,8 +612,8 @@ describe("SwiftUiTokenConverter enum themes", () => {
 });
 
 describe("SwiftUiTokenConverter struct themes", () => {
-    it("keeps flat palette aliases in the Theme struct", () => {
-        const out = convertList({
+    it("keeps flat palette aliases in the Theme struct", async () => {
+        const out = await convertList({
             primitive: {
                 color: {
                     brand: {
@@ -637,38 +631,38 @@ describe("SwiftUiTokenConverter struct themes", () => {
         expect(out).toContain("static let brand500 = Brand._500");
     });
 
-    it("emits a Theme struct mirroring the token tree", () => {
-        const out = convertList(THEMED_BASE, { dark: DARK_OVERRIDE }, { swiftType: "struct" });
+    it("emits a Theme struct mirroring the token tree", async () => {
+        const out = await convertList(THEMED_BASE, { dark: DARK_OVERRIDE }, { swiftType: "struct" });
         expect(out).toContain("struct Theme {");
         expect(out).toContain("let surface: SwiftUI.Color");
     });
 
-    it("emits the enum layer alongside the struct layer", () => {
-        const out = convertList(THEMED_BASE, { dark: DARK_OVERRIDE }, { swiftType: "struct" });
+    it("emits the enum layer alongside the struct layer", async () => {
+        const out = await convertList(THEMED_BASE, { dark: DARK_OVERRIDE }, { swiftType: "struct" });
         expect(out).toContain("enum DesignTokens {");
         expect(out).toContain("enum DesignTokensDark {");
     });
 
-    it("emits a base instance referencing the base enum", () => {
-        const out = convertList(THEMED_BASE, { dark: DARK_OVERRIDE }, { swiftType: "struct" });
+    it("emits a base instance referencing the base enum", async () => {
+        const out = await convertList(THEMED_BASE, { dark: DARK_OVERRIDE }, { swiftType: "struct" });
         expect(out).toContain("static let base = Theme(");
         expect(out).toContain("DesignTokens.Semantic.Color.surface");
     });
 
-    it("emits a theme instance referencing the theme enum", () => {
-        const out = convertList(THEMED_BASE, { dark: DARK_OVERRIDE }, { swiftType: "struct" });
+    it("emits a theme instance referencing the theme enum", async () => {
+        const out = await convertList(THEMED_BASE, { dark: DARK_OVERRIDE }, { swiftType: "struct" });
         expect(out).toContain("static let dark = Theme(");
         expect(out).toContain("DesignTokensDark.Semantic.Color.surface");
     });
 
-    it("holds enum references in struct fields, not color literals", () => {
-        const out = convertList(THEMED_BASE, { dark: DARK_OVERRIDE }, { swiftType: "struct" });
+    it("holds enum references in struct fields, not color literals", async () => {
+        const out = await convertList(THEMED_BASE, { dark: DARK_OVERRIDE }, { swiftType: "struct" });
         const themesSection = out.slice(out.indexOf("enum Themes {"));
         expect(themesSection).not.toContain("SwiftUI.Color(");
     });
 
-    it("emits a single default instance in the degenerate no-themes struct", () => {
-        const out = convertList(THEMED_BASE, {}, { swiftType: "struct" });
+    it("emits a single default instance in the degenerate no-themes struct", async () => {
+        const out = await convertList(THEMED_BASE, {}, { swiftType: "struct" });
         expect(out).toContain("struct Theme {");
         expect(out).toContain("static let base = Theme(");
         expect(out).toContain("DesignTokens.Semantic.Color.surface");
@@ -685,24 +679,24 @@ describe("SwiftUiTokenConverter rem dimensions", () => {
         },
     };
 
-    it("expands rem against the default base", () => {
-        const out = convert(REM_TOKENS);
+    it("expands rem against the default base", async () => {
+        const out = await convert(REM_TOKENS);
         expect(out).toContain("static let md: CGFloat = 24");
     });
 
-    it("emits px unchanged", () => {
-        const out = convert(REM_TOKENS);
+    it("emits px unchanged", async () => {
+        const out = await convert(REM_TOKENS);
         expect(out).toContain("static let px: CGFloat = 24");
     });
 
-    it("renders equal magnitudes identically regardless of unit", () => {
-        const out = convert(REM_TOKENS);
+    it("renders equal magnitudes identically regardless of unit", async () => {
+        const out = await convert(REM_TOKENS);
         expect(out).toContain("static let md: CGFloat = 24");
         expect(out).toContain("static let px: CGFloat = 24");
     });
 
-    it("expands rem in typography fontSize", () => {
-        const out = convert({
+    it("expands rem in typography fontSize", async () => {
+        const out = await convert({
             typography: {
                 body: {
                     $type: "typography",
@@ -719,8 +713,8 @@ describe("SwiftUiTokenConverter rem dimensions", () => {
         expect(out).toContain('SwiftUI.Font.custom("Inter", size: 16)');
     });
 
-    it("expands rem in typography letterSpacing", () => {
-        const out = convert({
+    it("expands rem in typography letterSpacing", async () => {
+        const out = await convert({
             typography: {
                 body: {
                     $type: "typography",
@@ -737,8 +731,8 @@ describe("SwiftUiTokenConverter rem dimensions", () => {
         expect(out).toContain("tracking: 8");
     });
 
-    it("expands rem in shadow blur and offsets", () => {
-        const out = convert({
+    it("expands rem in shadow blur and offsets", async () => {
+        const out = await convert({
             shadow: {
                 soft: {
                     $type: "shadow",
@@ -757,8 +751,8 @@ describe("SwiftUiTokenConverter rem dimensions", () => {
         expect(out).toContain("y: 8");
     });
 
-    it("expands rem in border width", () => {
-        const out = convert({
+    it("expands rem in border width", async () => {
+        const out = await convert({
             border: {
                 thin: {
                     $type: "border",
@@ -773,13 +767,13 @@ describe("SwiftUiTokenConverter rem dimensions", () => {
         expect(out).toContain("width: 2");
     });
 
-    it("uses the rem base declared by the document", () => {
-        const out = convert({ ...REM_TOKENS, $extensions: { "design-token-kit": { remBase: 10 } } });
+    it("uses the rem base declared by the document", async () => {
+        const out = await convert({ ...REM_TOKENS, $extensions: { "design-token-kit": { remBase: 10 } } });
         expect(out).toContain("static let md: CGFloat = 15");
     });
 
-    it("prefers the explicit option over the declared base", () => {
-        const out = convertList(
+    it("prefers the explicit option over the declared base", async () => {
+        const out = await convertList(
             { ...REM_TOKENS, $extensions: { "design-token-kit": { remBase: 10 } } },
             {},
             { remBase: 16 },
@@ -787,13 +781,13 @@ describe("SwiftUiTokenConverter rem dimensions", () => {
         expect(out).toContain("static let md: CGFloat = 24");
     });
 
-    it("falls back to the default base when the declared one is unusable", () => {
-        const out = convert({ ...REM_TOKENS, $extensions: { "design-token-kit": { remBase: "sixteen" } } });
+    it("falls back to the default base when the declared one is unusable", async () => {
+        const out = await convert({ ...REM_TOKENS, $extensions: { "design-token-kit": { remBase: "sixteen" } } });
         expect(out).toContain("static let md: CGFloat = 24");
     });
 
-    it("formats fractional results without a long tail", () => {
-        const out = convert({
+    it("formats fractional results without a long tail", async () => {
+        const out = await convert({
             space: { xs: { $type: "dimension", $value: { value: 0.1, unit: "rem" } } },
         });
         expect(out).toContain("static let xs: CGFloat = 1.6");

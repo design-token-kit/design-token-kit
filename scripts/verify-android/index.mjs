@@ -4,7 +4,7 @@ import { readFileSync, writeFileSync, mkdirSync, cpSync, rmSync, readdirSync } f
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { AndroidTokenConverter, DtcgJsonReader, DtcgList } from "@design-token-kit/core";
+import { AndroidTokenConverter, DtcgReader, DtcgList } from "@design-token-kit/core";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const root = resolve(here, "../..");
@@ -67,7 +67,7 @@ console.log(`Verifying tokens: ${basePath}${darkPath ? ` (+ dark theme: ${darkPa
 // not just a single document.
 let list;
 try {
-    const reader = new DtcgJsonReader();
+    const reader = new DtcgReader();
     const base = reader.parse(readFileSync(basePath, "utf8"));
     const themes = darkPath
         ? new Map([["dark", reader.parse(readFileSync(darkPath, "utf8"))]])

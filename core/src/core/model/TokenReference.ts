@@ -9,11 +9,34 @@ import { TokenPath } from "#/core/model/TokenPath";
  * @see https://tr.designtokens.org/format/#aliases-references
  */
 export class TokenReference {
+    /** Curly-brace notation with a non-empty, brace-free path inside. */
+    static readonly #NOTATION = /^\{[^{}]+\}$/;
+
     readonly #path: TokenPath;
 
     /** @param value - token path without curly braces, e.g. `color.base.red` */
     constructor(value: string | TokenPath) {
         this.#path = value instanceof TokenPath ? value : TokenPath.parse(value);
+    }
+
+    /**
+     * Returns true when the value is written in curly-brace notation,
+     * e.g. `{color.base.red}`.
+     */
+    static isNotation(value: unknown): value is string {
+        return typeof value === "string" && TokenReference.#NOTATION.test(value);
+    }
+
+    /**
+     * Parses curly-brace notation into a reference, e.g. `{color.base.red}`.
+     *
+     * @returns the reference, or {@code undefined} when the value is not
+     *   written in curly-brace notation.
+     */
+    static parse(value: unknown): TokenReference | undefined {
+        return TokenReference.isNotation(value)
+            ? new TokenReference(value.slice(1, -1))
+            : undefined;
     }
 
     /** Token path without curly braces, e.g. `color.base.red`. */

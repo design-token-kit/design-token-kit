@@ -2,7 +2,7 @@ import { describe, expect, it, vi, afterEach } from "vitest";
 import { existsSync, readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { Source } from "#/core/io/Source";
-import { Format } from "#/core/io/Format";
+import { TokenFormat } from "#/core/formats/TokenFormat";
 
 const YAML_FIXTURE = fileURLToPath(new URL("Source.test.yaml", import.meta.url));
 const CSS_CONTENT = ":root { --color-brand: #fff; }";
@@ -125,19 +125,20 @@ describe("Source", () => {
     });
 
     describe("getFormat", () => {
-        it("detects CSS format for CSS content", async () => {
+        // CSS is not a token format; the showcase recognises it separately.
+        it("falls back to HRDT for CSS content", async () => {
             const format = await new Source(`content:${CSS_CONTENT}`).getFormat();
-            expect(format).toBe(Format.CSS);
+            expect(format.format).toBe(TokenFormat.HRDT);
         });
 
         it("detects DTCG format for JSON content", async () => {
             const format = await new Source(`content:${JSON_CONTENT}`).getFormat();
-            expect(format).toBe(Format.DTCG);
+            expect(format.format).toBe(TokenFormat.DTCG);
         });
 
         it("detects HRDT format for YAML file by content", async () => {
             const format = await new Source(YAML_FIXTURE).getFormat();
-            expect(format).toBe(Format.HRDT);
+            expect(format.format).toBe(TokenFormat.HRDT);
         });
 
         it("caches format on second call", async () => {

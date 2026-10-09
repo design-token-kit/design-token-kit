@@ -1,6 +1,4 @@
-import type { CheckIssue } from "@design-token-kit/core/core/check/CheckIssue";
-import type { Format } from "@design-token-kit/core/core/io/Format";
-import type { DtcgList } from "@design-token-kit/core/core/model/DtcgList";
+import type { TokenFormat } from "@design-token-kit/core/core/formats/TokenFormat";
 
 /**
  * Replaces the core file-source loader inside the Figma plugin bundle.
@@ -17,34 +15,18 @@ import type { DtcgList } from "@design-token-kit/core/core/model/DtcgList";
  * All other `#/...` imports still resolve to `core/src/*`, matching the
  * package-import layout used by the rest of the workspace.
  */
+const UNAVAILABLE = "File-source token loading is unavailable in the Figma plugin.";
+
 export class DtcgListLoader {
 
     constructor(_schemaVersion?: string) {}
 
-    async load(_sources: string[], _forcedFormat?: Format): Promise<DtcgList> {
-        throw new Error("File-source token loading is unavailable in the Figma plugin.");
+    async read(_sources: string[], _forcedFormat?: TokenFormat): Promise<never> {
+        throw new Error(UNAVAILABLE);
     }
 
-}
-
-/**
- * Keeps the exported core error name available for modules that import it.
- *
- * This class exists only to satisfy imports in the browser bundle.
- */
-export class TokenSyntaxError extends Error {
-    readonly issues: CheckIssue[];
-
-    constructor(issues: CheckIssue[]) {
-        super("File-source token loading is unavailable in the Figma plugin.");
-        this.name = "TokenSyntaxError";
-        this.issues = issues;
-    }
-
-    formatIssues(): string {
-        return this.issues
-            .map((issue) => `[${issue.id}] ${issue.sourcePath} - ${issue.message}`)
-            .join("\n");
+    async load(_sources: string[], _forcedFormat?: TokenFormat): Promise<never> {
+        throw new Error(UNAVAILABLE);
     }
 
 }

@@ -1,5 +1,5 @@
 import type { CheckIssue } from "#/core/check/CheckIssue";
-import type { Format } from "#/core/io/Format";
+import type { TokenFormat } from "#/core/formats/TokenFormat";
 import type { DtcgList } from "#/core/model/DtcgList";
 
 /**
@@ -12,7 +12,7 @@ export class DtcgListLoader {
 
     constructor(_schema?: string) {}
 
-    async load(_sources: string[], _format?: Format): Promise<DtcgList> {
+    async load(_sources: string[], _format?: TokenFormat): Promise<DtcgList> {
         throw new Error("File-source token loading is unavailable in the browser entry.");
     }
 

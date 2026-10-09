@@ -72,7 +72,7 @@ async function analyzeTokens(): Promise<void> {
 async function exportTokens(format: TokenOutputFormat): Promise<void> {
     try {
         const result = await new TokenExporter().export();
-        const files = new TokenConversionService().convert({
+        const files = await new TokenConversionService().convert({
             files: result.files,
             format,
         });

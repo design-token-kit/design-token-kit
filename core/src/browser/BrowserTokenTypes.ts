@@ -1,5 +1,6 @@
 import type { CheckScope } from "#/core/check/CheckScope";
-import type { Format } from "#/core/io/Format";
+import type { TokenFormat } from "#/core/formats/TokenFormat";
+import type { PlatformFormat } from "#/core/platforms/PlatformFormat";
 
 /**
  * A document held in browser memory rather than addressed by a file path.
@@ -24,19 +25,19 @@ export interface BrowserTokenSet {
 /**
  * Input formats accepted by the browser toolkit.
  */
-export type BrowserInputFormat = Format.DTCG | Format.HRDT | Format.DESIGN_MD;
+export type BrowserInputFormat = TokenFormat.DTCG | TokenFormat.HRDT | TokenFormat.DESIGN_MD;
 
 /**
  * Output formats emitted by the browser toolkit.
  */
 export type BrowserOutputFormat =
     | BrowserInputFormat
-    | Format.CSS
-    | Format.SCSS
-    | Format.TAILWIND_V4
-    | Format.SWIFT_UI
-    | Format.FIGMA_SCRIPT
-    | Format.ANDROID
+    | PlatformFormat.CSS
+    | PlatformFormat.SCSS
+    | PlatformFormat.TAILWIND_V4
+    | PlatformFormat.SWIFT_UI
+    | PlatformFormat.FIGMA_SCRIPT
+    | PlatformFormat.ANDROID
     | "showcase";
 
 /**

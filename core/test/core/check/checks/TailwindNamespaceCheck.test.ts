@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { DtcgChecker } from "#/core/validation/DtcgChecker";
+import { TokenChecker } from "#/core/check/TokenChecker";
 import { CheckScope } from "#/core/check/CheckScope";
 
 function source(doc: object): string {
@@ -8,7 +8,7 @@ function source(doc: object): string {
 
 describe("TailwindNamespaceCheck", () => {
     it("reports unsupported design-token-kit.tailwindNamespace values", async () => {
-        const issues = await new DtcgChecker({ scope: CheckScope.VALIDATE }).validate([source({
+        const issues = await new TokenChecker({ scope: CheckScope.VALIDATE }).check([source({
             layout: {
                 desktop: {
                     "$type": "dimension",
@@ -29,7 +29,7 @@ describe("TailwindNamespaceCheck", () => {
     });
 
     it("allows the supported breakpoint namespace", async () => {
-        const issues = await new DtcgChecker({ scope: CheckScope.VALIDATE }).validate([source({
+        const issues = await new TokenChecker({ scope: CheckScope.VALIDATE }).check([source({
             layout: {
                 desktop: {
                     "$type": "dimension",

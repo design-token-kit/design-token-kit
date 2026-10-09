@@ -1,4 +1,4 @@
-import { DtcgChecker, DtcgTokenCssConverter, createTokenHtmlShowcase } from "@design-token-kit/core";
+import { TokenChecker, DtcgTokenCssConverter, createTokenHtmlShowcase } from "@design-token-kit/core";
 import { mkdir, writeFile } from "node:fs/promises";
 import { dirname } from "node:path";
 
@@ -27,7 +27,7 @@ switch (command) {
 }
 
 async function check(): Promise<void> {
-    const issues = await new DtcgChecker().validate(tokenFiles);
+    const issues = await new TokenChecker().check(tokenFiles);
 
     for (const issue of issues) {
         console.log(issue.severity, issue.sourcePath, issue.tokenPath?.toString(), issue.message);
