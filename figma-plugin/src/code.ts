@@ -4,13 +4,14 @@ import { TokenConversionService, type TokenOutputFormat } from "#/figma-plugin/t
 import { TokenArchitectureAnalyzer } from "#/figma-plugin/token-export/TokenArchitectureAnalyzer";
 import { TokenAnalyticsAnalyzer } from "#/figma-plugin/token-export/TokenAnalyticsAnalyzer";
 import { TokenExporter } from "#/figma-plugin/token-export/TokenExporter";
+import { auditWcagPage } from "#/figma-plugin/quality/WcagAudit";
 
 const MISSING_FILE_KEY_MESSAGE = "REST export requires figma.fileKey. "
     + "Reload the plugin after manifest update or run it as a private/local plugin.";
 
 figma.showUI(__html__, {
-    width: 720,
-    height: 720,
+    width: 800,
+    height: 800,
 });
 
 figma.ui.onmessage = async (msg: PluginMessage) => {
@@ -21,6 +22,11 @@ figma.ui.onmessage = async (msg: PluginMessage) => {
 
     if (msg.type === "ANALYZE_TOKENS") {
         await analyzeTokens();
+        return;
+    }
+
+    if (msg.type === "RUN_WCAG_AUDIT") {
+        await auditWcag();
         return;
     }
 
@@ -63,6 +69,26 @@ async function analyzeTokens(): Promise<void> {
             type: "EXPORT_FAILED",
             payload: {
                 source: "tokens",
+                message,
+            },
+        });
+    }
+}
+
+async function auditWcag(): Promise<void> {
+    try {
+        const report = await auditWcagPage(figma.currentPage);
+        figma.ui.postMessage({
+            type: "WCAG_AUDITED",
+            payload: report,
+        });
+    } catch (error: unknown) {
+        const message = getErrorMessage(error);
+        figma.notify(message, { error: true });
+        figma.ui.postMessage({
+            type: "EXPORT_FAILED",
+            payload: {
+                source: "wcag",
                 message,
             },
         });
@@ -168,6 +194,7 @@ function toTokenOutputFormat(type: PluginMessage["type"]): TokenOutputFormat | u
 type PluginMessage =
     | { type: "EXPORT_PLUGIN_JSON" }
     | { type: "ANALYZE_TOKENS" }
+    | { type: "RUN_WCAG_AUDIT" }
     | { type: "EXPORT_TOKENS_JSON" }
     | { type: "EXPORT_TOKENS_DTCG" }
     | { type: "EXPORT_TOKENS_CSS" }

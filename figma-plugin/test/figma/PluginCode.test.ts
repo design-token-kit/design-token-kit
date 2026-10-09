@@ -15,6 +15,10 @@ describe("plugin entrypoint", () => {
         vi.stubGlobal("__html__", "<main></main>");
         vi.stubGlobal("figma", {
             root: { id: "0:0", name: "My Token File", children: [] },
+            currentPage: {
+                loadAsync: vi.fn().mockResolvedValue(undefined),
+                children: [],
+            },
             showUI,
             notify,
             ui: {
@@ -32,7 +36,7 @@ describe("plugin entrypoint", () => {
     });
 
     it("initializes the plugin UI", () => {
-        expect(showUI).toHaveBeenCalledWith("<main></main>", { width: 720, height: 720 });
+        expect(showUI).toHaveBeenCalledWith("<main></main>", { width: 800, height: 800 });
         expect(pluginUi.onmessage).toBeTypeOf("function");
     });
 
@@ -145,5 +149,20 @@ describe("plugin entrypoint", () => {
                 analytics: expect.objectContaining({ totalTokens: 0 }),
             }),
         }));
+    });
+
+    it("audits WCAG contrast on the current page", async () => {
+        await pluginUi.onmessage?.({ type: "RUN_WCAG_AUDIT" });
+
+        expect(postMessage).toHaveBeenCalledWith({
+            type: "WCAG_AUDITED",
+            payload: expect.objectContaining({
+                score: null,
+                errors: 0,
+                warnings: 0,
+                nodesChecked: 0,
+                findings: [],
+            }),
+        });
     });
 });
