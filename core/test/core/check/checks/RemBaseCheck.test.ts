@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { DtcgChecker } from "#/core/validation/DtcgChecker";
+import { TokenChecker } from "#/core/check/TokenChecker";
 import { CheckScope } from "#/core/check/CheckScope";
 
 const SPACE = {
@@ -14,7 +14,7 @@ function source(doc: object): string {
 }
 
 function validate(doc: object) {
-    return new DtcgChecker({ scope: CheckScope.VALIDATE }).validate([source(doc)]);
+    return new TokenChecker({ scope: CheckScope.VALIDATE }).check([source(doc)]);
 }
 
 describe("RemBaseCheck", () => {

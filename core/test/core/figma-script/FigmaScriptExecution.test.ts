@@ -8,8 +8,7 @@
 
 import { describe, expect, it } from "vitest";
 
-import { DtcgJsonReader } from "#/core/io/DtcgJsonReader";
-import { DtcgList } from "#/core/model/DtcgList";
+import { readDtcgList } from "../../support/readDtcg";
 import { FigmaScriptTokenConverter } from "#/core/platforms/figma-script/FigmaScriptTokenConverter";
 
 interface FakeVariable {
@@ -124,11 +123,7 @@ function createFakeFigma(): { api: Record<string, unknown>; state: FakeFigma; co
 
 /** Generates a script for the given tokens and runs it against the stand-in. */
 async function run(base: object, themes: Record<string, object> = {}): Promise<FakeFigma> {
-    const reader = new DtcgJsonReader();
-    const list = new DtcgList(
-        reader.parse(JSON.stringify(base)),
-        new Map(Object.entries(themes).map(([name, doc]) => [name, reader.parse(JSON.stringify(doc))])),
-    );
+    const list = await readDtcgList(base, themes);
 
     const script = new FigmaScriptTokenConverter().convertList(list);
     const { api, state, console: fakeConsole } = createFakeFigma();
@@ -223,8 +218,7 @@ describe("generated Figma script", () => {
             semantic: { color: { action: { $value: "{primitive.color.brand}" } } },
         };
 
-        const reader = new DtcgJsonReader();
-        const list = new DtcgList(reader.parse(JSON.stringify(tokens)), new Map());
+        const list = await readDtcgList(tokens);
         const script = new FigmaScriptTokenConverter().convertList(list);
         const { api, state, console: fakeConsole } = createFakeFigma();
 
@@ -248,9 +242,8 @@ describe("generated Figma script", () => {
     it("explains a rejected mode once instead of per variable", async () => {
         // Figma refuses extra modes on a free plan. The report has to name that
         // reason once, not repeat a message for every variable wanting the mode.
-        const reader = new DtcgJsonReader();
-        const list = new DtcgList(
-            reader.parse(JSON.stringify({
+        const list = await readDtcgList(
+            {
                 primitive: {
                     color: {
                         first: color([0, 0, 1]),
@@ -258,16 +251,18 @@ describe("generated Figma script", () => {
                         third: color([1, 0, 0]),
                     },
                 },
-            })),
-            new Map([["dark", reader.parse(JSON.stringify({
-                primitive: {
-                    color: {
-                        first: color([1, 1, 1]),
-                        second: color([1, 1, 1]),
-                        third: color([1, 1, 1]),
+            },
+            {
+                dark: {
+                    primitive: {
+                        color: {
+                            first: color([1, 1, 1]),
+                            second: color([1, 1, 1]),
+                            third: color([1, 1, 1]),
+                        },
                     },
                 },
-            }))]]),
+            },
         );
 
         const script = new FigmaScriptTokenConverter().convertList(list);
@@ -301,10 +296,9 @@ describe("generated Figma script", () => {
     it("reports through print where the host provides it", async () => {
         // Scripter shows values through its own `print` and hides `console`
         // output, so the report has to prefer `print` when it exists.
-        const reader = new DtcgJsonReader();
         const tokens = { primitive: { color: { brand: color([0, 0, 1]) } } };
         const script = new FigmaScriptTokenConverter()
-            .convertList(new DtcgList(reader.parse(JSON.stringify(tokens)), new Map()));
+            .convertList(await readDtcgList(tokens));
 
         const { api } = createFakeFigma();
         const printed: string[] = [];

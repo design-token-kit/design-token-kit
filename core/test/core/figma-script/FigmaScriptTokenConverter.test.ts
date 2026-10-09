@@ -1,22 +1,14 @@
 import { describe, expect, it } from "vitest";
 
-import { DtcgJsonReader } from "#/core/io/DtcgJsonReader";
-import { DtcgList } from "#/core/model/DtcgList";
+import { readDtcg, readDtcgList } from "../../support/readDtcg";
 import { FigmaScriptTokenConverter } from "#/core/platforms/figma-script/FigmaScriptTokenConverter";
 
-function convert(json: object): string {
-    const doc = new DtcgJsonReader().parse(JSON.stringify(json));
-    return new FigmaScriptTokenConverter().convertDocument(doc);
+async function convert(json: object): Promise<string> {
+    return new FigmaScriptTokenConverter().convertDocument(await readDtcg(json));
 }
 
-function convertList(base: object, themes: Record<string, object> = {}): string {
-    const reader = new DtcgJsonReader();
-    const baseDoc = reader.parse(JSON.stringify(base));
-    const themeMap = new Map(
-        Object.entries(themes).map(([name, doc]) => [name, reader.parse(JSON.stringify(doc))]),
-    );
-
-    return new FigmaScriptTokenConverter().convertList(new DtcgList(baseDoc, themeMap));
+async function convertList(base: object, themes: Record<string, object> = {}): Promise<string> {
+    return new FigmaScriptTokenConverter().convertList(await readDtcgList(base, themes));
 }
 
 /** Reads one of the data literals the generated script declares. */
@@ -24,6 +16,11 @@ function readData(script: string, name: string): unknown {
     const match = new RegExp(`const ${name} = ([\\s\\S]*?);\\n`).exec(script);
     expect(match, `${name} must be declared`).not.toBeNull();
     return JSON.parse(match![1]!);
+}
+
+/** The `$value` of a color token, for embedding in composite values. */
+function colorValue(components: [number, number, number]): object {
+    return { colorSpace: "srgb", components, alpha: 1 };
 }
 
 function color(components: [number, number, number]): object {
@@ -37,21 +34,21 @@ const LAYERED = {
 };
 
 describe("FigmaScriptTokenConverter", () => {
-    it("emits a runnable script", () => {
-        const script = convert(LAYERED);
+    it("emits a runnable script", async () => {
+        const script = await convert(LAYERED);
 
         expect(script).toContain("async function applyTokens()");
         expect(script).toContain("await applyTokens();");
     });
 
-    it("creates one collection per token layer", () => {
-        const collections = readData(convert(LAYERED), "COLLECTIONS") as Array<{ name: string }>;
+    it("creates one collection per token layer", async () => {
+        const collections = readData(await convert(LAYERED), "COLLECTIONS") as Array<{ name: string }>;
 
         expect(collections.map((entry) => entry.name)).toEqual(["Primitive", "Semantic", "Component"]);
     });
 
-    it("keeps a reference as an alias instead of copying the value", () => {
-        const variables = readData(convert(LAYERED), "VARIABLES") as Array<{
+    it("keeps a reference as an alias instead of copying the value", async () => {
+        const variables = readData(await convert(LAYERED), "VARIABLES") as Array<{
             path: string;
             values: Record<string, { alias?: string }>;
         }>;
@@ -61,8 +58,8 @@ describe("FigmaScriptTokenConverter", () => {
         expect(semantic?.values["Light"]).toEqual({ alias: "primitive.color.brand" });
     });
 
-    it("orders an alias target before the variable pointing at it", () => {
-        const variables = readData(convert(LAYERED), "VARIABLES") as Array<{ path: string }>;
+    it("orders an alias target before the variable pointing at it", async () => {
+        const variables = readData(await convert(LAYERED), "VARIABLES") as Array<{ path: string }>;
         const paths = variables.map((entry) => entry.path);
 
         expect(paths.indexOf("primitive.color.brand")).toBeLessThan(paths.indexOf("semantic.color.action"));
@@ -70,8 +67,8 @@ describe("FigmaScriptTokenConverter", () => {
             .toBeLessThan(paths.indexOf("component.button.primary.background"));
     });
 
-    it("gives an alias the type of its target", () => {
-        const variables = readData(convert(LAYERED), "VARIABLES") as Array<{
+    it("gives an alias the type of its target", async () => {
+        const variables = readData(await convert(LAYERED), "VARIABLES") as Array<{
             path: string;
             resolvedType: string;
         }>;
@@ -80,8 +77,8 @@ describe("FigmaScriptTokenConverter", () => {
             .toBe("COLOR");
     });
 
-    it("turns each theme into a mode of the same collection", () => {
-        const script = convertList(
+    it("turns each theme into a mode of the same collection", async () => {
+        const script = await convertList(
             { primitive: { color: { brand: color([0, 0, 1]) } } },
             { dark: { primitive: { color: { brand: color([1, 1, 1]) } } } },
         );
@@ -93,8 +90,8 @@ describe("FigmaScriptTokenConverter", () => {
         expect(Object.keys(variables[0]!.values)).toEqual(["Light", "Dark"]);
     });
 
-    it("names a multi-word theme as a readable mode", () => {
-        const script = convertList(
+    it("names a multi-word theme as a readable mode", async () => {
+        const script = await convertList(
             { primitive: { color: { brand: color([0, 0, 1]) } } },
             { "brand-a": { primitive: { color: { brand: color([1, 0, 0]) } } } },
         );
@@ -104,8 +101,8 @@ describe("FigmaScriptTokenConverter", () => {
         expect(collections[0]?.modes).toEqual(["Light", "Brand A"]);
     });
 
-    it("marks an opacity token with the scope the export path reads back", () => {
-        const script = convert({
+    it("marks an opacity token with the scope the export path reads back", async () => {
+        const script = await convert({
             primitive: {
                 number: {
                     "opacity-disabled": { $type: "number", $value: 0.5 },
@@ -120,8 +117,8 @@ describe("FigmaScriptTokenConverter", () => {
         expect(variables.find((entry) => entry.path.includes("line-height"))?.scopes).toEqual([]);
     });
 
-    it("assigns dimension scopes from the token group", () => {
-        const script = convert({
+    it("assigns dimension scopes from the token group", async () => {
+        const script = await convert({
             primitive: {
                 dimension: {
                     "space-100": { $type: "dimension", $value: { value: 4, unit: "px" } },
@@ -137,8 +134,8 @@ describe("FigmaScriptTokenConverter", () => {
             .toEqual(["CORNER_RADIUS"]);
     });
 
-    it("creates a text style from a typography token", () => {
-        const script = convert({
+    it("creates a text style from a typography token", async () => {
+        const script = await convert({
             primitive: {
                 typography: {
                     body: {
@@ -166,8 +163,8 @@ describe("FigmaScriptTokenConverter", () => {
         });
     });
 
-    it("creates an effect style from a shadow token", () => {
-        const script = convert({
+    it("creates an effect style from a shadow token", async () => {
+        const script = await convert({
             primitive: {
                 shadow: {
                     surface: {
@@ -189,8 +186,8 @@ describe("FigmaScriptTokenConverter", () => {
         expect(styles[0]?.effects[0]).toMatchObject({ type: "DROP_SHADOW", radius: 8 });
     });
 
-    it("reports every type Figma cannot represent", () => {
-        const script = convert({
+    it("reports every type Figma cannot represent", async () => {
+        const script = await convert({
             primitive: {
                 fontFamily: { body: { $type: "fontFamily", $value: ["Inter"] } },
                 fontWeight: { bold: { $type: "fontWeight", $value: 700 } },
@@ -220,8 +217,8 @@ describe("FigmaScriptTokenConverter", () => {
         }
     });
 
-    it("blames the type, not the name, when a correct path carries an unsupported type", () => {
-        const script = convert({
+    it("blames the type, not the name, when a correct path carries an unsupported type", async () => {
+        const script = await convert({
             primitive: { fontFamily: { body: { $type: "fontFamily", $value: ["Inter"] } } },
         });
 
@@ -230,9 +227,19 @@ describe("FigmaScriptTokenConverter", () => {
         expect(skipped[0]?.type).toBe("fontFamily");
     });
 
-    it("skips a token whose alias target is not importable", () => {
-        const script = convert({
-            primitive: { gradient: { brand: { $type: "gradient", $value: [] } } },
+    it("skips a token whose alias target is not importable", async () => {
+        const script = await convert({
+            primitive: {
+                gradient: {
+                    brand: {
+                        $type: "gradient",
+                        $value: [
+                            { color: colorValue([0, 0, 1]), position: 0 },
+                            { color: colorValue([1, 0, 0]), position: 1 },
+                        ],
+                    },
+                },
+            },
             semantic: { surface: { hero: { $value: "{primitive.gradient.brand}" } } },
         });
 
@@ -243,8 +250,8 @@ describe("FigmaScriptTokenConverter", () => {
         expect(skipped.map((entry) => entry.path)).toContain("semantic.surface.hero");
     });
 
-    it("reports a reference cycle rather than looping", () => {
-        const script = convert({
+    it("reports a reference cycle rather than looping", async () => {
+        const script = await convert({
             semantic: {
                 color: {
                     first: { $value: "{semantic.color.second}" },
@@ -258,8 +265,8 @@ describe("FigmaScriptTokenConverter", () => {
         expect(skipped.some((entry) => entry.reason.includes("cycle"))).toBe(true);
     });
 
-    it("skips a path that cannot round-trip through the export path", () => {
-        const script = convert({
+    it("skips a path that cannot round-trip through the export path", async () => {
+        const script = await convert({
             primitive: { color: color([0, 0, 1]) },
         });
 
@@ -268,8 +275,8 @@ describe("FigmaScriptTokenConverter", () => {
         expect(skipped[0]?.type).toBe("naming");
     });
 
-    it("carries token descriptions into the script", () => {
-        const script = convert({
+    it("carries token descriptions into the script", async () => {
+        const script = await convert({
             primitive: {
                 color: {
                     brand: { ...color([0, 0, 1]), $description: "Primary brand colour." },
@@ -282,8 +289,8 @@ describe("FigmaScriptTokenConverter", () => {
         expect(variables[0]?.description).toBe("Primary brand colour.");
     });
 
-    it("lists what Figma cannot express in the header", () => {
-        const script = convert({
+    it("lists what Figma cannot express in the header", async () => {
+        const script = await convert({
             primitive: { duration: { fast: { $type: "duration", $value: { value: 100, unit: "ms" } } } },
         });
 

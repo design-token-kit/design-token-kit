@@ -1,39 +1,33 @@
 import { describe, it, expect } from "vitest";
-import { DtcgJsonReader } from "#/core/io/DtcgJsonReader";
-import { DtcgList } from "#/core/model/DtcgList";
+import { readDtcg, readDtcgList } from "../../support/readDtcg";
 import {
     AndroidTokenConverter,
     type AndroidTokenConverterOptions,
 } from "#/core/platforms/android/AndroidTokenConverter";
 import type { AndroidTokenOutput } from "#/core/platforms/android/AndroidTokenOutput";
 
-function convert(json: object, options?: AndroidTokenConverterOptions): string {
-    const doc = new DtcgJsonReader().parse(JSON.stringify(json));
+async function convert(json: object, options?: AndroidTokenConverterOptions): Promise<string> {
+    const doc = await readDtcg(json);
     return new AndroidTokenConverter(options).convertDocument(doc);
 }
 
-function convertResources(
+async function convertResources(
     base: object,
     themes: Record<string, object> = {},
     options?: AndroidTokenConverterOptions,
-): ReadonlyArray<AndroidTokenOutput> {
-    const reader = new DtcgJsonReader();
-    const baseDoc = reader.parse(JSON.stringify(base));
-    const themeMap = new Map(
-        Object.entries(themes).map(([name, doc]) => [name, reader.parse(JSON.stringify(doc))]),
-    );
-    return new AndroidTokenConverter(options).convertResourceList(new DtcgList(baseDoc, themeMap));
+): Promise<ReadonlyArray<AndroidTokenOutput>> {
+    return new AndroidTokenConverter(options).convertResourceList(await readDtcgList(base, themes));
 }
 
 /**
  * Converts with the resource-type layout, so that assertions about resource
  * content can address a file by resource type rather than token group.
  */
-function convertTyped(
+async function convertTyped(
     base: object,
     themes: Record<string, object> = {},
-): ReadonlyArray<AndroidTokenOutput> {
-    return convertResources(base, themes, { layout: "type" });
+): Promise<ReadonlyArray<AndroidTokenOutput>> {
+    return await convertResources(base, themes, { layout: "type" });
 }
 
 function fileNamed(outputs: ReadonlyArray<AndroidTokenOutput>, filePath: string): string {
@@ -45,58 +39,58 @@ function fileNamed(outputs: ReadonlyArray<AndroidTokenOutput>, filePath: string)
 const RED = { colorSpace: "srgb", components: [1, 0, 0] };
 
 describe("AndroidTokenConverter scalars", () => {
-    it("wraps output in a resources element with an XML declaration", () => {
-        const out = convert({ color: { red: { $type: "color", $value: RED } } });
+    it("wraps output in a resources element with an XML declaration", async () => {
+        const out = await convert({ color: { red: { $type: "color", $value: RED } } });
         expect(out).toContain("<?xml version=\"1.0\" encoding=\"utf-8\"?>");
         expect(out).toContain("<resources>");
         expect(out).toContain("</resources>");
     });
 
-    it("emits colors as #AARRGGBB", () => {
-        const out = convert({ color: { red: { $type: "color", $value: RED } } });
+    it("emits colors as #AARRGGBB", async () => {
+        const out = await convert({ color: { red: { $type: "color", $value: RED } } });
         expect(out).toContain("<color name=\"color_red\">#ffff0000</color>");
     });
 
-    it("names resources in snake_case from the token path", () => {
-        const out = convert({ color: { brandPrimary: { $type: "color", $value: RED } } });
+    it("names resources in snake_case from the token path", async () => {
+        const out = await convert({ color: { brandPrimary: { $type: "color", $value: RED } } });
         expect(out).toContain("name=\"color_brand_primary\"");
     });
 
-    it("emits dimensions in dp", () => {
-        const out = convert({ spacing: { md: { $type: "dimension", $value: { value: 16, unit: "px" } } } });
+    it("emits dimensions in dp", async () => {
+        const out = await convert({ spacing: { md: { $type: "dimension", $value: { value: 16, unit: "px" } } } });
         expect(out).toContain("<dimen name=\"spacing_md\">16dp</dimen>");
     });
 
-    it("emits font size dimensions in sp", () => {
-        const out = convert({
+    it("emits font size dimensions in sp", async () => {
+        const out = await convert({
             font: { size: { md: { $type: "dimension", $value: { value: 16, unit: "px" } } } },
         });
         expect(out).toContain("<dimen name=\"font_size_md\">16sp</dimen>");
     });
 
-    it("resolves rem against the pixel base", () => {
-        const out = convert({ spacing: { md: { $type: "dimension", $value: { value: 1.5, unit: "rem" } } } });
+    it("resolves rem against the pixel base", async () => {
+        const out = await convert({ spacing: { md: { $type: "dimension", $value: { value: 1.5, unit: "rem" } } } });
         expect(out).toContain("<dimen name=\"spacing_md\">24dp</dimen>");
     });
 
-    it("resolves rem against a custom pixel base", () => {
-        const out = convert(
+    it("resolves rem against a custom pixel base", async () => {
+        const out = await convert(
             { spacing: { md: { $type: "dimension", $value: { value: 1.5, unit: "rem" } } } },
             { remBase: 10 },
         );
         expect(out).toContain("<dimen name=\"spacing_md\">15dp</dimen>");
     });
 
-    it("resolves rem against the base declared by the document", () => {
-        const out = convert({
+    it("resolves rem against the base declared by the document", async () => {
+        const out = await convert({
             "$extensions": { "design-token-kit": { "remBase": 10 } },
             "spacing": { md: { $type: "dimension", $value: { value: 1.5, unit: "rem" } } },
         });
         expect(out).toContain("<dimen name=\"spacing_md\">15dp</dimen>");
     });
 
-    it("prefers an explicit pixel base over the declared one", () => {
-        const out = convert(
+    it("prefers an explicit pixel base over the declared one", async () => {
+        const out = await convert(
             {
                 "$extensions": { "design-token-kit": { "remBase": 10 } },
                 "spacing": { md: { $type: "dimension", $value: { value: 1.5, unit: "rem" } } },
@@ -106,43 +100,43 @@ describe("AndroidTokenConverter scalars", () => {
         expect(out).toContain("<dimen name=\"spacing_md\">24dp</dimen>");
     });
 
-    it("emits durations as integers in milliseconds", () => {
-        const out = convert({ motion: { fast: { $type: "duration", $value: { value: 0.2, unit: "s" } } } });
+    it("emits durations as integers in milliseconds", async () => {
+        const out = await convert({ motion: { fast: { $type: "duration", $value: { value: 0.2, unit: "s" } } } });
         expect(out).toContain("<integer name=\"motion_fast\">200</integer>");
     });
 
-    it("emits whole numbers as integers", () => {
-        const out = convert({ z: { modal: { $type: "number", $value: 1000 } } });
+    it("emits whole numbers as integers", async () => {
+        const out = await convert({ z: { modal: { $type: "number", $value: 1000 } } });
         expect(out).toContain("<integer name=\"z_modal\">1000</integer>");
     });
 
-    it("emits fractional numbers as float items, preserving the fraction", () => {
-        const out = convert({ line: { height: { $type: "number", $value: 1.5 } } });
+    it("emits fractional numbers as float items, preserving the fraction", async () => {
+        const out = await convert({ line: { height: { $type: "number", $value: 1.5 } } });
         expect(out).toContain("<item name=\"line_height\" type=\"dimen\" format=\"float\">1.5</item>");
     });
 
-    it("emits a font family as a single family, dropping CSS fallbacks", () => {
-        const out = convert({ font: { body: { $type: "fontFamily", $value: ["Inter", "Arial", "sans-serif"] } } });
+    it("emits a font family as a single family, dropping CSS fallbacks", async () => {
+        const out = await convert({ font: { body: { $type: "fontFamily", $value: ["Inter", "Arial", "sans-serif"] } } });
         expect(out).toContain("<string name=\"font_body\">Inter</string>");
         expect(out).not.toContain("Arial");
     });
 
-    it("renders a token description as an XML comment", () => {
-        const out = convert({
+    it("renders a token description as an XML comment", async () => {
+        const out = await convert({
             color: { red: { $type: "color", $value: RED, $description: "Brand red" } },
         });
         expect(out).toContain("<!-- Brand red -->");
     });
 
-    it("escapes XML special characters in values", () => {
-        const out = convert({ label: { note: { $type: "fontFamily", $value: "a & b" } } });
+    it("escapes XML special characters in values", async () => {
+        const out = await convert({ label: { note: { $type: "fontFamily", $value: "a & b" } } });
         expect(out).toContain("a &amp; b");
     });
 });
 
 describe("AndroidTokenConverter references", () => {
-    it("preserves color references as @color resource references", () => {
-        const out = convert({
+    it("preserves color references as @color resource references", async () => {
+        const out = await convert({
             color: {
                 base: { red: { $type: "color", $value: RED } },
                 semantic: { primary: { $type: "color", $value: "{color.base.red}" } },
@@ -151,8 +145,8 @@ describe("AndroidTokenConverter references", () => {
         expect(out).toContain("<color name=\"color_semantic_primary\">@color/color_base_red</color>");
     });
 
-    it("preserves dimension references as @dimen resource references", () => {
-        const outputs = convertTyped({
+    it("preserves dimension references as @dimen resource references", async () => {
+        const outputs = await convertTyped({
             space: {
                 $type: "dimension",
                 base: { $value: { value: 8, unit: "px" } },
@@ -163,8 +157,8 @@ describe("AndroidTokenConverter references", () => {
             .toContain("<dimen name=\"space_inset\">@dimen/space_base</dimen>");
     });
 
-    it("types an alias without a declared type after its target", () => {
-        const outputs = convertTyped({
+    it("types an alias without a declared type after its target", async () => {
+        const outputs = await convertTyped({
             space: { base: { $type: "dimension", $value: { value: 8, unit: "px" } } },
             component: { padding: { $value: "{space.base}" } },
         });
@@ -172,8 +166,8 @@ describe("AndroidTokenConverter references", () => {
             .toContain("<dimen name=\"component_padding\">@dimen/space_base</dimen>");
     });
 
-    it("decomposes an alias to a composite into per-field references", () => {
-        const outputs = convertTyped({
+    it("decomposes an alias to a composite into per-field references", async () => {
+        const outputs = await convertTyped({
             border: {
                 base: {
                     $type: "border",
@@ -188,8 +182,8 @@ describe("AndroidTokenConverter references", () => {
             .toContain("<dimen name=\"border_strong_width\">@dimen/border_base_width</dimen>");
     });
 
-    it("keeps a font family alias as a single reference", () => {
-        const out = convert({
+    it("keeps a font family alias as a single reference", async () => {
+        const out = await convert({
             font: {
                 $type: "fontFamily",
                 body: { $value: ["Inter", "Arial"] },
@@ -199,8 +193,8 @@ describe("AndroidTokenConverter references", () => {
         expect(out).toContain("<string name=\"font_heading\">@string/font_body</string>");
     });
 
-    it("types a number alias after the value it resolves to", () => {
-        const outputs = convertTyped({
+    it("types a number alias after the value it resolves to", async () => {
+        const outputs = await convertTyped({
             num: {
                 $type: "number",
                 whole: { $value: 1000 },
@@ -217,8 +211,8 @@ describe("AndroidTokenConverter references", () => {
 });
 
 describe("AndroidTokenConverter composites", () => {
-    it("skips cubic bezier and stroke geometry without approximating them", () => {
-        const outputs = convertResources({
+    it("skips cubic bezier and stroke geometry without approximating them", async () => {
+        const outputs = await convertResources({
             motion: {
                 easing: { $type: "cubicBezier", $value: [0.2, 0, 0, 1] },
                 stroke: { $type: "strokeStyle", $value: { dashArray: [{ value: 2, unit: "px" }], lineCap: "round" } },
@@ -228,8 +222,8 @@ describe("AndroidTokenConverter composites", () => {
         expect(outputs).toEqual([]);
     });
 
-    it("decomposes typography into one resource per field", () => {
-        const outputs = convertTyped({
+    it("decomposes typography into one resource per field", async () => {
+        const outputs = await convertTyped({
             typography: {
                 body: {
                     $type: "typography",
@@ -255,8 +249,8 @@ describe("AndroidTokenConverter composites", () => {
             .toContain("<string name=\"typography_body_font_family\">Inter</string>");
     });
 
-    it("maps typography keyword weights and field references", () => {
-        const outputs = convertTyped({
+    it("maps typography keyword weights and field references", async () => {
+        const outputs = await convertTyped({
             primitive: {
                 dimension: { body: { $type: "dimension", $value: { value: 16, unit: "px" } } },
                 number: { lineHeight: { $type: "number", $value: 1.5 } },
@@ -283,8 +277,8 @@ describe("AndroidTokenConverter composites", () => {
             .toContain("@dimen/primitive_number_line_height");
     });
 
-    it("decomposes a shadow into color and dimension resources", () => {
-        const outputs = convertTyped({
+    it("decomposes a shadow into color and dimension resources", async () => {
+        const outputs = await convertTyped({
             shadow: {
                 card: {
                     $type: "shadow",
@@ -304,8 +298,8 @@ describe("AndroidTokenConverter composites", () => {
             .toContain("<dimen name=\"shadow_card_blur\">4dp</dimen>");
     });
 
-    it("decomposes a border into color and width resources", () => {
-        const outputs = convertTyped({
+    it("decomposes a border into color and width resources", async () => {
+        const outputs = await convertTyped({
             border: {
                 subtle: {
                     $type: "border",
@@ -319,8 +313,8 @@ describe("AndroidTokenConverter composites", () => {
             .toContain("<dimen name=\"border_subtle_width\">1dp</dimen>");
     });
 
-    it("decomposes a transition into duration and delay resources", () => {
-        const out = convert({
+    it("decomposes a transition into duration and delay resources", async () => {
+        const out = await convert({
             transition: {
                 fade: {
                     $type: "transition",
@@ -336,8 +330,8 @@ describe("AndroidTokenConverter composites", () => {
         expect(out).toContain("<integer name=\"transition_fade_delay\">0</integer>");
     });
 
-    it("decomposes gradient stops by index", () => {
-        const outputs = convertTyped({
+    it("decomposes gradient stops by index", async () => {
+        const outputs = await convertTyped({
             gradient: {
                 brand: {
                     $type: "gradient",
@@ -364,32 +358,32 @@ describe("AndroidTokenConverter resource files", () => {
         },
     };
 
-    it("splits resources by root token group by default", () => {
-        const outputs = convertResources(LAYERED);
+    it("splits resources by root token group by default", async () => {
+        const outputs = await convertResources(LAYERED);
         expect(outputs.map((output) => output.filePath).sort())
             .toEqual(["values/primitive.xml", "values/semantic.xml"]);
     });
 
-    it("keeps resources of different types of one group in one file", () => {
-        const outputs = convertResources(LAYERED);
+    it("keeps resources of different types of one group in one file", async () => {
+        const outputs = await convertResources(LAYERED);
         const semantic = fileNamed(outputs, "values/semantic.xml");
         expect(semantic).toContain("<color name=\"semantic_color_primary\">");
         expect(semantic).toContain("<dimen name=\"semantic_space_md\">8dp</dimen>");
     });
 
-    it("splits resources by resource type for the type layout", () => {
-        const outputs = convertResources(LAYERED, {}, { layout: "type" });
+    it("splits resources by resource type for the type layout", async () => {
+        const outputs = await convertResources(LAYERED, {}, { layout: "type" });
         expect(outputs.map((output) => output.filePath).sort())
             .toEqual(["values/colors.xml", "values/dimens.xml"]);
     });
 
-    it("collects tokens declared at the document root under a shared file", () => {
-        const outputs = convertResources({ red: { $type: "color", $value: RED } });
+    it("collects tokens declared at the document root under a shared file", async () => {
+        const outputs = await convertResources({ red: { $type: "color", $value: RED } });
         expect(outputs.map((output) => output.filePath)).toEqual(["values/tokens.xml"]);
     });
 
-    it("opens a commented section per second-level token group", () => {
-        const out = convert({
+    it("opens a commented section per second-level token group", async () => {
+        const out = await convert({
             semantic: {
                 color: { primary: { $type: "color", $value: RED } },
                 space: { md: { $type: "dimension", $value: { value: 8, unit: "px" } } },
@@ -399,8 +393,8 @@ describe("AndroidTokenConverter resource files", () => {
         expect(out).toContain("<!-- semantic.space -->");
     });
 
-    it("renders the group description in the section header", () => {
-        const out = convert({
+    it("renders the group description in the section header", async () => {
+        const out = await convert({
             semantic: {
                 color: {
                     $description: "Semantic colors",
@@ -412,8 +406,8 @@ describe("AndroidTokenConverter resource files", () => {
         expect(out).toContain("Semantic colors");
     });
 
-    it("keeps resources of nested groups in the section their ancestor opened", () => {
-        const out = convert({
+    it("keeps resources of nested groups in the section their ancestor opened", async () => {
+        const out = await convert({
             semantic: {
                 color: {
                     background: { canvas: { $type: "color", $value: RED } },
@@ -425,19 +419,19 @@ describe("AndroidTokenConverter resource files", () => {
         expect(out).toContain("<!-- semantic.color -->");
     });
 
-    it("opens no section for tokens declared outside a group", () => {
-        const out = convert({ red: { $type: "color", $value: RED } });
+    it("opens no section for tokens declared outside a group", async () => {
+        const out = await convert({ red: { $type: "color", $value: RED } });
         expect(out).not.toContain("<!-- red");
     });
 
-    it("marks base document outputs as base", () => {
-        const outputs = convertResources({ color: { red: { $type: "color", $value: RED } } });
+    it("marks base document outputs as base", async () => {
+        const outputs = await convertResources({ color: { red: { $type: "color", $value: RED } } });
         expect(outputs[0].isBase).toBe(true);
         expect(outputs[0].themeName).toBe("base");
     });
 
-    it("throws from convertList when the output spans multiple files", () => {
-        expect(() => convert(LAYERED)).toThrow(/multiple resource files/);
+    it("throws from convertList when the output spans multiple files", async () => {
+        await expect(convert(LAYERED)).rejects.toThrow(/multiple resource files/);
     });
 });
 
@@ -445,19 +439,19 @@ describe("AndroidTokenConverter themes", () => {
     const BASE = { color: { bg: { $type: "color", $value: RED } } };
     const DARK = { color: { bg: { $type: "color", $value: { colorSpace: "srgb", components: [0, 0, 0] } } } };
 
-    it("writes the dark theme into values-night", () => {
-        const outputs = convertTyped(BASE, { dark: DARK });
+    it("writes the dark theme into values-night", async () => {
+        const outputs = await convertTyped(BASE, { dark: DARK });
         expect(fileNamed(outputs, "values-night/colors.xml"))
             .toContain("<color name=\"color_bg\">#ff000000</color>");
     });
 
-    it("writes other themes into a qualified values directory", () => {
-        const outputs = convertTyped(BASE, { red: DARK });
+    it("writes other themes into a qualified values directory", async () => {
+        const outputs = await convertTyped(BASE, { red: DARK });
         expect(outputs.some((output) => output.filePath === "values-red/colors.xml")).toBe(true);
     });
 
-    it("emits only the theme overrides, relying on resource qualifier fallback", () => {
-        const outputs = convertTyped(
+    it("emits only the theme overrides, relying on resource qualifier fallback", async () => {
+        const outputs = await convertTyped(
             {
                 color: {
                     bg: { $type: "color", $value: RED },
@@ -471,19 +465,15 @@ describe("AndroidTokenConverter themes", () => {
         expect(night).not.toContain("color_fg");
     });
 
-    it("marks theme outputs with their theme name", () => {
-        const outputs = convertTyped(BASE, { dark: DARK });
+    it("marks theme outputs with their theme name", async () => {
+        const outputs = await convertTyped(BASE, { dark: DARK });
         const night = outputs.find((output) => output.filePath === "values-night/colors.xml");
         expect(night?.themeName).toBe("dark");
         expect(night?.isBase).toBe(false);
     });
 
-    it("rejects convertList for multi-theme input", () => {
-        const reader = new DtcgJsonReader();
-        const list = new DtcgList(
-            reader.parse(JSON.stringify(BASE)),
-            new Map([["dark", reader.parse(JSON.stringify(DARK))]]),
-        );
+    it("rejects convertList for multi-theme input", async () => {
+        const list = await readDtcgList(BASE, { dark: DARK });
         expect(() => new AndroidTokenConverter().convertList(list)).toThrow(/multi-theme/);
     });
 });

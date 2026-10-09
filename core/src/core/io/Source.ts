@@ -3,8 +3,8 @@ import { readFile, writeFile } from "node:fs/promises";
 import { randomUUID } from "node:crypto";
 import path from "node:path";
 import { tmpdir } from "node:os";
-import { Format } from "#/core/io/Format";
-import { FormatDetector } from "#/core/io/FormatDetector";
+import type { FormatDescriptor } from "#/core/formats/FormatDescriptor";
+import { tokenFormats } from "#/core/formats/tokenFormats";
 import { stdin } from "#/core/io/Stdin";
 
 const CONTENT_PREFIX = "content:";
@@ -31,7 +31,7 @@ export class Source {
     readonly #type: SourceType;
     readonly #input: string;
     #content?: string;
-    #format?: Format;
+    #format?: FormatDescriptor;
     #filePath?: string;
 
     constructor(input: string) {
@@ -72,11 +72,11 @@ export class Source {
         return this.#type;
     }
 
-    async getFormat(): Promise<Format> {
+    async getFormat(): Promise<FormatDescriptor> {
         if (this.#format === undefined) {
             const content = await this.getContent();
             const filename = this.#type === SourceType.FILE ? this.#input : undefined;
-            this.#format = FormatDetector.detectWithContentAndFilename(content, filename);
+            this.#format = tokenFormats.detect(content, filename);
         }
         return this.#format;
     }

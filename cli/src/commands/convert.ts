@@ -2,10 +2,11 @@ import { Command } from "commander";
 import {
     AndroidTokenConverter,
     type AndroidTokenOutput,
-    DtcgChecker,
+    TokenChecker,
     DtcgList,
     DtcgListLoader,
-    Format,
+    PlatformFormat,
+    TokenFormat,
     type ScssTokenOutput,
     ScssTokenConverter,
 } from "@design-token-kit/core";
@@ -44,26 +45,26 @@ convertCommand
     .addHelpText("after", "\nExit status:\n  0  success\n  1  conversion failed")
     .action(async (files: string[], options: ConvertOptions) => {
         try {
-            const outform = options.outform ?? Format.CSS;
+            const outform = options.outform ?? PlatformFormat.CSS;
             validateFormatOptions(outform, options);
             const forcedFormat = options.inform !== undefined
                 ? toDocumentFormat(options.inform)
                 : undefined;
             if (forcedFormat === undefined) {
                 const sources = files.length > 0 ? files : ["-"];
-                const issues = await new DtcgChecker().validate(sources);
+                const issues = await new TokenChecker().check(sources);
                 printIssues(issues);
                 if (hasErrors(issues)) {
                     throw new Error("Token validation failed");
                 }
             }
             const list: DtcgList = await loadSources(files, forcedFormat);
-            if (outform === Format.ANDROID) {
+            if (outform === PlatformFormat.ANDROID) {
                 await writeAndroidOutputs(toAndroidOutputs(list, options), options.out);
                 return;
             }
 
-            if (outform === Format.SCSS && list.themes.size > 0) {
+            if (outform === PlatformFormat.SCSS && list.themes.size > 0) {
                 const outputs = new ScssTokenConverter({
                     separator: options.separator,
                 }).convertThemeList(list);
@@ -90,7 +91,7 @@ convertCommand
         }
     });
 
-async function loadSources(files: string[], forcedFormat?: Format): Promise<DtcgList> {
+async function loadSources(files: string[], forcedFormat?: TokenFormat): Promise<DtcgList> {
     const sources = files.length > 0 ? files : ["-"];
     return new DtcgListLoader().load(sources, forcedFormat);
 }

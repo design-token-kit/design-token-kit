@@ -3,23 +3,22 @@ import { mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { tmpdir } from "node:os";
 import { randomUUID } from "node:crypto";
-import { DtcgListLoader } from "#/core/io/DtcgListLoader";
-import { DtcgChecker } from "#/core/validation/DtcgChecker";
-import { TokenSyntaxError } from "#/core/io/DtcgListLoader";
+import { DtcgListLoader, TokenSyntaxError } from "#/core/io/DtcgListLoader";
+import { TokenChecker } from "#/core/check/TokenChecker";
 import { TokenStatsCalculator } from "#/core/stats/TokenStatsCalculator";
 import { TokenStatsBuilder } from "#/core/stats/TokenStatsBuilder";
 import { Dtcg } from "#/core/model/Dtcg";
 import { DtcgList } from "#/core/model/DtcgList";
 import { TokenGroup } from "#/core/model/TokenGroup";
 
-function mockChecker(validate: ReturnType<typeof vi.fn>): DtcgChecker {
-    return { validate } as unknown as DtcgChecker;
+function mockChecker(check: ReturnType<typeof vi.fn>): TokenChecker {
+    return { check } as unknown as TokenChecker;
 }
 
 function createStatsBuilder(): TokenStatsBuilder {
     return new TokenStatsBuilder(
         new DtcgListLoader(),
-        new DtcgChecker(),
+        new TokenChecker(),
         new TokenStatsCalculator(),
     );
 }
@@ -269,7 +268,7 @@ Themes 1:
         await expect(builder.collect(["tokens.json"])).rejects.toThrow("[bad-reference] tokens.json - Missing token");
     });
 
-    it("rethrows formatted token syntax errors from the loader", async () => {
+    it("reports read failures from the loader", async () => {
         const builder = new TokenStatsBuilder(
             {
                 load: vi.fn().mockRejectedValue(new TokenSyntaxError([

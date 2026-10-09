@@ -177,3 +177,33 @@ describe("CssTokenParser", () => {
         });
     });
 });
+
+describe("CssTokenParser.isCss", () => {
+    it("returns true for :root selector", () => {
+        expect(CssTokenParser.isCss(":root { --main: #fff; }")).toBe(true);
+    });
+
+    it("returns true for :root with spaces before", () => {
+        expect(CssTokenParser.isCss("  :root {\n    --main: #fff;\n  }")).toBe(true);
+    });
+
+    it("returns true for custom property declaration", () => {
+        expect(CssTokenParser.isCss("--main-color: #ff0000;")).toBe(true);
+    });
+
+    it("returns true for custom property with spaces", () => {
+        expect(CssTokenParser.isCss("  --spacing-md: 16px;")).toBe(true);
+    });
+
+    it("returns true for @layer at-rule", () => {
+        expect(CssTokenParser.isCss("@layer base {\n  html { }\n}")).toBe(true);
+    });
+
+    it("returns false for non-CSS content", () => {
+        expect(CssTokenParser.isCss("primitive:\n  color:\n    white: '#fff'")).toBe(false);
+    });
+
+    it("returns false for JSON content", () => {
+        expect(CssTokenParser.isCss('{"key": "value"}')).toBe(false);
+    });
+});

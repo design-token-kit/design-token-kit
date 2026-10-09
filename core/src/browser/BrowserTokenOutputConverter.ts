@@ -1,8 +1,9 @@
-import { DesignMdWriter } from "#/core/io/DesignMdWriter";
-import { DtcgJsonWriter } from "#/core/io/DtcgJsonWriter";
-import { DtcgToDesignMdMapper } from "#/core/io/DtcgToDesignMdMapper";
-import { Format } from "#/core/io/Format";
-import { HrdtTokenWriter } from "#/core/io/HrdtTokenWriter";
+import { DesignMdWriter } from "#/core/formats/design-md/DesignMdWriter";
+import { DtcgWriter } from "#/core/formats/dtcg/DtcgWriter";
+import { DtcgToDesignMdMapper } from "#/core/formats/design-md/DtcgToDesignMdMapper";
+import { TokenFormat } from "#/core/formats/TokenFormat";
+import { PlatformFormat } from "#/core/platforms/PlatformFormat";
+import { HrdtWriter } from "#/core/formats/hrdt/HrdtWriter";
 import type { Dtcg } from "#/core/model/Dtcg";
 import type { DtcgList } from "#/core/model/DtcgList";
 import { AndroidTokenConverter } from "#/core/platforms/android/AndroidTokenConverter";
@@ -40,27 +41,27 @@ export class BrowserTokenOutputConverter {
 type OutputStrategy = (list: DtcgList) => BrowserTokenOutput[];
 
 const CONVERTERS: Readonly<Record<BrowserOutputFormat, OutputStrategy>> = {
-    [Format.DTCG]: (list) => documentOutputs(list, "json", (document) => new DtcgJsonWriter().write(document)),
-    [Format.HRDT]: (list) => documentOutputs(list, "yaml", (document) => new HrdtTokenWriter().write(document)),
-    [Format.DESIGN_MD]: (list) => documentOutputs(
+    [TokenFormat.DTCG]: (list) => documentOutputs(list, "json", (document) => new DtcgWriter().write(document)),
+    [TokenFormat.HRDT]: (list) => documentOutputs(list, "yaml", (document) => new HrdtWriter().write(document)),
+    [TokenFormat.DESIGN_MD]: (list) => documentOutputs(
         new DtcgToDesignMdMapper().map(list), "md", (document) => new DesignMdWriter().write(document),
     ),
-    [Format.CSS]: (list) => [{ fileName: "tokens.css", content: new CssTokenConverter().convertList(list) }],
-    [Format.SCSS]: (list) => new ScssTokenConverter().convertThemeList(list).map((output) => ({
+    [PlatformFormat.CSS]: (list) => [{ fileName: "tokens.css", content: new CssTokenConverter().convertList(list) }],
+    [PlatformFormat.SCSS]: (list) => new ScssTokenConverter().convertThemeList(list).map((output) => ({
         fileName: `tokens.${output.themeName}.scss`,
         content: output.content,
         themeName: output.themeName,
     })),
-    [Format.TAILWIND_V4]: (list) => [{
+    [PlatformFormat.TAILWIND_V4]: (list) => [{
         fileName: "tokens.tailwind.css", content: new TailwindTokenConverter().convertList(list),
     }],
-    [Format.SWIFT_UI]: (list) => [{
+    [PlatformFormat.SWIFT_UI]: (list) => [{
         fileName: "DesignTokens.swift", content: new SwiftUiTokenConverter().convertList(list),
     }],
-    [Format.FIGMA_SCRIPT]: (list) => [{
+    [PlatformFormat.FIGMA_SCRIPT]: (list) => [{
         fileName: "tokens.figma.js", content: new FigmaScriptTokenConverter().convertList(list),
     }],
-    [Format.ANDROID]: (list) => new AndroidTokenConverter().convertResourceList(list).map((output) => ({
+    [PlatformFormat.ANDROID]: (list) => new AndroidTokenConverter().convertResourceList(list).map((output) => ({
         fileName: output.filePath,
         content: output.content,
         themeName: output.themeName,

@@ -1,5 +1,6 @@
 export { CheckScope } from "#/core/check/CheckScope";
-export { Format } from "#/core/io/Format";
+export { TokenFormat } from "#/core/formats/TokenFormat";
+export { PlatformFormat } from "#/core/platforms/PlatformFormat";
 export {
     BrowserTokenToolkit,
     BrowserTokenValidationError,

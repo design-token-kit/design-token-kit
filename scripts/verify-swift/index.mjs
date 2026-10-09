@@ -4,7 +4,7 @@ import { readFileSync, writeFileSync, mkdirSync, cpSync, rmSync } from "node:fs"
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { DtcgJsonReader, DtcgList, DtcgTokenSwiftUiConverter } from "@design-token-kit/core";
+import { DtcgReader, DtcgList, DtcgTokenSwiftUiConverter } from "@design-token-kit/core";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const root = resolve(here, "../..");
@@ -47,7 +47,7 @@ console.log(`Verifying tokens: ${basePath}${darkPath ? ` (+ dark theme: ${darkPa
 // theme, so the compile check exercises themed output, not just a single doc.
 let list;
 try {
-    const reader = new DtcgJsonReader();
+    const reader = new DtcgReader();
     const base = reader.parse(readFileSync(basePath, "utf8"));
     const themes = darkPath
         ? new Map([["dark", reader.parse(readFileSync(darkPath, "utf8"))]])

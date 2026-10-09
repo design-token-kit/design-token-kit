@@ -1,33 +1,23 @@
 import { Source } from "#/core/io/Source";
-import { DtcgJsonReader } from "#/core/io/DtcgJsonReader";
 import { DtcgList } from "#/core/model/DtcgList";
-import { Format } from "#/core/io/Format";
-import { HrdtTokenReader } from "#/core/io/HrdtTokenReader";
-import { DesignMdReader } from "#/core/io/DesignMdReader";
-import { DtcgSchemaValidator } from "#/core/validation/dtcg/DtcgSchemaValidator";
-import { HrdtTokenValidator } from "#/core/validation/hrdt/HrdtTokenValidator";
-import { DesignMdTokenValidator } from "#/core/validation/design-md/DesignMdTokenValidator";
+import { TokenFormat } from "#/core/formats/TokenFormat";
+import { tokenFormats } from "#/core/formats/tokenFormats";
+import { TokenFileName } from "#/core/formats/TokenFileName";
 import type { Dtcg } from "#/core/model/Dtcg";
-import type { TokenValidator } from "#/core/validation/TokenValidator";
 import type { CheckIssue } from "#/core/check/CheckIssue";
+import type { ReadResult, TokenReader } from "#/core/formats/TokenReader";
 
 /**
- * Loads and validates token sources, assembling a {@link DtcgList}.
+ * Loads token sources into a {@link DtcgList}.
  *
  * The first document is the base token set, subsequent documents are theme
  * overrides.
  *
- * Sources in different formats may be mixed.
+ * Sources in different formats may be mixed: each source is read by the format
+ * it is detected as.
  */
 export class DtcgListLoader {
-
-    readonly #validators: Map<Format, TokenValidator>;
-
-    readonly #parsers = new Map<Format, (source: Source) => Promise<Dtcg[]>>([
-        [Format.HRDT, async (source) => new HrdtTokenReader().parseAll(await source.getContent(), source.getInput())],
-        [Format.DTCG, async (source) => [new DtcgJsonReader().parse(await source.getContent(), source.getInput())]],
-        [Format.DESIGN_MD, async (source) => [new DesignMdReader().parse(await source.getContent(), source.getInput())]],
-    ]);
+    readonly #schema?: string;
 
     /**
      * @param schema - DTCG JSON Schema, one of:
@@ -40,120 +30,173 @@ export class DtcgListLoader {
      *   Defaults to the built-in "2025.10" schema.
      */
     constructor(schema?: string) {
-        this.#validators = new Map<Format, TokenValidator>([
-            [Format.HRDT, new HrdtTokenValidator()],
-            [Format.DTCG, new DtcgSchemaValidator(schema)],
-            [Format.DESIGN_MD, new DesignMdTokenValidator()],
-        ]);
+        this.#schema = schema;
     }
 
     /**
-     * Validates and loads all sources into a {@link DtcgList}.
+     * Reads all sources into a {@link DtcgList}.
+     *
+     * Every source is read, so the diagnostics cover all of them rather than
+     * stopping at the first that fails.
      *
      * @param sources - Paths to token files or {@code "-"} for stdin.
      * @param forcedFormat - When set, all sources are treated as this
      *   format instead of auto-detecting from content.
-     * @throws TokenSyntaxError when schema validation fails.
      */
-    async load(sources: string[], forcedFormat?: Format): Promise<DtcgList> {
-        return (await this.loadWithWarnings(sources, forcedFormat)).list;
+    async read(sources: string[], forcedFormat?: TokenFormat): Promise<LoadResult> {
+        const issues: CheckIssue[] = [];
+        const documents: Array<{ source: string; doc: Dtcg }> = [];
+        // One reader per format, so a run over many files reads each schema
+        // once rather than once per file.
+        const readers = new Map<TokenFormat, TokenReader>();
+
+        for (const input of sources) {
+            const source = new Source(input);
+            const format = forcedFormat !== undefined
+                ? tokenFormats.get(forcedFormat)
+                : await source.getFormat();
+            let reader = readers.get(format.format);
+            if (reader === undefined) {
+                reader = await format.createReader({ schema: this.#schema });
+                readers.set(format.format, reader);
+            }
+
+            const result = reader.read(await source.getContent(), source.getInput());
+            issues.push(...result.issues);
+            if (result.ok) {
+                documents.push(...result.documents.map((doc) => ({ source: source.getInput(), doc })));
+            }
+        }
+
+        if (issues.some((issue) => issue.severity === "error")) {
+            return loadFailed(issues);
+        }
+        return loadedList(this.#buildDtcgList(documents), issues);
     }
 
     /**
-     * Same as {@link load}, but also returns schema-stage warnings, such as
-     * DESIGN.md values that conversion ignores. Warnings do not stop loading.
+     * Reads all sources into a {@link DtcgList}, failing loudly.
      *
-     * @throws TokenSyntaxError when schema validation reports errors.
+     * @throws TokenSyntaxError when any source cannot be read.
      */
-    async loadWithWarnings(
-        sources: string[],
-        forcedFormat?: Format,
-    ): Promise<{ list: DtcgList; warnings: CheckIssue[] }> {
-        const sourceList = sources.map((s) => new Source(s));
-
-        const issues = await this.#validate(sourceList, forcedFormat);
-        if (issues.some((issue) => issue.severity === "error")) {
-            throw new TokenSyntaxError(issues);
+    async load(sources: string[], forcedFormat?: TokenFormat): Promise<DtcgList> {
+        const result = await this.read(sources, forcedFormat);
+        if (!result.ok) {
+            throw new TokenSyntaxError(result.issues);
         }
-
-        const allDocs = await this.#parse(sourceList, forcedFormat);
-        return { list: this.#buildDtcgList(allDocs), warnings: issues };
-    }
-
-    async #validate(sourceList: Source[], forcedFormat?: Format): Promise<CheckIssue[]> {
-        const issues: CheckIssue[] = [];
-        for (const source of sourceList) {
-            const format = forcedFormat ?? await source.getFormat();
-            const validator = this.#validators.get(format)!;
-            issues.push(...await validator.validate([source.getInput()]));
-        }
-        return issues;
-    }
-
-    async #parse(sourceList: Source[], forcedFormat?: Format): Promise<Array<{ source: string; doc: Dtcg }>> {
-        const allDocs = new Array<{ source: string; doc: Dtcg }>();
-        for (const source of sourceList) {
-            const format = forcedFormat ?? await source.getFormat();
-            const parser = this.#parsers.get(format)!;
-            for (const doc of await parser(source)) {
-                allDocs.push({ source: source.getInput(), doc });
-            }
-        }
-        return allDocs;
+        return result.list;
     }
 
     #buildDtcgList(allDocs: Array<{ source: string; doc: Dtcg }>): DtcgList {
         const [baseEntry, ...themeEntries] = allDocs;
-        const themes = new Map<string, Dtcg>();
-        themeEntries.forEach((entry, i) => {
-            // Documents of one multi-document source share its file name.
-            const name = extractThemeName(entry.source, i);
-            let uniqueName = name;
-            for (let suffix = 2; themes.has(uniqueName); suffix++) {
-                uniqueName = `${name}-${suffix}`;
-            }
-            themes.set(uniqueName, entry.doc);
-        });
+        const themes = new Map(
+            themeEntries.map((entry, i) => [
+                extractThemeName(entry.source, i),
+                entry.doc,
+            ]),
+        );
         return new DtcgList(baseEntry.doc, themes);
     }
 }
 
 /**
- * Thrown by {@link DtcgListLoader.load} when schema validation fails.
+ * Outcome of loading token sources: the assembled list, or why it could not be
+ * assembled.
  *
- * The {@link issues} field contains individual validation diagnostics.
+ * Shaped like {@link ReadResult}, for the same reason: the compiler refuses to
+ * read `list` until `ok` has been checked.
+ *
+ * Failing sources yield no list at all - one assembled from only the readable
+ * sources would silently lose tokens. Warnings do not fail a load, so they
+ * ride along with the successful branch.
+ */
+export type LoadResult = LoadSuccess | LoadFailure;
+
+/**
+ * A load that produced the assembled list.
+ */
+export interface LoadSuccess {
+    readonly ok: true;
+
+    /** The assembled list: a base document plus theme overrides. */
+    readonly list: DtcgList;
+
+    /**
+     * Warnings the sources raised without stopping the load - empty unless a
+     * format had something to report.
+     */
+    readonly issues: CheckIssue[];
+}
+
+/**
+ * A load that produced no list, and the diagnostics saying why.
+ */
+export interface LoadFailure {
+    readonly ok: false;
+
+    /** Why the sources could not be loaded; never empty. */
+    readonly issues: CheckIssue[];
+}
+
+/**
+ * A load that produced the assembled list.
+ */
+export function loadedList(list: DtcgList, issues: CheckIssue[] = []): LoadSuccess {
+    return { ok: true, list, issues };
+}
+
+/**
+ * A load that produced nothing, and the diagnostics saying why.
+ */
+export function loadFailed(issues: CheckIssue[]): LoadFailure {
+    return { ok: false, issues };
+}
+
+/**
+ * Thrown by {@link DtcgListLoader.load} when a source cannot be read.
+ *
+ * The {@link issues} field carries the diagnostics explaining why.
  */
 export class TokenSyntaxError extends Error {
     readonly issues: CheckIssue[];
 
     constructor(issues: CheckIssue[]) {
-        super("Schema validation failed");
+        // The diagnostics go into the message, not just the field: a handler
+        // that only prints `error.message` - which is what a CLI does - would
+        // otherwise report that something failed without saying what.
+        super(formatIssues(issues));
         this.name = "TokenSyntaxError";
         this.issues = issues;
     }
 
     formatIssues(): string {
-        return this.issues
-            .map((i) => `[${i.id}] ${i.sourcePath} - ${i.message}`)
-            .join("\n");
+        return formatIssues(this.issues);
     }
 }
 
-function extractThemeName(source: string, index?: number): string {
+/**
+ * Names the theme a source overrides.
+ *
+ * The name is read as `<role>[.theme].<format>`; a source carrying no theme -
+ * a base document listed after the first - is named by its role, so several
+ * such sources stay apart.
+ *
+ * Stdin has no name to read, so it is numbered by position.
+ */
+function extractThemeName(source: string, index: number): string {
     if (source === "-") {
-        return index !== undefined ? `stdin-${index + 1}` : "stdin";
-    }
-    const fileName = source.split("/").at(-1)?.split("\\").at(-1) ?? source;
-    const withoutExt = fileName.replace(/\.(json|ya?ml|design\.md|md)$/i, "");
-    const parts = withoutExt.split(".");
-
-    while (parts.length > 1 && isNonThemeSuffix(parts.at(-1)!)) {
-        parts.pop();
+        return `stdin-${index + 1}`;
     }
 
-    return parts.length > 1 ? parts.at(-1)! : withoutExt;
+    const name = TokenFileName.parse(source, tokenFormats);
+    return name.theme ?? name.role;
 }
 
-function isNonThemeSuffix(segment: string): boolean {
-    return segment === "dtcg" || segment === "hrdt" || segment === "valid" || segment === "invalid";
+/**
+ * Renders diagnostics as one message, a line per issue.
+ */
+function formatIssues(issues: CheckIssue[]): string {
+    return issues
+        .map((issue) => `[${issue.id}] ${issue.sourcePath} - ${issue.message}`)
+        .join("\n");
 }

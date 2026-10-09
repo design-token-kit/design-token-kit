@@ -1,10 +1,9 @@
 import { Source } from "#/core/io/Source";
-import { Format } from "#/core/io/Format";
 import type { CssTokenConverter } from "#/core/platforms/css/CssTokenConverter";
 import { CssTokenParser } from "#/core/showcase/CssTokenParser";
 import { TokenHtmlShowcase } from "#/core/showcase/TokenHtmlShowcase";
 import { TokenHtmlShowcaseRenderer } from "#/core/showcase/TokenHtmlShowcaseRenderer";
-import { TokenValidator } from "#/core/validation/TokenValidator";
+import { TokenChecker } from "#/core/check/TokenChecker";
 import type { CheckIssue } from "#/core/check/CheckIssue";
 
 /**
@@ -15,18 +14,18 @@ import type { CheckIssue } from "#/core/check/CheckIssue";
  * CSS parsing and HTML rendering to separate classes.
  */
 export class TokenHtmlShowcaseBuilder implements TokenHtmlShowcase {
-    readonly #validator: TokenValidator;
+    readonly #checker: TokenChecker;
     readonly #converter: Pick<CssTokenConverter, "convert">;
     readonly #parser: CssTokenParser;
     readonly #renderer: TokenHtmlShowcaseRenderer;
 
     constructor(
-        validator: TokenValidator,
+        checker: TokenChecker,
         converter: Pick<CssTokenConverter, "convert">,
         parser = new CssTokenParser(),
         renderer = new TokenHtmlShowcaseRenderer(),
     ) {
-        this.#validator = validator;
+        this.#checker = checker;
         this.#converter = converter;
         this.#parser = parser;
         this.#renderer = renderer;
@@ -38,9 +37,9 @@ export class TokenHtmlShowcaseBuilder implements TokenHtmlShowcase {
         }
 
         if (sources.length === 1) {
-            const source = new Source(sources[0]);
-            if (await source.getFormat() === Format.CSS) {
-                return this.#renderCss(await source.getContent());
+            const content = await new Source(sources[0]).getContent();
+            if (CssTokenParser.isCss(content)) {
+                return this.#renderCss(content);
             }
         }
 
@@ -48,7 +47,7 @@ export class TokenHtmlShowcaseBuilder implements TokenHtmlShowcase {
     }
 
     async #showcaseFromSources(sources: string[]): Promise<string> {
-        const issues = await this.#validator.validate(sources);
+        const issues = await this.#checker.check(sources);
         if (this.#hasValidationErrors(issues)) {
             throw new Error(this.#formatCheckIssues(issues));
         }

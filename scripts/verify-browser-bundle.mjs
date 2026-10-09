@@ -37,14 +37,14 @@ import {
     BrowserTokenToolkit,
     BrowserTokenValidationError,
     CheckScope,
-    Format,
+    TokenFormat,
     type BrowserTokenOutput,
     type BrowserTokenSet,
     type CheckIssue,
     type TokenStat,
 } from "./browser.js";
 
-const input: BrowserTokenSet = { base: { content: "{}", source: "tokens.json", format: Format.DTCG } };
+const input: BrowserTokenSet = { base: { content: "{}", source: "tokens.json", format: TokenFormat.DTCG } };
 const toolkit = new BrowserTokenToolkit();
 const issues: CheckIssue[] = toolkit.check(input, { scope: CheckScope.LINT, schema: "2025.10" });
 const outputs: BrowserTokenOutput[] = toolkit.convert(input, "showcase");

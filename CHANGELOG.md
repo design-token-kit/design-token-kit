@@ -2,12 +2,122 @@
 
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
-## [Unreleased]
+## [2.0.0] - 2026-10-09
+
+This release contains breaking changes in the `@design-token-kit/core` API.
+The CLI is unchanged.
 
 ### Changed
 
+- **BREAKING** A reader is built by a factory. `new` no longer defaults to
+  anything - it now requires a `SchemaValidator`.
+  ```ts
+  // before
+  const reader = new DtcgJsonReader();
+
+  // after
+  // A reader validating against the built-in schema (the default)
+  const reader = await DtcgReader.create();
+  // A reader validating against the schema you name
+  const reader = await DtcgReader.create("./my-schema");
+  // A reader that skips schema validation
+  const reader = DtcgReader.noSchema();
+  ```
+- **BREAKING** Readers return a result instead of throwing. `parse()`,
+  `parseAll()` and `parseRaw()` become a single `read()`: check `ok`, then take
+  `documents` or `issues`. `read()` always answers with a list, so a
+  multi-document HRDT source needs no separate call.
+  ```ts
+  // before
+  const doc = reader.parse(json);
+
+  // after
+  const result = reader.read(json);
+  const doc = result.ok ? result.documents[0] : undefined;
+  ```
+- **BREAKING** `DtcgListLoader.read()` returns `LoadResult` instead of throwing
+  `TokenSyntaxError`. `load()` still throws, for callers that want the loud
+  form.
+- **BREAKING** `FormatDescriptor.createReader()` is asynchronous. This only
+  affects a `FormatDescriptor` you wrote yourself.
+  ```ts
+  // before
+  createReader: (options) => new DtcgJsonReader(options?.schema),
+
+  // after
+  createReader: () => HrdtReader.create(),
+  ```
+- **BREAKING** Readers and writers are named after their format alone:
+  `DtcgJsonReader` becomes `DtcgReader`, `HrdtTokenReader` becomes
+  `HrdtReader`, and likewise for the writers and the reader error types.
+- **BREAKING** `DtcgChecker.validate()` becomes `TokenChecker.check()`.
+- **BREAKING** `Format` splits into `TokenFormat` (three readable formats) and
+  `PlatformFormat` (six output formats).
+- Theme names are read as `<role>[.theme].<format>`. `sample.dtcg.json` is now
+  a base document rather than a theme named `dtcg`, and `sample.dark.design.md`
+  is a theme named `dark` rather than `dark.design`.
 - The `missing-description` lint check is now opt-in and no longer runs by
   default with `--scope lint`.
+- A source that fails validation yields no document at all. It used to come
+  back as a partial model with its broken tokens dropped.
+- A broken source reports every error at once instead of stopping at the
+  first. HRDT diagnostics carry a line and column, DTCG diagnostics carry the
+  token path.
+- A token that cannot be read is reported under an id naming its type:
+  `invalid-color`, `invalid-dimension`, `invalid-font-weight` and so on, plus
+  `invalid-reference`, `missing-token-type` and `unknown-token-type`. The same
+  ids serve every format.
+- **BREAKING** `DtcgReaderError`, `HrdtReaderError` and `DesignMdReaderError`
+  take the diagnostic id before the message: `new DtcgReaderError(id, message)`.
+
+### Added
+
+- `tokenFormats` - the registry of readable formats. Ask it for a reader or a
+  writer instead of naming the class: `tokenFormats.get(format)`.
+- `FormatDescriptor` - the declaration of one token format: how to recognise
+  it, read it and write it. Implement it and register it to add a format.
+- `TokenFileName` - reads `<role>[.theme].<format>` from a file name.
+- `DtcgReader.create()`, and the same on the other two readers - builds a
+  reader that validates against the format's own JSON Schema. It also takes a
+  built-in schema name or a path to a schema of your own.
+- `DtcgReader.noSchema()`, and the same on the other two readers - builds a
+  reader that checks the token model but no JSON Schema, for an environment
+  that cannot load one, such as a browser bundle.
+- `ReadResult` / `ReadSuccess` / `ReadFailure` and `LoadResult` / `LoadSuccess`
+  / `LoadFailure` - the types `read()` and `DtcgListLoader.read()` return.
+- `SchemaValidator` is now an interface. `AjvSchemaValidator` implements it
+  over a schema held in memory, `noSchemaValidator` checks nothing.
+- `TokenReadError` - the base of the reader errors, carrying the diagnostic
+  `id` next to the message.
+
+### Removed
+
+- **BREAKING** `TokenValidator`, `DtcgSchemaValidator`, `HrdtTokenValidator`,
+  and `DesignMdTokenValidator` - each format validates itself while reading.
+  Use `TokenChecker` for files, or a reader for content already in memory. For
+  schema validation alone, as `DtcgSchemaValidator` did:
+  ```ts
+  // before
+  const issues = await new DtcgSchemaValidator().validate(sources);
+
+  // after
+  const issues = await new TokenChecker({ scope: CheckScope.SCHEMA }).check(sources);
+  ```
+- **BREAKING** `FormatDetector` - use `tokenFormats.detect()`.
+- **BREAKING** `TokenFile` and `TokenFiles` - use `TokenFileName` to read a
+  theme from a file name, and `CssTokenConverter` for the CSS selector.
+- **BREAKING** `Format` - see the split above.
+
+### Fixed
+
+- The `@design-token-kit/core/browser` bundle is half the size: 620 KB down to
+  303 KB, 143 KB down to 63 KB gzipped.
+- `--schema` accepts a path to a single schema file where it used to demand a
+  directory and fail with `ENOTDIR`. Whether a schema is one document or
+  several now follows from the path rather than from the format.
+- `--schema` with a path that does not exist names that path in the error. It
+  used to be appended to the built-in schema directory, so the message pointed
+  at a directory the user never asked for.
 
 ## [1.10.0] - 2026-09-28
 

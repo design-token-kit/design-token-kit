@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from "vitest";
 import { TokenHtmlShowcaseBuilder } from "#/core/showcase/TokenHtmlShowcaseBuilder";
-import type { TokenValidator } from "#/core/validation/TokenValidator";
+import type { TokenChecker } from "#/core/check/TokenChecker";
 import type { CssTokenParser } from "#/core/showcase/CssTokenParser";
 import type { TokenHtmlShowcaseRenderer } from "#/core/showcase/TokenHtmlShowcaseRenderer";
 import type { CheckIssue } from "#/core/check/CheckIssue";
@@ -12,8 +12,8 @@ function makeBuilder(overrides: {
     css?: string;
     parsedHtml?: string;
 } = {}): TokenHtmlShowcaseBuilder {
-    const validator: TokenValidator = {
-        validate: vi.fn().mockResolvedValue(overrides.issues ?? []),
+    const checker = {
+        check: vi.fn().mockResolvedValue(overrides.issues ?? []),
     };
 
     const converter: CssSourceConverter = {
@@ -29,7 +29,7 @@ function makeBuilder(overrides: {
         renderPage: vi.fn().mockReturnValue(overrides.parsedHtml ?? "<html>showcase</html>"),
     } as unknown as TokenHtmlShowcaseRenderer;
 
-    return new TokenHtmlShowcaseBuilder(validator, converter, parser, renderer);
+    return new TokenHtmlShowcaseBuilder(checker as unknown as TokenChecker, converter, parser, renderer);
 }
 
 function issue(severity: "error" | "warning", message: string, id = "test-id"): CheckIssue {
@@ -50,47 +50,47 @@ describe("TokenHtmlShowcaseBuilder", () => {
 
     describe("showcase - JSON sources", () => {
         it("validates sources before converting", async () => {
-            const validator: TokenValidator = { validate: vi.fn().mockResolvedValue([]) };
+            const checker = { check: vi.fn().mockResolvedValue([]) };
             const converter: CssSourceConverter = { convert: vi.fn().mockResolvedValue(":root {}") };
             const parser = { parse: vi.fn().mockReturnValue({ entries: [], themes: [] }) } as unknown as CssTokenParser;
             const renderer = { renderPage: vi.fn().mockReturnValue("<html/>") } as unknown as TokenHtmlShowcaseRenderer;
 
-            await new TokenHtmlShowcaseBuilder(validator, converter, parser, renderer).showcase(SOURCES);
+            await new TokenHtmlShowcaseBuilder(checker as unknown as TokenChecker, converter, parser, renderer).showcase(SOURCES);
 
-            expect(validator.validate).toHaveBeenCalledWith(SOURCES);
+            expect(checker.check).toHaveBeenCalledWith(SOURCES);
         });
 
         it("converts sources to CSS when validation passes", async () => {
-            const validator: TokenValidator = { validate: vi.fn().mockResolvedValue([]) };
+            const checker = { check: vi.fn().mockResolvedValue([]) };
             const converter: CssSourceConverter = { convert: vi.fn().mockResolvedValue(":root {}") };
             const parser = { parse: vi.fn().mockReturnValue({ entries: [], themes: [] }) } as unknown as CssTokenParser;
             const renderer = { renderPage: vi.fn().mockReturnValue("<html/>") } as unknown as TokenHtmlShowcaseRenderer;
 
-            await new TokenHtmlShowcaseBuilder(validator, converter, parser, renderer).showcase(SOURCES);
+            await new TokenHtmlShowcaseBuilder(checker as unknown as TokenChecker, converter, parser, renderer).showcase(SOURCES);
 
             expect(converter.convert).toHaveBeenCalledWith(SOURCES);
         });
 
         it("parses the CSS returned by converter", async () => {
             const css = ":root { --color-brand: #fff; }";
-            const validator: TokenValidator = { validate: vi.fn().mockResolvedValue([]) };
+            const checker = { check: vi.fn().mockResolvedValue([]) };
             const converter: CssSourceConverter = { convert: vi.fn().mockResolvedValue(css) };
             const parser = { parse: vi.fn().mockReturnValue({ entries: [], themes: [] }) } as unknown as CssTokenParser;
             const renderer = { renderPage: vi.fn().mockReturnValue("<html/>") } as unknown as TokenHtmlShowcaseRenderer;
 
-            await new TokenHtmlShowcaseBuilder(validator, converter, parser, renderer).showcase(SOURCES);
+            await new TokenHtmlShowcaseBuilder(checker as unknown as TokenChecker, converter, parser, renderer).showcase(SOURCES);
 
             expect(parser.parse).toHaveBeenCalledWith(css);
         });
 
         it("renders HTML from parsed CSS and returns it", async () => {
             const parsedResult = { entries: [{ name: "--color-brand", value: "#fff", scope: "primitive" }], themes: [] };
-            const validator: TokenValidator = { validate: vi.fn().mockResolvedValue([]) };
+            const checker = { check: vi.fn().mockResolvedValue([]) };
             const converter: CssSourceConverter = { convert: vi.fn().mockResolvedValue(":root {}") };
             const parser = { parse: vi.fn().mockReturnValue(parsedResult) } as unknown as CssTokenParser;
             const renderer = { renderPage: vi.fn().mockReturnValue("<html>ok</html>") } as unknown as TokenHtmlShowcaseRenderer;
 
-            const result = await new TokenHtmlShowcaseBuilder(validator, converter, parser, renderer).showcase(SOURCES);
+            const result = await new TokenHtmlShowcaseBuilder(checker as unknown as TokenChecker, converter, parser, renderer).showcase(SOURCES);
 
             expect(renderer.renderPage).toHaveBeenCalledWith(parsedResult);
             expect(result).toBe("<html>ok</html>");
@@ -131,13 +131,13 @@ describe("TokenHtmlShowcaseBuilder", () => {
         });
 
         it("does not convert when validation has errors", async () => {
-            const validator: TokenValidator = { validate: vi.fn().mockResolvedValue([issue("error", "Bad token")]) };
+            const checker = { check: vi.fn().mockResolvedValue([issue("error", "Bad token")]) };
             const converter: CssSourceConverter = { convert: vi.fn().mockResolvedValue(":root {}") };
             const parser = { parse: vi.fn() } as unknown as CssTokenParser;
             const renderer = { renderPage: vi.fn() } as unknown as TokenHtmlShowcaseRenderer;
 
             try {
-                await new TokenHtmlShowcaseBuilder(validator, converter, parser, renderer).showcase(SOURCES);
+                await new TokenHtmlShowcaseBuilder(checker as unknown as TokenChecker, converter, parser, renderer).showcase(SOURCES);
             } catch {
                 // expected
             }
@@ -148,23 +148,23 @@ describe("TokenHtmlShowcaseBuilder", () => {
 
     describe("showcase - two JSON sources", () => {
         it("passes all sources to validator", async () => {
-            const validator: TokenValidator = { validate: vi.fn().mockResolvedValue([]) };
+            const checker = { check: vi.fn().mockResolvedValue([]) };
             const converter: CssSourceConverter = { convert: vi.fn().mockResolvedValue(":root {}") };
             const parser = { parse: vi.fn().mockReturnValue({ entries: [], themes: [] }) } as unknown as CssTokenParser;
             const renderer = { renderPage: vi.fn().mockReturnValue("<html/>") } as unknown as TokenHtmlShowcaseRenderer;
 
-            await new TokenHtmlShowcaseBuilder(validator, converter, parser, renderer).showcase(SOURCES);
+            await new TokenHtmlShowcaseBuilder(checker as unknown as TokenChecker, converter, parser, renderer).showcase(SOURCES);
 
-            expect(validator.validate).toHaveBeenCalledWith(SOURCES);
+            expect(checker.check).toHaveBeenCalledWith(SOURCES);
         });
 
         it("passes all sources to converter", async () => {
-            const validator: TokenValidator = { validate: vi.fn().mockResolvedValue([]) };
+            const checker = { check: vi.fn().mockResolvedValue([]) };
             const converter: CssSourceConverter = { convert: vi.fn().mockResolvedValue(":root {}") };
             const parser = { parse: vi.fn().mockReturnValue({ entries: [], themes: [] }) } as unknown as CssTokenParser;
             const renderer = { renderPage: vi.fn().mockReturnValue("<html/>") } as unknown as TokenHtmlShowcaseRenderer;
 
-            await new TokenHtmlShowcaseBuilder(validator, converter, parser, renderer).showcase(SOURCES);
+            await new TokenHtmlShowcaseBuilder(checker as unknown as TokenChecker, converter, parser, renderer).showcase(SOURCES);
 
             expect(converter.convert).toHaveBeenCalledWith(SOURCES);
         });

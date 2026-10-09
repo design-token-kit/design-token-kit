@@ -50,9 +50,24 @@ npm install @design-token-kit/core
 ## Quick Start
 
 ```ts
-import { CssTokenConverter, DtcgListLoader } from "@design-token-kit/core";
+import {
+  DtcgListLoader,
+  TokenChecker,
+  CssTokenConverter,
+  ScssTokenConverter,
+  SwiftUiTokenConverter,
+  AndroidTokenConverter,
+  createTokenHtmlShowcase,
+  createTokenStats,
+} from "@design-token-kit/core";
 
-const sources = ["./tokens.json"];
+const sources = ["./tokens.json", "./tokens.dark.yaml"];
+
+const issues = await new TokenChecker().check(sources);
+if (issues.some((issue) => issue.severity === "error")) {
+  console.error(issues);
+  process.exit(1);
+}
 
 const list = await new DtcgListLoader().load(sources);
 const css = new CssTokenConverter().convertList(list);
@@ -153,12 +168,13 @@ write a parsed document back to any supported source format.
 
 ## Main APIs
 
-* `DtcgChecker` - validate token sources with the full check pipeline
-* `DtcgSchemaValidator` - validate DTCG JSON against the schema only
-* `HrdtTokenValidator` - validate HRDT YAML token sources
+* `TokenChecker` - check token sources with the full pipeline
 * `DtcgListLoader` - load base and theme sources into a `DtcgList`
-* `DtcgJsonReader` / `HrdtTokenReader` / `DesignMdReader` - parse supported token formats
-* `DtcgJsonWriter` / `HrdtTokenWriter` / `DesignMdWriter` - export token documents
+* `tokenFormats` - the registry of readable formats
+* `FormatDescriptor` - everything one format declares: suffixes, detection, reader, writer
+* `TokenFileName` - read `<role>[.theme].<format>` from a file name
+* `DtcgReader` / `HrdtReader` / `DesignMdReader` - read supported token formats
+* `DtcgWriter` / `HrdtWriter` / `DesignMdWriter` - export token documents
 * `DtcgToDesignMdMapper` - map DTCG tree to flat DESIGN.md layout
 * `TokenConverter` - common interface for platform converters
 * `CssTokenConverter` - generate CSS custom properties from tokens
@@ -200,44 +216,32 @@ migration:
 * `DtcgTokenSwiftUiConverter` -> `SwiftUiTokenConverter`
 * `ColorSwiftUiSerializer` -> `SwiftUiColorValueConverter`
 
-The root package import supports both names during migration:
+The package exports a single entry point, so both names are imported from the
+package root:
 
 ```ts
 import type { ScssTokenOutput, TokenScssOutput } from "@design-token-kit/core";
 ```
 
-Use the new primary root import in new code:
+Use the primary name in new code:
 
 ```ts
 import type { ScssTokenOutput } from "@design-token-kit/core";
 ```
 
-Where source deep imports are already supported by the consumer tooling, the
-old SCSS output path remains available during migration:
-
-```ts
-import type { TokenScssOutput } from "@design-token-kit/core/core/platforms/scss/TokenScssOutput";
-```
-
-Use the new primary deep import path in new code only if you already rely on
-source deep imports:
-
-```ts
-import type { ScssTokenOutput } from "@design-token-kit/core/core/platforms/scss/ScssTokenOutput";
-```
-
 ## Validation
 
-Use `DtcgChecker` when you want the full validation pass:
+Use `TokenChecker` when you want the full pass:
 
-- format/schema checks for DTCG JSON, HRDT YAML, and DESIGN.md
+- format/schema checks for DTCG JSON, HRDT YAML, and DESIGN.md, reported by
+  the format's own reader
 - semantic checks on the resolved token graph
 - optional lint checks when `scope` includes `CheckScope.LINT`
 
 ```ts
-import { DtcgChecker } from "@design-token-kit/core";
+import { TokenChecker } from "@design-token-kit/core";
 
-const issues = await new DtcgChecker().validate([
+const issues = await new TokenChecker().check([
   "./tokens.json",
   "./tokens.dark.json",
 ]);
@@ -252,8 +256,9 @@ for (const issue of issues) {
 }
 ```
 
-Use `DtcgSchemaValidator` when you only need DTCG schema validation
-without semantic checks.
+Format and schema errors come from the reader itself, so a source that fails
+them yields no document at all - a half-built model would make every reference
+into it look broken. Use `CheckScope` to run only the checks you want on top.
 
 ## Browser API
 
@@ -312,17 +317,48 @@ so only the first check pays the compilation cost.
 
 ## Document Conversion
 
-Use readers and writers to convert token documents between DTCG JSON
+Use readers and writers to convert token documents between DTCG JSON,
 HRDT YAML, and DESIGN.md.
+
+A reader validates its own format and returns a result rather than throwing.
+The result is a tagged union: `ok` says whether the source was read,
+`documents` lives on the branch where it was, and `issues` on the branch where
+it was not - so the compiler will not let you reach for either until you have
+checked. Every diagnostic a reader records stops the read, so a successful one
+has nothing left to report.
 
 ```ts
 import {
-  DtcgJsonReader,
-  HrdtTokenWriter,
+  DtcgReader,
+  HrdtWriter,
 } from "@design-token-kit/core";
 
-const doc = new DtcgJsonReader().parse(jsonString);
-const yaml = new HrdtTokenWriter().write(doc);
+const reader = await DtcgReader.create();
+const result = reader.read(jsonString);
+if (!result.ok) {
+  console.error(result.issues);
+  process.exit(1);
+}
+
+const yaml = new HrdtWriter().write(result.documents[0]);
+```
+
+Building the reader is asynchronous because it reads the schema from disk,
+once. Reading a document afterwards is synchronous. `DtcgReader.create` also
+takes a built-in schema name or a path to one of your own.
+
+To read without a schema - checking the token model but not the document
+structure - use `DtcgReader.noSchema()`. That is what the browser entry and
+the Figma plugin do, having no file system to read a schema from.
+
+To pick the format at run time rather than naming the reader, ask the
+registry:
+
+```ts
+import { tokenFormats, TokenFormat } from "@design-token-kit/core";
+
+const reader = await tokenFormats.get(TokenFormat.HRDT).createReader();
+const result = reader.read(yamlString);
 ```
 
 ## CSS Conversion
@@ -383,11 +419,26 @@ This returns one stylesheet per theme:
 - `dark`
 - any additional theme names derived from source file names
 
-Theme names are extracted from source file names after stripping technical
-suffixes such as `.dtcg`, `.hrdt`, `.valid`, and `.invalid`. For example:
+Theme names come from source file names, read as `<role>[.theme].<format>`:
 
-- `showcase.dark.valid.dtcg.json` -> `dark`
+- `tokens.json` -> base document
 - `tokens.dark.json` -> `dark`
+- `showcase.dark.dtcg.json` -> `dark`
+- `sample.dark.design.md` -> `dark`
+
+The format segment is optional - an extension already names the format while
+only one format claims it. Each format declares both forms, so `.json` and
+`.dtcg.json` are equally understood; spell the format out when a directory
+holds the same tokens in several formats. A segment no format declares is a
+theme like any other word, so `tokens.super_dtcg.json` yields theme
+`super_dtcg`.
+
+DESIGN.md is read from `.md` and from the compound `.design.md`. The latter is
+this project's own convention: the specification names only `DESIGN.md` and
+says nothing about themes or multiple files.
+
+A source with no theme segment is named by its role, so several base documents
+in one list stay apart.
 
 Use `convertList()` only for a single-document SCSS result. If the list
 contains themes, use `convertThemeList()` instead.
