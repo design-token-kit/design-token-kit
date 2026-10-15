@@ -2,7 +2,7 @@
 
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
-## [2.0.0] - 2026-10-09
+## [2.0.0] - 2026-10-15
 
 This release contains breaking changes in the `@design-token-kit/core` API.
 The CLI is unchanged.
