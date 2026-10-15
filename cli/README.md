@@ -9,6 +9,11 @@ https://github.com/design-token-kit/design-token-kit
 Website:
 https://design-token-kit.github.io/
 
+> **Upgrade notice for 2.0.0:** The CLI commands remain mostly compatible,
+> but the package uses the 2.0 Core validation pipeline. Read the
+> [1.x to 2.0 migration guide](https://design-token-kit.github.io/docs/migration/1.x-to-2.0/)
+> before upgrading scripts from 1.x.
+
 ## Features
 
 * **[DTCG 2025.10 check][dtcg]** - schema, model correctness, and lint

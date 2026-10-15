@@ -13,6 +13,10 @@ https://github.com/design-token-kit/design-token-kit
 Website:
 https://design-token-kit.github.io/
 
+> **Breaking changes in 2.0.0:** The Core API has breaking changes for 1.x
+> users. Read the [1.x to 2.0 migration guide](https://design-token-kit.github.io/docs/migration/1.x-to-2.0/)
+> before upgrading.
+
 ## Features
 
 * **[DTCG 2025.10 validation][dtcg]** - schema validation for DTCG JSON token
@@ -274,19 +278,24 @@ It bundles the DTCG, HRDT, and DESIGN.md schemas and never accesses paths,
 stdin, or temporary files.
 
 ```ts
-import { BrowserTokenToolkit, CheckScope, Format } from "@design-token-kit/core/browser";
+import {
+  BrowserTokenToolkit,
+  CheckScope,
+  PlatformFormat,
+  TokenFormat,
+} from "@design-token-kit/core/browser";
 
 const toolkit = new BrowserTokenToolkit();
 const input = {
   base: {
     source: "tokens.json",
-    format: Format.DTCG,
+    format: TokenFormat.DTCG,
     content: await file.text(),
   },
 };
 
 const issues = toolkit.check(input, { scope: CheckScope.LINT });
-const css = toolkit.convert(input, Format.CSS)[0]?.content;
+const css = toolkit.convert(input, PlatformFormat.CSS)[0]?.content;
 ```
 
 The browser entry accepts DTCG JSON, HRDT YAML, and DESIGN.md input.
