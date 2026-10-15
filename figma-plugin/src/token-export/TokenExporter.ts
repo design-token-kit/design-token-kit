@@ -245,12 +245,14 @@ async function readColorVariableTokens(
 
     const variablePathIndex = createVariablePathIndex(variables);
     const variableTokenTypeIndex = createVariableTokenTypeIndex(variables);
+    const variableIndex = createVariableIndex(variables);
     const modeExports = await createModeExports(variables, warnings);
     const files = modeExports.map((modeExport) => {
         const tokens = readVariableTokensForMode(
             variables,
             variablePathIndex,
             variableTokenTypeIndex,
+            variableIndex,
             modeExport,
             warnings,
         );
@@ -276,6 +278,7 @@ function readVariableTokensForMode(
     variables: Variable[],
     variablePathIndex: VariablePathIndex,
     variableTokenTypeIndex: VariableTokenTypeIndex,
+    variableIndex: VariableIndex,
     modeExport: ModeExport,
     warnings: string[],
 ): DtcgTokenEntry[] {
@@ -298,7 +301,14 @@ function readVariableTokensForMode(
         const modeId = getModeId(variable, modeExport);
         const tokenValue = modeId === undefined
             ? undefined
-            : toTokenValue(variable.valuesByMode[modeId], variablePathIndex, variableTokenTypeIndex, tokenType);
+            : toTokenValue(
+                variable.valuesByMode[modeId],
+                variablePathIndex,
+                variableTokenTypeIndex,
+                variableIndex,
+                modeExport,
+                tokenType,
+            );
         if (tokenValue === undefined) {
             if (modeExport.base) {
                 warnings.push(
@@ -457,6 +467,10 @@ function createVariableTokenTypeIndex(variables: Variable[]): VariableTokenTypeI
     }
 
     return index;
+}
+
+function createVariableIndex(variables: Variable[]): VariableIndex {
+    return new Map(variables.map((variable) => [variable.id, variable]));
 }
 
 function toTokenType(variable: Variable): DtcgVariableTokenType | undefined {
@@ -650,9 +664,11 @@ function getModeId(variable: Variable, modeExport: ModeExport): string | undefin
 }
 
 function toTokenValue(
-    value: VariableValue | undefined,
+    value: ExportVariableValue | undefined,
     variablePathIndex: VariablePathIndex,
     variableTokenTypeIndex: VariableTokenTypeIndex,
+    variableIndex: VariableIndex,
+    modeExport: ModeExport,
     tokenType: DtcgVariableTokenType,
 ): FigmaColor | number | string | undefined {
     if (value === undefined) {
@@ -663,6 +679,10 @@ function toTokenValue(
         const path = variablePathIndex.get(value.id);
         const aliasTokenType = variableTokenTypeIndex.get(value.id);
         return path === undefined || aliasTokenType !== tokenType ? undefined : toDtcgReference(path);
+    }
+
+    if (isComposedColorValue(value)) {
+        return tokenType === "color" ? resolveComposedColor(value, variableIndex, modeExport) : undefined;
     }
 
     if (tokenType === "color" && isColorValue(value)) {
@@ -676,7 +696,7 @@ function toTokenValue(
     return undefined;
 }
 
-function isColorValue(value: VariableValue): value is FigmaColor {
+function isColorValue(value: ExportVariableValue): value is FigmaColor {
     return typeof value === "object"
         && value !== null
         && "r" in value
@@ -684,11 +704,94 @@ function isColorValue(value: VariableValue): value is FigmaColor {
         && "b" in value;
 }
 
-function isVariableAlias(value: VariableValue): value is VariableAlias {
+function isVariableAlias(value: ExportVariableValue): value is VariableAlias {
     return typeof value === "object"
         && value !== null
         && "type" in value
         && value.type === "VARIABLE_ALIAS";
+}
+
+function isComposedColorValue(value: ExportVariableValue): value is VariableComposedColor {
+    return typeof value === "object"
+        && value !== null
+        && "color" in value
+        && "opacity" in value;
+}
+
+function resolveComposedColor(
+    value: VariableComposedColor,
+    variableIndex: VariableIndex,
+    modeExport: ModeExport,
+): FigmaColor | undefined {
+    const color = resolveColorPart(value.color, variableIndex, modeExport, new Set());
+    const opacity = resolveOpacityPart(value.opacity, variableIndex, modeExport, new Set());
+    return color === undefined || opacity === undefined ? undefined : { ...color, a: opacity };
+}
+
+function resolveColorPart(
+    value: ExportVariableValue,
+    variableIndex: VariableIndex,
+    modeExport: ModeExport,
+    visitedVariableIds: Set<string>,
+): FigmaColor | undefined {
+    if (isComposedColorValue(value)) {
+        return resolveComposedColor(value, variableIndex, modeExport);
+    }
+
+    if (!isVariableAlias(value)) {
+        return isColorValue(value) ? value : undefined;
+    }
+
+    if (visitedVariableIds.has(value.id)) {
+        return undefined;
+    }
+
+    const variable = variableIndex.get(value.id);
+    if (variable === undefined) {
+        return undefined;
+    }
+
+    const modeId = getModeId(variable, modeExport);
+    const targetValue = modeId === undefined ? undefined : variable.valuesByMode[modeId];
+    if (targetValue === undefined) {
+        return undefined;
+    }
+
+    const nextVisitedVariableIds = new Set(visitedVariableIds).add(value.id);
+    return resolveColorPart(targetValue as ExportVariableValue, variableIndex, modeExport, nextVisitedVariableIds);
+}
+
+function resolveOpacityPart(
+    value: number | VariableAlias,
+    variableIndex: VariableIndex,
+    modeExport: ModeExport,
+    visitedVariableIds: Set<string>,
+): number | undefined {
+    if (typeof value === "number") {
+        return value;
+    }
+
+    if (visitedVariableIds.has(value.id)) {
+        return undefined;
+    }
+
+    const variable = variableIndex.get(value.id);
+    if (variable === undefined) {
+        return undefined;
+    }
+
+    const modeId = getModeId(variable, modeExport);
+    const targetValue = modeId === undefined ? undefined : variable.valuesByMode[modeId];
+    if (targetValue === undefined || typeof targetValue === "number") {
+        return targetValue;
+    }
+
+    if (!isVariableAlias(targetValue)) {
+        return undefined;
+    }
+
+    const nextVisitedVariableIds = new Set(visitedVariableIds).add(value.id);
+    return resolveOpacityPart(targetValue, variableIndex, modeExport, nextVisitedVariableIds);
 }
 
 function isVisibleSolidPaint(paint: Paint): paint is SolidPaint {
@@ -881,6 +984,15 @@ export type DtcgVariableTokenType =
 
 type FigmaColor = RGB & Partial<Pick<RGBA, "a">>;
 
+type VariableComposedColor = {
+    color: FigmaColor | VariableAlias;
+    opacity: number | VariableAlias;
+};
+
+type ExportVariableValue = VariableValue | VariableComposedColor;
+
 type VariablePathIndex = Map<string, string[]>;
 
 type VariableTokenTypeIndex = Map<string, DtcgVariableTokenType>;
+
+type VariableIndex = Map<string, Variable>;

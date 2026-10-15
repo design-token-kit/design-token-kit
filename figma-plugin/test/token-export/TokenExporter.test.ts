@@ -147,6 +147,62 @@ describe("TokenExporter", () => {
         ]));
     });
 
+    it("exports colors with opacity variable aliases", async () => {
+        const baseColor = colorVariable("base-color", "Primitive/Color/White", {
+            default: { r: 1, g: 1, b: 1, a: 1 },
+        });
+        const opacity = floatVariable("opacity", "Primitive/Opacity/Disabled", 0.6, ["OPACITY"]);
+        const disabled = colorVariable("disabled", "Primitive/Color/Disabled", {
+            default: {
+                color: { r: 1, g: 1, b: 1, a: 1 },
+                opacity: { type: "VARIABLE_ALIAS", id: "opacity" },
+            },
+        });
+        const disabledAlias = colorVariable("disabled-alias", "Semantic/Color/Disabled", {
+            default: {
+                color: { type: "VARIABLE_ALIAS", id: "base-color" },
+                opacity: { type: "VARIABLE_ALIAS", id: "opacity" },
+            },
+        });
+        stubFigma({
+            variables: {
+                getLocalVariablesAsync: vi.fn(async (type: string) =>
+                    type === "COLOR" ? [baseColor, disabled, disabledAlias] : [opacity]),
+                getLocalVariableCollectionsAsync: vi.fn().mockResolvedValue([]),
+            },
+        });
+
+        const result = await new TokenExporter().export();
+
+        expect(result.warnings).toEqual([]);
+        expect(result.files[0]?.tokens).toMatchObject({
+            primitive: {
+                color: {
+                    disabled: {
+                        $type: "color",
+                        $value: {
+                            colorSpace: "srgb",
+                            components: [1, 1, 1],
+                            alpha: 0.6,
+                        },
+                    },
+                },
+            },
+        });
+        expect(result.files[0]?.tokens).toMatchObject({
+            semantic: {
+                color: {
+                    disabled: {
+                        $value: {
+                            components: [1, 1, 1],
+                            alpha: 0.6,
+                        },
+                    },
+                },
+            },
+        });
+    });
+
     it("exports variables, aliases, and typography into the base file", async () => {
         const blue = colorVariable("blue", "Primitive/Color/Blue", { default: { r: 0, g: 0, b: 1, a: 1 } });
         const action = colorVariable("action", "Semantic/Color/Action", {
