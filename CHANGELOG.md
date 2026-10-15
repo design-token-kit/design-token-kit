@@ -110,6 +110,8 @@ The CLI is unchanged.
 
 ### Fixed
 
+- Figma color variables with composed opacity values now export as DTCG colors
+  with resolved alpha instead of being skipped with a warning (#7).
 - The `@design-token-kit/core/browser` bundle is half the size: 620 KB down to
   303 KB, 143 KB down to 63 KB gzipped.
 - `--schema` accepts a path to a single schema file where it used to demand a
