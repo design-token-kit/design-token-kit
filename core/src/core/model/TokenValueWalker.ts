@@ -1,6 +1,10 @@
 import { TokenNode } from "#/core/model/TokenNode";
 import { TokenReference } from "#/core/model/TokenReference";
 import { BorderValue } from "#/core/model/values/BorderValue";
+import { ColorValue } from "#/core/model/values/ColorValue";
+import { CubicBezierValue } from "#/core/model/values/CubicBezierValue";
+import { DimensionValue } from "#/core/model/values/DimensionValue";
+import { DurationValue } from "#/core/model/values/DurationValue";
 import { GradientStop } from "#/core/model/values/GradientValue";
 import { ShadowLayer } from "#/core/model/values/ShadowValue";
 import { StrokeStyleObject } from "#/core/model/values/StrokeStyleValue";
@@ -73,10 +77,55 @@ export function walkValue(value: unknown, visit: LeafVisitor): void {
     if (value instanceof BorderValue) {
         emit(value.color);
         emit(value.width);
-        emit(value.style);
-        if (value.style instanceof StrokeStyleObject) {
-            for (const d of value.style.dashArray) emit(d);
+        const style = value.style;
+        if (style instanceof StrokeStyleObject) {
+            if (style.dashArray instanceof TokenReference) {
+                emit(style.dashArray);
+            } else {
+                for (const d of style.dashArray) emit(d);
+            }
+            emit(style.lineCap);
+        } else {
+            emit(style);
         }
+        return;
+    }
+
+    if (value instanceof ColorValue) {
+        const colorSpace = value.colorSpace as unknown;
+        const components = value.components as unknown;
+        const hex = value.hex as unknown;
+        const fields = [
+            ...(colorSpace instanceof TokenReference ? [colorSpace] : []),
+            ...(components instanceof TokenReference ? [components] : components as unknown[]),
+            value.alpha as unknown,
+            ...(hex instanceof TokenReference ? [hex] : []),
+        ];
+        if (!fields.some(field => field instanceof TokenReference)) {
+            emit(value);
+            return;
+        }
+        for (const field of fields) emit(field);
+        return;
+    }
+
+    if (value instanceof DimensionValue) {
+        emit(value.value);
+        emit(value.unit);
+        return;
+    }
+
+    if (value instanceof DurationValue) {
+        emit(value.value);
+        emit(value.unit);
+        return;
+    }
+
+    if (value instanceof CubicBezierValue) {
+        emit(value.p1x);
+        emit(value.p1y);
+        emit(value.p2x);
+        emit(value.p2y);
         return;
     }
 
@@ -89,6 +138,18 @@ export function walkValue(value: unknown, visit: LeafVisitor): void {
 
     if (value instanceof ShadowLayer) {
         emitShadowLayer(value, emit);
+        emit(value.inset);
+        return;
+    }
+
+    if (value instanceof StrokeStyleObject) {
+        const dashArray = value.dashArray;
+        if (dashArray instanceof TokenReference) {
+            emit(dashArray);
+        } else {
+            for (const dash of dashArray) emit(dash);
+        }
+        emit(value.lineCap);
         return;
     }
 

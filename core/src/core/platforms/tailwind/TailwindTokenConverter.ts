@@ -1,6 +1,7 @@
 import { Dtcg } from "#/core/model/Dtcg";
 import { DtcgList } from "#/core/model/DtcgList";
 import { DtcgListLoader } from "#/core/io/DtcgListLoader";
+import { materializePropertyReferences } from "#/core/model/PropertyReferenceMaterializer";
 import type { TokenConverter } from "#/core/platforms/TokenConverter";
 import { TailwindDeclaration, TailwindTokenMapper } from "#/core/platforms/tailwind/TailwindTokenMapper";
 
@@ -55,8 +56,9 @@ export class TailwindTokenConverter implements TokenConverter {
     }
 
     convertList(list: DtcgList): string {
+        const materialized = materializePropertyReferences(list);
         const sections = ["@import 'tailwindcss';"];
-        const baseDeclarations = dedupeDeclarations(this.#mapper.collectDocument(list.base));
+        const baseDeclarations = dedupeDeclarations(this.#mapper.collectDocument(materialized.base));
         const baseBlock = renderBlock("@theme", baseDeclarations);
         if (baseBlock) {
             sections.push(baseBlock);
@@ -68,7 +70,7 @@ export class TailwindTokenConverter implements TokenConverter {
             }
         }
 
-        for (const [themeName, theme] of list.themes) {
+        for (const [themeName, theme] of materialized.themes) {
             const block = renderBlock(this.#resolveThemeSelector(themeName), dedupeDeclarations(this.#mapper.collectDocument(theme)));
             if (block) {
                 sections.push(block);

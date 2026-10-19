@@ -75,6 +75,30 @@ const VALID: string = source({
     semantic: { color: { action: { "$description": "Action color.", "$type": "color", "$value": "{primitive.color.brand}" } } },
 });
 
+const COMPOSED_COLOR_REFS: string = source({
+    primitive: {
+        color: {
+            blue: {
+                "$type": "color",
+                "$value": { colorSpace: "srgb", components: [0.1, 0.4, 0.9] },
+            },
+        },
+        opacity: { disabled: { "$type": "number", "$value": 0.6 } },
+    },
+    semantic: {
+        color: {
+            disabled: {
+                "$type": "color",
+                "$value": {
+                    colorSpace: "srgb",
+                    components: { "$ref": "#/primitive/color/blue/$value/components" },
+                    alpha: { "$ref": "#/primitive/opacity/disabled/$value" },
+                },
+            },
+        },
+    },
+});
+
 const INVALID_TAILWIND_NAMESPACE: string = source({
     layout: {
         desktop: {
@@ -160,6 +184,14 @@ describe("TokenChecker", () => {
         it("returns no issues for a valid document at lint scope", async () => {
             const issues = await new TokenChecker({ scope: CheckScope.LINT }).check([VALID]);
             expect(issues).toEqual([]);
+        });
+
+        it("accepts a semantic color composed from primitive property references", async () => {
+            const issues = await new TokenChecker({ scope: CheckScope.LINT }).check([COMPOSED_COLOR_REFS]);
+
+            expect(ids(issues)).not.toContain("raw-value-usage");
+            expect(ids(issues)).not.toContain("layer-reference");
+            expect(ids(issues)).not.toContain("bad-reference");
         });
     });
 

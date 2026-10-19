@@ -20,10 +20,10 @@ export const DEFAULT_REM_BASE = 16;
  * @see https://tr.designtokens.org/format/#dimension
  */
 export class DimensionValue {
-    readonly value: number;
-    readonly unit: DimensionUnit;
+    readonly value: number | TokenReference;
+    readonly unit: DimensionUnit | TokenReference;
 
-    constructor(value: number, unit: DimensionUnit) {
+    constructor(value: number | TokenReference, unit: DimensionUnit | TokenReference) {
         this.value = value;
         this.unit = unit;
     }
@@ -41,12 +41,25 @@ export class DimensionValue {
      * @param base - Pixel value of one `rem`.
      */
     toPixels(base: number = DEFAULT_REM_BASE): number {
+        if (this.value instanceof TokenReference || this.unit instanceof TokenReference) {
+            throw new Error("Cannot convert a dimension containing a property reference.");
+        }
         return this.unit === "rem" ? this.value * base : this.value;
     }
 
     toString(): string {
+        if (this.value instanceof TokenReference || this.unit instanceof TokenReference) {
+            throw new Error("Cannot stringify a dimension containing a property reference.");
+        }
         return `${this.value}${this.unit}`;
     }
+}
+
+/** Returns true when a dimension has no unresolved property references. */
+export function isConcreteDimensionValue(
+    value: DimensionValue,
+): value is DimensionValue & { readonly value: number; readonly unit: DimensionUnit } {
+    return typeof value.value === "number" && typeof value.unit === "string";
 }
 
 /** A dimension value or a reference to another dimension token. */

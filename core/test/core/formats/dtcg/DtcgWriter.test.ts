@@ -135,6 +135,77 @@ describe("DtcgWriter", () => {
             const obj = result["bg"] as Record<string, unknown>;
             expect(obj["$value"]).toBe("{primitive.color.white}");
         });
+
+        it("writes a token-level JSON Pointer reference as $ref", async () => {
+            const doc = await read(`{
+                "primitive": { "opacity": { "$type": "number", "$value": 0.5 } },
+                "semantic": { "opacity": { "$type": "number", "$ref": "#/primitive/opacity/$value" } }
+            }`);
+
+            const written = write(doc);
+            const semantic = (written["semantic"] as Record<string, unknown>)["opacity"] as Record<string, unknown>;
+
+            expect(semantic["$ref"]).toBe("#/primitive/opacity/$value");
+            expect(semantic).not.toHaveProperty("$value");
+        });
+
+        it("writes property references as JSON Pointer reference objects", async () => {
+            const doc = await read(`{
+                "primitive": {
+                    "color": { "blue": { "$type": "color", "$value": { "colorSpace": "srgb", "components": [0.1, 0.4, 0.9] } } },
+                    "opacity": { "disabled": { "$type": "number", "$value": 0.6 } }
+                },
+                "semantic": { "disabled": { "$type": "color", "$value": {
+                    "colorSpace": "srgb",
+                    "components": { "$ref": "#/primitive/color/blue/$value/components" },
+                    "alpha": { "$ref": "#/primitive/opacity/disabled/$value" }
+                } } }
+            }`);
+            const written = write(doc);
+            const semantic = (written["semantic"] as Record<string, unknown>)["disabled"] as Record<string, unknown>;
+            const value = semantic["$value"] as Record<string, unknown>;
+
+            expect(value["components"]).toEqual({ "$ref": "#/primitive/color/blue/$value/components" });
+            expect(value["alpha"]).toEqual({ "$ref": "#/primitive/opacity/disabled/$value" });
+        });
+
+        it("writes property references nested in composite values", async () => {
+            const doc = await read(`{
+                "primitive": {
+                    "color": { "red": { "$type": "color", "$value": { "colorSpace": "srgb", "components": [1, 0, 0] } } },
+                    "dimension": { "space": { "$type": "dimension", "$value": { "value": 4, "unit": "px" } } },
+                    "number": { "mid": { "$type": "number", "$value": 0.5 } },
+                    "font": { "body": { "$type": "fontFamily", "$value": "Arial" } }
+                },
+                "composite": {
+                    "gradient": { "$type": "gradient", "$value": [{
+                        "color": { "$ref": "#/primitive/color/red/$value" },
+                        "position": { "$ref": "#/primitive/number/mid/$value" }
+                    }] },
+                    "stroke": { "$type": "strokeStyle", "$value": {
+                        "dashArray": [{ "$ref": "#/primitive/dimension/space/$value" }],
+                        "lineCap": "round"
+                    } },
+                    "typography": { "$type": "typography", "$value": {
+                        "fontFamily": ["Inter", { "$ref": "#/primitive/font/body/$value" }],
+                        "fontSize": { "$ref": "#/primitive/dimension/space/$value" },
+                        "fontWeight": 500,
+                        "letterSpacing": { "$ref": "#/primitive/dimension/space/$value" },
+                        "lineHeight": 1.5
+                    } }
+                }
+            }`);
+            const written = write(doc);
+            const composite = written["composite"] as Record<string, unknown>;
+            const gradient = (composite["gradient"] as Record<string, unknown>)["$value"] as Array<Record<string, unknown>>;
+            const stroke = (composite["stroke"] as Record<string, unknown>)["$value"] as Record<string, unknown>;
+            const typography = (composite["typography"] as Record<string, unknown>)["$value"] as Record<string, unknown>;
+
+            expect(gradient[0]?.color).toEqual({ "$ref": "#/primitive/color/red/$value" });
+            expect(gradient[0]?.position).toEqual({ "$ref": "#/primitive/number/mid/$value" });
+            expect((stroke["dashArray"] as unknown[])[0]).toEqual({ "$ref": "#/primitive/dimension/space/$value" });
+            expect((typography["fontFamily"] as unknown[])[1]).toEqual({ "$ref": "#/primitive/font/body/$value" });
+        });
     });
 
     describe("writes groups", () => {
@@ -205,6 +276,60 @@ describe("DtcgWriter", () => {
     });
 
     describe("writes compound token values", () => {
+        it("writes references in primitive composite fields", async () => {
+            const doc = await read(`{
+                "primitive": {
+                    "number": { "four": { "$type": "number", "$value": 4 } },
+                    "dimension": { "space": { "$type": "dimension", "$value": {
+                        "value": { "$ref": "#/primitive/number/four/$value" },
+                        "unit": "px"
+                    } } },
+                    "strokeStyle": { "base": { "$type": "strokeStyle", "$value": {
+                        "dashArray": [{ "value": 8, "unit": "px" }],
+                        "lineCap": "round"
+                    } } }
+                },
+                "copy": {
+                    "dimension": { "$type": "dimension", "$value": {
+                        "value": { "$ref": "#/primitive/dimension/space/$value/value" },
+                        "unit": { "$ref": "#/primitive/dimension/space/$value/unit" }
+                    } },
+                    "stroke": { "$type": "strokeStyle", "$value": {
+                        "dashArray": { "$ref": "#/primitive/strokeStyle/base/$value/dashArray" },
+                        "lineCap": { "$ref": "#/primitive/strokeStyle/base/$value/lineCap" }
+                    } }
+                }
+            }`);
+            const written = write(doc);
+            const copy = written["copy"] as Record<string, unknown>;
+            const dimension = (copy["dimension"] as Record<string, unknown>)["$value"] as Record<string, unknown>;
+            const stroke = (copy["stroke"] as Record<string, unknown>)["$value"] as Record<string, unknown>;
+
+            expect(dimension["value"]).toEqual({ "$ref": "#/primitive/dimension/space/$value/value" });
+            expect(dimension["unit"]).toEqual({ "$ref": "#/primitive/dimension/space/$value/unit" });
+            expect(stroke["dashArray"]).toEqual({ "$ref": "#/primitive/strokeStyle/base/$value/dashArray" });
+            expect(stroke["lineCap"]).toEqual({ "$ref": "#/primitive/strokeStyle/base/$value/lineCap" });
+        });
+
+        it("writes a single shadow layer as an object", () => {
+            const shadow = new ShadowToken(new ShadowLayer(
+                new ColorValue("srgb", [0, 0, 0]),
+                new DimensionValue(0, "px"),
+                new DimensionValue(2, "px"),
+                new DimensionValue(4, "px"),
+                new DimensionValue(0, "px"),
+            ));
+            const result = write(new Dtcg(new TokenGroup({ children: new Map([["shadow", shadow]]) })));
+
+            expect((result.shadow as Record<string, unknown>)["$value"]).toEqual({
+                color: { colorSpace: "srgb", components: [0, 0, 0] },
+                offsetX: { value: 0, unit: "px" },
+                offsetY: { value: 2, unit: "px" },
+                blur: { value: 4, unit: "px" },
+                spread: { value: 0, unit: "px" },
+            });
+        });
+
         it("writes compound values and nested references in DTCG format", () => {
             const black = new ColorValue("srgb", [0, 0, 0], 0.5, "#000000");
             const pixel = new DimensionValue(2, "px");

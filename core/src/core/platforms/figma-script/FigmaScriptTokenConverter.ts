@@ -1,5 +1,6 @@
 import { Dtcg } from "#/core/model/Dtcg";
 import { DtcgList } from "#/core/model/DtcgList";
+import { materializePropertyReferences } from "#/core/model/PropertyReferenceMaterializer";
 import { TokenGroup } from "#/core/model/TokenGroup";
 import { TokenNode } from "#/core/model/TokenNode";
 import { TokenReference } from "#/core/model/TokenReference";
@@ -37,8 +38,9 @@ export class FigmaScriptTokenConverter implements TokenConverter {
     }
 
     convertList(list: DtcgList): string {
-        const plan = this.#buildPlan(list);
-        return renderScript(plan, list.base.source ?? "stdin");
+        const materialized = materializePropertyReferences(list);
+        const plan = this.#buildPlan(materialized);
+        return renderScript(plan, materialized.base.source ?? "stdin");
     }
 
     #buildPlan(list: DtcgList): ScriptPlan {

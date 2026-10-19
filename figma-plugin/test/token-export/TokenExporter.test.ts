@@ -183,7 +183,7 @@ describe("TokenExporter", () => {
                         $value: {
                             colorSpace: "srgb",
                             components: [1, 1, 1],
-                            alpha: 0.6,
+                            alpha: { $ref: "#/primitive/opacity/disabled/$value" },
                         },
                     },
                 },
@@ -194,13 +194,77 @@ describe("TokenExporter", () => {
                 color: {
                     disabled: {
                         $value: {
-                            components: [1, 1, 1],
-                            alpha: 0.6,
+                            colorSpace: { $ref: "#/primitive/color/white/$value/colorSpace" },
+                            components: { $ref: "#/primitive/color/white/$value/components" },
+                            alpha: { $ref: "#/primitive/opacity/disabled/$value" },
                         },
                     },
                 },
             },
         });
+    });
+
+    it("resolves composed color aliases to their final typed targets", async () => {
+        const baseColor = colorVariable("base-color", "Primitive/Color/White", {
+            default: { r: 1, g: 1, b: 1, a: 1 },
+        });
+        const aliasedColor = colorVariable("aliased-color", "Primitive/Color/Aliased", {
+            default: { type: "VARIABLE_ALIAS", id: "base-color" },
+        });
+        const composed = colorVariable("composed", "Semantic/Color/Composed", {
+            default: {
+                color: { type: "VARIABLE_ALIAS", id: "aliased-color" },
+                opacity: 0.5,
+            },
+        });
+        stubFigma({
+            variables: {
+                getLocalVariablesAsync: vi.fn(async (type: string) =>
+                    type === "COLOR" ? [baseColor, aliasedColor, composed] : []),
+                getLocalVariableCollectionsAsync: vi.fn().mockResolvedValue([]),
+            },
+        });
+
+        const result = await new TokenExporter().export();
+        expect(result.files[0]?.tokens).toMatchObject({
+            semantic: {
+                color: {
+                    composed: {
+                        $value: {
+                            colorSpace: { "$ref": "#/primitive/color/white/$value/colorSpace" },
+                            components: { "$ref": "#/primitive/color/white/$value/components" },
+                        },
+                    },
+                },
+            },
+        });
+    });
+
+    it("skips composed colors with a non-number opacity alias", async () => {
+        const color = colorVariable("color", "Primitive/Color/White", {
+            default: { r: 1, g: 1, b: 1, a: 1 },
+        });
+        const spacing = floatVariable("spacing", "Primitive/Spacing/4", 4, ["GAP"]);
+        const invalid = colorVariable("invalid", "Semantic/Color/Invalid", {
+            default: {
+                color: { type: "VARIABLE_ALIAS", id: "color" },
+                opacity: { type: "VARIABLE_ALIAS", id: "spacing" },
+            },
+        });
+        stubFigma({
+            variables: {
+                getLocalVariablesAsync: vi.fn(async (type: string) =>
+                    type === "COLOR" ? [color, invalid] : [spacing]),
+                getLocalVariableCollectionsAsync: vi.fn().mockResolvedValue([]),
+            },
+        });
+
+        const result = await new TokenExporter().export();
+
+        expect(result.files[0]?.tokens.semantic).toBeUndefined();
+        expect(result.warnings).toContain(
+            'Skipped color variable "Semantic/Color/Invalid" in tokens.json because it has no raw value or resolvable alias.',
+        );
     });
 
     it("exports variables, aliases, and typography into the base file", async () => {

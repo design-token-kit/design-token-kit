@@ -1,4 +1,9 @@
-import { ColorValue, type ColorComponent } from "#/core/model/values/ColorValue";
+import {
+    ColorValue,
+    isConcreteColorValue,
+    type ConcreteColorValue,
+    type ColorComponent,
+} from "#/core/model/values/ColorValue";
 
 const HEX_PATTERN = /^#?([0-9a-fA-F]{6})$/;
 const CHANNEL_MAX = 255;
@@ -15,10 +20,13 @@ const OPAQUE = "ff";
  */
 export class AndroidColorValueConverter {
     convert(color: ColorValue): string {
+        if (!isConcreteColorValue(color)) {
+            throw new Error("Cannot convert a color containing a property reference.");
+        }
         return `#${this.#alpha(color.alpha)}${this.#rgb(color)}`;
     }
 
-    #rgb(color: ColorValue): string {
+    #rgb(color: ConcreteColorValue): string {
         return this.#fromComponents(color.components)
             ?? this.#fromHex(color.hex)
             ?? "000000";

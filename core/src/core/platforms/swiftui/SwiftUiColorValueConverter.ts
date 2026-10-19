@@ -1,4 +1,9 @@
-import { ColorValue, type ColorComponent, type ColorSpace } from "#/core/model/values/ColorValue";
+import {
+    ColorValue,
+    isConcreteColorValue,
+    type ColorComponent,
+    type ColorSpace,
+} from "#/core/model/values/ColorValue";
 
 const SPACE_MAP: Partial<Record<ColorSpace, string>> = {
     "srgb": ".sRGB",
@@ -16,7 +21,10 @@ const SPACE_MAP: Partial<Record<ColorSpace, string>> = {
  */
 export class SwiftUiColorValueConverter {
     convert(color: ColorValue): string {
-        const space = SPACE_MAP[color.colorSpace] ?? ".sRGB";
+        if (!isConcreteColorValue(color)) {
+            throw new Error("Cannot convert a color containing a property reference.");
+        }
+        const space = SPACE_MAP[color.colorSpace as ColorSpace] ?? ".sRGB";
         const [r, g, b] = color.components;
         const parts = [
             `${space}`,

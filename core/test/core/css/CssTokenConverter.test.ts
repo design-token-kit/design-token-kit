@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeAll } from "vitest";
 import { fileURLToPath } from "node:url";
 import { CssTokenConverter } from "#/core/platforms/css/CssTokenConverter";
+import { DtcgReader } from "#/core/formats/dtcg/DtcgReader";
 import { Dtcg } from "#/core/model/Dtcg";
 import { TokenGroup } from "#/core/model/TokenGroup";
 import { TokenNode } from "#/core/model/TokenNode";
@@ -127,6 +128,25 @@ describe("CssTokenConverter", () => {
 
     it("converts alias to var()", () => {
         expect(css).toContain("--semantic-color-bg-surface: var(--primitive-color-white)");
+    });
+
+    it("resolves property references inside a color", async () => {
+        const result = await DtcgReader.noSchema().read(`{
+            "primitive": {
+                "color": { "blue": { "$type": "color", "$value": { "colorSpace": "srgb", "components": [0.1, 0.4, 0.9] } } },
+                "opacity": { "disabled": { "$type": "number", "$value": 0.6 } }
+            },
+            "semantic": { "button": { "disabled": { "$type": "color", "$value": {
+                "colorSpace": "srgb",
+                "components": { "$ref": "#/primitive/color/blue/$value/components" },
+                "alpha": { "$ref": "#/primitive/opacity/disabled/$value" }
+            } } } }
+        }`);
+        if (!result.ok) expect.fail(result.issues.map(issue => issue.message).join("\n"));
+
+        const output = converter.convertDocument(result.documents[0]);
+
+        expect(output).toContain("--semantic-button-disabled: color(srgb 0.1 0.4 0.9 / 0.6)");
     });
 
     it("converts typography tokens to CSS custom properties", () => {

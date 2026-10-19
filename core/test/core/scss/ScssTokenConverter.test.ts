@@ -28,6 +28,7 @@ import { StrokeStyleObject } from "#/core/model/values/StrokeStyleValue";
 import { TransitionValue } from "#/core/model/values/TransitionValue";
 import { TypographyValue } from "#/core/model/values/TypographyValue";
 import { DtcgList } from "#/core/model/DtcgList";
+import { readDtcg } from "../../support/readDtcg";
 
 const FIXTURES = fileURLToPath(new URL("../css/fixtures", import.meta.url));
 const sources = [
@@ -109,6 +110,29 @@ it("converts a simple color token", () => {
             ["overlay", new ColorToken(new ColorValue("srgb", [0, 0, 0], 0.4, "#000000"))],
         ])));
         expect(result).toBe("$overlay: color(srgb 0 0 0 / 0.4);\n");
+    });
+
+    it("resolves color property references before rendering", async () => {
+        const doc = await readDtcg({
+            primitive: {
+                color: { red: { $type: "color", $value: { colorSpace: "srgb", components: [1, 0, 0] } } },
+                opacity: { half: { $type: "number", $value: 0.5 } },
+            },
+            semantic: {
+                color: {
+                    primary: {
+                        $type: "color",
+                        $value: {
+                            colorSpace: "srgb",
+                            components: { $ref: "#/primitive/color/red/$value/components" },
+                            alpha: { $ref: "#/primitive/opacity/half/$value" },
+                        },
+                    },
+                },
+            },
+        });
+
+        expect(converter.convertDocument(doc)).toContain("$semantic-color-primary: color(srgb 1 0 0 / 0.5);");
     });
 
     it("converts dimension to px", () => {

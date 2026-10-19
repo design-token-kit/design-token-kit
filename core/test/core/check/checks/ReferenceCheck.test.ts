@@ -7,6 +7,7 @@ import { TokenGroup } from "#/core/model/TokenGroup";
 import { TokenNode } from "#/core/model/TokenNode";
 import { TokenReference } from "#/core/model/TokenReference";
 import { ColorToken } from "#/core/model/tokens/ColorToken";
+import { NumberToken } from "#/core/model/tokens/NumberToken";
 import { AliasToken } from "#/core/model/tokens/AliasToken";
 import { ColorValue } from "#/core/model/values/ColorValue";
 
@@ -45,6 +46,17 @@ describe("ReferenceCheck", () => {
         expect(issues.some((i) => i.id === "circular-reference")).toBe(true);
     });
 
+    it("flags a circular property reference", () => {
+        const aComponents = TokenReference.parse({ "$ref": "#/b/$value/components" })!;
+        const bComponents = TokenReference.parse({ "$ref": "#/a/$value/components" })!;
+        const issues = run(group({
+            a: new ColorToken(new ColorValue("srgb", aComponents)),
+            b: new ColorToken(new ColorValue("srgb", bComponents)),
+        }));
+
+        expect(issues.some((i) => i.id === "circular-reference")).toBe(true);
+    });
+
     it("warns on a reference to a deprecated token", () => {
         const issues = run(group({
             old: new ColorToken(color(), undefined, true),
@@ -67,5 +79,35 @@ describe("ReferenceCheck", () => {
             brand: alias("red"),
         }));
         expect(issues).toEqual([]);
+    });
+
+    it("accepts a property reference to a token value", () => {
+        const opacity = new NumberToken(0.6);
+        const alpha = TokenReference.parse({ "$ref": "#/opacity/$value" })!;
+        const color = new ColorToken(new ColorValue("srgb", [0.1, 0.4, 0.9], alpha as unknown as number));
+        const issues = run(group({ opacity, color }));
+
+        expect(issues).toEqual([]);
+    });
+
+    it("flags a missing property reference", () => {
+        const alpha = TokenReference.parse({ "$ref": "#/missing/$value" })!;
+        const color = new ColorToken(new ColorValue("srgb", [0.1, 0.4, 0.9], alpha as unknown as number));
+        const issues = run(group({ color }));
+
+        expect(issues).toHaveLength(1);
+        expect(issues[0]?.id).toBe("bad-reference");
+        expect(issues[0]?.message).toContain("#/missing/$value");
+    });
+
+    it("warns when a property reference targets a deprecated token", () => {
+        const opacity = new NumberToken(0.6, undefined, true);
+        const alpha = TokenReference.parse({ "$ref": "#/opacity/$value" })!;
+        const color = new ColorToken(new ColorValue("srgb", [0.1, 0.4, 0.9], alpha as unknown as number));
+        const issues = run(group({ opacity, color }));
+
+        expect(issues).toHaveLength(1);
+        expect(issues[0]?.id).toBe("deprecated-reference");
+        expect(issues[0]?.severity).toBe("warning");
     });
 });

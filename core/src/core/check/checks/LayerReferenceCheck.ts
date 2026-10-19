@@ -32,7 +32,8 @@ export class LayerReferenceCheck extends TokenCheck {
 
         const issues: CheckIssue[] = [];
         for (const ref of refs) {
-            const toLayer = ctx.layers.layerOf(ref.path);
+            const target = ctx.resolve(ref);
+            const toLayer = target === undefined ? undefined : ctx.layers.layerOf(target.path);
             if (toLayer === undefined) continue;
             if (ctx.layers.isAllowedEdge(fromLayer, toLayer)) continue;
 
@@ -44,7 +45,7 @@ export class LayerReferenceCheck extends TokenCheck {
                 id: this.id,
                 severity: this.defaultSeverity,
                 tokenPath: path,
-                message: `${path.toString()} (${fromLayer}) references {${ref.value}} (${toLayer}); ${allowedHint}`,
+                message: `${path.toString()} (${fromLayer}) references ${ref.toString()} (${toLayer}); ${allowedHint}`,
             });
         }
         return issues;

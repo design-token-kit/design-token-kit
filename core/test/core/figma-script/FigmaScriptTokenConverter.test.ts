@@ -58,6 +58,34 @@ describe("FigmaScriptTokenConverter", () => {
         expect(semantic?.values["Light"]).toEqual({ alias: "primitive.color.brand" });
     });
 
+    it("resolves color property references before creating Figma values", async () => {
+        const script = await convert({
+            primitive: {
+                color: { red: color([1, 0, 0]) },
+                opacity: { half: { $type: "number", $value: 0.5 } },
+            },
+            semantic: {
+                color: {
+                    primary: {
+                        $type: "color",
+                        $value: {
+                            colorSpace: "srgb",
+                            components: { $ref: "#/primitive/color/red/$value/components" },
+                            alpha: { $ref: "#/primitive/opacity/half/$value" },
+                        },
+                    },
+                },
+            },
+        });
+        const variables = readData(script, "VARIABLES") as Array<{
+            path: string;
+            values: Record<string, unknown>;
+        }>;
+
+        expect(variables.find((entry) => entry.path === "semantic.color.primary")?.values["Light"])
+            .toEqual({ value: { r: 1, g: 0, b: 0, a: 0.5 } });
+    });
+
     it("orders an alias target before the variable pointing at it", async () => {
         const variables = readData(await convert(LAYERED), "VARIABLES") as Array<{ path: string }>;
         const paths = variables.map((entry) => entry.path);

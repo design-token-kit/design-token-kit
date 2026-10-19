@@ -14,7 +14,7 @@ export class ShadowLayer {
     readonly blur: DimensionOrReference;
     readonly spread: DimensionOrReference;
     /** When true, renders as an inner shadow. Defaults to false. */
-    readonly inset: boolean;
+    readonly inset: boolean | TokenReference;
 
     constructor(
         color: ColorOrReference,
@@ -22,7 +22,7 @@ export class ShadowLayer {
         offsetY: DimensionOrReference,
         blur: DimensionOrReference,
         spread: DimensionOrReference,
-        inset = false,
+        inset: boolean | TokenReference = false,
     ) {
         this.color = color;
         this.offsetX = offsetX;

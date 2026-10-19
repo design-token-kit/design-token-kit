@@ -80,6 +80,7 @@ export class CheckRunner {
             layers: this.#layers,
             walkValue: walkTokenValue,
             resolve: (ref) => doc.resolveRef(ref, base),
+            resolveValue: (ref) => doc.resolveReferenceValue(ref, base),
             resolveChain: (ref) => doc.resolveChain(ref, base),
         };
     }

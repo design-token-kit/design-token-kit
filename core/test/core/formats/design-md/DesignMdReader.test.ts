@@ -138,7 +138,7 @@ colors:
             const token = getGroup(doc, "colors").get("accent") as ColorToken;
             const value = token.value as ColorValue;
             expect(value.colorSpace).toBe("hsl");
-            expect(value.components[0]).toBe(210);
+            expect(value.components).toEqual([210, 7, 11]);
         });
 
         it("parses oklch() color", async () => {

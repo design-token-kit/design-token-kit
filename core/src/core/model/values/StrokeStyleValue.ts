@@ -30,10 +30,10 @@ export type LineCap = "round" | "butt" | "square";
  */
 export class StrokeStyleObject {
     /** Alternating dash and gap lengths. */
-    readonly dashArray: DimensionOrReference[];
-    readonly lineCap: LineCap;
+    readonly dashArray: DimensionOrReference[] | TokenReference;
+    readonly lineCap: LineCap | TokenReference;
 
-    constructor(dashArray: DimensionOrReference[], lineCap: LineCap) {
+    constructor(dashArray: DimensionOrReference[] | TokenReference, lineCap: LineCap | TokenReference) {
         this.dashArray = dashArray;
         this.lineCap = lineCap;
     }

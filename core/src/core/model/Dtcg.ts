@@ -83,8 +83,32 @@ export class Dtcg {
      *   does not resolve.
      */
     resolveRef(ref: TokenReference, base?: Dtcg): { node: TokenGroup | TokenNode<unknown>; path: TokenPath } | undefined {
-        const node = this.#resolveRef(ref, base);
-        return node === undefined ? undefined : { node, path: ref.path };
+        if (ref.isPropertyReference || ref.isTokenReference) {
+            const target = this.#resolveJsonPointer(ref.pointer!, base);
+            return target?.node === undefined || target.nodePath === undefined
+                ? undefined
+                : { node: target.node, path: target.nodePath };
+        }
+
+        const path = ref.path!;
+        const node = this.#resolveAlias(path, base);
+        return node === undefined ? undefined : { node, path };
+    }
+
+    /**
+     * Resolves a reference to its value.
+     *
+     * Property references return the addressed value while aliases return the
+     * referenced token value without following alias chains.
+     */
+    resolveReferenceValue(ref: TokenReference, base?: Dtcg): unknown {
+        if (ref.isPropertyReference) return this.#resolveJsonPointer(ref.pointer!, base)?.value;
+        if (ref.isTokenReference) {
+            const target = this.#resolveJsonPointer(ref.pointer!, base)?.node;
+            return target instanceof TokenNode ? target.value : undefined;
+        }
+        const target = this.#resolveAlias(ref.path!, base);
+        return target instanceof TokenNode ? target.value : undefined;
     }
 
     /**
@@ -103,19 +127,91 @@ export class Dtcg {
     }
 
     #resolveRef(ref: TokenReference, base?: Dtcg): TokenGroup | TokenNode<unknown> | undefined {
-        const parts = ref.path.segments();
+        if (ref.isPropertyReference || ref.isTokenReference) return this.#resolveJsonPointer(ref.pointer!, base)?.node;
+        return this.#resolveAlias(ref.path!, base);
+    }
+
+    #resolveAlias(path: TokenPath, base?: Dtcg): TokenGroup | TokenNode<unknown> | undefined {
+        const parts = path.segments();
         let node: TokenGroup | TokenNode<unknown> | undefined = this.#root.get(parts[0]);
         if (node === undefined && base !== undefined) {
-            return base.#resolveRef(ref);
+            return base.#resolveAlias(path);
         }
         for (let i = 1; i < parts.length; i++) {
             if (!(node instanceof TokenGroup)) return undefined;
             node = node.get(parts[i]);
             if (node === undefined && base !== undefined) {
-                return base.#resolveRef(ref);
+                return base.#resolveAlias(path);
             }
         }
         return node;
+    }
+
+    #resolveJsonPointer(pointer: string, base?: Dtcg): JsonPointerTarget | undefined {
+        const segments = parseJsonPointer(pointer);
+        if (segments === undefined) return undefined;
+        const target = this.#resolvePointerSegments(segments);
+        if (target !== undefined || base === undefined) return target;
+        return base.#resolveJsonPointer(pointer);
+    }
+
+    #resolvePointerSegments(segments: string[]): JsonPointerTarget | undefined {
+        let value: unknown = this.#root;
+        let owner: TokenNode<unknown> | undefined;
+        let ownerPath: TokenPath | undefined;
+        let groupPath = TokenPath.root();
+
+        for (const segment of segments) {
+            if (value instanceof TokenGroup) {
+                if (segment === "$root") {
+                    value = value.root;
+                    if (value instanceof TokenNode) {
+                        owner = value;
+                        ownerPath = groupPath.child("$root");
+                    }
+                    continue;
+                }
+                const child = value.get(segment);
+                if (child === undefined) return undefined;
+                value = child;
+                if (child instanceof TokenNode) {
+                    owner = child;
+                    ownerPath = groupPath.child(segment);
+                } else {
+                    groupPath = groupPath.child(segment);
+                }
+                continue;
+            }
+
+            if (value instanceof TokenNode) {
+                if (segment !== "$value") return undefined;
+                value = value.value;
+                continue;
+            }
+
+            if (Array.isArray(value)) {
+                const index = Number(segment);
+                if (!Number.isInteger(index) || index < 0 || index >= value.length) return undefined;
+                value = value[index];
+                continue;
+            }
+
+            if (typeof value !== "object" || value === null || !(segment in value)) return undefined;
+            value = (value as Record<string, unknown>)[segment];
+        }
+
+        const node = value instanceof TokenGroup
+            ? value
+            : value instanceof TokenNode
+                ? value
+                : owner;
+        const nodePath = value instanceof TokenGroup
+            ? groupPath
+            : value instanceof TokenNode
+                ? ownerPath
+                : ownerPath;
+
+        return { value, owner, ownerPath, node, nodePath };
     }
 
     #resolveChain(ref: TokenReference, visited = new Set<string>(), base?: Dtcg): TokenGroup | TokenNode<unknown> | undefined {
@@ -127,5 +223,22 @@ export class Dtcg {
             return this.#resolveChain(target.value, visited, base);
         }
         return target;
+    }
+}
+
+interface JsonPointerTarget {
+    readonly value: unknown;
+    readonly owner: TokenNode<unknown> | undefined;
+    readonly ownerPath: TokenPath | undefined;
+    readonly node: TokenGroup | TokenNode<unknown> | undefined;
+    readonly nodePath: TokenPath | undefined;
+}
+
+function parseJsonPointer(pointer: string): string[] | undefined {
+    try {
+        return pointer.slice(2).split("/").map(segment =>
+            decodeURIComponent(segment).replace(/~1/g, "/").replace(/~0/g, "~"));
+    } catch {
+        return undefined;
     }
 }

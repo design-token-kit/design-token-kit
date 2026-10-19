@@ -1,7 +1,11 @@
 import { TokenReference } from "#/core/model/TokenReference";
-import type { ColorComponent, ColorValue } from "#/core/model/values/ColorValue";
+import {
+    isConcreteColorValue,
+    type ColorComponent,
+    type ColorValue,
+} from "#/core/model/values/ColorValue";
 import { ColorValue as ColorValueClass } from "#/core/model/values/ColorValue";
-import { DimensionValue } from "#/core/model/values/DimensionValue";
+import { DimensionValue, isConcreteDimensionValue } from "#/core/model/values/DimensionValue";
 import { ShadowLayer } from "#/core/model/values/ShadowValue";
 import { TypographyValue } from "#/core/model/values/TypographyValue";
 
@@ -107,6 +111,9 @@ export class FigmaScriptValueConverter {
      * variables, so the caller reports the loss rather than the converter.
      */
     convertColor(color: ColorValue): FigmaScriptColor {
+        if (!isConcreteColorValue(color)) {
+            throw new Error("Cannot convert a color containing a property reference.");
+        }
         const [r, g, b] = color.components;
 
         return {
@@ -121,6 +128,9 @@ export class FigmaScriptValueConverter {
      * Converts a dimension to a Figma float, resolving `rem` to pixels.
      */
     convertDimension(dimension: DimensionValue): number {
+        if (!isConcreteDimensionValue(dimension)) {
+            throw new Error("Cannot convert a dimension containing a property reference.");
+        }
         return dimension.unit === "rem" ? dimension.value * REM_IN_PX : dimension.value;
     }
 
@@ -158,7 +168,7 @@ export class FigmaScriptValueConverter {
      * typography does: an effect style stores values, not links.
      */
     convertShadow(layer: ShadowLayer): FigmaScriptShadow | undefined {
-        if (!(layer.color instanceof ColorValueClass)) {
+        if (!(layer.color instanceof ColorValueClass) || typeof layer.inset !== "boolean") {
             return undefined;
         }
 

@@ -130,9 +130,52 @@ describe("DtcgReader", () => {
             const value = token.value as ColorValue;
             expect(value.alpha).toBe(0.4);
         });
+
+        it("parses property references in color components and alpha", async () => {
+            const doc = await parse(`{
+                "primitive": {
+                    "color": { "blue": { "$type": "color", "$value": { "colorSpace": "srgb", "components": [0.1, 0.4, 0.9] } } },
+                    "opacity": { "disabled": { "$type": "number", "$value": 0.6 } }
+                },
+                "semantic": {
+                    "button": { "disabled": { "$type": "color", "$value": {
+                        "colorSpace": "srgb",
+                        "components": { "$ref": "#/primitive/color/blue/$value/components" },
+                        "alpha": { "$ref": "#/primitive/opacity/disabled/$value" }
+                    } } }
+                }
+            }`);
+            const value = getToken(doc, "semantic", "button", "disabled").value as ColorValue;
+
+            expect(value.components).toBeInstanceOf(TokenReference);
+            expect(value.alpha).toBeInstanceOf(TokenReference);
+            expect(doc.resolveReferenceValue(value.components as unknown as TokenReference)).toEqual([0.1, 0.4, 0.9]);
+            expect(doc.resolveReferenceValue(value.alpha as unknown as TokenReference)).toBe(0.6);
+        });
     });
 
     describe("dimension tokens", () => {
+        it("parses references in dimension fields", async () => {
+            const doc = await parse(`{
+                "primitive": {
+                    "number": { "four": { "$type": "number", "$value": 4 } },
+                    "dimension": {
+                        "space": {
+                            "$type": "dimension",
+                            "$value": {
+                                "value": { "$ref": "#/primitive/number/four/$value" },
+                                "unit": "px"
+                            }
+                        }
+                    }
+                }
+            }`);
+            const value = (getToken(doc, "primitive", "dimension", "space") as DimensionToken).value as DimensionValue;
+
+            expect(value.value).toBeInstanceOf(TokenReference);
+            expect(value.unit).toBe("px");
+        });
+
         it("parses dimension in px", async () => {
             const doc = await parse(`{
                 "$schema": "",
@@ -153,6 +196,14 @@ describe("DtcgReader", () => {
             }`);
             const token = getToken(doc, "fontFamily", "body") as FontFamilyToken;
             expect(token.value).toEqual(["Inter", "Arial", "sans-serif"]);
+        });
+
+        it("keeps a literal font family beginning with a JSON Pointer prefix", async () => {
+            const doc = await parse(`{
+                "fontFamily": { "literal": { "$type": "fontFamily", "$value": "#/brand" } }
+            }`);
+
+            expect((getToken(doc, "fontFamily", "literal") as FontFamilyToken).value).toBe("#/brand");
         });
     });
 
@@ -216,6 +267,25 @@ describe("DtcgReader", () => {
     });
 
     describe("strokeStyle tokens", () => {
+        it("parses references in dashArray and lineCap", async () => {
+            const doc = await parse(`{
+                "strokeStyle": {
+                    "base": { "$type": "strokeStyle", "$value": {
+                        "dashArray": [{ "value": 8, "unit": "px" }],
+                        "lineCap": "round"
+                    } },
+                    "copy": { "$type": "strokeStyle", "$value": {
+                        "dashArray": { "$ref": "#/strokeStyle/base/$value/dashArray" },
+                        "lineCap": { "$ref": "#/strokeStyle/base/$value/lineCap" }
+                    } }
+                }
+            }`);
+            const value = (getToken(doc, "strokeStyle", "copy") as StrokeStyleToken).value as StrokeStyleObject;
+
+            expect(value.dashArray).toBeInstanceOf(TokenReference);
+            expect(value.lineCap).toBeInstanceOf(TokenReference);
+        });
+
         it("parses keyword stroke style", async () => {
             const doc = await parse(`{
                 "$schema": "",
@@ -238,7 +308,7 @@ describe("DtcgReader", () => {
             expect(value).toBeInstanceOf(StrokeStyleObject);
             expect(value.lineCap).toBe("round");
             expect(value.dashArray).toHaveLength(2);
-            expect((value.dashArray[0] as DimensionValue).value).toBe(8);
+            expect((value.dashArray as Array<DimensionValue>)[0]?.value).toBe(8);
         });
     });
 
@@ -274,6 +344,46 @@ describe("DtcgReader", () => {
             const token = getToken(doc, "border", "focusRing") as BorderToken;
             const value = token.value as BorderValue;
             expect(value.style).toBeInstanceOf(StrokeStyleObject);
+        });
+
+        it("parses property references in composite fields", async () => {
+            const doc = await parse(`{
+                "primitive": {
+                    "color": { "red": { "$type": "color", "$value": { "colorSpace": "srgb", "components": [1, 0, 0] } } },
+                    "dimension": { "space": { "$type": "dimension", "$value": { "value": 4, "unit": "px" } } },
+                    "duration": { "fast": { "$type": "duration", "$value": { "value": 120, "unit": "ms" } } },
+                    "easing": { "standard": { "$type": "cubicBezier", "$value": [0.2, 0, 0, 1] } },
+                    "number": { "mid": { "$type": "number", "$value": 0.5 } }
+                },
+                "composite": {
+                    "border": { "$type": "border", "$value": {
+                        "color": { "$ref": "#/primitive/color/red/$value" },
+                        "width": { "$ref": "#/primitive/dimension/space/$value" },
+                        "style": { "dashArray": [{ "$ref": "#/primitive/dimension/space/$value" }], "lineCap": "round" }
+                    } },
+                    "transition": { "$type": "transition", "$value": {
+                        "duration": { "$ref": "#/primitive/duration/fast/$value" },
+                        "delay": { "$ref": "#/primitive/duration/fast/$value" },
+                        "timingFunction": { "$ref": "#/primitive/easing/standard/$value" }
+                    } },
+                    "gradient": { "$type": "gradient", "$value": [{
+                        "color": { "$ref": "#/primitive/color/red/$value" },
+                        "position": { "$ref": "#/primitive/number/mid/$value" }
+                    }] }
+                }
+            }`);
+
+            const border = (getToken(doc, "composite", "border") as BorderToken).value as BorderValue;
+            const transition = (getToken(doc, "composite", "transition") as TransitionToken).value as TransitionValue;
+            const gradient = (getToken(doc, "composite", "gradient") as GradientToken).value as GradientStop[];
+
+            expect(border.color).toBeInstanceOf(TokenReference);
+            expect(border.width).toBeInstanceOf(TokenReference);
+            expect((border.style as StrokeStyleObject).dashArray).toEqual([expect.any(TokenReference)]);
+            expect(transition.duration).toBeInstanceOf(TokenReference);
+            expect(transition.timingFunction).toBeInstanceOf(TokenReference);
+            expect(gradient[0]?.color).toBeInstanceOf(TokenReference);
+            expect(gradient[0]?.position).toBeInstanceOf(TokenReference);
         });
     });
 

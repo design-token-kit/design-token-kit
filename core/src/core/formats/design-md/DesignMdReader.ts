@@ -15,7 +15,7 @@ import { DimensionToken } from "#/core/model/tokens/DimensionToken";
 import { NumberToken } from "#/core/model/tokens/NumberToken";
 import { TypographyToken } from "#/core/model/tokens/TypographyToken";
 import { ColorValue } from "#/core/model/values/ColorValue";
-import { DimensionValue, DimensionUnit } from "#/core/model/values/DimensionValue";
+import { DimensionValue, DimensionUnit, isConcreteDimensionValue } from "#/core/model/values/DimensionValue";
 import { TypographyValue, FontWeightOrReference } from "#/core/model/values/TypographyValue";
 
 
@@ -367,9 +367,12 @@ export class DesignMdReader implements TokenReader {
         if (typeof raw !== "string" || !DIMENSION_RE.test(raw)) return this.#parseNumberOrRef(raw);
 
         const lineHeight = this.#parseDimension(raw);
+        if (!isConcreteDimensionValue(lineHeight)) {
+            throw new DesignMdReaderError("invalid-line-height", `Invalid lineHeight "${raw}".`);
+        }
         // "em" is already relative to fontSize; the model unit type omits it.
         if ((lineHeight.unit as string) === "em") return lineHeight.value;
-        if (!(fontSize instanceof DimensionValue)) {
+        if (!(fontSize instanceof DimensionValue) || !isConcreteDimensionValue(fontSize)) {
             throw new DesignMdReaderError(
                 "invalid-line-height",
                 `Cannot convert lineHeight "${raw}" to a multiplier: fontSize is a reference.`,

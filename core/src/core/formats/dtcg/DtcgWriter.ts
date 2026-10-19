@@ -79,7 +79,12 @@ export class DtcgWriter {
         if (token.deprecated !== undefined) obj["$deprecated"] = token.deprecated;
         if (token.extensions !== undefined) obj["$extensions"] = token.extensions;
 
-        obj["$value"] = this.#writeValue(token);
+        const value = token.value;
+        if (value instanceof TokenReference && (value.isPropertyReference || value.isTokenReference)) {
+            obj["$ref"] = value.pointer;
+        } else {
+            obj["$value"] = this.#writeValue(token);
+        }
         return obj;
     }
 
@@ -106,33 +111,55 @@ export class DtcgWriter {
 
     #writeColor(color: ColorValue): JsonObject {
         const obj: JsonObject = {
-            colorSpace: color.colorSpace,
-            components: color.components,
+            colorSpace: this.#writePropertyValue(color.colorSpace),
+            components: this.#writeColorComponents(color.components),
         };
-        if (color.alpha !== 1) obj["alpha"] = color.alpha;
-        if (color.hex !== undefined) obj["hex"] = color.hex;
+        if (color.alpha !== 1) obj["alpha"] = this.#writePropertyValue(color.alpha);
+        if (color.hex !== undefined) obj["hex"] = this.#writePropertyValue(color.hex);
         return obj;
     }
 
+    #writeColorComponents(components: unknown): unknown {
+        if (components instanceof TokenReference) return this.#writePropertyReference(components);
+        return (components as Array<string | number | TokenReference>)
+            .map(component => this.#writePropertyValue(component));
+    }
+
+    #writePropertyValue(value: string | number | boolean | TokenReference): unknown {
+        return value instanceof TokenReference ? this.#writePropertyReference(value) : value;
+    }
+
+    #writePropertyReference(reference: TokenReference): unknown {
+        return reference.isPropertyReference ? { "$ref": reference.pointer } : reference.toString();
+    }
+
     #writeDimension(dim: DimensionValue): JsonObject {
-        return { value: dim.value, unit: dim.unit };
+        return {
+            value: this.#writePropertyValue(dim.value),
+            unit: this.#writePropertyValue(dim.unit),
+        };
     }
 
     #writeDuration(dur: DurationValue): JsonObject {
-        return { value: dur.value, unit: dur.unit };
+        return {
+            value: this.#writePropertyValue(dur.value),
+            unit: this.#writePropertyValue(dur.unit),
+        };
     }
 
-    #writeCubicBezier(cb: CubicBezierValue): number[] {
-        return [cb.p1x, cb.p1y, cb.p2x, cb.p2y];
+    #writeCubicBezier(cb: CubicBezierValue): unknown[] {
+        return [cb.p1x, cb.p1y, cb.p2x, cb.p2y].map(value => this.#writePropertyValue(value));
     }
 
     #writeStrokeStyle(value: unknown): unknown {
         if (value instanceof StrokeStyleObject) {
             return {
-                dashArray: value.dashArray.map(d =>
-                    d instanceof TokenReference ? d.toString() : this.#writeDimension(d as DimensionValue)
-                ),
-                lineCap: value.lineCap,
+                dashArray: value.dashArray instanceof TokenReference
+                    ? this.#writePropertyReference(value.dashArray)
+                    : value.dashArray.map(d =>
+                        d instanceof TokenReference ? this.#writePropertyReference(d) : this.#writeDimension(d)
+                    ),
+                lineCap: this.#writePropertyValue(value.lineCap),
             };
         }
         return value;
@@ -157,7 +184,7 @@ export class DtcgWriter {
     #writeShadow(value: unknown): unknown {
         if (Array.isArray(value)) {
             return value.map(item =>
-                item instanceof TokenReference ? item.toString() : this.#writeShadowLayer(item as ShadowLayer)
+                item instanceof TokenReference ? this.#writePropertyReference(item) : this.#writeShadowLayer(item as ShadowLayer)
             );
         }
         return this.#writeShadowLayer(value as ShadowLayer);
@@ -171,13 +198,13 @@ export class DtcgWriter {
             blur: this.#writeDimensionOrRef(layer.blur),
             spread: this.#writeDimensionOrRef(layer.spread),
         };
-        if (layer.inset) obj["inset"] = layer.inset;
+        if (layer.inset) obj["inset"] = this.#writePropertyValue(layer.inset);
         return obj;
     }
 
     #writeGradient(stops: (GradientStop | TokenReference)[]): unknown[] {
         return stops.map(stop =>
-            stop instanceof TokenReference ? stop.toString() : this.#writeGradientStop(stop)
+            stop instanceof TokenReference ? this.#writePropertyReference(stop) : this.#writeGradientStop(stop)
         );
     }
 
@@ -199,35 +226,39 @@ export class DtcgWriter {
     }
 
     #writeColorOrRef(value: ColorValue | TokenReference): unknown {
-        return value instanceof TokenReference ? value.toString() : this.#writeColor(value);
+        return value instanceof TokenReference ? this.#writePropertyReference(value) : this.#writeColor(value);
     }
 
     #writeDimensionOrRef(value: DimensionValue | TokenReference): unknown {
-        return value instanceof TokenReference ? value.toString() : this.#writeDimension(value);
+        return value instanceof TokenReference ? this.#writePropertyReference(value) : this.#writeDimension(value);
     }
 
     #writeDurationOrRef(value: DurationValue | TokenReference): unknown {
-        return value instanceof TokenReference ? value.toString() : this.#writeDuration(value);
+        return value instanceof TokenReference ? this.#writePropertyReference(value) : this.#writeDuration(value);
     }
 
     #writeCubicBezierOrRef(value: CubicBezierValue | TokenReference): unknown {
-        return value instanceof TokenReference ? value.toString() : this.#writeCubicBezier(value);
+        return value instanceof TokenReference ? this.#writePropertyReference(value) : this.#writeCubicBezier(value);
     }
 
     #writeStrokeStyleOrRef(value: unknown): unknown {
-        if (value instanceof TokenReference) return value.toString();
+        if (value instanceof TokenReference) return this.#writePropertyReference(value);
         return this.#writeStrokeStyle(value);
     }
 
     #writeFontFamilyOrRef(value: unknown): unknown {
-        return value instanceof TokenReference ? value.toString() : value;
+        if (value instanceof TokenReference) return this.#writePropertyReference(value);
+        if (Array.isArray(value)) {
+            return value.map(item => item instanceof TokenReference ? this.#writePropertyReference(item) : item);
+        }
+        return value;
     }
 
     #writeFontWeightOrRef(value: unknown): unknown {
-        return value instanceof TokenReference ? value.toString() : value;
+        return value instanceof TokenReference ? this.#writePropertyReference(value) : value;
     }
 
     #writeNumberOrRef(value: number | TokenReference): unknown {
-        return value instanceof TokenReference ? value.toString() : value;
+        return value instanceof TokenReference ? this.#writePropertyReference(value) : value;
     }
 }

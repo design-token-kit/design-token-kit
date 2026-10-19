@@ -9,8 +9,8 @@ import { FontFamilyToken } from "#/core/model/tokens/FontFamilyToken";
 import { FontWeightToken } from "#/core/model/tokens/FontWeightToken";
 import { NumberToken } from "#/core/model/tokens/NumberToken";
 import { TypographyToken } from "#/core/model/tokens/TypographyToken";
-import { ColorValue } from "#/core/model/values/ColorValue";
-import { DimensionValue } from "#/core/model/values/DimensionValue";
+import { ColorValue, isConcreteColorValue, type ConcreteColorValue } from "#/core/model/values/ColorValue";
+import { DimensionValue, isConcreteDimensionValue } from "#/core/model/values/DimensionValue";
 import { TypographyValue } from "#/core/model/values/TypographyValue";
 
 const SECTION_HEADERS = [
@@ -220,6 +220,9 @@ export class DesignMdWriter {
     }
 
     #serializeColor(color: ColorValue): string {
+        if (!isConcreteColorValue(color)) {
+            throw new Error("DESIGN.md cannot serialize a color containing a property reference.");
+        }
         if (color.alpha === 0) {
             return "transparent";
         }
@@ -254,9 +257,10 @@ export class DesignMdWriter {
             case "xyz-d50":
                 return `"${this.#colorFn(color)}"`;
         }
+        throw new Error(`Unsupported color space: ${color.colorSpace}`);
     }
 
-    #colorFn(color: ColorValue): string {
+    #colorFn(color: ConcreteColorValue): string {
         const comps = color.components.map((c) =>
             typeof c === "number" ? c : "none",
         );
@@ -269,6 +273,9 @@ export class DesignMdWriter {
     }
 
     #serializeDimension(dim: DimensionValue): string {
+        if (!isConcreteDimensionValue(dim)) {
+            throw new Error("DESIGN.md cannot serialize a dimension containing a property reference.");
+        }
         return `${dim.value}${dim.unit}`;
     }
 

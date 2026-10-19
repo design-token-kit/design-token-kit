@@ -16,6 +16,7 @@ import { DimensionValue } from "#/core/model/values/DimensionValue";
 import { DurationValue } from "#/core/model/values/DurationValue";
 import { TransitionValue } from "#/core/model/values/TransitionValue";
 import { TypographyValue } from "#/core/model/values/TypographyValue";
+import { readDtcg } from "../../support/readDtcg";
 
 const FIXTURES = fileURLToPath(new URL("fixtures", import.meta.url));
 const sources = [
@@ -45,6 +46,30 @@ describe("TailwindTokenConverter", () => {
 
     it("renders color aliases against mapped tailwind variables", () => {
         expect(css).toContain("--color-semantic-bg-surface: var(--color-primitive-white);");
+    });
+
+    it("resolves color property references before rendering", async () => {
+        const doc = await readDtcg({
+            primitive: {
+                color: { red: { $type: "color", $value: { colorSpace: "srgb", components: [1, 0, 0] } } },
+                opacity: { half: { $type: "number", $value: 0.5 } },
+            },
+            semantic: {
+                color: {
+                    primary: {
+                        $type: "color",
+                        $value: {
+                            colorSpace: "srgb",
+                            components: { $ref: "#/primitive/color/red/$value/components" },
+                            alpha: { $ref: "#/primitive/opacity/half/$value" },
+                        },
+                    },
+                },
+            },
+        });
+
+        expect(new TailwindTokenConverter().convertDocument(doc))
+            .toContain("--color-semantic-primary: rgb(255 0 0 / 0.5);");
     });
 
     it("renders gradient aliases against mapped tailwind variables", () => {

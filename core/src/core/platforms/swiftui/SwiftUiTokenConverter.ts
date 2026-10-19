@@ -1,14 +1,15 @@
 import { Dtcg } from "#/core/model/Dtcg";
 import { DtcgList } from "#/core/model/DtcgList";
+import { materializePropertyReferences } from "#/core/model/PropertyReferenceMaterializer";
 import { readRemBase } from "#/core/model/RemBaseExtension";
 import { TokenGroup } from "#/core/model/TokenGroup";
 import { TokenNode } from "#/core/model/TokenNode";
 import { TokenReference } from "#/core/model/TokenReference";
 import type { TokenType } from "#/core/model/TokenType";
 import { ColorValue } from "#/core/model/values/ColorValue";
-import { DEFAULT_REM_BASE, DimensionValue } from "#/core/model/values/DimensionValue";
-import { DurationValue } from "#/core/model/values/DurationValue";
-import { CubicBezierValue } from "#/core/model/values/CubicBezierValue";
+import { DEFAULT_REM_BASE, DimensionValue, isConcreteDimensionValue } from "#/core/model/values/DimensionValue";
+import { DurationValue, isConcreteDurationValue } from "#/core/model/values/DurationValue";
+import { CubicBezierValue, isConcreteCubicBezierValue } from "#/core/model/values/CubicBezierValue";
 import { BorderValue } from "#/core/model/values/BorderValue";
 import { ShadowLayer } from "#/core/model/values/ShadowValue";
 import { StrokeStyleObject } from "#/core/model/values/StrokeStyleValue";
@@ -68,21 +69,22 @@ export class SwiftUiTokenConverter implements TokenConverter {
     }
 
     convertList(list: DtcgList): string {
+        const materialized = materializePropertyReferences(list);
         this.#used = new Set();
-        this.#base = this.#remBase ?? readRemBase(list.base.root) ?? DEFAULT_REM_BASE;
+        this.#base = this.#remBase ?? readRemBase(materialized.base.root) ?? DEFAULT_REM_BASE;
 
-        const enums: string[] = [this.#renderBaseEnum(list.base)];
-        for (const [themeName, theme] of list.themes) {
-            enums.push(this.#renderThemeEnum(list.base, theme, themeName));
+        const enums: string[] = [this.#renderBaseEnum(materialized.base)];
+        for (const [themeName, theme] of materialized.themes) {
+            enums.push(this.#renderThemeEnum(materialized.base, theme, themeName));
         }
 
         const structLayer = this.#swiftType === "struct"
-            ? this.#renderStructLayer(list)
+            ? this.#renderStructLayer(materialized)
             : undefined;
 
         const wrappers = [...this.#used].map((kind) => STRUCT_DEFINITIONS[kind]).join("\n\n");
 
-        const source = list.base.source ?? "stdin";
+        const source = materialized.base.source ?? "stdin";
 
         const doc: string[] = [
             `/// Swift representation of design tokens from \`${source}\`.`,
@@ -92,13 +94,13 @@ export class SwiftUiTokenConverter implements TokenConverter {
         ];
 
         doc.push("/// - DesignTokens - base theme tokens (basic usage)");
-        for (const themeName of list.themes.keys()) {
+        for (const themeName of materialized.themes.keys()) {
             doc.push(`/// - ${ROOT}${pascal(themeName)} - ${themeName} theme tokens (basic usage)`);
         }
 
         if (this.#swiftType === "struct") {
             doc.push("/// - Themes.base - base theme tokens (advanced usage)");
-            for (const themeName of list.themes.keys()) {
+            for (const themeName of materialized.themes.keys()) {
                 doc.push(`/// - Themes.${camel(themeName)} - ${themeName} theme tokens (advanced usage)`);
             }
         }
@@ -670,6 +672,9 @@ function renderScalar(value: unknown, remBase: number): Rendered | undefined {
 }
 
 function durationSeconds(value: DurationValue): number {
+    if (!isConcreteDurationValue(value)) {
+        throw new Error("Cannot convert a duration containing a property reference.");
+    }
     return value.unit === "ms" ? value.value / 1000 : value.value;
 }
 
@@ -699,6 +704,9 @@ function dimToSwift(value: DimensionValue | TokenReference, remBase: number): st
  * the base.
  */
 function dimensionToSwift(value: DimensionValue, remBase: number): string {
+    if (!isConcreteDimensionValue(value)) {
+        throw new Error("Cannot convert a dimension containing a property reference.");
+    }
     return formatNumber(value.toPixels(remBase));
 }
 
@@ -781,6 +789,9 @@ function shadowLayerToSwift(layer: ShadowLayer, remBase: number): string {
 
 function strokeStyleToSwift(value: unknown): string {
     if (value instanceof StrokeStyleObject) {
+        if (value.dashArray instanceof TokenReference || value.lineCap instanceof TokenReference) {
+            throw new Error("Cannot convert a strokeStyle containing a property reference.");
+        }
         const dashArray = value.dashArray.map(dimToSwift).join(", ");
         return [
             `StrokeStyleToken(dashed: ${value.dashArray.length > 0}, dashArray: [${dashArray}],`,
@@ -813,6 +824,9 @@ function timingFunctionToSwift(value: TransitionValue["timingFunction"]): string
 }
 
 function cubicBezierToSwift(value: CubicBezierValue): string {
+    if (!isConcreteCubicBezierValue(value)) {
+        throw new Error("Cannot convert a cubicBezier containing a property reference.");
+    }
     const start = `SwiftUI.UnitPoint(x: ${value.p1x}, y: ${value.p1y})`;
     const end = `SwiftUI.UnitPoint(x: ${value.p2x}, y: ${value.p2y})`;
     return `SwiftUI.UnitCurve.bezier(startControlPoint: ${start}, endControlPoint: ${end})`;

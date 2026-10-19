@@ -57,6 +57,29 @@ describe("SwiftUiTokenConverter scalars", () => {
         expect(out).toContain("static let primary = DesignTokens.Color.Base.red");
     });
 
+    it("resolves color property references before rendering", async () => {
+        const out = await convert({
+            primitive: {
+                color: { red: { $type: "color", $value: { colorSpace: "srgb", components: [1, 0, 0] } } },
+                opacity: { half: { $type: "number", $value: 0.5 } },
+            },
+            semantic: {
+                color: {
+                    primary: {
+                        $type: "color",
+                        $value: {
+                            colorSpace: "srgb",
+                            components: { $ref: "#/primitive/color/red/$value/components" },
+                            alpha: { $ref: "#/primitive/opacity/half/$value" },
+                        },
+                    },
+                },
+            },
+        });
+
+        expect(out).toContain("static let primary = SwiftUI.Color(.sRGB, red: 1, green: 0, blue: 0, opacity: 0.5)");
+    });
+
     it("escapes Swift reserved words in identifiers", async () => {
         const out = await convert({
             color: {

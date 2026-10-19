@@ -5,6 +5,7 @@ import { TokenGroup } from "#/core/model/TokenGroup";
 import { TokenNode } from "#/core/model/TokenNode";
 import { TokenPath } from "#/core/model/TokenPath";
 import { TokenReference } from "#/core/model/TokenReference";
+import { materializePropertyReferences } from "#/core/model/PropertyReferenceMaterializer";
 import { BorderValue } from "#/core/model/values/BorderValue";
 import { ColorValue } from "#/core/model/values/ColorValue";
 import { CubicBezierValue } from "#/core/model/values/CubicBezierValue";
@@ -62,22 +63,24 @@ export class ScssTokenConverter implements TokenConverter {
     }
 
     convertList(list: DtcgList): string {
-        if (list.themes.size > 0) {
+        const materialized = materializePropertyReferences(list);
+        if (materialized.themes.size > 0) {
             throw new Error("SCSS multi-theme output produces multiple files; use convertThemes()");
         }
 
-        const declarations = collectFromDoc(list.base, this.#options.separator);
+        const declarations = collectFromDoc(materialized.base, this.#options.separator);
         return renderDeclarations(declarations);
     }
 
     convertThemeList(list: DtcgList): ReadonlyArray<ScssTokenOutput> {
+        const materialized = materializePropertyReferences(list);
         const outputs: ScssTokenOutput[] = [{
             themeName: "base",
             isBase: true,
-            content: renderDeclarations(collectFromDoc(list.base, this.#options.separator)),
+            content: renderDeclarations(collectFromDoc(materialized.base, this.#options.separator)),
         }];
 
-        for (const [themeName, theme] of list.themes) {
+        for (const [themeName, theme] of materialized.themes) {
             outputs.push({
                 themeName,
                 isBase: false,

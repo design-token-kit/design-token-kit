@@ -1,5 +1,6 @@
 import { Dtcg } from "#/core/model/Dtcg";
 import { DtcgList } from "#/core/model/DtcgList";
+import { materializePropertyReferences } from "#/core/model/PropertyReferenceMaterializer";
 import { readRemBase } from "#/core/model/RemBaseExtension";
 import { DEFAULT_REM_BASE } from "#/core/model/values/DimensionValue";
 import type { AndroidResource } from "#/core/platforms/android/AndroidResource";
@@ -101,19 +102,20 @@ export class AndroidTokenConverter implements TokenConverter {
      * @returns One output per resource file, in `res` directory layout.
      */
     convertResourceList(list: DtcgList): ReadonlyArray<AndroidTokenOutput> {
-        const mapper = this.#createMapper(list);
+        const materialized = materializePropertyReferences(list);
+        const mapper = this.#createMapper(materialized);
 
         const outputs: AndroidTokenOutput[] = this.#toOutputs(
-            mapper.map(list.base),
+            mapper.map(materialized.base),
             BASE_THEME,
             true,
             BASE_DIRECTORY,
-            this.#source(list.base),
+            this.#source(materialized.base),
         );
 
-        for (const [themeName, theme] of list.themes) {
+        for (const [themeName, theme] of materialized.themes) {
             outputs.push(...this.#toOutputs(
-                mapper.map(theme, list.base),
+                mapper.map(theme, materialized.base),
                 themeName,
                 false,
                 this.#themeDirectory(themeName),

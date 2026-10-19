@@ -17,10 +17,10 @@ import { StrokeStyleToken } from "#/core/model/tokens/StrokeStyleToken";
 import { TransitionToken } from "#/core/model/tokens/TransitionToken";
 import { TypographyToken } from "#/core/model/tokens/TypographyToken";
 import { BorderValue } from "#/core/model/values/BorderValue";
-import { ColorValue } from "#/core/model/values/ColorValue";
-import { CubicBezierValue } from "#/core/model/values/CubicBezierValue";
-import { DimensionValue } from "#/core/model/values/DimensionValue";
-import { DurationValue } from "#/core/model/values/DurationValue";
+import { ColorValue, isConcreteColorValue } from "#/core/model/values/ColorValue";
+import { CubicBezierValue, isConcreteCubicBezierValue } from "#/core/model/values/CubicBezierValue";
+import { DimensionValue, isConcreteDimensionValue } from "#/core/model/values/DimensionValue";
+import { DurationValue, isConcreteDurationValue } from "#/core/model/values/DurationValue";
 import { GradientStop } from "#/core/model/values/GradientValue";
 import { ShadowLayer } from "#/core/model/values/ShadowValue";
 import { StrokeStyleObject } from "#/core/model/values/StrokeStyleValue";
@@ -138,6 +138,9 @@ export class HrdtWriter {
     }
 
     #colorToHex(color: ColorValue): string {
+        if (!isConcreteColorValue(color)) {
+            throw new Error("HRDT cannot serialize a color containing a property reference.");
+        }
         if (color.hex) {
             if (color.alpha === 1) return color.hex;
             const alphaHex = Math.round(color.alpha * 255).toString(16).padStart(2, "0");
@@ -152,10 +155,16 @@ export class HrdtWriter {
     }
 
     #serializeDimension(dim: DimensionValue): string {
+        if (!isConcreteDimensionValue(dim)) {
+            throw new Error("HRDT cannot serialize a dimension containing a property reference.");
+        }
         return `${dim.value}${dim.unit}`;
     }
 
     #serializeDuration(dur: DurationValue): string {
+        if (!isConcreteDurationValue(dur)) {
+            throw new Error("HRDT cannot serialize a duration containing a property reference.");
+        }
         return `${dur.value}${dur.unit}`;
     }
 
@@ -168,12 +177,18 @@ export class HrdtWriter {
     }
 
     #serializeCubicBezier(cb: CubicBezierValue): string {
+        if (!isConcreteCubicBezierValue(cb)) {
+            throw new Error("HRDT cannot serialize a cubicBezier containing a property reference.");
+        }
         return `[${cb.p1x}, ${cb.p1y}, ${cb.p2x}, ${cb.p2y}]`;
     }
 
     #serializeStrokeStyle(value: unknown): string | string[] {
         if (typeof value === "string") return value;
         if (value instanceof StrokeStyleObject) {
+            if (value.dashArray instanceof TokenReference || value.lineCap instanceof TokenReference) {
+                throw new Error("HRDT cannot serialize a strokeStyle containing a property reference.");
+            }
             const dashArray = value.dashArray
                 .map((d) => d instanceof TokenReference ? `"${d}"` : this.#serializeDimension(d as DimensionValue))
                 .join(", ");
@@ -217,6 +232,9 @@ export class HrdtWriter {
     }
 
     #serializeShadowLayerLines(layer: ShadowLayer): string[] {
+        if (typeof layer.inset !== "boolean") {
+            throw new Error("HRDT cannot serialize a shadow containing a property reference.");
+        }
         const lines = [
             `color: "${this.#serializeColorOrRef(layer.color)}"`,
             `offsetX: ${this.#serializeDimensionOrRef(layer.offsetX)}`,
@@ -276,6 +294,9 @@ export class HrdtWriter {
         if (typeof value === "string") return value;
         if (value instanceof TokenReference) return `"${value}"`;
         if (value instanceof StrokeStyleObject) {
+            if (value.dashArray instanceof TokenReference || value.lineCap instanceof TokenReference) {
+                throw new Error("HRDT cannot serialize a strokeStyle containing a property reference.");
+            }
             const dashArray = value.dashArray
                 .map((d) => d instanceof TokenReference ? `"${d}"` : this.#serializeDimension(d as DimensionValue))
                 .join(", ");

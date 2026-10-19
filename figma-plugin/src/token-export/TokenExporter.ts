@@ -8,9 +8,16 @@ export type { TokenCounts } from "#/figma-plugin/token-export/TokenCounter";
  * Color value in the DTCG JSON format.
  */
 export interface DtcgColorValue {
-    colorSpace: "srgb";
-    components: [number, number, number];
-    alpha: number;
+    colorSpace: "srgb" | DtcgPropertyReference;
+    components: [number, number, number] | DtcgPropertyReference;
+    alpha: number | DtcgPropertyReference;
+}
+
+/**
+ * A DTCG property-level JSON Pointer reference.
+ */
+export interface DtcgPropertyReference {
+    $ref: string;
 }
 
 /**
@@ -258,13 +265,13 @@ async function readColorVariableTokens(
         );
         const document = documentBuilder.build(tokens);
 
-            return {
-                fileName: modeExport.fileName,
-                content: JSON.stringify(document, null, 2),
-                tokens: document,
-                downloadable: tokens.length > 0,
-                architectureWarnings: collectArchitectureWarnings(tokens),
-            };
+        return {
+            fileName: modeExport.fileName,
+            content: JSON.stringify(document, null, 2),
+            tokens: document,
+            downloadable: tokens.length > 0,
+            architectureWarnings: collectArchitectureWarnings(tokens),
+        };
     });
     const downloadableFiles = files.filter((file) => file.downloadable);
 
@@ -670,7 +677,7 @@ function toTokenValue(
     variableIndex: VariableIndex,
     modeExport: ModeExport,
     tokenType: DtcgVariableTokenType,
-): FigmaColor | number | string | undefined {
+): FigmaColor | DtcgColorValue | number | string | undefined {
     if (value === undefined) {
         return undefined;
     }
@@ -682,7 +689,9 @@ function toTokenValue(
     }
 
     if (isComposedColorValue(value)) {
-        return tokenType === "color" ? resolveComposedColor(value, variableIndex, modeExport) : undefined;
+        return tokenType === "color"
+            ? toComposedDtcgColor(value, variablePathIndex, variableTokenTypeIndex, variableIndex, modeExport)
+            : undefined;
     }
 
     if (tokenType === "color" && isColorValue(value)) {
@@ -718,80 +727,116 @@ function isComposedColorValue(value: ExportVariableValue): value is VariableComp
         && "opacity" in value;
 }
 
-function resolveComposedColor(
+function toComposedDtcgColor(
     value: VariableComposedColor,
+    variablePathIndex: VariablePathIndex,
+    variableTokenTypeIndex: VariableTokenTypeIndex,
     variableIndex: VariableIndex,
     modeExport: ModeExport,
-): FigmaColor | undefined {
-    const color = resolveColorPart(value.color, variableIndex, modeExport, new Set());
-    const opacity = resolveOpacityPart(value.opacity, variableIndex, modeExport, new Set());
-    return color === undefined || opacity === undefined ? undefined : { ...color, a: opacity };
+): DtcgColorValue | undefined {
+    const color = toDtcgColorPart(
+        value.color,
+        variablePathIndex,
+        variableTokenTypeIndex,
+        variableIndex,
+        modeExport,
+    );
+    const alpha = toDtcgAlphaPart(
+        value.opacity,
+        variablePathIndex,
+        variableTokenTypeIndex,
+        variableIndex,
+        modeExport,
+    );
+    return color === undefined || alpha === undefined
+        ? undefined
+        : { ...color, alpha };
 }
 
-function resolveColorPart(
+function toDtcgColorPart(
     value: ExportVariableValue,
+    variablePathIndex: VariablePathIndex,
+    variableTokenTypeIndex: VariableTokenTypeIndex,
     variableIndex: VariableIndex,
     modeExport: ModeExport,
-    visitedVariableIds: Set<string>,
-): FigmaColor | undefined {
-    if (isComposedColorValue(value)) {
-        return resolveComposedColor(value, variableIndex, modeExport);
+): Omit<DtcgColorValue, "alpha"> | undefined {
+    if (isColorValue(value)) {
+        return {
+            colorSpace: "srgb",
+            components: [value.r, value.g, value.b],
+        };
     }
 
-    if (!isVariableAlias(value)) {
-        return isColorValue(value) ? value : undefined;
-    }
-
-    if (visitedVariableIds.has(value.id)) {
-        return undefined;
-    }
-
-    const variable = variableIndex.get(value.id);
-    if (variable === undefined) {
-        return undefined;
-    }
-
-    const modeId = getModeId(variable, modeExport);
-    const targetValue = modeId === undefined ? undefined : variable.valuesByMode[modeId];
-    if (targetValue === undefined) {
-        return undefined;
-    }
-
-    const nextVisitedVariableIds = new Set(visitedVariableIds).add(value.id);
-    return resolveColorPart(targetValue as ExportVariableValue, variableIndex, modeExport, nextVisitedVariableIds);
+    if (!isVariableAlias(value)) return undefined;
+    const targetId = resolveAliasTargetId(
+        value,
+        "color",
+        variableTokenTypeIndex,
+        variableIndex,
+        modeExport,
+        new Set(),
+    );
+    const path = targetId === undefined ? undefined : variablePathIndex.get(targetId);
+    if (path === undefined) return undefined;
+    return {
+        colorSpace: toDtcgPropertyReference(path, "colorSpace"),
+        components: toDtcgPropertyReference(path, "components"),
+    };
 }
 
-function resolveOpacityPart(
+function toDtcgAlphaPart(
     value: number | VariableAlias,
+    variablePathIndex: VariablePathIndex,
+    variableTokenTypeIndex: VariableTokenTypeIndex,
+    variableIndex: VariableIndex,
+    modeExport: ModeExport,
+): number | DtcgPropertyReference | undefined {
+    if (typeof value === "number") return value;
+    const targetId = resolveAliasTargetId(
+        value,
+        "number",
+        variableTokenTypeIndex,
+        variableIndex,
+        modeExport,
+        new Set(),
+    );
+    const path = targetId === undefined ? undefined : variablePathIndex.get(targetId);
+    return path === undefined ? undefined : toDtcgPropertyReference(path);
+}
+
+function resolveAliasTargetId(
+    alias: VariableAlias,
+    expectedType: DtcgVariableTokenType,
+    variableTokenTypeIndex: VariableTokenTypeIndex,
     variableIndex: VariableIndex,
     modeExport: ModeExport,
     visitedVariableIds: Set<string>,
-): number | undefined {
-    if (typeof value === "number") {
-        return value;
-    }
+): string | undefined {
+    if (visitedVariableIds.has(alias.id)) return undefined;
+    if (variableTokenTypeIndex.get(alias.id) !== expectedType) return undefined;
 
-    if (visitedVariableIds.has(value.id)) {
-        return undefined;
-    }
-
-    const variable = variableIndex.get(value.id);
-    if (variable === undefined) {
-        return undefined;
-    }
-
+    const variable = variableIndex.get(alias.id);
+    if (variable === undefined) return undefined;
     const modeId = getModeId(variable, modeExport);
     const targetValue = modeId === undefined ? undefined : variable.valuesByMode[modeId];
-    if (targetValue === undefined || typeof targetValue === "number") {
-        return targetValue;
+    if (targetValue === undefined) return undefined;
+
+    const nextVisitedVariableIds = new Set(visitedVariableIds).add(alias.id);
+    if (isVariableAlias(targetValue)) {
+        return resolveAliasTargetId(
+            targetValue,
+            expectedType,
+            variableTokenTypeIndex,
+            variableIndex,
+            modeExport,
+            nextVisitedVariableIds,
+        );
     }
 
-    if (!isVariableAlias(targetValue)) {
-        return undefined;
+    if (expectedType === "color") {
+        return isColorValue(targetValue) || isComposedColorValue(targetValue) ? alias.id : undefined;
     }
-
-    const nextVisitedVariableIds = new Set(visitedVariableIds).add(value.id);
-    return resolveOpacityPart(targetValue, variableIndex, modeExport, nextVisitedVariableIds);
+    return typeof targetValue === "number" ? alias.id : undefined;
 }
 
 function isVisibleSolidPaint(paint: Paint): paint is SolidPaint {
@@ -800,7 +845,7 @@ function isVisibleSolidPaint(paint: Paint): paint is SolidPaint {
 
 function createToken(
     tokenType: DtcgVariableTokenType,
-    value: FigmaColor | number | string,
+    value: FigmaColor | DtcgColorValue | number | string,
     description: string,
 ): DtcgToken {
     const token: DtcgToken = createTokenWithoutDescription(tokenType, value);
@@ -814,12 +859,14 @@ function createToken(
 
 function createTokenWithoutDescription(
     tokenType: DtcgVariableTokenType,
-    value: FigmaColor | number | string,
+    value: FigmaColor | DtcgColorValue | number | string,
 ): DtcgToken {
     if (tokenType === "color") {
         return {
             $type: "color",
-            $value: typeof value === "string" ? value : toDtcgColorValue(value as FigmaColor),
+            $value: typeof value === "string"
+                ? value
+                : isDtcgColorValue(value) ? value : toDtcgColorValue(value as FigmaColor),
         };
     }
 
@@ -942,6 +989,19 @@ function toDtcgColorValue(color: FigmaColor): DtcgColorValue {
         components: [color.r, color.g, color.b],
         alpha: color.a ?? 1,
     };
+}
+
+function isDtcgColorValue(value: FigmaColor | DtcgColorValue | number): value is DtcgColorValue {
+    return typeof value === "object" && value !== null && "colorSpace" in value && "components" in value;
+}
+
+function toDtcgPropertyReference(path: string[], property?: string): DtcgPropertyReference {
+    const pointerPath = property === undefined ? [...path, "$value"] : [...path, "$value", property];
+    return { $ref: `#/${pointerPath.map(escapeJsonPointerSegment).join("/")}` };
+}
+
+function escapeJsonPointerSegment(segment: string): string {
+    return encodeURIComponent(segment.replace(/~/g, "~0").replace(/\//g, "~1")).replace(/%24/gi, "$");
 }
 
 function toDtcgReference(path: string[]): string {

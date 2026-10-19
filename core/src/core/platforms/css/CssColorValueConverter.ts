@@ -1,6 +1,12 @@
-import { ColorValue, type ColorComponent, type ColorSpace } from "#/core/model/values/ColorValue";
+import {
+    ColorValue,
+    isConcreteColorValue,
+    type ConcreteColorValue,
+    type ColorComponent,
+    type ColorSpace,
+} from "#/core/model/values/ColorValue";
 
-type ColorValueConverter = (color: ColorValue) => string;
+type ColorValueConverter = (color: ConcreteColorValue) => string;
 type CssColorValueConverterMode = "css" | "tailwind";
 
 export interface CssColorValueConverterOptions {
@@ -35,15 +41,18 @@ export class CssColorValueConverter {
     }
 
     convert(color: ColorValue): string {
+        if (!isConcreteColorValue(color)) {
+            throw new Error("Cannot convert a color containing a property reference.");
+        }
         if (this.#mode === "tailwind") {
             const tailwindColor = this.#convertTailwind(color);
             if (tailwindColor) return tailwindColor;
         }
         if (color.hex && color.alpha === 1) return color.hex;
-        return this.#converters[color.colorSpace](color);
+        return this.#converters[color.colorSpace as ColorSpace](color);
     }
 
-    #convertTailwind(color: ColorValue): string | undefined {
+    #convertTailwind(color: ConcreteColorValue): string | undefined {
         if (color.colorSpace !== "srgb") {
             return undefined;
         }
@@ -57,7 +66,7 @@ export class CssColorValueConverter {
         return `rgb(${rgbComponents.join(" ")} / ${color.alpha})`;
     }
 
-    #colorFunction(color: ColorValue): string {
+    #colorFunction(color: ConcreteColorValue): string {
         const components = color.components.map((component) => this.#component(component)).join(" ");
         return `color(${color.colorSpace} ${components}${this.#alpha(color)})`;
     }
@@ -83,7 +92,7 @@ export class CssColorValueConverter {
         return `${component ?? "none"}${unit}`;
     }
 
-    #alpha(color: ColorValue, separator = " / "): string {
+    #alpha(color: ConcreteColorValue, separator = " / "): string {
         return color.alpha === 1 ? "" : `${separator}${color.alpha}`;
     }
 }

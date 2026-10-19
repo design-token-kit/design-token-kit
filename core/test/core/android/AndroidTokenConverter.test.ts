@@ -51,6 +51,29 @@ describe("AndroidTokenConverter scalars", () => {
         expect(out).toContain("<color name=\"color_red\">#ffff0000</color>");
     });
 
+    it("resolves color property references before rendering", async () => {
+        const outputs = await convertTyped({
+            primitive: {
+                color: { red: { $type: "color", $value: RED } },
+                opacity: { half: { $type: "number", $value: 0.5 } },
+            },
+            semantic: {
+                color: {
+                    primary: {
+                        $type: "color",
+                        $value: {
+                            colorSpace: "srgb",
+                            components: { $ref: "#/primitive/color/red/$value/components" },
+                            alpha: { $ref: "#/primitive/opacity/half/$value" },
+                        },
+                    },
+                },
+            },
+        });
+        const out = fileNamed(outputs, "values/colors.xml");
+        expect(out).toContain("<color name=\"semantic_color_primary\">#80ff0000</color>");
+    });
+
     it("names resources in snake_case from the token path", async () => {
         const out = await convert({ color: { brandPrimary: { $type: "color", $value: RED } } });
         expect(out).toContain("name=\"color_brand_primary\"");
@@ -311,6 +334,30 @@ describe("AndroidTokenConverter composites", () => {
             .toContain("<color name=\"border_subtle_color\">#ffff0000</color>");
         expect(fileNamed(outputs, "values/dimens.xml"))
             .toContain("<dimen name=\"border_subtle_width\">1dp</dimen>");
+    });
+
+    it("materializes property references inside composite resources", async () => {
+        const outputs = await convertTyped({
+            primitive: {
+                color: { red: { $type: "color", $value: RED } },
+                dimension: { border: { $type: "dimension", $value: { value: 2, unit: "px" } } },
+            },
+            border: {
+                subtle: {
+                    $type: "border",
+                    $value: {
+                        color: { $ref: "#/primitive/color/red/$value" },
+                        width: { $ref: "#/primitive/dimension/border/$value" },
+                        style: "solid",
+                    },
+                },
+            },
+        });
+
+        expect(fileNamed(outputs, "values/colors.xml"))
+            .toContain("<color name=\"border_subtle_color\">#ffff0000</color>");
+        expect(fileNamed(outputs, "values/dimens.xml"))
+            .toContain("<dimen name=\"border_subtle_width\">2dp</dimen>");
     });
 
     it("decomposes a transition into duration and delay resources", async () => {

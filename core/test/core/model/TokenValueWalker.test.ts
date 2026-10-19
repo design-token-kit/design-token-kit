@@ -83,4 +83,20 @@ describe("walkTokenValue", () => {
         expect(refs(token)).toEqual(["primitive.color.a"]);
         expect(rawCount(token)).toBeGreaterThan(0);
     });
+
+    it("walks colorSpace and hex property references", () => {
+        const colorSpace = new TokenReference("#/primitive/color/space/$value", true);
+        const hex = new TokenReference("#/primitive/color/hex/$value", true);
+        const value = new ColorValue(
+            colorSpace as unknown as "srgb",
+            [1, 0, 0],
+            1,
+            hex as unknown as string,
+        );
+
+        expect(refs(new ColorToken(value))).toEqual([
+            "#/primitive/color/space/$value",
+            "#/primitive/color/hex/$value",
+        ]);
+    });
 });

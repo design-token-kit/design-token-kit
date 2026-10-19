@@ -36,6 +36,9 @@ export interface CheckContext {
      */
     resolve(ref: TokenReference): ResolvedRef | undefined;
 
+    /** Resolves a reference to the value it addresses without following aliases. */
+    resolveValue(ref: TokenReference): unknown;
+
     /**
      * Follows an alias chain to its end node, applying the theme-to-base
      * fallback. Returns undefined when the chain is broken or cyclic.

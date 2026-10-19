@@ -27,7 +27,7 @@ export type ColorSpace =
  *
  * @see https://tr.designtokens.org/format/#color
  */
-export type ColorComponent = number | "none";
+export type ColorComponent = number | "none" | TokenReference;
 
 /**
  * Represents a color value in a specific color space.
@@ -38,24 +38,41 @@ export type ColorComponent = number | "none";
  * @see https://tr.designtokens.org/format/#color
  */
 export class ColorValue {
-    readonly colorSpace: ColorSpace;
-    readonly components: ColorComponent[];
+    readonly colorSpace: ColorSpace | TokenReference;
+    readonly components: ColorComponent[] | TokenReference;
     /** Alpha channel, 0 (transparent) to 1 (opaque). Defaults to 1. */
-    readonly alpha: number;
+    readonly alpha: number | TokenReference;
     /** Optional 6-digit hex fallback, e.g. `#ff00ff`. */
-    readonly hex: string | undefined;
+    readonly hex: string | TokenReference | undefined;
 
     constructor(
-        colorSpace: ColorSpace,
-        components: ColorComponent[],
-        alpha = 1,
-        hex?: string,
+        colorSpace: ColorSpace | TokenReference,
+        components: ColorComponent[] | TokenReference,
+        alpha: number | TokenReference = 1,
+        hex?: string | TokenReference,
     ) {
         this.colorSpace = colorSpace;
         this.components = components;
         this.alpha = alpha;
         this.hex = hex;
     }
+}
+
+/** A color value with no unresolved property references. */
+export type ConcreteColorValue = ColorValue & {
+    readonly colorSpace: ColorSpace;
+    readonly components: Array<number | "none">;
+    readonly alpha: number;
+    readonly hex: string | undefined;
+};
+
+/** Returns true when every color field is concrete. */
+export function isConcreteColorValue(value: ColorValue): value is ConcreteColorValue {
+    return typeof value.colorSpace === "string"
+        && Array.isArray(value.components)
+        && value.components.every(component => typeof component === "number" || component === "none")
+        && typeof value.alpha === "number"
+        && (value.hex === undefined || typeof value.hex === "string");
 }
 
 /** A color value or a reference to another color token. */

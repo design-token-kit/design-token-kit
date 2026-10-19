@@ -187,7 +187,11 @@ export class DtcgReader implements TokenReader {
         if ("$ref" in raw) {
             const ref = raw["$ref"];
             if (typeof ref !== "string") throw new DtcgReaderError("invalid-reference", "$ref must be a string");
-            return this.#makeToken(type, new TokenReference(ref), description, deprecated, extensions);
+            const reference = TokenReference.parseTokenReference(ref);
+            if (reference === undefined) {
+                throw new DtcgReaderError("invalid-reference", `Invalid token reference: ${ref}`);
+            }
+            return this.#makeToken(type, reference, description, deprecated, extensions);
         }
 
         const rawValue = raw["$value"];
@@ -257,11 +261,11 @@ export class DtcgReader implements TokenReader {
             throw new DtcgReaderError("invalid-color", `Invalid color value: ${JSON.stringify(raw)}`);
         }
         const obj = raw as JsonObject;
-        const colorSpace = obj["colorSpace"] as ColorSpace;
-        const components = obj["components"] as (number | "none")[];
-        const alpha = typeof obj["alpha"] === "number" ? obj["alpha"] : 1;
-        const hex = typeof obj["hex"] === "string" ? obj["hex"] : undefined;
-        return new ColorValue(colorSpace, components, alpha, hex);
+        const colorSpace = this.#parseColorSpace(obj["colorSpace"]);
+        const components = this.#parseColorComponents(obj["components"]);
+        const alpha = this.#parseOptionalNumberOrRef(obj["alpha"], 1);
+        const hex = this.#parseOptionalStringOrRef(obj["hex"]);
+        return new ColorValue(colorSpace as ColorSpace | TokenReference, components, alpha, hex);
     }
 
     #parseDimension(raw: unknown): DimensionValue {
@@ -269,12 +273,17 @@ export class DtcgReader implements TokenReader {
             throw new DtcgReaderError("invalid-dimension", `Invalid dimension value: ${JSON.stringify(raw)}`);
         }
         const obj = raw as JsonObject;
-        return new DimensionValue(obj["value"] as number, obj["unit"] as DimensionUnit);
+        return new DimensionValue(
+            this.#parseNumberOrRef(obj["value"]),
+            this.#parseDimensionUnitOrRef(obj["unit"]),
+        );
     }
 
     #parseFontFamily(raw: unknown): FontFamilyValue {
         if (typeof raw === "string") return raw;
-        if (Array.isArray(raw)) return raw as string[];
+        if (Array.isArray(raw)) {
+            return raw.map(item => TokenReference.parse(item) ?? this.#parseString(item));
+        }
         throw new DtcgReaderError("invalid-font-family", `Invalid fontFamily value: ${JSON.stringify(raw)}`);
     }
 
@@ -295,22 +304,35 @@ export class DtcgReader implements TokenReader {
             throw new DtcgReaderError("invalid-duration", `Invalid duration value: ${JSON.stringify(raw)}`);
         }
         const obj = raw as JsonObject;
-        return new DurationValue(obj["value"] as number, obj["unit"] as DurationUnit);
+        return new DurationValue(
+            this.#parseNumberOrRef(obj["value"]),
+            this.#parseDurationUnitOrRef(obj["unit"]),
+        );
     }
 
     #parseCubicBezier(raw: unknown): CubicBezierValue {
         if (!Array.isArray(raw) || raw.length !== 4) {
             throw new DtcgReaderError("invalid-cubic-bezier", `Invalid cubicBezier value: ${JSON.stringify(raw)}`);
         }
-        return new CubicBezierValue(raw[0] as number, raw[1] as number, raw[2] as number, raw[3] as number);
+        return new CubicBezierValue(
+            this.#parseNumberOrRef(raw[0]),
+            this.#parseNumberOrRef(raw[1]),
+            this.#parseNumberOrRef(raw[2]),
+            this.#parseNumberOrRef(raw[3]),
+        );
     }
 
     #parseStrokeStyle(raw: unknown): StrokeStyleValue {
         if (typeof raw === "string") return raw as StrokeStyleValue;
         if (typeof raw === "object" && raw !== null && !Array.isArray(raw)) {
             const obj = raw as JsonObject;
-            const dashArray = (obj["dashArray"] as unknown[]).map(d => this.#parseDimension(d));
-            return new StrokeStyleObject(dashArray, obj["lineCap"] as LineCap);
+            const dashArray = TokenReference.parse(obj["dashArray"])
+                ?? (Array.isArray(obj["dashArray"])
+                    ? obj["dashArray"].map(d => this.#parseDimensionOrRef(d))
+                    : this.#parseInvalidValue("strokeStyle", obj["dashArray"]));
+            const lineCap = TokenReference.parse(obj["lineCap"])
+                ?? this.#parseString(obj["lineCap"]) as LineCap;
+            return new StrokeStyleObject(dashArray, lineCap);
         }
         throw new DtcgReaderError("invalid-stroke-style", `Invalid strokeStyle value: ${JSON.stringify(raw)}`);
     }
@@ -355,7 +377,9 @@ export class DtcgReader implements TokenReader {
             this.#parseDimensionOrRef(obj["offsetY"]),
             this.#parseDimensionOrRef(obj["blur"]),
             this.#parseDimensionOrRef(obj["spread"]),
-            typeof obj["inset"] === "boolean" ? obj["inset"] : false,
+            obj["inset"] === undefined
+                ? false
+                : TokenReference.parse(obj["inset"]) ?? this.#parseBoolean(obj["inset"]),
         );
     }
 
@@ -429,6 +453,54 @@ export class DtcgReader implements TokenReader {
         return TokenReference.parse(raw) ?? this.#parseNumber(raw);
     }
 
+    #parseDimensionUnitOrRef(raw: unknown): DimensionUnit | TokenReference {
+        return TokenReference.parse(raw) ?? raw as DimensionUnit;
+    }
+
+    #parseDurationUnitOrRef(raw: unknown): DurationUnit | TokenReference {
+        return TokenReference.parse(raw) ?? raw as DurationUnit;
+    }
+
+    #parseColorSpace(raw: unknown): ColorSpace | TokenReference {
+        return TokenReference.parse(raw) ?? raw as ColorSpace;
+    }
+
+    #parseColorComponents(raw: unknown): (number | "none" | TokenReference)[] | TokenReference {
+        const reference = TokenReference.parse(raw);
+        if (reference !== undefined) return reference;
+        if (!Array.isArray(raw)) {
+            throw new DtcgReaderError("invalid-color", `Invalid color components: ${JSON.stringify(raw)}`);
+        }
+        return raw.map(component => TokenReference.parse(component) ?? component as number | "none");
+    }
+
+    #parseOptionalNumberOrRef(raw: unknown, fallback: number): number | TokenReference {
+        return raw === undefined ? fallback : this.#parseNumberOrRef(raw);
+    }
+
+    #parseOptionalStringOrRef(raw: unknown): string | TokenReference | undefined {
+        if (raw === undefined) return undefined;
+        return TokenReference.parse(raw) ?? this.#parseString(raw);
+    }
+
+    #parseString(raw: unknown): string {
+        if (typeof raw !== "string") {
+            throw new DtcgReaderError("invalid-string", `Invalid string value: ${JSON.stringify(raw)}`);
+        }
+        return raw;
+    }
+
+    #parseBoolean(raw: unknown): boolean {
+        if (typeof raw !== "boolean") {
+            throw new DtcgReaderError("invalid-boolean", `Invalid boolean value: ${JSON.stringify(raw)}`);
+        }
+        return raw;
+    }
+
+    #parseInvalidValue(type: string, raw: unknown): never {
+        throw new DtcgReaderError(`invalid-${type}`, `Invalid ${type} value: ${JSON.stringify(raw)}`);
+    }
+
     #resolveType(raw: unknown, inherited: TokenType | undefined): TokenType | undefined {
         if (typeof raw === "string") return raw as TokenType;
         return inherited;
@@ -448,7 +520,7 @@ export class DtcgReader implements TokenReader {
 
     #parseExtendsRef(raw: unknown): TokenReference | string | undefined {
         if (typeof raw !== "string") return undefined;
-        return TokenReference.parse(raw) ?? raw;
+        return TokenReference.parseTokenReference(raw) ?? raw;
     }
 }
 

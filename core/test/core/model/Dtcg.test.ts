@@ -78,5 +78,76 @@ describe("Dtcg", () => {
             const ref = new TokenReference("primitive.color.white");
             expect(theme.resolveChain(ref, base)).toBe(base.resolveChain(ref));
         });
+
+        it("resolves property references to nested values and reports their owner", () => {
+            const color = new ColorToken(new ColorValue("srgb", [0.1, 0.4, 0.9]));
+            const doc = makeDoc(new Map([
+                ["primitive", new TokenGroup({
+                    children: new Map([["color", new TokenGroup({
+                        children: new Map([["blue", color]]),
+                    })]]),
+                })],
+            ]));
+            const reference = new TokenReference("#/primitive/color/blue/$value/components/1", true);
+
+            expect(doc.resolveReferenceValue(reference)).toBe(0.4);
+            expect(doc.resolveRef(reference)).toEqual({
+                node: color,
+                path: expect.objectContaining({
+                    toString: expect.any(Function),
+                }),
+            });
+            expect(doc.resolveRef(reference)?.path.toString()).toBe("primitive.color.blue");
+        });
+
+        it("falls back to the base document for property references", () => {
+            const baseColor = new ColorToken(new ColorValue("srgb", [1, 0, 0]));
+            const base = makeDoc(new Map([["primitive", new TokenGroup({
+                children: new Map([["color", new TokenGroup({
+                    children: new Map([["red", baseColor]]),
+                })]]),
+            })]]));
+            const theme = makeDoc(new Map());
+            const reference = new TokenReference("#/primitive/color/red/$value/components", true);
+
+            expect(theme.resolveReferenceValue(reference, base)).toEqual([1, 0, 0]);
+            expect(theme.resolveRef(reference, base)?.node).toBe(baseColor);
+        });
+
+        it("returns undefined for missing, group, and invalid array pointers", () => {
+            const color = new ColorToken(new ColorValue("srgb", [1, 0, 0]));
+            const doc = makeDoc(new Map([
+                ["colors", new TokenGroup({ root: color })],
+            ]));
+
+            expect(doc.resolveReferenceValue(new TokenReference("#/missing/$value", true))).toBeUndefined();
+            expect(doc.resolveRef(new TokenReference("#/colors", true))?.node).toBeInstanceOf(TokenGroup);
+            expect(doc.resolveReferenceValue(new TokenReference("#/colors/$root/$value/components/4", true)))
+                .toBeUndefined();
+            expect(doc.resolveReferenceValue(new TokenReference("#/colors/$root/$value/components/0", true))).toBe(1);
+        });
+
+        it("falls back when a theme group is present but the pointer target is missing", () => {
+            const baseColor = new ColorToken(new ColorValue("srgb", [1, 0, 0]));
+            const base = makeDoc(new Map([["primitive", new TokenGroup({
+                children: new Map([["color", new TokenGroup({
+                    children: new Map([["red", baseColor]]),
+                })]]),
+            })]]));
+            const theme = makeDoc(new Map([["primitive", new TokenGroup()]]));
+            const reference = new TokenReference("#/primitive/color/red/$value/components", true);
+
+            expect(theme.resolveReferenceValue(reference, base)).toEqual([1, 0, 0]);
+        });
+
+        it("decodes URI fragment encoding and resolves group pointers", () => {
+            const token = new ColorToken(makeColor());
+            const group = new TokenGroup({ children: new Map([["brand color", token]]) });
+            const doc = makeDoc(new Map([["base", group]]));
+
+            expect(doc.resolveReferenceValue(new TokenReference("#/base/brand%20color/$value", true)))
+                .toEqual(makeColor());
+            expect(doc.resolveRef(new TokenReference("#/base", true))?.node).toBe(group);
+        });
     });
 });
