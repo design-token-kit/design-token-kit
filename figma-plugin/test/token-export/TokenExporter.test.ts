@@ -204,6 +204,107 @@ describe("TokenExporter", () => {
         });
     });
 
+    it("treats an unscoped float alias used as color opacity as a number", async () => {
+        const color = colorVariable("color", "Primitive/Color/White", {
+            default: { r: 1, g: 1, b: 1, a: 1 },
+        });
+        const alpha = floatVariable("alpha", "Primitive/Alpha/50", 0.5, []);
+        const translucent = colorVariable("translucent", "Semantic/Color/Translucent", {
+            default: {
+                color: { type: "VARIABLE_ALIAS", id: "color" },
+                opacity: { type: "VARIABLE_ALIAS", id: "alpha" },
+            },
+        });
+        stubFigma({
+            variables: {
+                getLocalVariablesAsync: vi.fn(async (type: string) =>
+                    type === "COLOR" ? [color, translucent] : [alpha]),
+                getLocalVariableCollectionsAsync: vi.fn().mockResolvedValue([]),
+            },
+        });
+
+        const result = await new TokenExporter().export();
+
+        expect(result.warnings).toEqual([]);
+        expect(result.files[0]?.tokens.semantic).toMatchObject({
+            color: {
+                translucent: {
+                    $value: {
+                        alpha: { $ref: "#/primitive/alpha/50/$value" },
+                    },
+                },
+            },
+        });
+    });
+
+    it("preserves unscoped number variables as number tokens", async () => {
+        const number = floatVariable("number", "Primitive/Number/Scale", 1.5, []);
+        stubFigma({
+            variables: {
+                getLocalVariablesAsync: vi.fn(async (type: string) => type === "FLOAT" ? [number] : []),
+                getLocalVariableCollectionsAsync: vi.fn().mockResolvedValue([]),
+            },
+        });
+
+        const result = await new TokenExporter().export();
+
+        expect(result.files[0]?.tokens).toMatchObject({
+            primitive: {
+                number: {
+                    scale: { $type: "number", $value: 1.5 },
+                },
+            },
+        });
+    });
+
+    it("skips direct aliases whose color target cannot be exported", async () => {
+        const broken = colorVariable("broken", "Primitive/Color/Broken", {
+            default: {
+                color: { type: "VARIABLE_ALIAS", id: "missing" },
+                opacity: 0.5,
+            },
+        });
+        const alias = colorVariable("alias", "Semantic/Color/Alias", {
+            default: { type: "VARIABLE_ALIAS", id: "broken" },
+        });
+        stubFigma({
+            variables: {
+                getLocalVariablesAsync: vi.fn(async (type: string) =>
+                    type === "COLOR" ? [broken, alias] : []),
+                getLocalVariableCollectionsAsync: vi.fn().mockResolvedValue([]),
+            },
+        });
+
+        const result = await new TokenExporter().export();
+
+        expect(result.files[0]?.tokens.primitive).toBeUndefined();
+        expect(result.files[0]?.tokens.semantic).toBeUndefined();
+    });
+
+    it("skips direct alias cycles", async () => {
+        const first = colorVariable("first", "Primitive/Color/First", {
+            default: { type: "VARIABLE_ALIAS", id: "second" },
+        });
+        const second = colorVariable("second", "Primitive/Color/Second", {
+            default: { type: "VARIABLE_ALIAS", id: "first" },
+        });
+        stubFigma({
+            variables: {
+                getLocalVariablesAsync: vi.fn(async (type: string) =>
+                    type === "COLOR" ? [first, second] : []),
+                getLocalVariableCollectionsAsync: vi.fn().mockResolvedValue([]),
+            },
+        });
+
+        const result = await new TokenExporter().export();
+
+        expect(result.files[0]?.tokens.primitive).toBeUndefined();
+        expect(result.warnings).toEqual(expect.arrayContaining([
+            'Skipped color variable "Primitive/Color/First" in tokens.json because it has no raw value or resolvable alias.',
+            'Skipped color variable "Primitive/Color/Second" in tokens.json because it has no raw value or resolvable alias.',
+        ]));
+    });
+
     it("resolves composed color aliases to their final typed targets", async () => {
         const baseColor = colorVariable("base-color", "Primitive/Color/White", {
             default: { r: 1, g: 1, b: 1, a: 1 },
@@ -238,6 +339,37 @@ describe("TokenExporter", () => {
                 },
             },
         });
+    });
+
+    it("skips composed color aliases whose composed target is not exportable", async () => {
+        const broken = colorVariable("broken", "Primitive/Color/Broken", {
+            default: {
+                color: { type: "VARIABLE_ALIAS", id: "missing" },
+                opacity: 0.5,
+            },
+        });
+        const alias = colorVariable("alias", "Semantic/Color/Alias", {
+            default: {
+                color: { type: "VARIABLE_ALIAS", id: "broken" },
+                opacity: 0.8,
+            },
+        });
+        stubFigma({
+            variables: {
+                getLocalVariablesAsync: vi.fn(async (type: string) =>
+                    type === "COLOR" ? [broken, alias] : []),
+                getLocalVariableCollectionsAsync: vi.fn().mockResolvedValue([]),
+            },
+        });
+
+        const result = await new TokenExporter().export();
+
+        expect(result.files[0]?.tokens.primitive).toBeUndefined();
+        expect(result.files[0]?.tokens.semantic).toBeUndefined();
+        expect(result.warnings).toEqual(expect.arrayContaining([
+            'Skipped color variable "Primitive/Color/Broken" in tokens.json because it has no raw value or resolvable alias.',
+            'Skipped color variable "Semantic/Color/Alias" in tokens.json because it has no raw value or resolvable alias.',
+        ]));
     });
 
     it("skips composed colors with a non-number opacity alias", async () => {

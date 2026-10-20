@@ -2,6 +2,7 @@ import { TokenGroup, type NodeVisitor } from "#/core/model/TokenGroup";
 import { TokenNode } from "#/core/model/TokenNode";
 import { TokenPath } from "#/core/model/TokenPath";
 import { TokenReference } from "#/core/model/TokenReference";
+import { CubicBezierValue } from "#/core/model/values/CubicBezierValue";
 
 /**
  * The root of a DTCG token document, corresponding to a single `.json` file.
@@ -190,13 +191,22 @@ export class Dtcg {
             }
 
             if (Array.isArray(value)) {
-                const index = Number(segment);
-                if (!Number.isInteger(index) || index < 0 || index >= value.length) return undefined;
+                const index = parseArrayIndex(segment, value.length);
+                if (index === undefined) return undefined;
                 value = value[index];
                 continue;
             }
 
-            if (typeof value !== "object" || value === null || !(segment in value)) return undefined;
+            if (value instanceof CubicBezierValue) {
+                const points = [value.p1x, value.p1y, value.p2x, value.p2y];
+                const index = parseArrayIndex(segment, points.length);
+                if (index === undefined) return undefined;
+                value = points[index];
+                continue;
+            }
+
+            if (typeof value !== "object" || value === null
+                || !Object.prototype.hasOwnProperty.call(value, segment)) return undefined;
             value = (value as Record<string, unknown>)[segment];
         }
 
@@ -241,4 +251,10 @@ function parseJsonPointer(pointer: string): string[] | undefined {
     } catch {
         return undefined;
     }
+}
+
+function parseArrayIndex(segment: string, length: number): number | undefined {
+    if (!/^(0|[1-9]\d*)$/.test(segment)) return undefined;
+    const index = Number(segment);
+    return index < length ? index : undefined;
 }

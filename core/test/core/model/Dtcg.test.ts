@@ -2,8 +2,10 @@ import { describe, it, expect } from "vitest";
 import { Dtcg } from "#/core/model/Dtcg";
 import { TokenGroup } from "#/core/model/TokenGroup";
 import { ColorToken } from "#/core/model/tokens/ColorToken";
+import { CubicBezierToken } from "#/core/model/tokens/CubicBezierToken";
 import { AliasToken } from "#/core/model/tokens/AliasToken";
 import { ColorValue } from "#/core/model/values/ColorValue";
+import { CubicBezierValue } from "#/core/model/values/CubicBezierValue";
 import type { TokenNode } from "#/core/model/TokenNode";
 import { TokenReference } from "#/core/model/TokenReference";
 
@@ -88,7 +90,7 @@ describe("Dtcg", () => {
                     })]]),
                 })],
             ]));
-            const reference = new TokenReference("#/primitive/color/blue/$value/components/1", true);
+            const reference = new TokenReference("#/primitive/color/blue/$value/components/1", "property");
 
             expect(doc.resolveReferenceValue(reference)).toBe(0.4);
             expect(doc.resolveRef(reference)).toEqual({
@@ -108,7 +110,7 @@ describe("Dtcg", () => {
                 })]]),
             })]]));
             const theme = makeDoc(new Map());
-            const reference = new TokenReference("#/primitive/color/red/$value/components", true);
+            const reference = new TokenReference("#/primitive/color/red/$value/components", "property");
 
             expect(theme.resolveReferenceValue(reference, base)).toEqual([1, 0, 0]);
             expect(theme.resolveRef(reference, base)?.node).toBe(baseColor);
@@ -120,11 +122,25 @@ describe("Dtcg", () => {
                 ["colors", new TokenGroup({ root: color })],
             ]));
 
-            expect(doc.resolveReferenceValue(new TokenReference("#/missing/$value", true))).toBeUndefined();
-            expect(doc.resolveRef(new TokenReference("#/colors", true))?.node).toBeInstanceOf(TokenGroup);
-            expect(doc.resolveReferenceValue(new TokenReference("#/colors/$root/$value/components/4", true)))
+            expect(doc.resolveReferenceValue(new TokenReference("#/missing/$value", "property"))).toBeUndefined();
+            expect(doc.resolveRef(new TokenReference("#/colors", "property"))?.node).toBeInstanceOf(TokenGroup);
+            expect(doc.resolveReferenceValue(new TokenReference("#/colors/$root/$value/components/4", "property")))
                 .toBeUndefined();
-            expect(doc.resolveReferenceValue(new TokenReference("#/colors/$root/$value/components/0", true))).toBe(1);
+            expect(doc.resolveReferenceValue(new TokenReference("#/colors/$root/$value/components/0", "property"))).toBe(1);
+        });
+
+        it("resolves numeric pointers into cubic-bezier values", () => {
+            const easing = new CubicBezierToken(new CubicBezierValue(0.2, 0.4, 0.6, 0.8));
+            const doc = makeDoc(new Map([["easing", easing]]));
+
+            expect(doc.resolveReferenceValue(new TokenReference("#/easing/$value/2", "property"))).toBe(0.6);
+        });
+
+        it("rejects non-canonical array indices", () => {
+            const easing = new CubicBezierToken(new CubicBezierValue(0.2, 0.4, 0.6, 0.8));
+            const doc = makeDoc(new Map([["easing", easing]]));
+
+            expect(doc.resolveReferenceValue(new TokenReference("#/easing/$value/01", "property"))).toBeUndefined();
         });
 
         it("falls back when a theme group is present but the pointer target is missing", () => {
@@ -135,7 +151,7 @@ describe("Dtcg", () => {
                 })]]),
             })]]));
             const theme = makeDoc(new Map([["primitive", new TokenGroup()]]));
-            const reference = new TokenReference("#/primitive/color/red/$value/components", true);
+            const reference = new TokenReference("#/primitive/color/red/$value/components", "property");
 
             expect(theme.resolveReferenceValue(reference, base)).toEqual([1, 0, 0]);
         });
@@ -145,9 +161,9 @@ describe("Dtcg", () => {
             const group = new TokenGroup({ children: new Map([["brand color", token]]) });
             const doc = makeDoc(new Map([["base", group]]));
 
-            expect(doc.resolveReferenceValue(new TokenReference("#/base/brand%20color/$value", true)))
+            expect(doc.resolveReferenceValue(new TokenReference("#/base/brand%20color/$value", "property")))
                 .toEqual(makeColor());
-            expect(doc.resolveRef(new TokenReference("#/base", true))?.node).toBe(group);
+            expect(doc.resolveRef(new TokenReference("#/base", "property"))?.node).toBe(group);
         });
     });
 });

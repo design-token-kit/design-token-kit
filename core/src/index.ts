@@ -155,6 +155,7 @@ export { Source } from "#/core/io/Source";
 export type { TokenType } from "#/core/model/TokenType";
 export { TokenPath } from "#/core/model/TokenPath";
 export { TokenReference } from "#/core/model/TokenReference";
+export type { TokenReferenceKind } from "#/core/model/TokenReference";
 export { TokenNode } from "#/core/model/TokenNode";
 export { TokenGroup } from "#/core/model/TokenGroup";
 export { walkTokenValue, walkValue } from "#/core/model/TokenValueWalker";

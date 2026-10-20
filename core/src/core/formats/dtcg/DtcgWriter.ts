@@ -80,7 +80,7 @@ export class DtcgWriter {
         if (token.extensions !== undefined) obj["$extensions"] = token.extensions;
 
         const value = token.value;
-        if (value instanceof TokenReference && (value.isPropertyReference || value.isTokenReference)) {
+        if (value instanceof TokenReference && value.isTokenReference) {
             obj["$ref"] = value.pointer;
         } else {
             obj["$value"] = this.#writeValue(token);
@@ -90,7 +90,7 @@ export class DtcgWriter {
 
     #writeValue(token: TokenNode<unknown>): unknown {
         const value = token.value;
-        if (value instanceof TokenReference) return value.toString();
+        if (value instanceof TokenReference) return this.#writePropertyReference(value);
 
         if (token instanceof ColorToken) return this.#writeColor(value as ColorValue);
         if (token instanceof DimensionToken) return this.#writeDimension(value as DimensionValue);

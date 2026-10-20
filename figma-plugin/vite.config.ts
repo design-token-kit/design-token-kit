@@ -15,6 +15,18 @@ export default defineConfig({
                 replacement: resolve(currentDir, "src/core-adapter/DtcgListLoader.ts"),
             },
             {
+                find: "#/core/formats/dtcg/dtcgSchema",
+                replacement: resolve(currentDir, "../core/src/browser/BrowserSchemaLoader.ts"),
+            },
+            {
+                find: "#/core/formats/design-md/designMdSchema",
+                replacement: resolve(currentDir, "../core/src/browser/BrowserSchemaLoader.ts"),
+            },
+            {
+                find: "#/core/formats/hrdt/hrdtSchema",
+                replacement: resolve(currentDir, "../core/src/browser/BrowserSchemaLoader.ts"),
+            },
+            {
                 find: /^#\/figma-plugin\/(.*)$/,
                 replacement: `${resolve(currentDir, "src")}/$1`,
             },

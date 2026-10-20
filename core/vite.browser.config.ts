@@ -13,6 +13,18 @@ export default defineConfig({
                 replacement: path.resolve(currentDir, "src/browser/BrowserDtcgListLoader.ts"),
             },
             {
+                find: "#/core/formats/dtcg/dtcgSchema",
+                replacement: path.resolve(currentDir, "src/browser/BrowserSchemaLoader.ts"),
+            },
+            {
+                find: "#/core/formats/design-md/designMdSchema",
+                replacement: path.resolve(currentDir, "src/browser/BrowserSchemaLoader.ts"),
+            },
+            {
+                find: "#/core/formats/hrdt/hrdtSchema",
+                replacement: path.resolve(currentDir, "src/browser/BrowserSchemaLoader.ts"),
+            },
+            {
                 find: /^#\/(.*)$/,
                 replacement: `${path.resolve(currentDir, "src")}/$1`,
             },

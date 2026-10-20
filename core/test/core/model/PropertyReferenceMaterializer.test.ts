@@ -13,6 +13,7 @@ import { TypographyValue } from "#/core/model/values/TypographyValue";
 import { BorderToken } from "#/core/model/tokens/BorderToken";
 import { ColorToken } from "#/core/model/tokens/ColorToken";
 import { DimensionToken } from "#/core/model/tokens/DimensionToken";
+import { NumberToken } from "#/core/model/tokens/NumberToken";
 import { StrokeStyleToken } from "#/core/model/tokens/StrokeStyleToken";
 import { TokenGroup } from "#/core/model/TokenGroup";
 import { TokenNode } from "#/core/model/TokenNode";
@@ -169,6 +170,75 @@ describe("materializePropertyReferences", () => {
         const darkPrimary = (darkColor as { get(name: string): unknown }).get("primary") as ColorToken;
 
         expect((darkPrimary.value as ColorValue).components).toEqual([0, 0, 1]);
+    });
+
+    it("adds a derived theme override when a base property reference depends on a theme token", async () => {
+        const list = await readDtcgList(
+            {
+                primitive: {
+                    color: { brand: { $type: "color", $value: { colorSpace: "srgb", components: [1, 0, 0] } } },
+                },
+                semantic: {
+                    color: {
+                        primary: {
+                            $type: "color",
+                            $value: {
+                                colorSpace: "srgb",
+                                components: { $ref: "#/primitive/color/brand/$value/components" },
+                            },
+                        },
+                    },
+                },
+            },
+            {
+                dark: {
+                    primitive: {
+                        color: { brand: { $type: "color", $value: { colorSpace: "srgb", components: [0, 0, 1] } } },
+                    },
+                },
+            },
+        );
+
+        const materialized = materializePropertyReferences(list);
+        const dark = materialized.themes.get("dark")!;
+        const semantic = dark.get("semantic") as TokenGroup;
+        const color = semantic.get("color") as TokenGroup;
+        const primary = color.get("primary") as ColorToken;
+
+        expect((primary.value as ColorValue).components).toEqual([0, 0, 1]);
+    });
+
+    it("does not add a derived theme token when the referenced value is unchanged", async () => {
+        const list = await readDtcgList(
+            {
+                primitive: {
+                    color: { brand: { $type: "color", $value: { colorSpace: "srgb", components: [1, 0, 0] } } },
+                },
+                semantic: {
+                    color: {
+                        primary: {
+                            $type: "color",
+                            $value: {
+                                colorSpace: "srgb",
+                                components: { $ref: "#/primitive/color/brand/$value/components" },
+                            },
+                        },
+                    },
+                },
+            },
+            {
+                dark: {
+                    primitive: {
+                        number: { scale: { $type: "number", $value: 2 } },
+                    },
+                },
+            },
+        );
+
+        const materialized = materializePropertyReferences(list);
+        const dark = materialized.themes.get("dark")!;
+
+        expect(dark.get("semantic")).toBeUndefined();
     });
 
     it("resolves property references through aliases and nested composite values", async () => {
@@ -344,6 +414,63 @@ describe("materializePropertyReferences", () => {
         expect(primary).toBeInstanceOf(ColorToken);
         expect(primary.value).toBeInstanceOf(TokenReference);
         expect((primary.value as TokenReference).toString()).toBe("{primitive.color.red}");
+    });
+
+    it("materializes a token-level pointer to a nested property", async () => {
+        const doc = await readDtcg({
+            primitive: {
+                color: { red: { $type: "color", $value: { colorSpace: "srgb", components: [1, 0.4, 0] } } },
+            },
+            semantic: {
+                accent: { $type: "number", $ref: "#/primitive/color/red/$value/components/1" },
+            },
+        });
+
+        const materialized = materializePropertyReferences({ base: doc, themes: new Map() });
+        const semantic = materialized.base.get("semantic") as TokenGroup;
+        const accent = semantic.get("accent") as TokenNode<unknown>;
+
+        expect(accent.value).toBe(0.4);
+        expect(accent.type).toBe("number");
+    });
+
+    it("infers the type through an untyped alias before resolving a full value pointer", async () => {
+        const doc = await readDtcg({
+            primitive: {
+                color: { red: { $type: "color", $value: { colorSpace: "srgb", components: [1, 0, 0] } } },
+            },
+            aliases: {
+                red: { $value: "{primitive.color.red}" },
+            },
+            semantic: {
+                copy: { $value: { $ref: "#/aliases/red/$value" } },
+            },
+        });
+
+        const materialized = materializePropertyReferences({ base: doc, themes: new Map() });
+        const semantic = materialized.base.get("semantic") as TokenGroup;
+        const copy = semantic.get("copy") as ColorToken;
+
+        expect(copy).toBeInstanceOf(ColorToken);
+        expect(copy.value).toEqual(new ColorValue("srgb", [1, 0, 0]));
+    });
+
+    it("infers the type from a scalar property reference when the token has no type", async () => {
+        const doc = await readDtcg({
+            primitive: {
+                color: { red: { $type: "color", $value: { colorSpace: "srgb", components: [1, 0.4, 0] } } },
+            },
+            semantic: {
+                accent: { $value: { $ref: "#/primitive/color/red/$value/components/1" } },
+            },
+        });
+
+        const materialized = materializePropertyReferences({ base: doc, themes: new Map() });
+        const semantic = materialized.base.get("semantic") as TokenGroup;
+        const accent = semantic.get("accent") as TokenNode<unknown>;
+
+        expect(accent).toBeInstanceOf(NumberToken);
+        expect(accent.value).toBe(0.4);
     });
 
     it("returns the original document when no color property references exist", async () => {

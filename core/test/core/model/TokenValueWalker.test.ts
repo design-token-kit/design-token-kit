@@ -6,6 +6,7 @@ import { ColorToken } from "#/core/model/tokens/ColorToken";
 import { BorderToken } from "#/core/model/tokens/BorderToken";
 import { TypographyToken } from "#/core/model/tokens/TypographyToken";
 import { GradientToken } from "#/core/model/tokens/GradientToken";
+import { ShadowToken } from "#/core/model/tokens/ShadowToken";
 import { AliasToken } from "#/core/model/tokens/AliasToken";
 import { TokenNode } from "#/core/model/TokenNode";
 import { ColorValue } from "#/core/model/values/ColorValue";
@@ -13,6 +14,7 @@ import { DimensionValue } from "#/core/model/values/DimensionValue";
 import { BorderValue } from "#/core/model/values/BorderValue";
 import { TypographyValue } from "#/core/model/values/TypographyValue";
 import { GradientStop } from "#/core/model/values/GradientValue";
+import { ShadowLayer } from "#/core/model/values/ShadowValue";
 
 function color(): ColorValue { return new ColorValue("srgb", [1, 0, 0], 1); }
 function dim(): DimensionValue { return new DimensionValue(2, "px"); }
@@ -85,8 +87,8 @@ describe("walkTokenValue", () => {
     });
 
     it("walks colorSpace and hex property references", () => {
-        const colorSpace = new TokenReference("#/primitive/color/space/$value", true);
-        const hex = new TokenReference("#/primitive/color/hex/$value", true);
+        const colorSpace = new TokenReference("#/primitive/color/space/$value", "property");
+        const hex = new TokenReference("#/primitive/color/hex/$value", "property");
         const value = new ColorValue(
             colorSpace as unknown as "srgb",
             [1, 0, 0],
@@ -98,5 +100,27 @@ describe("walkTokenValue", () => {
             "#/primitive/color/space/$value",
             "#/primitive/color/hex/$value",
         ]);
+    });
+
+    it("does not treat default color alpha as a raw value when another field is a reference", () => {
+        const component = new TokenReference("#/primitive/color/component/$value", "property");
+        const token = new ColorToken(new ColorValue("srgb", [component], 1, "#ff0000"));
+
+        expect(refs(token)).toEqual(["#/primitive/color/component/$value"]);
+        expect(rawCount(token)).toBe(0);
+    });
+
+    it("walks property references nested inside composite fields", () => {
+        const width = new DimensionValue(new TokenReference("#/primitive/number/width/$value", "property"), "px");
+        const token = new BorderToken(new BorderValue(color(), width, "solid"));
+
+        expect(refs(token)).toEqual(["#/primitive/number/width/$value"]);
+    });
+
+    it("walks inset references in shadow arrays", () => {
+        const inset = new TokenReference("#/primitive/number/inset/$value", "property");
+        const shadow = new ShadowLayer(color(), dim(), dim(), dim(), dim(), inset);
+
+        expect(refs(new ShadowToken([shadow]))).toEqual(["#/primitive/number/inset/$value"]);
     });
 });

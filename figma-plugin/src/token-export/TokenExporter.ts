@@ -498,7 +498,12 @@ function toTokenType(variable: Variable): DtcgVariableTokenType | undefined {
 }
 
 function isNumberVariable(variable: Variable): boolean {
-    return getVariableScopes(variable).includes("OPACITY") || variable.name.toLowerCase().includes("opacity");
+    const segments = variable.name
+        .toLowerCase()
+        .split("/")
+        .map((segment) => segment.replace(/[^a-z0-9]+/g, ""));
+    return getVariableScopes(variable).includes("OPACITY")
+        || segments.some((segment) => ["opacity", "alpha", "number", "lineheight"].includes(segment));
 }
 
 function isFontWeightVariable(variable: Variable): boolean {
@@ -525,7 +530,7 @@ function toFloatFallbackPrefix(variable: Variable, tokenType: "dimension" | "num
     }
 
     if (tokenType === "number") {
-        return ["primitive", "opacity"];
+        return isOpacityVariable(variable) ? ["primitive", "opacity"] : ["primitive", "number"];
     }
 
     const scope = getVariableScopes(variable).find((value) => DIMENSION_SCOPES.includes(value));
@@ -559,6 +564,15 @@ function getVariableResolvedType(variable: Variable): VariableResolvedDataType {
 
 function getVariableScopes(variable: Variable): VariableScope[] {
     return variable.scopes ?? [];
+}
+
+function isOpacityVariable(variable: Variable): boolean {
+    const segments = variable.name
+        .toLowerCase()
+        .split("/")
+        .map((segment) => segment.replace(/[^a-z0-9]+/g, ""));
+    return getVariableScopes(variable).includes("OPACITY")
+        || segments.some((segment) => ["opacity", "alpha"].includes(segment));
 }
 
 function uniqueVariables(variables: Variable[]): Variable[] {
@@ -683,9 +697,16 @@ function toTokenValue(
     }
 
     if (isVariableAlias(value)) {
-        const path = variablePathIndex.get(value.id);
-        const aliasTokenType = variableTokenTypeIndex.get(value.id);
-        return path === undefined || aliasTokenType !== tokenType ? undefined : toDtcgReference(path);
+        const targetId = resolveAliasTargetId(
+            value,
+            tokenType,
+            variableTokenTypeIndex,
+            variableIndex,
+            modeExport,
+            new Set(),
+        );
+        const path = targetId === undefined ? undefined : variablePathIndex.get(targetId);
+        return path === undefined ? undefined : toDtcgReference(path);
     }
 
     if (isComposedColorValue(value)) {
@@ -813,10 +834,15 @@ function resolveAliasTargetId(
     visitedVariableIds: Set<string>,
 ): string | undefined {
     if (visitedVariableIds.has(alias.id)) return undefined;
-    if (variableTokenTypeIndex.get(alias.id) !== expectedType) return undefined;
 
     const variable = variableIndex.get(alias.id);
     if (variable === undefined) return undefined;
+    const indexedType = variableTokenTypeIndex.get(alias.id);
+    if (expectedType === "number") {
+        if (indexedType !== "number" && !isContextuallyNumericVariable(variable, indexedType)) return undefined;
+    } else if (indexedType !== expectedType) {
+        return undefined;
+    }
     const modeId = getModeId(variable, modeExport);
     const targetValue = modeId === undefined ? undefined : variable.valuesByMode[modeId];
     if (targetValue === undefined) return undefined;
@@ -834,9 +860,52 @@ function resolveAliasTargetId(
     }
 
     if (expectedType === "color") {
-        return isColorValue(targetValue) || isComposedColorValue(targetValue) ? alias.id : undefined;
+        const isResolvableColor = isColorValue(targetValue)
+            || isComposedColorValue(targetValue)
+                && isResolvableComposedColor(
+                    targetValue,
+                    variableTokenTypeIndex,
+                    variableIndex,
+                    modeExport,
+                    nextVisitedVariableIds,
+                );
+        return isResolvableColor ? alias.id : undefined;
     }
     return typeof targetValue === "number" ? alias.id : undefined;
+}
+
+function isContextuallyNumericVariable(variable: Variable, tokenType: DtcgVariableTokenType | undefined): boolean {
+    return tokenType === "dimension" && isNumberVariable(variable);
+}
+
+function isResolvableComposedColor(
+    value: VariableComposedColor,
+    variableTokenTypeIndex: VariableTokenTypeIndex,
+    variableIndex: VariableIndex,
+    modeExport: ModeExport,
+    visitedVariableIds: Set<string>,
+): boolean {
+    const colorResolvable = isColorValue(value.color)
+        || isVariableAlias(value.color)
+            && resolveAliasTargetId(
+                value.color,
+                "color",
+                variableTokenTypeIndex,
+                variableIndex,
+                modeExport,
+                visitedVariableIds,
+            ) !== undefined;
+    const alphaResolvable = typeof value.opacity === "number"
+        || resolveAliasTargetId(
+            value.opacity,
+            "number",
+            variableTokenTypeIndex,
+            variableIndex,
+            modeExport,
+            visitedVariableIds,
+        ) !== undefined;
+
+    return colorResolvable && alphaResolvable;
 }
 
 function isVisibleSolidPaint(paint: Paint): paint is SolidPaint {

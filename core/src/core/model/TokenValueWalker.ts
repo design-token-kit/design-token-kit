@@ -65,9 +65,7 @@ export function walkTokenValue(token: TokenNode<unknown>, visit: LeafVisitor): v
  * @param visit - Callback invoked for each reference or raw leaf.
  */
 export function walkValue(value: unknown, visit: LeafVisitor): void {
-    const emit = (field: unknown): void => {
-        visit(field instanceof TokenReference ? { value: field, kind: "ref" } : { value: field, kind: "raw" });
-    };
+    const walkField = (field: unknown): void => walkValue(field, visit);
 
     if (value instanceof TokenReference) {
         visit({ value, kind: "ref" });
@@ -75,18 +73,18 @@ export function walkValue(value: unknown, visit: LeafVisitor): void {
     }
 
     if (value instanceof BorderValue) {
-        emit(value.color);
-        emit(value.width);
+        walkField(value.color);
+        walkField(value.width);
         const style = value.style;
         if (style instanceof StrokeStyleObject) {
             if (style.dashArray instanceof TokenReference) {
-                emit(style.dashArray);
+                walkField(style.dashArray);
             } else {
-                for (const d of style.dashArray) emit(d);
+                for (const d of style.dashArray) walkField(d);
             }
-            emit(style.lineCap);
+            walkField(style.lineCap);
         } else {
-            emit(style);
+            walkField(style);
         }
         return;
     }
@@ -98,92 +96,93 @@ export function walkValue(value: unknown, visit: LeafVisitor): void {
         const fields = [
             ...(colorSpace instanceof TokenReference ? [colorSpace] : []),
             ...(components instanceof TokenReference ? [components] : components as unknown[]),
-            value.alpha as unknown,
+            ...(value.alpha === 1 ? [] : [value.alpha as unknown]),
             ...(hex instanceof TokenReference ? [hex] : []),
         ];
         if (!fields.some(field => field instanceof TokenReference)) {
-            emit(value);
+            visit({ value, kind: "raw" });
             return;
         }
-        for (const field of fields) emit(field);
+        for (const field of fields) walkField(field);
         return;
     }
 
     if (value instanceof DimensionValue) {
-        emit(value.value);
-        emit(value.unit);
+        if (!(value.value instanceof TokenReference) && !(value.unit instanceof TokenReference)) {
+            visit({ value, kind: "raw" });
+            return;
+        }
+        walkField(value.value);
+        walkField(value.unit);
         return;
     }
 
     if (value instanceof DurationValue) {
-        emit(value.value);
-        emit(value.unit);
+        if (!(value.value instanceof TokenReference) && !(value.unit instanceof TokenReference)) {
+            visit({ value, kind: "raw" });
+            return;
+        }
+        walkField(value.value);
+        walkField(value.unit);
         return;
     }
 
     if (value instanceof CubicBezierValue) {
-        emit(value.p1x);
-        emit(value.p1y);
-        emit(value.p2x);
-        emit(value.p2y);
+        const points = [value.p1x, value.p1y, value.p2x, value.p2y];
+        if (!points.some(point => point instanceof TokenReference)) {
+            visit({ value, kind: "raw" });
+            return;
+        }
+        for (const point of points) walkField(point);
         return;
     }
 
     if (value instanceof TransitionValue) {
-        emit(value.duration);
-        emit(value.delay);
-        emit(value.timingFunction);
+        walkField(value.duration);
+        walkField(value.delay);
+        walkField(value.timingFunction);
         return;
     }
 
     if (value instanceof ShadowLayer) {
-        emitShadowLayer(value, emit);
-        emit(value.inset);
+        emitShadowLayer(value, walkField);
+        if (value.inset !== false) walkField(value.inset);
         return;
     }
 
     if (value instanceof StrokeStyleObject) {
         const dashArray = value.dashArray;
         if (dashArray instanceof TokenReference) {
-            emit(dashArray);
+            walkField(dashArray);
         } else {
-            for (const dash of dashArray) emit(dash);
+            for (const dash of dashArray) walkField(dash);
         }
-        emit(value.lineCap);
+        walkField(value.lineCap);
         return;
     }
 
     if (value instanceof GradientStop) {
-        emit(value.color);
-        emit(value.position);
+        walkField(value.color);
+        walkField(value.position);
         return;
     }
 
     if (Array.isArray(value)) {
         for (const item of value) {
-            if (item instanceof TokenReference) {
-                visit({ value: item, kind: "ref" });
-            } else if (item instanceof ShadowLayer) {
-                emitShadowLayer(item, emit);
-            } else if (item instanceof GradientStop) {
-                emit(item.color);
-                emit(item.position);
-            } else {
-                visit({ value: item, kind: "raw" });
-            }
+            walkField(item);
         }
         return;
     }
 
     if (value instanceof TypographyValue) {
-        emit(value.fontSize);
-        emit(value.fontWeight);
-        emit(value.letterSpacing);
-        emit(value.lineHeight);
+        walkField(value.fontSize);
+        walkField(value.fontWeight);
+        walkField(value.letterSpacing);
+        walkField(value.lineHeight);
         if (Array.isArray(value.fontFamily)) {
-            for (const f of value.fontFamily) emit(f);
+            for (const f of value.fontFamily) walkField(f);
         } else {
-            emit(value.fontFamily);
+            walkField(value.fontFamily);
         }
         return;
     }
@@ -192,10 +191,10 @@ export function walkValue(value: unknown, visit: LeafVisitor): void {
     visit({ value, kind: "raw" });
 }
 
-function emitShadowLayer(layer: ShadowLayer, emit: (field: unknown) => void): void {
-    emit(layer.color);
-    emit(layer.offsetX);
-    emit(layer.offsetY);
-    emit(layer.blur);
-    emit(layer.spread);
+function emitShadowLayer(layer: ShadowLayer, walkField: (field: unknown) => void): void {
+    walkField(layer.color);
+    walkField(layer.offsetX);
+    walkField(layer.offsetY);
+    walkField(layer.blur);
+    walkField(layer.spread);
 }

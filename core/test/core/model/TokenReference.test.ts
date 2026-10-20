@@ -8,7 +8,9 @@ describe("TokenReference", () => {
     });
 
     it("serializes to curly-brace notation", () => {
-        expect(new TokenReference("color.base.red").toString()).toBe("{color.base.red}");
+        const ref = new TokenReference("color.base.red");
+        expect(ref.kind).toBe("alias");
+        expect(ref.toString()).toBe("{color.base.red}");
     });
 
     it("preserves nested path segments", () => {
@@ -32,6 +34,14 @@ describe("TokenReference", () => {
         expect(ref?.isPropertyReference).toBe(false);
         expect(ref?.isTokenReference).toBe(true);
         expect(ref?.toString()).toBe("#/primitive/color/blue/$value");
+    });
+
+    it("parses a token-level pointer to a nested property as a property reference", () => {
+        const ref = TokenReference.parseTokenReference("#/primitive/color/blue/$value/components/0");
+
+        expect(ref?.isPropertyReference).toBe(true);
+        expect(ref?.isTokenReference).toBe(false);
+        expect(ref?.toString()).toBe("#/primitive/color/blue/$value/components/0");
     });
 
     it("rejects malformed JSON Pointer references", () => {

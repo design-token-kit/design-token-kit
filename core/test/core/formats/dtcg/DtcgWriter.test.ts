@@ -149,6 +149,21 @@ describe("DtcgWriter", () => {
             expect(semantic).not.toHaveProperty("$value");
         });
 
+        it("keeps a token value reference to a nested property inside $value", async () => {
+            const doc = await read(`{
+                "primitive": {
+                    "color": { "blue": { "$type": "color", "$value": { "colorSpace": "srgb", "components": [0.1, 0.4, 0.9] } } }
+                },
+                "semantic": { "accent": { "$ref": "#/primitive/color/blue/$value/components/1" } }
+            }`);
+
+            const written = write(doc);
+            const semantic = (written["semantic"] as Record<string, unknown>)["accent"] as Record<string, unknown>;
+
+            expect(semantic["$value"]).toEqual({ "$ref": "#/primitive/color/blue/$value/components/1" });
+            expect(semantic).not.toHaveProperty("$ref");
+        });
+
         it("writes property references as JSON Pointer reference objects", async () => {
             const doc = await read(`{
                 "primitive": {

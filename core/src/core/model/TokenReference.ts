@@ -15,23 +15,20 @@ export class TokenReference {
 
     readonly #aliasPath: TokenPath | undefined;
     readonly #jsonPointer: string | undefined;
-    readonly #kind: ReferenceKind;
+    readonly #kind: TokenReferenceKind;
 
     /**
      * Creates a reference from a token path or JSON Pointer.
      *
      * @param value - token path without braces or a JSON Pointer.
-     * @param kind - legacy boolean property-reference flag or an explicit kind.
+     * @param kind - reference kind. Curly-brace aliases use the default kind.
      */
-    constructor(value: string | TokenPath, kind: boolean | ReferenceKind = false) {
-        const referenceKind: ReferenceKind = typeof kind === "boolean"
-            ? kind ? "property" : "alias"
-            : kind;
-        this.#kind = referenceKind;
-        this.#aliasPath = referenceKind === "alias"
+    constructor(value: string | TokenPath, kind: TokenReferenceKind = "alias") {
+        this.#kind = kind;
+        this.#aliasPath = kind === "alias"
             ? value instanceof TokenPath ? value : TokenPath.parse(value)
             : undefined;
-        this.#jsonPointer = referenceKind === "alias" ? undefined : String(value);
+        this.#jsonPointer = kind === "alias" ? undefined : String(value);
     }
 
     private static fromPointer(pointer: string): TokenReference {
@@ -74,7 +71,10 @@ export class TokenReference {
      */
     static parseTokenReference(value: unknown): TokenReference | undefined {
         if (TokenReference.isNotation(value)) return new TokenReference(value.slice(1, -1));
-        return TokenReference.isJsonPointer(value) ? TokenReference.fromTokenPointer(value) : undefined;
+        if (!TokenReference.isJsonPointer(value)) return undefined;
+        return hasNestedValueProperty(value)
+            ? TokenReference.fromPointer(value)
+            : TokenReference.fromTokenPointer(value);
     }
 
     /** Token path or JSON Pointer without its enclosing reference object. */
@@ -90,6 +90,11 @@ export class TokenReference {
     /** Whether this is a token-level JSON Pointer reference. */
     get isTokenReference(): boolean {
         return this.#kind === "token";
+    }
+
+    /** The reference's discriminant. */
+    get kind(): TokenReferenceKind {
+        return this.#kind;
     }
 
     /** The referenced token path for a curly-brace alias. */
@@ -111,10 +116,22 @@ export class TokenReference {
     }
 }
 
-type ReferenceKind = "alias" | "property" | "token";
+export type TokenReferenceKind = "alias" | "property" | "token";
 
 function isJsonPointerReference(value: unknown): value is { $ref: string } {
     if (typeof value !== "object" || value === null || Array.isArray(value)) return false;
     const entries = Object.entries(value);
     return entries.length === 1 && TokenReference.isJsonPointer((value as { $ref?: unknown }).$ref);
+}
+
+function hasNestedValueProperty(pointer: string): boolean {
+    try {
+        const segments = pointer.slice(2).split("/").map((segment) =>
+            decodeURIComponent(segment).replace(/~1/g, "/").replace(/~0/g, "~"),
+        );
+        const valueIndex = segments.indexOf("$value");
+        return valueIndex >= 0 && valueIndex < segments.length - 1;
+    } catch {
+        return false;
+    }
 }
