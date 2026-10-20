@@ -4,6 +4,7 @@
 [![DTCG Native](https://img.shields.io/badge/DTCG-Native-2563eb?style=flat-square)](https://www.designtokens.org/)
 [![DESIGN.md Compatible](https://img.shields.io/badge/DESIGN.md-Compatible-059669?style=flat-square)](https://github.com/google-labs-code/design.md)
 <a href="https://codecov.io/gh/design-token-kit/design-token-kit"><img src="https://codecov.io/gh/design-token-kit/design-token-kit/branch/main/graph/badge.svg" alt="codecov" width="125"></a>
+[![XERJ Corpus Hub contributor](https://hub.xerj.org/contributors/dbychinsky/badge.svg)](https://hub.xerj.org/contributors/dbychinsky)
 
 Website: https://design-token-kit.github.io/
 
