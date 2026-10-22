@@ -47,14 +47,22 @@ console.log(`Verifying tokens: ${basePath}${darkPath ? ` (+ dark theme: ${darkPa
 // theme, so the compile check exercises themed output, not just a single doc.
 let list;
 try {
-    const reader = new DtcgReader();
-    const base = reader.parse(readFileSync(basePath, "utf8"));
+    const reader = DtcgReader.noSchema();
+    const base = readDocument(reader, basePath);
     const themes = darkPath
-        ? new Map([["dark", reader.parse(readFileSync(darkPath, "utf8"))]])
+        ? new Map([["dark", readDocument(reader, darkPath)]])
         : new Map();
     list = new DtcgList(base, themes);
 } catch (error) {
     fail(`could not read token sources: ${error.message}`);
+}
+
+function readDocument(reader, filePath) {
+    const result = reader.read(readFileSync(filePath, "utf8"), filePath);
+    if (!result.ok) {
+        throw new Error(result.issues.map((issue) => issue.message).join("; "));
+    }
+    return result.documents[0];
 }
 
 // Generate and compile each SwiftUI output form. A failure in either form
