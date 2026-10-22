@@ -1,5 +1,7 @@
 # @design-token-kit/core
 
+[![Breaking changes in v3.0.0](https://img.shields.io/badge/Breaking_changes-v3.0.0-dc2626?style=flat-square)](https://design-token-kit.github.io/docs/migration/1.x-to-3.0/)
+
 The core package of Design Token Kit provides the runtime foundation
 for working with [DTCG 2025.10 design tokens][dtcg] and [DESIGN.md][designmd].
 It defines the typed token model, performs schema and semantic validation,
@@ -13,9 +15,10 @@ https://github.com/design-token-kit/design-token-kit
 Website:
 https://design-token-kit.github.io/
 
-> **Breaking changes in 2.0.0:** The Core API has breaking changes for 1.x
-> users. Read the [1.x to 2.0 migration guide](https://design-token-kit.github.io/docs/migration/1.x-to-2.0/)
-> before upgrading.
+> **Breaking changes in v3.0.0:** Read the migration guide for your current
+> version before upgrading: [1.x to 3.0](https://design-token-kit.github.io/docs/migration/1.x-to-3.0/),
+> [1.x to 2.0](https://design-token-kit.github.io/docs/migration/1.x-to-2.0/), or
+> [2.0 to 3.0](https://design-token-kit.github.io/docs/migration/2.0-to-3.0/).
 
 ## Features
 
