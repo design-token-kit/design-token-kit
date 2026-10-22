@@ -68,6 +68,19 @@ describe("TokenGroup", () => {
     });
 
     describe("walk", () => {
+        it("visits a group's root token before its children", () => {
+            const rootToken = makeColorToken();
+            const root = new TokenGroup({
+                root: rootToken,
+                children: new Map([["red", makeColorToken()]]),
+            });
+
+            const paths: string[] = [];
+            root.walk((_node, path) => paths.push(path.toString()));
+
+            expect(paths).toEqual(["", "$root", "red"]);
+        });
+
         it("visits the group itself first, then children pre-order", () => {
             const inner = new TokenGroup({ children: new Map([["red", makeColorToken()]]) });
             const root = new TokenGroup({ children: children([["primitive", inner], ["semantic", makeColorToken()]]) });

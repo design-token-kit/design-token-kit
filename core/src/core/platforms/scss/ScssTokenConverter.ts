@@ -209,6 +209,10 @@ function tokenValueToScss(value: unknown, separator: string): string | undefined
 
 function collectDeclarations(group: TokenGroup, path: TokenPath, separator: string): Array<[string, string]> {
     const result: Array<[string, string]> = [];
+    if (group.root !== undefined && path.toString()) {
+        const scss = tokenValueToScss(group.root.value, separator);
+        if (scss !== undefined) result.push([tokenPathToScssVar(path.toString(), separator), scss]);
+    }
     for (const [key, child] of group.entries()) {
         const childPath = path.child(key);
         if (child instanceof TokenGroup) {

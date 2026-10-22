@@ -68,6 +68,9 @@ export class FigmaScriptTokenConverter implements TokenConverter {
      */
     #collect(plan: ScriptPlan, doc: Dtcg, mode: string, isBase: boolean): void {
         const walk = (group: Dtcg | TokenGroup, path: string[]): void => {
+            if (group instanceof TokenGroup && group.root !== undefined && path.length > 0) {
+                this.#addToken(plan, group.root, path, mode, isBase);
+            }
             for (const [key, child] of group.entries()) {
                 const childPath = [...path, key];
 

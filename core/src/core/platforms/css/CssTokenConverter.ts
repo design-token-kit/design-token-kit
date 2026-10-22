@@ -174,6 +174,10 @@ function tokenValueToCss(value: unknown, doc: Dtcg, base?: Dtcg): string | undef
 
 function collectDeclarations(group: TokenGroup, path: TokenPath, doc: Dtcg, base?: Dtcg): Array<[string, string]> {
     const result: Array<[string, string]> = [];
+    if (group.root !== undefined && path.toString()) {
+        const css = tokenValueToCss(group.root.value, doc, base);
+        if (css !== undefined) result.push([tokenPathToCssVar(path.toString()), css]);
+    }
     for (const [key, child] of group.entries()) {
         const childPath = path.child(key);
         if (child instanceof TokenGroup) {

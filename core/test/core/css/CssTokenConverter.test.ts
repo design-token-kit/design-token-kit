@@ -172,6 +172,16 @@ describe("CssTokenConverter", () => {
         expect(converter.convertDocument(new Dtcg(new TokenGroup()))).toBe("");
     });
 
+    it("converts a group's root token at the group path", () => {
+        const generated = converter.convertDocument(new Dtcg(new TokenGroup({
+            children: new Map([["colors", new TokenGroup({
+                root: new ColorToken(new ColorValue("srgb", [1, 0, 0], 1, "#ff0000")),
+            })]]),
+        })));
+
+        expect(generated).toContain("--colors: #ff0000");
+    });
+
     it("serializes direct top-level tokens and complex css value branches", () => {
         const generated = converter.convertDocument(new Dtcg(new TokenGroup({
             children: new Map<string, TokenGroup | TokenNode<unknown>>([

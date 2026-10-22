@@ -97,6 +97,9 @@ export class AndroidResourceMapper {
 
     #mapGroup(group: TokenGroup, path: readonly string[], depth: number): AndroidResource[] {
         const resources: AndroidResource[] = [];
+        if (group.root !== undefined && path.length > 0) {
+            resources.push(...this.#mapToken(group.root, path));
+        }
         for (const [key, child] of group.entries()) {
             const childPath = [...path, ...this.#namer.parts(key)];
             if (child instanceof TokenGroup) {

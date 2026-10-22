@@ -257,6 +257,28 @@ describe("TokenExporter", () => {
         });
     });
 
+    it("preserves opacity substring classification for legacy FLOAT names", async () => {
+        const opacity = floatVariable("opacity", "Values/OpacityDisabled", 0.6, []);
+        stubFigma({
+            variables: {
+                getLocalVariablesAsync: vi.fn(async (type: string) => type === "FLOAT" ? [opacity] : []),
+                getLocalVariableCollectionsAsync: vi.fn().mockResolvedValue([]),
+            },
+        });
+
+        const result = await new TokenExporter().export();
+
+        expect(result.files[0]?.tokens).toMatchObject({
+            primitive: {
+                opacity: {
+                    values: {
+                        opacitydisabled: { $type: "number", $value: 0.6 },
+                    },
+                },
+            },
+        });
+    });
+
     it("skips direct aliases whose color target cannot be exported", async () => {
         const broken = colorVariable("broken", "Primitive/Color/Broken", {
             default: {

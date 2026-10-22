@@ -81,6 +81,7 @@ export class TokenGroup {
      */
     walk(visit: NodeVisitor, path: TokenPath = TokenPath.root()): void {
         visit(this, path);
+        if (this.root !== undefined) visit(this.root, path.child("$root"));
         for (const [name, child] of this.#children) {
             const childPath = path.child(name);
             if (child instanceof TokenGroup) {

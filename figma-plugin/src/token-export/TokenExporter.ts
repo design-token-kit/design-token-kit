@@ -498,11 +498,13 @@ function toTokenType(variable: Variable): DtcgVariableTokenType | undefined {
 }
 
 function isNumberVariable(variable: Variable): boolean {
+    const normalizedName = variable.name.toLowerCase().replace(/[^a-z0-9]+/g, "");
     const segments = variable.name
         .toLowerCase()
         .split("/")
         .map((segment) => segment.replace(/[^a-z0-9]+/g, ""));
     return getVariableScopes(variable).includes("OPACITY")
+        || normalizedName.includes("opacity")
         || segments.some((segment) => ["opacity", "alpha", "number", "lineheight"].includes(segment));
 }
 
@@ -567,11 +569,13 @@ function getVariableScopes(variable: Variable): VariableScope[] {
 }
 
 function isOpacityVariable(variable: Variable): boolean {
+    const normalizedName = variable.name.toLowerCase().replace(/[^a-z0-9]+/g, "");
     const segments = variable.name
         .toLowerCase()
         .split("/")
         .map((segment) => segment.replace(/[^a-z0-9]+/g, ""));
     return getVariableScopes(variable).includes("OPACITY")
+        || normalizedName.includes("opacity")
         || segments.some((segment) => ["opacity", "alpha"].includes(segment));
 }
 

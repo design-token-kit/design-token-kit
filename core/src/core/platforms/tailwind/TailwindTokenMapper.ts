@@ -115,6 +115,7 @@ export class TailwindTokenMapper {
 
     #collectGroup(group: TokenGroup, path: TokenPath): TailwindDeclaration[] {
         const result: TailwindDeclaration[] = [];
+        if (group.root !== undefined) result.push(...this.#mapToken(path, group.root));
         for (const [key, child] of group.entries()) {
             const childPath = path.child(key);
             if (child instanceof TokenGroup) {
