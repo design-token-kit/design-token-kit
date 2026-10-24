@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { TokenArchitectureAnalyzer } from "#/figma-plugin/token-export/TokenArchitectureAnalyzer";
 import { TokenExporter } from "#/figma-plugin/token-export/TokenExporter";
 
 describe("TokenExporter", () => {
@@ -202,6 +203,224 @@ describe("TokenExporter", () => {
                 },
             },
         });
+    });
+
+    it("preserves adjacent layer aliases instead of flattening the alias chain", async () => {
+        const primitive = colorVariable("primitive", "Primitive/Color/Blue", {
+            default: { r: 0, g: 0, b: 1, a: 1 },
+        });
+        const semantic = colorVariable("semantic", "Semantic/Color/Action", {
+            default: { type: "VARIABLE_ALIAS", id: "primitive" },
+        });
+        const component = colorVariable("component", "Component/Card/Default/Background", {
+            default: { type: "VARIABLE_ALIAS", id: "semantic" },
+        });
+        Object.assign(primitive, { variableCollectionId: "primitive-collection" });
+        Object.assign(semantic, { variableCollectionId: "semantic-collection" });
+        Object.assign(component, { variableCollectionId: "component-collection" });
+
+        stubFigma({
+            variables: {
+                getLocalVariablesAsync: vi.fn().mockResolvedValue([primitive, semantic, component]),
+                getLocalVariableCollectionsAsync: vi.fn().mockResolvedValue([
+                    variableCollection("primitive-collection"),
+                    variableCollection("semantic-collection"),
+                    variableCollection("component-collection"),
+                ]),
+            },
+        });
+
+        const result = await new TokenExporter().export();
+        const report = new TokenArchitectureAnalyzer().analyze(result.files);
+
+        expect(result.files[0]?.tokens).toMatchObject({
+            semantic: {
+                color: {
+                    action: { $value: "{primitive.color.blue}" },
+                },
+            },
+            component: {
+                card: {
+                    default: {
+                        background: { $value: "{semantic.color.action}" },
+                    },
+                },
+            },
+        });
+        expect(report.warnings).toEqual([]);
+    });
+
+    it("references the resolved alias target when the direct target has no token path", async () => {
+        const primitive = colorVariable("primitive", "Primitive/Color/Blue", {
+            default: { r: 0, g: 0, b: 1, a: 1 },
+        });
+        const unnamed = colorVariable("unnamed", " / ", {
+            default: { type: "VARIABLE_ALIAS", id: "primitive" },
+        });
+        const semantic = colorVariable("semantic", "Semantic/Color/Action", {
+            default: { type: "VARIABLE_ALIAS", id: "unnamed" },
+        });
+        stubFigma({
+            variables: {
+                getLocalVariablesAsync: vi.fn().mockResolvedValue([primitive, unnamed, semantic]),
+                getLocalVariableCollectionsAsync: vi.fn().mockResolvedValue([]),
+            },
+        });
+
+        const result = await new TokenExporter().export();
+
+        expect(result.files[0]?.tokens).toMatchObject({
+            semantic: {
+                color: {
+                    action: { $value: "{primitive.color.blue}" },
+                },
+            },
+        });
+    });
+
+    it("references the first exportable alias target behind an unnamed variable", async () => {
+        const primitive = colorVariable("primitive", "Primitive/Color/Blue", {
+            default: { r: 0, g: 0, b: 1, a: 1 },
+        });
+        const semantic = colorVariable("semantic", "Semantic/Color/Action", {
+            default: { type: "VARIABLE_ALIAS", id: "primitive" },
+        });
+        const unnamed = colorVariable("unnamed", " / ", {
+            default: { type: "VARIABLE_ALIAS", id: "semantic" },
+        });
+        const opacity = floatVariable("opacity", "Primitive/Opacity/Disabled", 0.6, ["OPACITY"]);
+        const background = colorVariable("background", "Component/Card/Background", {
+            default: { type: "VARIABLE_ALIAS", id: "unnamed" },
+        });
+        const disabled = colorVariable("disabled", "Component/Card/Disabled", {
+            default: {
+                color: { type: "VARIABLE_ALIAS", id: "unnamed" },
+                opacity: { type: "VARIABLE_ALIAS", id: "opacity" },
+            },
+        });
+        stubFigma({
+            variables: {
+                getLocalVariablesAsync: vi.fn(async (type: string) =>
+                    type === "COLOR" ? [primitive, semantic, unnamed, background, disabled] : [opacity]),
+                getLocalVariableCollectionsAsync: vi.fn().mockResolvedValue([]),
+            },
+        });
+
+        const result = await new TokenExporter().export();
+
+        expect(result.files[0]?.tokens).toMatchObject({
+            component: {
+                card: {
+                    background: { $value: "{semantic.color.action}" },
+                },
+            },
+        });
+        expect(result.files[0]?.referenceSources).toEqual({
+            "component.card.disabled": {
+                "#/primitive/color/blue/$value/colorSpace": ["semantic", "color", "action"],
+                "#/primitive/color/blue/$value/components": ["semantic", "color", "action"],
+            },
+        });
+    });
+
+    it("flattens aliases through variables whose token path is shared or nested", async () => {
+        const red = colorVariable("red", "Primitive/Color/Red", {
+            default: { r: 1, g: 0, b: 0, a: 1 },
+        });
+        const blue = colorVariable("blue", "Primitive/Color/Blue", {
+            default: { r: 0, g: 0, b: 1, a: 1 },
+        });
+        const action = colorVariable("action", "Semantic/Color/Action", {
+            default: { type: "VARIABLE_ALIAS", id: "red" },
+        });
+        const duplicateAction = colorVariable("duplicate-action", "semantic/color/action ", {
+            default: { type: "VARIABLE_ALIAS", id: "blue" },
+        });
+        const text = colorVariable("text", "Semantic/Color/Text", {
+            default: { type: "VARIABLE_ALIAS", id: "blue" },
+        });
+        const textPrimary = colorVariable("text-primary", "Semantic/Color/Text/Primary", {
+            default: { type: "VARIABLE_ALIAS", id: "red" },
+        });
+        const background = colorVariable("background", "Component/Button/Background", {
+            default: { type: "VARIABLE_ALIAS", id: "action" },
+        });
+        const label = colorVariable("label", "Component/Button/Label", {
+            default: { type: "VARIABLE_ALIAS", id: "text-primary" },
+        });
+        stubFigma({
+            variables: {
+                getLocalVariablesAsync: vi.fn().mockResolvedValue([
+                    red, blue, action, duplicateAction, text, textPrimary, background, label,
+                ]),
+                getLocalVariableCollectionsAsync: vi.fn().mockResolvedValue([]),
+            },
+        });
+
+        const result = await new TokenExporter().export();
+
+        expect(result.files[0]?.tokens).toMatchObject({
+            component: {
+                button: {
+                    background: { $value: "{primitive.color.red}" },
+                    label: { $value: "{primitive.color.red}" },
+                },
+            },
+        });
+    });
+
+    it("reports Figma alias targets of flattened opacity color references", async () => {
+        const primitiveColor = colorVariable("primitive-color", "Primitive/Color/Blue", {
+            default: { r: 0, g: 0, b: 1, a: 1 },
+        });
+        const primitiveOpacity = floatVariable("primitive-opacity", "Primitive/Opacity/Disabled", 0.6, ["OPACITY"]);
+        const semanticColor = colorVariable("semantic-color", "Semantic/Color/Action", {
+            default: { type: "VARIABLE_ALIAS", id: "primitive-color" },
+        });
+        const semanticOpacity = Object.assign(
+            floatVariable("semantic-opacity", "Semantic/Opacity/Disabled", 0, ["OPACITY"]),
+            { valuesByMode: { default: { type: "VARIABLE_ALIAS", id: "primitive-opacity" } } },
+        );
+        const component = colorVariable("component", "Component/Card/Disabled", {
+            default: {
+                color: { type: "VARIABLE_ALIAS", id: "semantic-color" },
+                opacity: { type: "VARIABLE_ALIAS", id: "semantic-opacity" },
+            },
+        });
+        stubFigma({
+            variables: {
+                getLocalVariablesAsync: vi.fn(async (type: string) =>
+                    type === "COLOR"
+                        ? [primitiveColor, semanticColor, component]
+                        : [primitiveOpacity, semanticOpacity]),
+                getLocalVariableCollectionsAsync: vi.fn().mockResolvedValue([]),
+            },
+        });
+
+        const result = await new TokenExporter().export();
+        const report = new TokenArchitectureAnalyzer().analyze(result.files);
+
+        expect(result.files[0]?.tokens).toMatchObject({
+            component: {
+                card: {
+                    disabled: {
+                        $value: {
+                            colorSpace: { $ref: "#/primitive/color/blue/$value/colorSpace" },
+                            components: { $ref: "#/primitive/color/blue/$value/components" },
+                            alpha: { $ref: "#/primitive/opacity/disabled/$value" },
+                        },
+                    },
+                },
+            },
+        });
+        expect(result.files[0]?.referenceSources).toEqual({
+            "component.card.disabled": {
+                "#/primitive/color/blue/$value/colorSpace": ["semantic", "color", "action"],
+                "#/primitive/color/blue/$value/components": ["semantic", "color", "action"],
+                "#/primitive/opacity/disabled/$value": ["semantic", "opacity", "disabled"],
+            },
+        });
+        expect(report.warnings).toEqual([]);
     });
 
     it("treats an unscoped float alias used as color opacity as a number", async () => {
@@ -543,5 +762,13 @@ function shadowStyle(name: string): Record<string, unknown> {
             offset: { x: 0, y: 2 },
             radius: 4,
         }],
+    };
+}
+
+function variableCollection(id: string): Record<string, unknown> {
+    return {
+        id,
+        defaultModeId: "default",
+        modes: [{ modeId: "default", name: "Default" }],
     };
 }

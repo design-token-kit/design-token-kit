@@ -269,6 +269,176 @@ describe("TokenArchitectureAnalyzer", () => {
     });
 });
 
+describe("TokenArchitectureAnalyzer property references", () => {
+    const primitive = {
+        color: {
+            blue: token("color", { colorSpace: "srgb", components: [0, 0, 1], alpha: 1 }),
+        },
+        opacity: {
+            disabled: token("number", 0.6),
+        },
+    };
+    const blueWithDisabledOpacity = {
+        colorSpace: { $ref: "#/primitive/color/blue/$value/colorSpace" },
+        components: { $ref: "#/primitive/color/blue/$value/components" },
+        alpha: { $ref: "#/primitive/opacity/disabled/$value" },
+    };
+
+    it("accepts semantic property references to primitive tokens", () => {
+        const report = new TokenArchitectureAnalyzer().analyze([tokenFile({
+            primitive,
+            semantic: {
+                color: {
+                    disabled: token("color", blueWithDisabledOpacity),
+                },
+            },
+        })]);
+
+        expect(report.warnings).toEqual([]);
+    });
+
+    it("reports component property references that skip the semantic layer", () => {
+        const report = new TokenArchitectureAnalyzer().analyze([tokenFile({
+            primitive,
+            component: {
+                card: {
+                    disabled: token("color", blueWithDisabledOpacity),
+                },
+            },
+        })]);
+
+        expect(report.warnings).toEqual([
+            "Token architecture: \"component.card.disabled\" references a token outside the allowed layer order.",
+        ]);
+    });
+
+    it("checks layers against the Figma alias targets of property references", () => {
+        const report = new TokenArchitectureAnalyzer().analyze([{
+            ...tokenFile({
+                primitive,
+                semantic: {
+                    color: {
+                        action: token("color", "{primitive.color.blue}"),
+                    },
+                    opacity: {
+                        disabled: token("number", "{primitive.opacity.disabled}"),
+                    },
+                },
+                component: {
+                    card: {
+                        disabled: token("color", blueWithDisabledOpacity),
+                    },
+                },
+            }),
+            referenceSources: {
+                "component.card.disabled": {
+                    "#/primitive/color/blue/$value/colorSpace": ["semantic", "color", "action"],
+                    "#/primitive/color/blue/$value/components": ["semantic", "color", "action"],
+                    "#/primitive/opacity/disabled/$value": ["semantic", "opacity", "disabled"],
+                },
+            },
+        }]);
+
+        expect(report.warnings).toEqual([]);
+    });
+
+    it("reports broken property references", () => {
+        const report = new TokenArchitectureAnalyzer().analyze([tokenFile({
+            primitive,
+            semantic: {
+                color: {
+                    disabled: token("color", {
+                        ...blueWithDisabledOpacity,
+                        alpha: { $ref: "#/primitive/opacity/missing/$value" },
+                    }),
+                },
+            },
+        })]);
+
+        expect(report.warnings).toEqual([
+            "Token architecture: \"semantic.color.disabled\" references a missing token.",
+        ]);
+    });
+
+    it("reports property references to missing value properties", () => {
+        const report = new TokenArchitectureAnalyzer().analyze([tokenFile({
+            primitive,
+            semantic: {
+                color: {
+                    disabled: token("color", {
+                        ...blueWithDisabledOpacity,
+                        alpha: { $ref: "#/primitive/color/blue/$value/hex" },
+                    }),
+                },
+            },
+        })]);
+
+        expect(report.warnings).toEqual([
+            "Token architecture: \"semantic.color.disabled\" references a missing token.",
+        ]);
+    });
+
+    it("treats objects with extra keys next to $ref as raw values", () => {
+        const report = new TokenArchitectureAnalyzer().analyze([tokenFile({
+            primitive,
+            semantic: {
+                color: {
+                    disabled: token("color", {
+                        ...blueWithDisabledOpacity,
+                        alpha: { $ref: "#/primitive/opacity/disabled/$value", fallback: 0.5 },
+                    }),
+                },
+            },
+        })]);
+
+        expect(report.warnings).toEqual([
+            "Token architecture: \"semantic.color.disabled\" uses a raw value outside primitive tokens.",
+        ]);
+    });
+
+    it("ignores Figma alias targets that are missing from the document", () => {
+        const report = new TokenArchitectureAnalyzer().analyze([{
+            ...tokenFile({
+                primitive,
+                component: {
+                    card: {
+                        disabled: token("color", blueWithDisabledOpacity),
+                    },
+                },
+            }),
+            referenceSources: {
+                "component.card.disabled": {
+                    "#/primitive/color/blue/$value/colorSpace": ["semantic", "color", "action"],
+                    "#/primitive/color/blue/$value/components": ["semantic", "color", "action"],
+                    "#/primitive/opacity/disabled/$value": ["semantic", "opacity", "disabled"],
+                },
+            },
+        }]);
+
+        expect(report.warnings).toEqual([
+            "Token architecture: \"component.card.disabled\" references a token outside the allowed layer order.",
+        ]);
+    });
+
+    it("reports malformed property reference pointers as missing tokens", () => {
+        const report = new TokenArchitectureAnalyzer().analyze([tokenFile({
+            primitive,
+            semantic: {
+                color: {
+                    disabled: token("color", {
+                        ...blueWithDisabledOpacity,
+                        alpha: { $ref: "#/primitive/opacity/50%/$value" },
+                    }),
+                },
+            },
+        })]);
+
+        expect(report.warnings).toEqual([
+            "Token architecture: \"semantic.color.disabled\" references a missing token.",
+        ]);
+    });
+});
+
 function token(type: string, value: unknown): Record<string, unknown> {
     return {
         $type: type,

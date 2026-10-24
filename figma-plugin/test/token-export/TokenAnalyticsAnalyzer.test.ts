@@ -89,6 +89,36 @@ describe("TokenAnalyticsAnalyzer", () => {
         expect(analytics.referenceTokens).toBe(1);
         expect(analytics.rawValueTokens).toBe(2);
     });
+
+    it("counts property references as references, not raw values", () => {
+        const analytics = new TokenAnalyticsAnalyzer().analyze(
+            [
+                tokenFile("tokens.json", {
+                    primitive: {
+                        color: {
+                            blue: token("color", { colorSpace: "srgb", components: [0, 0, 1], alpha: 1 }),
+                        },
+                        opacity: {
+                            disabled: token("number", 0.6),
+                        },
+                    },
+                    semantic: {
+                        color: {
+                            disabled: token("color", {
+                                colorSpace: { $ref: "#/primitive/color/blue/$value/colorSpace" },
+                                components: { $ref: "#/primitive/color/blue/$value/components" },
+                                alpha: { $ref: "#/primitive/opacity/disabled/$value" },
+                            }),
+                        },
+                    },
+                }),
+            ],
+            [],
+        );
+
+        expect(analytics.referenceTokens).toBe(1);
+        expect(analytics.rawValueTokens).toBe(2);
+    });
 });
 
 function token(type: string, value: unknown): Record<string, unknown> {

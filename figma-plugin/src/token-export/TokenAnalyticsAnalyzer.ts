@@ -1,3 +1,4 @@
+import { TokenReference } from "@design-token-kit/core/core/model/TokenReference";
 import type { ExportedTokenFile } from "#/figma-plugin/token-export/TokenExporter";
 import type { TokenArchitectureCheckResult } from "#/figma-plugin/token-export/TokenArchitectureAnalyzer";
 
@@ -92,6 +93,10 @@ function hasReference(value: unknown): boolean {
         return value.some(hasReference);
     }
 
+    if (isPropertyReference(value)) {
+        return true;
+    }
+
     if (isRecord(value)) {
         return Object.values(value).some(hasReference);
     }
@@ -108,6 +113,10 @@ function hasRawValueLeaf(value: unknown): boolean {
         return value.some(hasRawValueLeaf);
     }
 
+    if (isPropertyReference(value)) {
+        return false;
+    }
+
     if (isRecord(value)) {
         return Object.values(value).some(hasRawValueLeaf);
     }
@@ -117,6 +126,10 @@ function hasRawValueLeaf(value: unknown): boolean {
 
 function isReferenceValue(value: string): boolean {
     return /^\{[^{}]+\}$/.test(value);
+}
+
+function isPropertyReference(value: unknown): boolean {
+    return isRecord(value) && TokenReference.parse(value) !== undefined;
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {

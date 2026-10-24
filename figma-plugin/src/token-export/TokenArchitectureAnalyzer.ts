@@ -1,4 +1,5 @@
-import type { ExportedTokenFile } from "#/figma-plugin/token-export/TokenExporter";
+import { TokenReference } from "@design-token-kit/core/core/model/TokenReference";
+import type { ExportedTokenFile, TokenReferenceSources } from "#/figma-plugin/token-export/TokenExporter";
 
 /**
  * Reports architecture issues for the expected primitive, semantic, component token layers.
@@ -62,7 +63,7 @@ export class TokenArchitectureAnalyzer {
             ]);
         }
 
-        return analyzeDocument(baseFile.tokens, baseFile.architectureWarnings);
+        return analyzeDocument(baseFile.tokens, baseFile.architectureWarnings, baseFile.referenceSources ?? {});
     }
 
 }
@@ -102,12 +103,23 @@ interface TokenEntry {
     value: unknown;
 }
 
+interface TokenReferenceEntry {
+    layerPath: string[];
+    resolved: boolean;
+}
+
 type TokenArchitectureDocument = Record<string, unknown>;
 
-function analyzeDocument(document: TokenArchitectureDocument, architectureWarnings: string[]): TokenArchitectureReport {
+type TokenValueIndex = Map<string, unknown>;
+
+function analyzeDocument(
+    document: TokenArchitectureDocument,
+    architectureWarnings: string[],
+    referenceSources: TokenReferenceSources,
+): TokenArchitectureReport {
     const tokens = collectTokens(document);
-    const tokenPathSet = new Set(tokens.map((token) => toPathName(token.path)));
-    const referenceIssues = checkTokenReferences(tokens, tokenPathSet);
+    const tokenValues: TokenValueIndex = new Map(tokens.map((token) => [toPathName(token.path), token.value]));
+    const referenceIssues = checkTokenReferences(tokens, tokenValues, referenceSources);
     const layerIssues = checkArchitectureLayers(document, architectureWarnings);
     const checks = [
         checkResult(
@@ -189,7 +201,11 @@ function checkTokenValues(tokens: TokenEntry[]): string[] {
     );
 }
 
-function checkTokenReferences(tokens: TokenEntry[], tokenPathSet: Set<string>): ReferenceIssues {
+function checkTokenReferences(
+    tokens: TokenEntry[],
+    tokenValues: TokenValueIndex,
+    referenceSources: TokenReferenceSources,
+): ReferenceIssues {
     const issues: ReferenceIssues = {
         missingReferenceIssues: [],
         layerIssues: [],
@@ -197,18 +213,18 @@ function checkTokenReferences(tokens: TokenEntry[], tokenPathSet: Set<string>): 
     };
 
     for (const token of tokens) {
-        for (const referencePath of extractReferencePaths(token.value)) {
-            const referenceName = toPathName(referencePath);
-            if (!tokenPathSet.has(referenceName)) {
+        const tokenReferenceSources = referenceSources[toPathName(token.path)] ?? {};
+        for (const reference of extractReferences(token.value, tokenValues, tokenReferenceSources)) {
+            if (!reference.resolved) {
                 issues.missingReferenceIssues.push(toPathName(token.path));
             }
 
-            const layerIssue = checkLayerReference(token.path, referencePath);
+            const layerIssue = checkLayerReference(token.path, reference.layerPath);
             if (layerIssue !== undefined) {
                 issues.layerIssues.push(layerIssue);
             }
 
-            const isolationIssue = checkComponentIsolation(token.path, referencePath);
+            const isolationIssue = checkComponentIsolation(token.path, reference.layerPath);
             if (isolationIssue !== undefined) {
                 issues.componentIsolationIssues.push(isolationIssue);
             }
@@ -279,6 +295,10 @@ function hasRawValueLeaf(value: unknown): boolean {
         return value.some((item) => hasRawValueLeaf(item));
     }
 
+    if (toPropertyReferencePointer(value) !== undefined) {
+        return false;
+    }
+
     if (isRecord(value)) {
         return Object.values(value).some((child) => hasRawValueLeaf(child));
     }
@@ -290,20 +310,80 @@ function isReferenceValue(value: string): boolean {
     return /^\{[^{}]+\}$/.test(value);
 }
 
-function extractReferencePaths(value: unknown): string[][] {
+function toPropertyReferencePointer(value: unknown): string | undefined {
+    return isRecord(value) ? TokenReference.parse(value)?.pointer : undefined;
+}
+
+function extractReferences(
+    value: unknown,
+    tokenValues: TokenValueIndex,
+    referenceSources: Record<string, string[]>,
+): TokenReferenceEntry[] {
     if (typeof value === "string") {
-        return Array.from(value.matchAll(REFERENCE_PATTERN), (match) => match[1]!.split("."));
+        return Array.from(value.matchAll(REFERENCE_PATTERN), (match) => {
+            const path = match[1]!.split(".");
+            return { layerPath: path, resolved: tokenValues.has(toPathName(path)) };
+        });
     }
 
     if (Array.isArray(value)) {
-        return value.flatMap((item) => extractReferencePaths(item));
+        return value.flatMap((item) => extractReferences(item, tokenValues, referenceSources));
+    }
+
+    const pointer = toPropertyReferencePointer(value);
+    if (pointer !== undefined) {
+        return [toPropertyReferenceEntry(pointer, tokenValues, referenceSources)];
     }
 
     if (isRecord(value)) {
-        return Object.values(value).flatMap((child) => extractReferencePaths(child));
+        return Object.values(value).flatMap((child) => extractReferences(child, tokenValues, referenceSources));
     }
 
     return [];
+}
+
+function toPropertyReferenceEntry(
+    pointer: string,
+    tokenValues: TokenValueIndex,
+    referenceSources: Record<string, string[]>,
+): TokenReferenceEntry {
+    const segments = parseJsonPointer(pointer) ?? [];
+    const valueIndex = segments.indexOf("$value");
+    const tokenPath = valueIndex === -1 ? segments : segments.slice(0, valueIndex);
+    const tokenName = toPathName(tokenPath);
+    const resolved = valueIndex > 0
+        && tokenValues.has(tokenName)
+        && resolvePointerValue(tokenValues.get(tokenName), segments.slice(valueIndex + 1)) !== undefined;
+    const sourcePath = referenceSources[pointer];
+
+    return {
+        layerPath: sourcePath !== undefined && tokenValues.has(toPathName(sourcePath)) ? sourcePath : tokenPath,
+        resolved,
+    };
+}
+
+function parseJsonPointer(pointer: string): string[] | undefined {
+    try {
+        return pointer.slice(2).split("/").map((segment) =>
+            decodeURIComponent(segment).replace(/~1/g, "/").replace(/~0/g, "~"));
+    } catch {
+        return undefined;
+    }
+}
+
+function resolvePointerValue(value: unknown, segments: string[]): unknown {
+    let current = value;
+    for (const segment of segments) {
+        if (Array.isArray(current) && /^(0|[1-9]\d*)$/.test(segment)) {
+            current = current[Number(segment)];
+        } else if (isRecord(current) && Object.hasOwn(current, segment)) {
+            current = current[segment];
+        } else {
+            return undefined;
+        }
+    }
+
+    return current;
 }
 
 function toTokenLayer(path: string[]): TokenLayer | undefined {
