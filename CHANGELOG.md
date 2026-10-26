@@ -2,6 +2,45 @@
 
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [3.1.0] - 2026-10-26
+
+### Fixed
+
+- Fixed false Figma plugin `layer-reference` warnings for valid
+  `component -> semantic -> primitive` alias chains.
+- Preserved the original Figma alias source when analyzing composed color
+  property references.
+- Counted DTCG property references as references instead of raw values in
+  Figma plugin analytics.
+
+## [3.0.0] - 2026-10-22
+
+This release contains breaking changes to the reference model and platform
+conversion behavior.
+
+### Added
+
+- Added support for DTCG property references across the token model, readers,
+  writers, and platform converters.
+- Added property-reference materialization for color, dimension, duration,
+  cubic-bezier, border, transition, shadow, gradient, stroke-style, and
+  typography values.
+
+### Changed
+
+- **BREAKING** `TokenReference` now uses an explicit reference kind instead of
+  a boolean constructor argument.
+- DTCG serialization preserves property references, while platform converters
+  materialize them into concrete values.
+- Figma FLOAT variables are classified as `number` for opacity, alpha, number,
+  and line-height names, while other FLOAT variables remain dimensions.
+
+### Fixed
+
+- Hardened property-reference resolution for themes, alias chains, circular
+  references, and unresolved references.
+- Preserved root tokens in platform exporters.
+
 ## [2.0.0] - 2026-10-15
 
 This release contains breaking changes in the `@design-token-kit/core` API.
