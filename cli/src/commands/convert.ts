@@ -2,6 +2,8 @@ import { Command } from "commander";
 import {
     AndroidTokenConverter,
     type AndroidTokenOutput,
+    type CssConversion,
+    CssTokenConverter,
     TokenChecker,
     DtcgList,
     DtcgListLoader,
@@ -83,6 +85,11 @@ convertCommand
                 return;
             }
 
+            if (options.cssTokenMap !== undefined) {
+                await writeCssWithTokenMap(list, options.cssTokenMap, options.out);
+                return;
+            }
+
             const output = convertList(list, outform, options);
             await writeOutput(output, options.out);
         } catch (error) {
@@ -112,6 +119,20 @@ async function writeOutput(output: string, out?: string): Promise<void> {
     } else {
         process.stdout.write(output);
     }
+}
+
+async function writeCssWithTokenMap(list: DtcgList, cssTokenMap: string | true, out?: string): Promise<void> {
+    const mapFile: string = toCssTokenMapFile(cssTokenMap, out);
+    const conversion: CssConversion = new CssTokenConverter().convertListWithMap(list);
+    await mkdir(dirname(mapFile), { recursive: true });
+    await writeFile(mapFile, conversion.map.toJson());
+    await writeOutput(conversion.css, out);
+}
+
+function toCssTokenMapFile(cssTokenMap: string | true, out?: string): string {
+    if (cssTokenMap !== true) return cssTokenMap;
+    if (out === undefined) throw new Error("--css-token-map needs a file name when --out is not set");
+    return `${out}.map.json`;
 }
 
 function toAndroidOutputs(list: DtcgList, options: ConvertOptions): ReadonlyArray<AndroidTokenOutput> {

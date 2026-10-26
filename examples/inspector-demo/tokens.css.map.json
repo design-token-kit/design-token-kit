@@ -1,0 +1,85 @@
+{
+  "version": 1,
+  "customProperties": {
+    "--primitive-color-white": {
+      "path": "primitive.color.white",
+      "type": "color",
+      "source": "core/test/core/css/fixtures/tokens.json"
+    },
+    "--primitive-color-teal-500": {
+      "path": "primitive.color.teal.500",
+      "type": "color",
+      "source": "core/test/core/css/fixtures/tokens.json"
+    },
+    "--primitive-color-overlay": {
+      "path": "primitive.color.overlay",
+      "type": "color",
+      "source": "core/test/core/css/fixtures/tokens.json"
+    },
+    "--primitive-color-slate-100": {
+      "path": "primitive.color.slate.100",
+      "type": "color",
+      "source": "core/test/core/css/fixtures/tokens.json"
+    },
+    "--primitive-color-slate-900": {
+      "path": "primitive.color.slate.900",
+      "type": "color",
+      "source": "core/test/core/css/fixtures/tokens.json"
+    },
+    "--primitive-spacing-4": {
+      "path": "primitive.spacing.4",
+      "type": "dimension",
+      "source": "core/test/core/css/fixtures/tokens.json"
+    },
+    "--primitive-transition-base": {
+      "path": "primitive.transition.base",
+      "type": "duration",
+      "source": "core/test/core/css/fixtures/tokens.json"
+    },
+    "--primitive-font-weight-bold": {
+      "path": "primitive.font.weight.bold",
+      "type": "number",
+      "source": "core/test/core/css/fixtures/tokens.json"
+    },
+    "--primitive-typography-body": {
+      "path": "primitive.typography.body",
+      "type": "typography",
+      "source": "core/test/core/css/fixtures/tokens.json"
+    },
+    "--primitive-gradient-brand": {
+      "path": "primitive.gradient.brand",
+      "type": "gradient",
+      "source": "core/test/core/css/fixtures/tokens.json"
+    },
+    "--semantic-color-bg-surface": {
+      "path": "semantic.color.bg.surface",
+      "type": "color",
+      "source": "core/test/core/css/fixtures/tokens.json"
+    },
+    "--semantic-color-text-primary": {
+      "path": "semantic.color.text.primary",
+      "type": "color",
+      "source": "core/test/core/css/fixtures/tokens.json"
+    },
+    "--semantic-text-body": {
+      "path": "semantic.text.body",
+      "type": "typography",
+      "source": "core/test/core/css/fixtures/tokens.json"
+    },
+    "--semantic-surface-brand": {
+      "path": "semantic.surface.brand",
+      "type": "gradient",
+      "source": "core/test/core/css/fixtures/tokens.json"
+    },
+    "--component-button-bg": {
+      "path": "component.button.bg",
+      "type": "color",
+      "source": "core/test/core/css/fixtures/tokens.json"
+    },
+    "--component-button-text": {
+      "path": "component.button.text",
+      "type": "color",
+      "source": "core/test/core/css/fixtures/tokens.json"
+    }
+  }
+}

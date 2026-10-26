@@ -240,6 +240,14 @@ Convert token documents between DTCG JSON, HRDT YAML, and DESIGN.md.
   - omit `--out` to write a tar archive of the resource tree to stdout
   - use `--out <name>.tar` to write that archive to file
   - use `--out <directory>` to write the resource tree into a directory
+* `--css-token-map [file]` - CSS only: also write a CSS token map that links
+  every custom property to its token path, type, description, and source
+  document.
+  Defaults to `<out>.map.json`, a file name is required when `--out` is
+  omitted.
+  Load the map in the Tokens pane of the browser extension.
+  Put the option after the input files, because its value is optional and
+  would otherwise be taken as the map file name.
 
 ### showcase
 

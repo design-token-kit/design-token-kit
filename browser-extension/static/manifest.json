@@ -1,0 +1,14 @@
+{
+    "manifest_version": 3,
+    "name": "Design Token Kit Inspector",
+    "version": "3.0.0",
+    "minimum_chrome_version": "118",
+    "description": "Shows which design tokens style the element selected in DevTools.",
+    "devtools_page": "devtools.html",
+    "background": {
+        "service_worker": "background.js",
+        "type": "module"
+    },
+    "permissions": ["debugger", "storage"],
+    "host_permissions": ["<all_urls>"]
+}

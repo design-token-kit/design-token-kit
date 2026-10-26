@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>Tokens</title>
+    <link rel="stylesheet" href="panel.css">
+</head>
+<body>
+    <header>
+        <p id="status" role="status"></p>
+        <div class="map-controls">
+            <form id="map-form">
+                <label class="visually-hidden" for="map-url">CSS token map URL</label>
+                <input id="map-url" type="url" required placeholder="CSS token map URL for this site">
+                <button type="submit">Use URL</button>
+            </form>
+            <input id="map-file" class="visually-hidden" type="file" accept=".json,application/json">
+            <label class="file-button" for="map-file">Open file</label>
+            <button id="map-remove" type="button" disabled aria-label="Remove the CSS token map of this site">
+                Remove
+            </button>
+        </div>
+    </header>
+    <main id="properties"></main>
+    <script type="module" src="panel.js"></script>
+</body>
+</html>

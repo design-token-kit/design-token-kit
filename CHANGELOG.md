@@ -2,6 +2,21 @@
 
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [Unreleased]
+
+### Added
+
+- `dtokens convert --css-token-map` writes a CSS token map that links every
+  CSS custom property to its token path, type, and description.
+- `CssTokenMap`, `CssTokenConverter.convertListWithMap`, and `CssTokenTracer`
+  in `@design-token-kit/core`.
+- `TOKEN_TYPES` and `isTokenType` in `@design-token-kit/core`.
+- `@design-token-kit/core/browser` now exports `TokenLayers`, `TokenPath`, and
+  the map and tracer types.
+- Chromium DevTools extension with a "Tokens" pane that shows the token chains
+  of the selected element.
+  The CSS token map is loaded in the pane from a file or a URL.
+
 ## [2.0.0] - 2026-10-15
 
 This release contains breaking changes in the `@design-token-kit/core` API.

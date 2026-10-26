@@ -1,0 +1,23 @@
+:root {
+  --primitive-color-white: color(srgb 1 1 1);
+  --primitive-color-teal-500: #10a5a5;
+  --primitive-color-overlay: color(srgb 0 0 0 / 0.4);
+  --primitive-color-slate-100: color(srgb 0.945 0.949 0.957);
+  --primitive-color-slate-900: color(srgb 0.094 0.114 0.145);
+  --primitive-spacing-4: 16px;
+  --primitive-transition-base: 200ms;
+  --primitive-font-weight-bold: 700;
+  --primitive-typography-body: 500 16px/1.5 "Inter", "Arial", "sans-serif";
+  --primitive-gradient-brand: linear-gradient(180deg, #10a5a5 0%, color(srgb 0.118 0.161 0.231) 100%);
+  --semantic-color-bg-surface: var(--primitive-color-white);
+  --semantic-color-text-primary: var(--primitive-color-slate-900);
+  --semantic-text-body: var(--primitive-typography-body);
+  --semantic-surface-brand: var(--primitive-gradient-brand);
+  --component-button-bg: var(--semantic-color-bg-surface);
+  --component-button-text: var(--semantic-color-text-primary);
+}
+
+:root[data-theme="dark"] {
+  --primitive-color-slate-100: color(srgb 0.118 0.161 0.231);
+  --semantic-color-bg-surface: var(--primitive-color-slate-100);
+}

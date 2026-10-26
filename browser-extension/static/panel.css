@@ -1,0 +1,94 @@
+body {
+    margin: 0;
+    font: 12px/1.5 system-ui, sans-serif;
+    color: #202124;
+}
+
+header {
+    padding: 4px 8px;
+    border-bottom: 1px solid #dadce0;
+}
+
+#status {
+    margin: 0 0 4px;
+    color: #5f6368;
+}
+
+.map-controls {
+    display: flex;
+    gap: 4px;
+}
+
+#map-form {
+    display: flex;
+    flex: 1;
+    gap: 4px;
+}
+
+.file-button {
+    padding: 1px 6px;
+    border: 1px solid #dadce0;
+    border-radius: 2px;
+    cursor: pointer;
+}
+
+.file-button:hover {
+    background: #f1f3f4;
+}
+
+button:focus-visible,
+#map-file:focus-visible + .file-button {
+    outline: 2px solid #1a73e8;
+}
+
+#map-url {
+    flex: 1;
+}
+
+.property {
+    padding: 4px 8px;
+    border-bottom: 1px solid #f1f3f4;
+}
+
+.property-name {
+    font-weight: 600;
+}
+
+.property-origin,
+.computed-value,
+.raw-mark,
+.description {
+    color: #5f6368;
+}
+
+.link,
+.value {
+    display: block;
+    padding-left: 12px;
+    font-family: ui-monospace, monospace;
+}
+
+.computed-value {
+    font-family: ui-monospace, monospace;
+}
+
+.link {
+    cursor: copy;
+}
+
+.link:hover {
+    text-decoration: underline;
+}
+
+.theme {
+    color: #1a73e8;
+}
+
+.visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+}

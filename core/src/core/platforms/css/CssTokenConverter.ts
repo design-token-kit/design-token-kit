@@ -17,6 +17,7 @@ import { ShadowLayer } from "#/core/model/values/ShadowValue";
 import { GradientStop } from "#/core/model/values/GradientValue";
 import { TypographyValue } from "#/core/model/values/TypographyValue";
 import { CssColorValueConverter } from "#/core/platforms/css/CssColorValueConverter";
+import { CssTokenMap, type CssTokenMapEntry } from "#/core/platforms/css/CssTokenMap";
 import type { TokenConverter } from "#/core/platforms/TokenConverter";
 
 /**
@@ -41,19 +42,106 @@ export class CssTokenConverter implements TokenConverter {
     }
 
     convertList(list: DtcgList): string {
-        const materialized = materializePropertyReferences(list);
-        const blocks: string[] = [];
-
-        const baseBlock = renderBlock(":root", collectFromDoc(materialized.base));
-        if (baseBlock) blocks.push(baseBlock);
-
-        for (const [themeName, theme] of materialized.themes) {
-            const block = renderBlock(`:root[data-theme="${themeName}"]`, collectFromDoc(theme, materialized.base));
-            if (block) blocks.push(block);
-        }
-
-        return blocks.join("\n\n") + (blocks.length > 0 ? "\n" : "");
+        return this.convertListWithMap(list).css;
     }
+
+    /**
+     * Converts the list to CSS and maps every emitted custom property to its
+     * token in the same pass.
+     *
+     * A theme token that overrides a base token shares the base entry, so
+     * each custom property has exactly one entry.
+     * A token absent from the base but present in several themes takes the
+     * source of the first theme.
+     * When several tokens of one block produce the same custom property, the
+     * last one wins, as it does in the cascade.
+     */
+    convertListWithMap(list: DtcgList): CssConversion {
+        const blocks: DeclarationBlock[] = collectBlocks(materializePropertyReferences(list));
+        return {
+            css: renderStylesheet(blocks),
+            map: new CssTokenMap(toMapEntries(blocks)),
+        };
+    }
+}
+
+/**
+ * CSS produced by conversion and the map of its custom properties.
+ */
+export interface CssConversion {
+    /** Stylesheet with the custom properties. */
+    readonly css: string;
+
+    /** Map of every custom property in the stylesheet. */
+    readonly map: CssTokenMap;
+}
+
+/** A custom property emitted for one token. */
+interface TokenDeclaration {
+    readonly customProperty: string;
+    readonly value: string;
+    readonly path: TokenPath;
+    readonly token: TokenNode<unknown>;
+}
+
+/** Declarations emitted under one selector, with the document they came from. */
+interface DeclarationBlock {
+    readonly selector: string;
+    readonly source: string | undefined;
+    readonly declarations: readonly TokenDeclaration[];
+}
+
+function collectBlocks(list: DtcgList): DeclarationBlock[] {
+    const blocks: DeclarationBlock[] = [
+        { selector: ":root", source: list.base.source, declarations: collectFromDoc(list.base) },
+    ];
+    for (const [themeName, theme] of list.themes) {
+        blocks.push({
+            selector: `:root[data-theme="${themeName}"]`,
+            source: theme.source,
+            declarations: collectFromDoc(theme, list.base),
+        });
+    }
+    return blocks;
+}
+
+function renderStylesheet(blocks: readonly DeclarationBlock[]): string {
+    const rendered: string[] = blocks
+        .map((block) => renderBlock(block.selector, block.declarations.map(toCssPair)))
+        .filter((css) => css !== "");
+    return rendered.join("\n\n") + (rendered.length > 0 ? "\n" : "");
+}
+
+function toCssPair(declaration: TokenDeclaration): [string, string] {
+    return [declaration.customProperty, declaration.value];
+}
+
+function toMapEntries(blocks: readonly DeclarationBlock[]): CssTokenMapEntry[] {
+    const entries: Map<string, CssTokenMapEntry> = new Map();
+    for (const block of blocks) {
+        const blockEntries: Map<string, CssTokenMapEntry> = new Map();
+        for (const declaration of block.declarations) {
+            blockEntries.set(declaration.customProperty, toMapEntry(declaration, block.source));
+        }
+        for (const [customProperty, entry] of blockEntries) {
+            if (!entries.has(customProperty)) entries.set(customProperty, entry);
+        }
+    }
+    return [...entries.values()];
+}
+
+function toMapEntry(declaration: TokenDeclaration, source: string | undefined): CssTokenMapEntry {
+    return {
+        customProperty: declaration.customProperty,
+        path: declaration.path,
+        type: declaration.token.type,
+        description: declaration.token.description,
+        source,
+    };
+}
+
+function declare(path: TokenPath, token: TokenNode<unknown>, value: string): TokenDeclaration {
+    return { customProperty: tokenPathToCssVar(path.toString()), value, path, token };
 }
 
 function tokenPathToCssVar(path: string): string {
@@ -172,11 +260,11 @@ function tokenValueToCss(value: unknown, doc: Dtcg, base?: Dtcg): string | undef
     return undefined;
 }
 
-function collectDeclarations(group: TokenGroup, path: TokenPath, doc: Dtcg, base?: Dtcg): Array<[string, string]> {
-    const result: Array<[string, string]> = [];
+function collectDeclarations(group: TokenGroup, path: TokenPath, doc: Dtcg, base?: Dtcg): TokenDeclaration[] {
+    const result: TokenDeclaration[] = [];
     if (group.root !== undefined && path.toString()) {
         const css = tokenValueToCss(group.root.value, doc, base);
-        if (css !== undefined) result.push([tokenPathToCssVar(path.toString()), css]);
+        if (css !== undefined) result.push(declare(path, group.root, css));
     }
     for (const [key, child] of group.entries()) {
         const childPath = path.child(key);
@@ -184,22 +272,20 @@ function collectDeclarations(group: TokenGroup, path: TokenPath, doc: Dtcg, base
             result.push(...collectDeclarations(child, childPath, doc, base));
         } else if (child instanceof TokenNode) {
             const css = tokenValueToCss(child.value, doc, base);
-            if (css !== undefined) {
-                result.push([tokenPathToCssVar(childPath.toString()), css]);
-            }
+            if (css !== undefined) result.push(declare(childPath, child, css));
         }
     }
     return result;
 }
 
-function collectFromDoc(doc: Dtcg, base?: Dtcg): Array<[string, string]> {
-    const result: Array<[string, string]> = [];
+function collectFromDoc(doc: Dtcg, base?: Dtcg): TokenDeclaration[] {
+    const result: TokenDeclaration[] = [];
     for (const [key, child] of doc.entries()) {
         if (child instanceof TokenGroup) {
             result.push(...collectDeclarations(child, TokenPath.of(key), doc, base));
         } else if (child instanceof TokenNode) {
             const css = tokenValueToCss(child.value, doc, base);
-            if (css !== undefined) result.push([tokenPathToCssVar(TokenPath.of(key).toString()), css]);
+            if (css !== undefined) result.push(declare(TokenPath.of(key), child, css));
         }
     }
     return result;

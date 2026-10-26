@@ -44,6 +44,24 @@ export {
     createResourceLayout,
 } from "#/core/platforms/android/AndroidResourceLayout";
 export { CssTokenConverter } from "#/core/platforms/css/CssTokenConverter";
+export { CssTokenMap } from "#/core/platforms/css/CssTokenMap";
+export type {
+    CssTokenMapEntry,
+    CssTokenMapReadFailure,
+    CssTokenMapReadResult,
+    CssTokenMapReadSuccess,
+} from "#/core/platforms/css/CssTokenMap";
+export type { CssConversion } from "#/core/platforms/css/CssTokenConverter";
+export { CssTokenTracer } from "#/core/platforms/css/CssTokenTracer";
+export type {
+    CssDeclaration,
+    CssElementStyles,
+    CssPropertyTrace,
+    CssTokenChain,
+    CssTokenChainEnd,
+    CssTokenLink,
+} from "#/core/platforms/css/CssTokenTracer";
+export { isTokenType, TOKEN_TYPES } from "#/core/model/TokenType";
 export { CssColorValueConverter } from "#/core/platforms/css/CssColorValueConverter";
 /**
  * @deprecated Use {@link CssColorValueConverter}.

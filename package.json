@@ -6,7 +6,8 @@
     "workspaces": [
         "core",
         "cli",
-        "figma-plugin"
+        "figma-plugin",
+        "browser-extension"
     ],
     "scripts": {
         "build": "npm run build --workspaces",

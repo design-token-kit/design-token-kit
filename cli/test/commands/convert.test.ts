@@ -327,4 +327,95 @@ describe("convert", () => {
             expect(result.stdout).toContain(":root {");
         });
     });
+
+    it("writes a CSS token map next to the CSS", async () => {
+        const outDir = resolve(tmpdir(), `dtokens-test-${randomUUID()}`);
+        const outFile = resolve(outDir, "tokens.css");
+        mkdirSync(outDir, { recursive: true });
+        try {
+            const result = await run(
+                convertCommand,
+                resolve(__dirname, "valid.json"),
+                "--out",
+                outFile,
+                "--css-token-map",
+            );
+            expect(result.status).toBe(0);
+            expect(readFileSync(outFile, "utf8")).toContain(":root {");
+            const map = JSON.parse(readFileSync(`${outFile}.map.json`, "utf8"));
+            expect(map.version).toBe(1);
+            expect(map.customProperties["--primitive-color-white"].path).toBe("primitive.color.white");
+        } finally {
+            rmSync(outDir, { recursive: true, force: true });
+        }
+    });
+
+    it("writes the CSS token map to the given file", async () => {
+        const outDir = resolve(tmpdir(), `dtokens-test-${randomUUID()}`);
+        const outFile = resolve(outDir, "css", "tokens.css");
+        const mapFile = resolve(outDir, "maps", "tokens.json");
+        mkdirSync(resolve(outDir, "css"), { recursive: true });
+        try {
+            const result = await run(
+                convertCommand,
+                resolve(__dirname, "valid.json"),
+                "--out",
+                outFile,
+                "--css-token-map",
+                mapFile,
+            );
+            expect(result.status).toBe(0);
+            expect(readFileSync(outFile, "utf8")).toContain(":root {");
+            expect(JSON.parse(readFileSync(mapFile, "utf8")).version).toBe(1);
+        } finally {
+            rmSync(outDir, { recursive: true, force: true });
+        }
+    });
+
+    it("rejects --css-token-map for other formats", async () => {
+        const result = await run(
+            convertCommand,
+            resolve(__dirname, "valid.json"),
+            "--outform",
+            "scss",
+            "--css-token-map",
+            "x.json",
+        );
+        expect(result.status).toBe(1);
+        expect(result.stderr).toContain("--css-token-map is only valid for \"css\"");
+    });
+
+    it("needs a map file name when CSS goes to stdout", async () => {
+        const result = await run(convertCommand, resolve(__dirname, "valid.json"), "--css-token-map");
+        expect(result.status).toBe(1);
+        expect(result.stderr).toContain("--css-token-map needs a file name when --out is not set");
+    });
+
+    it("writes one map entry per custom property for multi-theme input", async () => {
+        const outDir = resolve(tmpdir(), `dtokens-test-${randomUUID()}`);
+        const outFile = resolve(outDir, "tokens.css");
+        const fixtures = resolve(__dirname, "../../../core/test/core/css/fixtures");
+        mkdirSync(outDir, { recursive: true });
+        try {
+            const result = await run(
+                convertCommand,
+                resolve(fixtures, "tokens.json"),
+                resolve(fixtures, "tokens.dark.json"),
+                "--out",
+                outFile,
+                "--css-token-map",
+            );
+            expect(result.status).toBe(0);
+            const css = readFileSync(outFile, "utf8");
+            const map = JSON.parse(readFileSync(`${outFile}.map.json`, "utf8"));
+            expect(css).toContain("[data-theme=\"dark\"]");
+            const names: string[] = Object.keys(map.customProperties);
+            expect(names.length).toBeGreaterThan(0);
+            for (const name of names) {
+                expect(css).toContain(`${name}:`);
+            }
+        } finally {
+            rmSync(outDir, { recursive: true, force: true });
+        }
+    });
 });

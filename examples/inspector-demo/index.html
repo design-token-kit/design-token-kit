@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>Token inspector demo</title>
+    <link rel="stylesheet" href="tokens.css">
+    <style>
+        body {
+            color: var(--semantic-color-text-primary);
+            font: var(--semantic-text-body);
+        }
+
+        .card {
+            background: var(--semantic-color-bg-surface);
+            padding: 24px;
+        }
+    </style>
+</head>
+<body>
+    <button onclick="document.documentElement.dataset.theme = document.documentElement.dataset.theme ? '' : 'dark'">
+        Toggle dark theme
+    </button>
+    <div class="card"><p>Card text</p></div>
+</body>
+</html>

@@ -71,6 +71,14 @@ export interface ConvertSettings {
      * @defaultValue `"16"`
      */
     remBase?: string;
+
+    /**
+     * CSS: file for the CSS token map, or `true` to name it after `--out` as
+     * `<out>.map.json`.
+     *
+     * @defaultValue no map is written
+     */
+    cssTokenMap?: string | true;
 }
 
 interface FormatOptionDefinition {
@@ -123,6 +131,13 @@ const FORMAT_OPTION_DEFINITIONS: readonly FormatOptionDefinition[] = [
         name: "--rem-base",
         description: "Android and SwiftUI only: pixel base used to resolve rem dimensions (default: 16)",
         formats: [PlatformFormat.ANDROID, PlatformFormat.SWIFT_UI],
+    },
+    {
+        key: "cssTokenMap",
+        flags: "--css-token-map [file]",
+        name: "--css-token-map",
+        description: "CSS only: also write a map linking custom properties to tokens (default file: <out>.map.json)",
+        formats: [PlatformFormat.CSS],
     },
 ];
 

@@ -1,4 +1,4 @@
-import { readFileSync, writeFileSync } from "node:fs";
+import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { cp, mkdir, rm } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -163,9 +163,19 @@ class Workspace {
         }
     }
 
+    /**
+     * Path of the extension manifest relative to the repository root,
+     * or undefined when the workspace has none.
+     */
+    get manifestPath() {
+        const relativePath = path.join(this.dir, "static", "manifest.json");
+        return existsSync(this.#project.path(relativePath)) ? relativePath : undefined;
+    }
+
     setVersion(version) {
         this._pkg.version = version;
         this.#save();
+        this.#saveManifestVersion(version);
     }
 
     setDependencyVersion(name, version) {
@@ -173,6 +183,24 @@ class Workspace {
             this._pkg.dependencies[name] = version;
             this.#save();
         }
+    }
+
+    #saveManifestVersion(version) {
+        const manifestPath = this.manifestPath;
+        if (manifestPath === undefined) {
+            return;
+        }
+        const file = this.#project.path(manifestPath);
+        const manifest = JSON.parse(readFileSync(file, "utf8"));
+        // Chrome accepts only 1-4 dot-separated integers in `version`.
+        const [releaseVersion] = version.split("-");
+        manifest.version = releaseVersion;
+        if (releaseVersion === version) {
+            delete manifest.version_name;
+        } else {
+            manifest.version_name = version;
+        }
+        writeFileSync(file, `${JSON.stringify(manifest, null, 4)}\n`, "utf8");
     }
 
     #save() {
@@ -280,6 +308,9 @@ export class Release {
         const files = ["package.json"];
         for (const ws of this.#project.workspaces()) {
             files.push(path.join(ws.dir, "package.json"));
+            if (ws.manifestPath !== undefined) {
+                files.push(ws.manifestPath);
+            }
         }
         for (const extraPackage of this.#project.extraPackages()) {
             files.push(extraPackage.relativePath);
