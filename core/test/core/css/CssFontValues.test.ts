@@ -15,6 +15,10 @@ const GENERIC_FAMILIES: string[] = [
     "ui-sans-serif",
     "ui-monospace",
     "ui-rounded",
+    "generic(fangsong)",
+    "generic(kai)",
+    "generic(khmer-mul)",
+    "generic(nastaliq)",
 ];
 
 function cssVar(reference: TokenReference): string {
@@ -42,6 +46,10 @@ describe("fontWeightToCss", () => {
 describe("fontFamilyToCss", () => {
     it.each(GENERIC_FAMILIES)("writes the generic family '%s' without quotes", (family) => {
         expect(fontFamilyToCss([family], cssVar)).toBe(family);
+    });
+
+    it("writes a script-specific generic family after a quoted name", () => {
+        expect(fontFamilyToCss(["Noto Serif SC", "generic(fangsong)"], cssVar)).toBe('"Noto Serif SC", generic(fangsong)');
     });
 
     it("quotes a family name", () => {

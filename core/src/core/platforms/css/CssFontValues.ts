@@ -16,7 +16,8 @@ export type CssReferenceFormatter = (reference: TokenReference) => string;
 const CSS_FONT_WEIGHT_KEYWORDS: ReadonlySet<FontWeightName> = new Set([FontWeightName.NORMAL, FontWeightName.BOLD]);
 
 /**
- * Generic font family keywords, which CSS reads as names only when unquoted.
+ * Generic font families, which CSS reads as generic families only when
+ * unquoted: the complete, incomplete and script-specific ones.
  *
  * @see https://www.w3.org/TR/css-fonts-4/#generic-font-families
  */
@@ -32,6 +33,10 @@ const CSS_GENERIC_FONT_FAMILIES: ReadonlySet<string> = new Set([
     "ui-sans-serif",
     "ui-monospace",
     "ui-rounded",
+    "generic(fangsong)",
+    "generic(kai)",
+    "generic(khmer-mul)",
+    "generic(nastaliq)",
 ]);
 
 /**

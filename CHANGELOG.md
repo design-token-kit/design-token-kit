@@ -21,6 +21,7 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   numbers, such as `400` for `regular`.
 - Wrote generic font families, such as `sans-serif`, without quotes in CSS,
   SCSS, and Tailwind CSS outputs.
+  This includes the script-specific forms such as `generic(fangsong)`.
 
 ## [3.1.0] - 2026-10-26
 
