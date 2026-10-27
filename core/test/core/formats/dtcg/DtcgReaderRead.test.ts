@@ -59,6 +59,17 @@ describe("DtcgReader.read", () => {
             const [issue] = await issuesOf('{"a":{"$type":"colour","b":{"$value":"x"}}}');
             expect(issue.id).toBe("unknown-token-type");
         });
+
+        it("reports an unknown font weight name", async () => {
+            const [issue] = await issuesOf('{"w":{"$type":"fontWeight","$value":"regulr"}}');
+            expect(issue.id).toBe("invalid-font-weight");
+            expect(issue.message).toContain("regulr");
+        });
+
+        it("reports a font weight name in a different case", async () => {
+            const [issue] = await issuesOf('{"w":{"$type":"fontWeight","$value":"Bold"}}');
+            expect(issue.id).toBe("invalid-font-weight");
+        });
     });
 
     describe("syntax errors", () => {

@@ -12,6 +12,7 @@ import { GradientStop } from "#/core/model/values/GradientValue";
 import { ShadowLayer } from "#/core/model/values/ShadowValue";
 import { StrokeStyleObject } from "#/core/model/values/StrokeStyleValue";
 import { TransitionValue } from "#/core/model/values/TransitionValue";
+import { FontWeightName } from "#/core/model/values/FontWeightName";
 import { TypographyValue } from "#/core/model/values/TypographyValue";
 import type { AndroidResource } from "#/core/platforms/android/AndroidResource";
 import { AndroidColorValueConverter } from "#/core/platforms/android/AndroidColorValueConverter";
@@ -225,6 +226,9 @@ export class AndroidResourceMapper {
         if (typeof value === "string") {
             return this.#resource(AndroidResourceType.STRING, path, value);
         }
+        if (value instanceof FontWeightName) {
+            return this.#resource(AndroidResourceType.STRING, path, value.name);
+        }
         return undefined;
     }
 
@@ -367,8 +371,8 @@ export class AndroidResourceMapper {
         if (typeof value === "number") {
             return [this.#resource(AndroidResourceType.INTEGER, fieldPath, String(value))];
         }
-        if (typeof value === "string") {
-            return [this.#resource(AndroidResourceType.STRING, fieldPath, value)];
+        if (value instanceof FontWeightName) {
+            return [this.#resource(AndroidResourceType.STRING, fieldPath, value.name)];
         }
         return [];
     }
@@ -424,6 +428,7 @@ export class AndroidResourceMapper {
         if (value instanceof DurationValue) return AndroidResourceType.INTEGER;
         if (typeof value === "number") return this.#numberType(value);
         if (typeof value === "string" || Array.isArray(value)) return AndroidResourceType.STRING;
+        if (value instanceof FontWeightName) return AndroidResourceType.STRING;
         return AndroidResourceType.COLOR;
     }
 

@@ -34,6 +34,7 @@ import { GradientStop } from "#/core/model/values/GradientValue";
 import { ShadowLayer } from "#/core/model/values/ShadowValue";
 import { StrokeStyleObject, StrokeStyleValue } from "#/core/model/values/StrokeStyleValue";
 import { TransitionValue } from "#/core/model/values/TransitionValue";
+import { FontWeightName } from "#/core/model/values/FontWeightName";
 import { FontWeightValue, TypographyValue } from "#/core/model/values/TypographyValue";
 
 
@@ -319,10 +320,12 @@ export class HrdtReader implements TokenReader {
     }
 
     #parseFontWeight(value: JsonValue): FontWeightValue {
-        if (typeof value === "string" || typeof value === "number") return value as FontWeightValue;
+        if (typeof value === "number") return value;
+        const name: FontWeightName | undefined = typeof value === "string" ? FontWeightName.find(value) : undefined;
+        if (name !== undefined) return name;
         throw new HrdtReaderError(
             "invalid-font-weight",
-            `Expected fontWeight string or number, got: ${JSON.stringify(value)}`,
+            `Expected fontWeight number or one of ${FontWeightName.names().join(", ")}, got: ${JSON.stringify(value)}`,
         );
     }
 

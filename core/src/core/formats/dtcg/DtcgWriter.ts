@@ -25,6 +25,7 @@ import { GradientStop } from "#/core/model/values/GradientValue";
 import { ShadowLayer } from "#/core/model/values/ShadowValue";
 import { StrokeStyleObject } from "#/core/model/values/StrokeStyleValue";
 import { TransitionValue } from "#/core/model/values/TransitionValue";
+import { FontWeightName } from "#/core/model/values/FontWeightName";
 import { TypographyValue } from "#/core/model/values/TypographyValue";
 
 type JsonObject = Record<string, unknown>;
@@ -95,7 +96,7 @@ export class DtcgWriter {
         if (token instanceof ColorToken) return this.#writeColor(value as ColorValue);
         if (token instanceof DimensionToken) return this.#writeDimension(value as DimensionValue);
         if (token instanceof FontFamilyToken) return value;
-        if (token instanceof FontWeightToken) return value;
+        if (token instanceof FontWeightToken) return this.#writeFontWeight(value);
         if (token instanceof NumberToken) return value;
         if (token instanceof DurationToken) return this.#writeDuration(value as DurationValue);
         if (token instanceof CubicBezierToken) return this.#writeCubicBezier(value as CubicBezierValue);
@@ -255,7 +256,11 @@ export class DtcgWriter {
     }
 
     #writeFontWeightOrRef(value: unknown): unknown {
-        return value instanceof TokenReference ? this.#writePropertyReference(value) : value;
+        return value instanceof TokenReference ? this.#writePropertyReference(value) : this.#writeFontWeight(value);
+    }
+
+    #writeFontWeight(value: unknown): unknown {
+        return value instanceof FontWeightName ? value.name : value;
     }
 
     #writeNumberOrRef(value: number | TokenReference): unknown {

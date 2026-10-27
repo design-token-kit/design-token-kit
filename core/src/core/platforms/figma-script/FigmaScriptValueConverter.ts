@@ -38,30 +38,6 @@ const FONT_STYLE_BY_WEIGHT = new Map<number, string>([
 const FALLBACK_FONT_STYLE = "Regular";
 
 /**
- * Font weight keywords mapped to the numeric scale.
- */
-const WEIGHT_BY_KEYWORD: Record<string, number> = {
-    "thin": 100,
-    "hairline": 100,
-    "extra-light": 200,
-    "ultra-light": 200,
-    "light": 300,
-    "normal": 400,
-    "regular": 400,
-    "book": 400,
-    "medium": 500,
-    "semi-bold": 600,
-    "demi-bold": 600,
-    "bold": 700,
-    "extra-bold": 800,
-    "ultra-bold": 800,
-    "black": 900,
-    "heavy": 900,
-    "extra-black": 950,
-    "ultra-black": 950,
-};
-
-/**
  * A Figma colour, with channels in the 0..1 range.
  */
 export interface FigmaScriptColor {
@@ -226,11 +202,7 @@ function toFontStyle(weight: TypographyValue["fontWeight"]): string {
         return FALLBACK_FONT_STYLE;
     }
 
-    const numeric = typeof weight === "number" ? weight : WEIGHT_BY_KEYWORD[weight];
-    if (numeric === undefined) {
-        return FALLBACK_FONT_STYLE;
-    }
-
+    const numeric: number = typeof weight === "number" ? weight : weight.weight;
     return FONT_STYLE_BY_WEIGHT.get(toWeightStep(numeric)) ?? FALLBACK_FONT_STYLE;
 }
 

@@ -26,6 +26,7 @@ import { GradientStop } from "#/core/model/values/GradientValue";
 import { ShadowLayer } from "#/core/model/values/ShadowValue";
 import { StrokeStyleObject } from "#/core/model/values/StrokeStyleValue";
 import { TransitionValue } from "#/core/model/values/TransitionValue";
+import { FontWeightName } from "#/core/model/values/FontWeightName";
 import { TypographyValue } from "#/core/model/values/TypographyValue";
 
 /**
@@ -447,6 +448,7 @@ function inferTokenType(value: unknown): TokenType | undefined {
     if (value instanceof ShadowLayer) return "shadow";
     if (value instanceof StrokeStyleObject) return "strokeStyle";
     if (value instanceof TypographyValue) return "typography";
+    if (value instanceof FontWeightName) return "fontWeight";
     if (typeof value === "number") return "number";
     if (Array.isArray(value)) {
         if (value.some(item => item instanceof ShadowLayer)

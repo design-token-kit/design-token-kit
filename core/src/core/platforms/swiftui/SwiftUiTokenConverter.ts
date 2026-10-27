@@ -14,6 +14,7 @@ import { BorderValue } from "#/core/model/values/BorderValue";
 import { ShadowLayer } from "#/core/model/values/ShadowValue";
 import { StrokeStyleObject } from "#/core/model/values/StrokeStyleValue";
 import { TransitionValue } from "#/core/model/values/TransitionValue";
+import { FontWeightName } from "#/core/model/values/FontWeightName";
 import { TypographyValue } from "#/core/model/values/TypographyValue";
 import { GradientStop } from "#/core/model/values/GradientValue";
 import { SwiftUiColorValueConverter } from "#/core/platforms/swiftui/SwiftUiColorValueConverter";
@@ -379,6 +380,46 @@ let currentRoot = ROOT;
 
 const swiftUiColorValueConverter = new SwiftUiColorValueConverter();
 
+/**
+ * SwiftUI weight constants for numeric weights; other numbers fall back to
+ * `.regular`.
+ */
+const SWIFT_WEIGHT_BY_NUMBER: ReadonlyMap<number, string> = new Map([
+    [100, ".ultraLight"],
+    [200, ".thin"],
+    [300, ".light"],
+    [400, ".regular"],
+    [500, ".medium"],
+    [600, ".semibold"],
+    [700, ".bold"],
+    [800, ".heavy"],
+    [900, ".black"],
+]);
+
+/**
+ * SwiftUI weight constants for DTCG font weight names.
+ */
+const SWIFT_WEIGHT_BY_NAME: ReadonlyMap<FontWeightName, string> = new Map([
+    [FontWeightName.THIN, ".thin"],
+    [FontWeightName.HAIRLINE, ".thin"],
+    [FontWeightName.EXTRA_LIGHT, ".ultraLight"],
+    [FontWeightName.ULTRA_LIGHT, ".ultraLight"],
+    [FontWeightName.LIGHT, ".light"],
+    [FontWeightName.NORMAL, ".regular"],
+    [FontWeightName.REGULAR, ".regular"],
+    [FontWeightName.BOOK, ".regular"],
+    [FontWeightName.MEDIUM, ".medium"],
+    [FontWeightName.SEMI_BOLD, ".semibold"],
+    [FontWeightName.DEMI_BOLD, ".semibold"],
+    [FontWeightName.BOLD, ".bold"],
+    [FontWeightName.EXTRA_BOLD, ".heavy"],
+    [FontWeightName.ULTRA_BOLD, ".heavy"],
+    [FontWeightName.BLACK, ".black"],
+    [FontWeightName.HEAVY, ".black"],
+    [FontWeightName.EXTRA_BLACK, ".black"],
+    [FontWeightName.ULTRA_BLACK, ".black"],
+]);
+
 const SWIFT_KEYWORDS = new Set([
     "default", "class", "enum", "struct", "case", "let", "var", "func",
     "import", "return", "self", "super", "static", "public", "internal",
@@ -629,7 +670,7 @@ function fieldSwiftType(node: TokenNode<unknown>): string | undefined {
     if (node.type === "strokeStyle") return "StrokeStyleToken";
     if (Array.isArray(value) && value.length > 0) return arrayFieldType(value);
     if (typeof value === "number") return "CGFloat";
-    if (typeof value === "string") return "String";
+    if (typeof value === "string" || value instanceof FontWeightName) return "String";
     return undefined;
 }
 
@@ -668,6 +709,7 @@ function renderScalar(value: unknown, remBase: number): Rendered | undefined {
     }
     if (typeof value === "number") return { expr: String(value) };
     if (typeof value === "string") return { expr: JSON.stringify(value) };
+    if (value instanceof FontWeightName) return { expr: JSON.stringify(value.name) };
     return undefined;
 }
 
@@ -751,7 +793,7 @@ function fontFamilyToSwift(value: TypographyValue["fontFamily"]): string {
 
 function fontWeightValueToSwift(value: TypographyValue["fontWeight"]): string {
     if (value instanceof TokenReference) return `FontWeightToken(${refToSwift(value)})`;
-    if (typeof value === "string") return `FontWeightToken(${JSON.stringify(value)})`;
+    if (value instanceof FontWeightName) return `FontWeightToken(${JSON.stringify(value.name)})`;
     const numericValue = Number.isInteger(value) ? `Int(${value})` : `CGFloat(${value})`;
     return `FontWeightToken(${numericValue})`;
 }
@@ -767,16 +809,10 @@ function concreteFontFamily(fontFamily: TypographyValue["fontFamily"]): string |
 
 function fontWeightToSwift(weight: TypographyValue["fontWeight"]): string {
     if (weight instanceof TokenReference) return refToSwift(weight);
-    const map: Record<string, string> = {
-        "100": ".ultraLight", "200": ".thin", "300": ".light", "400": ".regular",
-        "500": ".medium", "600": ".semibold", "700": ".bold", "800": ".heavy", "900": ".black",
-        thin: ".thin", hairline: ".thin", "extra-light": ".ultraLight", "ultra-light": ".ultraLight",
-        light: ".light", normal: ".regular", regular: ".regular", book: ".regular",
-        medium: ".medium", "semi-bold": ".semibold", "demi-bold": ".semibold", bold: ".bold",
-        "extra-bold": ".heavy", "ultra-bold": ".heavy", black: ".black", heavy: ".black",
-        "extra-black": ".black", "ultra-black": ".black",
-    };
-    return map[String(weight)] ?? ".regular";
+    const swiftWeight: string | undefined = weight instanceof FontWeightName
+        ? SWIFT_WEIGHT_BY_NAME.get(weight)
+        : SWIFT_WEIGHT_BY_NUMBER.get(weight);
+    return swiftWeight ?? ".regular";
 }
 
 function shadowLayerToSwift(layer: ShadowLayer, remBase: number): string {

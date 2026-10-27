@@ -26,6 +26,7 @@ import { GradientStop } from "#/core/model/values/GradientValue";
 import { ShadowLayer } from "#/core/model/values/ShadowValue";
 import { StrokeStyleObject } from "#/core/model/values/StrokeStyleValue";
 import { TransitionValue } from "#/core/model/values/TransitionValue";
+import { FontWeightName } from "#/core/model/values/FontWeightName";
 import { TypographyValue } from "#/core/model/values/TypographyValue";
 import { DtcgList } from "#/core/model/DtcgList";
 import { readDtcg } from "../../support/readDtcg";
@@ -208,7 +209,7 @@ it("converts a simple color token", () => {
             ["typography", new TypographyToken(new TypographyValue(
                 "Arial",
                 new DimensionValue(14, "px"),
-                "bold",
+                FontWeightName.BOLD,
                 new DimensionValue(0, "px"),
                 1.2,
             ))],

@@ -10,6 +10,7 @@ import { NumberToken } from "#/core/model/tokens/NumberToken";
 import { TypographyToken } from "#/core/model/tokens/TypographyToken";
 import { ColorValue } from "#/core/model/values/ColorValue";
 import { DimensionValue } from "#/core/model/values/DimensionValue";
+import { FontWeightName } from "#/core/model/values/FontWeightName";
 import { TypographyValue } from "#/core/model/values/TypographyValue";
 
 const SAMPLE = `---
@@ -195,6 +196,20 @@ describe("DesignMdWriter", () => {
             expect(result).toContain("fontWeight: 400");
             expect(result).toContain("letterSpacing: 0px");
             expect(result).toContain("lineHeight: 1.5");
+        });
+
+        it("writes a typography font weight given as a name", () => {
+            const typo = new TypographyValue(
+                "Inter",
+                new DimensionValue(16, "px"),
+                FontWeightName.SEMI_BOLD,
+                new DimensionValue(0, "px"),
+                1.5,
+            );
+            const typography = new TokenGroup({ children: new Map([["body", new TypographyToken(typo)]]) });
+            const root = new TokenGroup({ children: new Map([["typography", typography]]) });
+
+            expect(write(new Dtcg(root))).toMatch(/^\s+fontWeight: semi-bold$/m);
         });
 
         it("writes typography font fallback arrays and references", async () => {

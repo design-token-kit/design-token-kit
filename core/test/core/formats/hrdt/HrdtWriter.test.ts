@@ -10,6 +10,7 @@ import { CubicBezierToken } from "#/core/model/tokens/CubicBezierToken";
 import { DimensionToken } from "#/core/model/tokens/DimensionToken";
 import { DurationToken } from "#/core/model/tokens/DurationToken";
 import { FontFamilyToken } from "#/core/model/tokens/FontFamilyToken";
+import { FontWeightToken } from "#/core/model/tokens/FontWeightToken";
 import { GradientToken } from "#/core/model/tokens/GradientToken";
 import { NumberToken } from "#/core/model/tokens/NumberToken";
 import { ShadowToken } from "#/core/model/tokens/ShadowToken";
@@ -25,6 +26,7 @@ import { GradientStop } from "#/core/model/values/GradientValue";
 import { ShadowLayer } from "#/core/model/values/ShadowValue";
 import { StrokeStyleObject } from "#/core/model/values/StrokeStyleValue";
 import { TransitionValue } from "#/core/model/values/TransitionValue";
+import { FontWeightName } from "#/core/model/values/FontWeightName";
 import { TypographyValue } from "#/core/model/values/TypographyValue";
 
 // A small but representative HRDT document: the three layers plus an alias,
@@ -187,5 +189,38 @@ describe("HrdtWriter", () => {
             // reader rejects fails here rather than passing silently.
             await read(result);
         });
+    });
+});
+
+describe("HrdtWriter font weight names", () => {
+    const FONT_WEIGHTS = `primitive:
+  fontWeight:
+    semi-bold: semi-bold
+  typography:
+    body:
+      fontFamily: Inter
+      fontSize: 16px
+      fontWeight: extra-light
+      letterSpacing: 0px
+      lineHeight: 1.5
+`;
+
+    it("writes a standalone font weight name", async () => {
+        expect(write(await read(FONT_WEIGHTS))).toMatch(/^\s+semi-bold: semi-bold$/m);
+    });
+
+    it("writes a typography font weight name", async () => {
+        expect(write(await read(FONT_WEIGHTS))).toMatch(/^\s+fontWeight: extra-light$/m);
+    });
+
+    it("reads back the written names", async () => {
+        const reread: Dtcg = await read(write(await read(FONT_WEIGHTS)));
+        const primitive = reread.get("primitive") as TokenGroup;
+        const fontWeights = primitive.get("fontWeight") as TokenGroup;
+        const typography = primitive.get("typography") as TokenGroup;
+
+        expect((fontWeights.get("semi-bold") as FontWeightToken).value).toBe(FontWeightName.SEMI_BOLD);
+        expect(((typography.get("body") as TypographyToken).value as TypographyValue).fontWeight)
+            .toBe(FontWeightName.EXTRA_LIGHT);
     });
 });

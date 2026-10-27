@@ -15,6 +15,7 @@ import { GradientStop } from "#/core/model/values/GradientValue";
 import { ShadowLayer } from "#/core/model/values/ShadowValue";
 import { StrokeStyleObject } from "#/core/model/values/StrokeStyleValue";
 import { TransitionValue } from "#/core/model/values/TransitionValue";
+import { FontWeightName } from "#/core/model/values/FontWeightName";
 import { TypographyValue } from "#/core/model/values/TypographyValue";
 import { CssColorValueConverter } from "#/core/platforms/css/CssColorValueConverter";
 import type { TokenConverter } from "#/core/platforms/TokenConverter";
@@ -136,7 +137,7 @@ function typographyToScss(value: TypographyValue, separator: string): string {
             : `"${value.fontFamily}"`;
     const fontWeight = value.fontWeight instanceof TokenReference
         ? refToScssVar(value.fontWeight, separator)
-        : String(value.fontWeight);
+        : value.fontWeight instanceof FontWeightName ? value.fontWeight.name : String(value.fontWeight);
     const lineHeight = value.lineHeight instanceof TokenReference
         ? refToScssVar(value.lineHeight, separator)
         : String(value.lineHeight);
@@ -166,6 +167,7 @@ function tokenValueToScss(value: unknown, separator: string): string | undefined
     if (value instanceof DurationValue) return `${value.value}${value.unit}`;
     if (value instanceof CubicBezierValue) return `cubic-bezier(${value.p1x}, ${value.p1y}, ${value.p2x}, ${value.p2y})`;
     if (typeof value === "number") return String(value);
+    if (value instanceof FontWeightName) return value.name;
     if (typeof value === "string") return value;
 
     if (value instanceof ShadowLayer) return shadowLayerToScss(value, separator);

@@ -25,7 +25,8 @@ import { GradientStop } from "#/core/model/values/GradientValue";
 import { ShadowLayer } from "#/core/model/values/ShadowValue";
 import { StrokeStyleObject } from "#/core/model/values/StrokeStyleValue";
 import { TransitionValue } from "#/core/model/values/TransitionValue";
-import { TypographyValue } from "#/core/model/values/TypographyValue";
+import { FontWeightName } from "#/core/model/values/FontWeightName";
+import { FontWeightValue, TypographyValue } from "#/core/model/values/TypographyValue";
 
 /**
  * Serializes a {@link Dtcg} document to the HRDT token format.
@@ -119,7 +120,7 @@ export class HrdtWriter {
         if (token instanceof DimensionToken) return this.#serializeDimension(value as DimensionValue);
         if (token instanceof DurationToken) return this.#serializeDuration(value as DurationValue);
         if (token instanceof FontFamilyToken) return this.#serializeFontFamily(value as string | string[]);
-        if (token instanceof FontWeightToken) return String(value);
+        if (token instanceof FontWeightToken) return this.#serializeFontWeight(value);
         if (token instanceof NumberToken) return String(value);
         if (token instanceof CubicBezierToken) return this.#serializeCubicBezier(value as CubicBezierValue);
         if (token instanceof StrokeStyleToken) return this.#serializeStrokeStyle(value);
@@ -174,6 +175,14 @@ export class HrdtWriter {
             return `[${items}]`;
         }
         return value;
+    }
+
+    #serializeFontWeight(value: unknown): string {
+        return value instanceof FontWeightName ? value.name : String(value);
+    }
+
+    #serializeFontWeightOrRef(value: FontWeightValue | TokenReference): string {
+        return value instanceof TokenReference ? `"${value}"` : this.#serializeFontWeight(value);
     }
 
     #serializeCubicBezier(cb: CubicBezierValue): string {
@@ -268,7 +277,7 @@ export class HrdtWriter {
             lines.push(`fontFamily: ${ff}`);
         }
         if (typo.fontSize !== undefined) lines.push(`fontSize: ${this.#serializeDimensionOrRef(typo.fontSize)}`);
-        if (typo.fontWeight !== undefined) lines.push(`fontWeight: ${typo.fontWeight instanceof TokenReference ? `"${typo.fontWeight}"` : typo.fontWeight}`);
+        if (typo.fontWeight !== undefined) lines.push(`fontWeight: ${this.#serializeFontWeightOrRef(typo.fontWeight)}`);
         if (typo.letterSpacing !== undefined) lines.push(`letterSpacing: ${this.#serializeDimensionOrRef(typo.letterSpacing)}`);
         if (typo.lineHeight !== undefined) lines.push(`lineHeight: ${typo.lineHeight instanceof TokenReference ? `"${typo.lineHeight}"` : typo.lineHeight}`);
         return lines;

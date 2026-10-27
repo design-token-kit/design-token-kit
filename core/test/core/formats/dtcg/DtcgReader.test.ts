@@ -26,6 +26,7 @@ import { BorderValue } from "#/core/model/values/BorderValue";
 import { TransitionValue } from "#/core/model/values/TransitionValue";
 import { ShadowLayer } from "#/core/model/values/ShadowValue";
 import { GradientStop } from "#/core/model/values/GradientValue";
+import { FontWeightName } from "#/core/model/values/FontWeightName";
 import { TypographyValue } from "#/core/model/values/TypographyValue";
 
 async function parse(json: string): Promise<Dtcg> {
@@ -214,7 +215,7 @@ describe("DtcgReader", () => {
                 "fontWeight": { "regular": { "$type": "fontWeight", "$value": "regular" } }
             }`);
             const token = getToken(doc, "fontWeight", "regular") as FontWeightToken;
-            expect(token.value).toBe("regular");
+            expect(token.value).toBe(FontWeightName.REGULAR);
         });
 
         it("parses numeric font weight", async () => {
@@ -476,7 +477,7 @@ describe("DtcgReader", () => {
             expect(value).toBeInstanceOf(TypographyValue);
             expect(value.fontFamily).toEqual(["Inter", "Arial", "sans-serif"]);
             expect((value.fontSize as DimensionValue).value).toBe(14);
-            expect(value.fontWeight).toBe("regular");
+            expect(value.fontWeight).toBe(FontWeightName.REGULAR);
             expect(value.lineHeight).toBe(1.5);
         });
     });

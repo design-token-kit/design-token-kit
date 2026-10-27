@@ -21,6 +21,7 @@ import { CubicBezierValue } from "#/core/model/values/CubicBezierValue";
 import { DimensionValue } from "#/core/model/values/DimensionValue";
 import { GradientStop } from "#/core/model/values/GradientValue";
 import { ShadowLayer } from "#/core/model/values/ShadowValue";
+import { FontWeightName } from "#/core/model/values/FontWeightName";
 import { TypographyValue } from "#/core/model/values/TypographyValue";
 
 describe("TailwindTokenMapper", () => {
@@ -103,11 +104,11 @@ describe("TailwindTokenMapper", () => {
     it("normalizes font weight keywords for tailwind font-weight variables", () => {
         const declarations = mapper.collectDocument(new Dtcg(new TokenGroup({
             children: new Map<string, TokenGroup | TokenNode<unknown>>([
-                ["fontWeight", new FontWeightToken("regular")],
+                ["fontWeight", new FontWeightToken(FontWeightName.REGULAR)],
                 ["typography", new TypographyToken(new TypographyValue(
                     ["Inter", "sans-serif"],
                     new DimensionValue(16, "px"),
-                    "book",
+                    FontWeightName.BOOK,
                     new DimensionValue(0, "px"),
                     1.5,
                 ))],

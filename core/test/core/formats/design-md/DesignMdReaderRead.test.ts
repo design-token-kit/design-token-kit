@@ -1,6 +1,9 @@
 import { describe, it, expect } from "vitest";
 import { DesignMdReader } from "#/core/formats/design-md/DesignMdReader";
 import type { CheckIssue } from "#/core/check/CheckIssue";
+import { TokenGroup } from "#/core/model/TokenGroup";
+import { TypographyToken } from "#/core/model/tokens/TypographyToken";
+import { TypographyValue } from "#/core/model/values/TypographyValue";
 
 function designMd(frontmatter: string): string {
     return `---\n${frontmatter}---\n\n## Colors\n`;
@@ -54,6 +57,23 @@ describe("DesignMdReader.read", () => {
             const [issue] = await issuesOf(designMd("colors:\n  lost: 42\n"));
             expect(issue.id).toBe("invalid-value");
             expect(issue.tokenPath?.toString()).toBe("colors.lost");
+        });
+
+        it("reads a quoted numeric font weight as a number", async () => {
+            const typography = "typography:\n  body:\n    fontFamily: Inter\n    fontSize: 16px\n"
+                + "    fontWeight: \"600\"\n    lineHeight: 1.5\n";
+            const [document] = await documentsOf(designMd(typography));
+            const group = document.get("typography") as TokenGroup;
+            const value = (group.get("body") as TypographyToken).value as TypographyValue;
+            expect(value.fontWeight).toBe(600);
+        });
+
+        it("reports an unknown font weight name", async () => {
+            const typography = "typography:\n  body:\n    fontFamily: Inter\n    fontSize: 16px\n"
+                + "    fontWeight: regulr\n    lineHeight: 1.5\n";
+            const [issue] = await issuesOf(designMd(typography));
+            expect(issue.id).toBe("invalid-font-weight");
+            expect(issue.message).toContain("regulr");
         });
 
         // The specification allows the property; the model has no type for it,

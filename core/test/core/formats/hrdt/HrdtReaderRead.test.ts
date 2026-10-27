@@ -87,6 +87,12 @@ describe("HrdtReader.read", () => {
             expect(issue.tokenPath?.toString()).toBe("semantic.bg");
         });
 
+        it("reports an unknown font weight name", async () => {
+            const [issue] = await issuesOf("primitive:\n  fontWeight:\n    body: regulr\n");
+            expect(issue.id).toBe("invalid-font-weight");
+            expect(issue.tokenPath?.toString()).toBe("primitive.fontWeight.body");
+        });
+
         it("reports a broken token in a later document", async () => {
             const content = `${VALID}---\nprimitive:\n  color:\n    other: "#QQQ"\n`;
             const [issue] = await issuesOf(content);

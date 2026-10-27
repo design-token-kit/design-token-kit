@@ -27,6 +27,7 @@ import { BorderValue } from "#/core/model/values/BorderValue";
 import { TransitionValue } from "#/core/model/values/TransitionValue";
 import { ShadowLayer } from "#/core/model/values/ShadowValue";
 import { GradientStop } from "#/core/model/values/GradientValue";
+import { FontWeightName } from "#/core/model/values/FontWeightName";
 import { TypographyValue } from "#/core/model/values/TypographyValue";
 
 function color(alpha = 1): ColorValue { return new ColorValue("srgb", [1, 0, 0], alpha); }
@@ -204,7 +205,7 @@ describe("validation checks", () => {
         });
 
         it("reports broken reference in TypographyValue", () => {
-            const typo = new TypographyValue(new TokenReference("missing"), dim(), "regular", dim(), 1.5);
+            const typo = new TypographyValue(new TokenReference("missing"), dim(), FontWeightName.REGULAR, dim(), 1.5);
             expect(validate(doc({ ty: new TypographyToken(typo) }))).toHaveLength(1);
         });
 

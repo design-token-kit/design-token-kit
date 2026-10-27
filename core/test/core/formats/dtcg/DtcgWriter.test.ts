@@ -25,6 +25,7 @@ import { GradientStop } from "#/core/model/values/GradientValue";
 import { ShadowLayer } from "#/core/model/values/ShadowValue";
 import { StrokeStyleObject } from "#/core/model/values/StrokeStyleValue";
 import { TransitionValue } from "#/core/model/values/TransitionValue";
+import { FontWeightName } from "#/core/model/values/FontWeightName";
 import { TypographyValue } from "#/core/model/values/TypographyValue";
 
 // A small but representative DTCG document: three layers, a couple of token
@@ -408,5 +409,45 @@ describe("DtcgWriter", () => {
                 lineHeight: "{primitive.number.line-height}",
             });
         });
+    });
+});
+
+describe("DtcgWriter font weight names", () => {
+    const FONT_WEIGHTS = JSON.stringify({
+        fontWeight: { semiBold: { $type: "fontWeight", $value: "semi-bold" } },
+        typography: {
+            body: {
+                $type: "typography",
+                $value: {
+                    fontFamily: "Inter",
+                    fontSize: { value: 16, unit: "px" },
+                    fontWeight: "extra-light",
+                    letterSpacing: { value: 0, unit: "px" },
+                    lineHeight: 1.5,
+                },
+            },
+        },
+    });
+
+    it("writes a standalone font weight name", async () => {
+        const written: Record<string, unknown> = write(await read(FONT_WEIGHTS));
+
+        expect(written).toMatchObject({ fontWeight: { semiBold: { $value: "semi-bold" } } });
+    });
+
+    it("writes a typography font weight name", async () => {
+        const written: Record<string, unknown> = write(await read(FONT_WEIGHTS));
+
+        expect(written).toMatchObject({ typography: { body: { $value: { fontWeight: "extra-light" } } } });
+    });
+
+    it("reads back the written names", async () => {
+        const reread: Dtcg = await read(new DtcgWriter().write(await read(FONT_WEIGHTS)));
+        const typography = reread.get("typography") as TokenGroup;
+        const fontWeights = reread.get("fontWeight") as TokenGroup;
+
+        expect((fontWeights.get("semiBold") as TokenNode<unknown>).value).toBe(FontWeightName.SEMI_BOLD);
+        expect(((typography.get("body") as TokenNode<unknown>).value as TypographyValue).fontWeight)
+            .toBe(FontWeightName.EXTRA_LIGHT);
     });
 });

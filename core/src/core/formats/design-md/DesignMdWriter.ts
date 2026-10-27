@@ -11,6 +11,7 @@ import { NumberToken } from "#/core/model/tokens/NumberToken";
 import { TypographyToken } from "#/core/model/tokens/TypographyToken";
 import { ColorValue, isConcreteColorValue, type ConcreteColorValue } from "#/core/model/values/ColorValue";
 import { DimensionValue, isConcreteDimensionValue } from "#/core/model/values/DimensionValue";
+import { FontWeightName } from "#/core/model/values/FontWeightName";
 import { TypographyValue } from "#/core/model/values/TypographyValue";
 
 const SECTION_HEADERS = [
@@ -208,7 +209,7 @@ export class DesignMdWriter {
             return this.#serializeFontFamilyOrRef(value);
         }
         if (token instanceof FontWeightToken) {
-            return String(value);
+            return this.#serializeFontWeightOrRef(value);
         }
         if (token instanceof TypographyToken) {
             return undefined;
@@ -300,6 +301,7 @@ export class DesignMdWriter {
 
     #serializeFontWeightOrRef(value: unknown): string {
         if (value instanceof TokenReference) return `"${value}"`;
+        if (value instanceof FontWeightName) return value.name;
         return String(value);
     }
 

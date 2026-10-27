@@ -15,6 +15,7 @@ import { CubicBezierValue } from "#/core/model/values/CubicBezierValue";
 import { DimensionValue } from "#/core/model/values/DimensionValue";
 import { DurationValue } from "#/core/model/values/DurationValue";
 import { TransitionValue } from "#/core/model/values/TransitionValue";
+import { FontWeightName } from "#/core/model/values/FontWeightName";
 import { TypographyValue } from "#/core/model/values/TypographyValue";
 import { readDtcg } from "../../support/readDtcg";
 
@@ -150,7 +151,7 @@ describe("TailwindTokenConverter", () => {
                     children: new Map([
                         ["fontWeight", new TokenGroup({
                             children: new Map([
-                                ["regular", new FontWeightToken("regular")],
+                                ["regular", new FontWeightToken(FontWeightName.REGULAR)],
                             ]),
                         })],
                         ["typography", new TokenGroup({
@@ -158,7 +159,7 @@ describe("TailwindTokenConverter", () => {
                                 ["body", new TypographyToken(new TypographyValue(
                                     ["Inter", "sans-serif"],
                                     new DimensionValue(14, "px"),
-                                    "regular",
+                                    FontWeightName.REGULAR,
                                     new DimensionValue(0, "px"),
                                     1.4,
                                 ))],
@@ -318,7 +319,7 @@ describe("TailwindTokenConverter", () => {
                                 ["display", new TypographyToken(new TypographyValue(
                                     ["Sora", "Arial", "sans-serif"],
                                     new DimensionValue(48, "px"),
-                                    "bold",
+                                    FontWeightName.BOLD,
                                     new DimensionValue(-0.8, "px"),
                                     1.1,
                                 ))],

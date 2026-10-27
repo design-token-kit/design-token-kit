@@ -12,7 +12,8 @@ import { GradientStop } from "#/core/model/values/GradientValue";
 import { ShadowLayer } from "#/core/model/values/ShadowValue";
 import { StrokeStyleObject } from "#/core/model/values/StrokeStyleValue";
 import { TransitionValue } from "#/core/model/values/TransitionValue";
-import { TypographyValue } from "#/core/model/values/TypographyValue";
+import { FontWeightName } from "#/core/model/values/FontWeightName";
+import { FontWeightValue, TypographyValue } from "#/core/model/values/TypographyValue";
 import { CssColorValueConverter } from "#/core/platforms/css/CssColorValueConverter";
 
 type TailwindNamespace =
@@ -67,27 +68,6 @@ const STRIPPED_SEGMENTS: Record<TailwindNamespace, Set<string>> = {
     spacing: new Set(["dimension", "size", "sizes", "space", "spacing"]),
     text: new Set(["dimension", "font-size", "fontSize", "size", "sizes", "text", "typography"]),
     tracking: new Set(["dimension", "letter-spacing", "letterSpacing", "text", "tracking", "typography"]),
-};
-
-const FONT_WEIGHT_KEYWORDS: Record<string, string> = {
-    thin: "100",
-    hairline: "100",
-    "extra-light": "200",
-    "ultra-light": "200",
-    light: "300",
-    normal: "400",
-    regular: "400",
-    book: "400",
-    medium: "500",
-    "semi-bold": "600",
-    "demi-bold": "600",
-    bold: "700",
-    "extra-bold": "800",
-    "ultra-bold": "800",
-    black: "900",
-    heavy: "900",
-    "extra-black": "950",
-    "ultra-black": "950",
 };
 
 /**
@@ -318,9 +298,8 @@ export class TailwindTokenMapper {
         return labels.some((label) => normalized === label.toLowerCase() || normalized.startsWith(`${label.toLowerCase()}-`));
     }
 
-    #normalizeFontWeight(value: number | string): string {
-        if (typeof value === "number") return String(value);
-        return FONT_WEIGHT_KEYWORDS[value] ?? value;
+    #normalizeFontWeight(value: FontWeightValue): string {
+        return value instanceof FontWeightName ? String(value.weight) : String(value);
     }
 
     #colorToCss(color: ColorValue): string {
@@ -380,11 +359,8 @@ export class TailwindTokenMapper {
         if (value instanceof DurationValue) return `${value.value}${value.unit}`;
         if (value instanceof CubicBezierValue) return `cubic-bezier(${value.p1x}, ${value.p1y}, ${value.p2x}, ${value.p2y})`;
         if (typeof value === "number") return String(value);
-        if (typeof value === "string") {
-            return namespace === "font-weight"
-                ? this.#normalizeFontWeight(value)
-                : value;
-        }
+        if (value instanceof FontWeightName) return this.#normalizeFontWeight(value);
+        if (typeof value === "string") return value;
 
         if (value instanceof ShadowLayer) return this.#shadowLayerToCss(value);
 

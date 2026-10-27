@@ -2,6 +2,16 @@
 
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [Unreleased]
+
+### Changed
+
+- Made HRDT and DESIGN.md readers reject unknown font weight names with
+  `invalid-font-weight`.
+  They used to pass them through.
+- Reported an unknown font weight name in DTCG as one `invalid-font-weight`
+  error instead of several schema errors.
+
 ## [3.1.0] - 2026-10-26
 
 ### Fixed

@@ -33,6 +33,7 @@ import { GradientStop } from "#/core/model/values/GradientValue";
 import { ShadowLayer } from "#/core/model/values/ShadowValue";
 import { StrokeStyleObject, LineCap, StrokeStyleValue } from "#/core/model/values/StrokeStyleValue";
 import { TransitionValue } from "#/core/model/values/TransitionValue";
+import { FontWeightName } from "#/core/model/values/FontWeightName";
 import { TypographyValue, FontFamilyValue, FontWeightValue } from "#/core/model/values/TypographyValue";
 
 type JsonObject = Record<string, unknown>;
@@ -288,7 +289,9 @@ export class DtcgReader implements TokenReader {
     }
 
     #parseFontWeight(raw: unknown): FontWeightValue {
-        if (typeof raw === "number" || typeof raw === "string") return raw as FontWeightValue;
+        if (typeof raw === "number") return raw;
+        const name: FontWeightName | undefined = typeof raw === "string" ? FontWeightName.find(raw) : undefined;
+        if (name !== undefined) return name;
         throw new DtcgReaderError("invalid-font-weight", `Invalid fontWeight value: ${JSON.stringify(raw)}`);
     }
 

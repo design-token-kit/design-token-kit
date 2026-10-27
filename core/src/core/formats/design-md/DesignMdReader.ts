@@ -16,6 +16,7 @@ import { NumberToken } from "#/core/model/tokens/NumberToken";
 import { TypographyToken } from "#/core/model/tokens/TypographyToken";
 import { ColorValue } from "#/core/model/values/ColorValue";
 import { DimensionValue, DimensionUnit, isConcreteDimensionValue } from "#/core/model/values/DimensionValue";
+import { FontWeightName } from "#/core/model/values/FontWeightName";
 import { TypographyValue, FontWeightOrReference } from "#/core/model/values/TypographyValue";
 
 
@@ -575,16 +576,26 @@ export class DesignMdReader implements TokenReader {
     }
 
     #parseFontWeightOrRef(raw: unknown): FontWeightOrReference {
-        if (typeof raw === "string") {
-            const ref = TokenReference.parse(raw);
-            if (ref !== undefined) return ref;
-            return raw as FontWeightOrReference;
-        }
         if (typeof raw === "number") return raw;
+        const weight: FontWeightOrReference | undefined = typeof raw === "string"
+            ? this.#parseFontWeightString(raw)
+            : undefined;
+        if (weight !== undefined) return weight;
         throw new DesignMdReaderError(
             "invalid-font-weight",
-            `Expected fontWeight string or number, got: ${JSON.stringify(raw)}`,
+            `Expected fontWeight number or one of ${FontWeightName.names().join(", ")}, got: ${JSON.stringify(raw)}`,
         );
+    }
+
+    /**
+     * Reads a weight given as a string: a reference, a font weight name, or a
+     * quoted number such as "600", which DESIGN.md treats as the bare number.
+     */
+    #parseFontWeightString(raw: string): FontWeightOrReference | undefined {
+        const ref: TokenReference | undefined = TokenReference.parse(raw);
+        if (ref !== undefined) return ref;
+        if (NUMERIC_FONT_WEIGHT_RE.test(raw)) return Number(raw);
+        return FontWeightName.find(raw);
     }
 
     #parseNumberOrRef(raw: unknown): number | TokenReference {
@@ -612,6 +623,7 @@ export class DesignMdReaderError extends TokenReadError {
 
 const DIMENSION_RE = /^(-?\d+(?:\.\d+)?)(px|em|rem)$/;
 const HEX_RE = /^#([0-9a-fA-F]{3,8})$/;
+const NUMERIC_FONT_WEIGHT_RE = /^\d+(\.\d+)?$/;
 const RGB_RE = /^rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)(?:\s*,\s*([\d.]+))?\s*\)$/;
 const HSL_RE = /^hsla?\(\s*(-?[\d.]+)\s*,?\s*(-?[\d.]+)%\s*,?\s*(-?[\d.]+)%(?:\s*,?\s*([\d.]+))?\s*\)$/;
 const HWB_RE = /^hwb\(\s*(-?[\d.]+)\s+(-?[\d.]+)%\s+(-?[\d.]+)%(?:\s*\/\s*([\d.]+))?\s*\)$/;
