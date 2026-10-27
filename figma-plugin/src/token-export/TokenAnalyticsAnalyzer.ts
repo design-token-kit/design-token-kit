@@ -1,6 +1,6 @@
 import { TokenReference } from "@design-token-kit/core/core/model/TokenReference";
 import type { ExportedTokenFile } from "#/figma-plugin/token-export/TokenExporter";
-import type { TokenArchitectureCheckResult } from "#/figma-plugin/token-export/TokenArchitectureAnalyzer";
+import type { TokenCheckCard } from "#/figma-plugin/token-export/TokenCheckAnalyzer";
 
 /**
  * Summarizes exported token files for the plugin UI.
@@ -12,7 +12,7 @@ export class TokenAnalyticsAnalyzer {
      */
     analyze(
         files: ExportedTokenFile[],
-        architectureChecks: TokenArchitectureCheckResult[],
+        architectureChecks: TokenCheckCard[],
     ): TokenAnalyticsReport {
         const tokens = files.flatMap((file) => collectTokens(file.tokens));
 

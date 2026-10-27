@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { TokenAnalyticsAnalyzer } from "#/figma-plugin/token-export/TokenAnalyticsAnalyzer";
-import type { TokenArchitectureCheckResult } from "#/figma-plugin/token-export/TokenArchitectureAnalyzer";
+import type { TokenCheckCard } from "#/figma-plugin/token-export/TokenCheckAnalyzer";
 import type { ExportedTokenFile } from "#/figma-plugin/token-export/TokenExporter";
 
 describe("TokenAnalyticsAnalyzer", () => {
@@ -138,7 +138,7 @@ function tokenFile(fileName: string, tokens: Record<string, unknown>): ExportedT
     };
 }
 
-function architectureCheck(severity: TokenArchitectureCheckResult["severity"]): TokenArchitectureCheckResult {
+function architectureCheck(severity: TokenCheckCard["severity"]): TokenCheckCard {
     return {
         name: severity,
         description: severity,

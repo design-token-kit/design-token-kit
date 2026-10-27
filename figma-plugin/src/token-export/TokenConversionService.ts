@@ -9,6 +9,7 @@ import { ScssTokenConverter } from "@design-token-kit/core/core/platforms/scss/S
 import { SwiftUiTokenConverter } from "@design-token-kit/core/core/platforms/swiftui/SwiftUiTokenConverter";
 import { TailwindTokenConverter } from "@design-token-kit/core/core/platforms/tailwind/TailwindTokenConverter";
 import type { Dtcg } from "@design-token-kit/core/core/model/Dtcg";
+import type { CheckIssue } from "@design-token-kit/core/core/check/CheckIssue";
 import type { ExportedTokenFile } from "#/figma-plugin/token-export/TokenExporter";
 
 export interface ConvertedTokenFile {
@@ -23,6 +24,14 @@ export interface TokenConversionRequest {
     format: TokenOutputFormat;
 }
 
+/**
+ * DTCG documents and diagnostics produced while reading exported files.
+ */
+export interface DtcgListReadResult {
+    list?: DtcgList;
+    issues: CheckIssue[];
+}
+
 export class TokenConversionService {
 
     async convert(request: TokenConversionRequest): Promise<ConvertedTokenFile[]> {
@@ -34,7 +43,12 @@ export class TokenConversionService {
     }
 
     async #convertPlatform(files: ExportedTokenFile[], format: PlatformTokenOutputFormat): Promise<ConvertedTokenFile[]> {
-        const list = await toDtcgList(files);
+        const result = await this.readList(files);
+        if (result.issues.length > 0) {
+            throw new Error(formatReadIssues(result.issues));
+        }
+
+        const list = result.list;
         if (list === undefined) {
             return [];
         }
@@ -59,6 +73,13 @@ export class TokenConversionService {
         return [toFile("DesignTokens.swift", new SwiftUiTokenConverter().convertList(list))];
     }
 
+    /**
+     * Reads exported files for analysis without throwing on malformed input.
+     */
+    async readList(files: ExportedTokenFile[]): Promise<DtcgListReadResult> {
+        return toDtcgList(files);
+    }
+
 }
 
 function toDtcgFiles(files: ExportedTokenFile[]): ConvertedTokenFile[] {
@@ -70,17 +91,32 @@ function toDtcgFiles(files: ExportedTokenFile[]): ConvertedTokenFile[] {
     }));
 }
 
-async function toDtcgList(files: ExportedTokenFile[]): Promise<DtcgList | undefined> {
+async function toDtcgList(files: ExportedTokenFile[]): Promise<DtcgListReadResult> {
     const downloadableFiles = files.filter((file) => file.downloadable);
     const baseFile = downloadableFiles.find((file) => file.fileName === "tokens.json") ?? downloadableFiles[0];
     if (baseFile === undefined) {
-        return undefined;
+        return { issues: [] };
     }
 
     // No file system here, so no schema: the plugin reads back only the DTCG
     // it generated itself, and the reader's own checks cover it.
     const reader = DtcgReader.noSchema();
-    const base = await readDocument(reader, baseFile);
+    const baseResult = reader.read(baseFile.content, baseFile.fileName);
+    if (!baseResult.ok) {
+        return { issues: baseResult.issues };
+    }
+
+    const base = baseResult.documents[0];
+    if (base === undefined) {
+        return { issues: [{
+            id: "dtcg-reader",
+            sourcePath: baseFile.fileName,
+            message: "DTCG reader returned no document.",
+            severity: "error",
+        }] };
+    }
+
+    const issues = [...baseResult.issues];
     const themes = new Map<string, Dtcg>();
 
     for (const file of downloadableFiles) {
@@ -88,26 +124,21 @@ async function toDtcgList(files: ExportedTokenFile[]): Promise<DtcgList | undefi
             continue;
         }
 
-        themes.set(toThemeName(file.fileName), await readDocument(reader, file));
+        const themeResult = reader.read(file.content, file.fileName);
+        issues.push(...themeResult.issues);
+        if (themeResult.ok && themeResult.documents[0] !== undefined) {
+            themes.set(toThemeName(file.fileName), themeResult.documents[0]);
+        }
     }
 
-    return new DtcgList(base, themes);
+    return { list: new DtcgList(base, themes), issues };
 }
 
-/**
- * Reads one exported file, turning a failed read into an exception.
- *
- * The plugin reports an export failure through a single catch, so a file the
- * reader rejected has to arrive there rather than as a value.
- */
-async function readDocument(reader: DtcgReader, file: ExportedTokenFile): Promise<Dtcg> {
-    const result = await reader.read(file.content, file.fileName);
-    if (!result.ok) {
-        throw new Error(
-            `Unable to read ${file.fileName}:\n${result.issues.map((issue) => issue.message).join("\n")}`,
-        );
-    }
-    return result.documents[0];
+function formatReadIssues(issues: CheckIssue[]): string {
+    return issues.map((issue) => {
+        const source = issue.sourcePath === undefined ? "DTCG" : issue.sourcePath;
+        return `Unable to read ${source}: ${issue.message}`;
+    }).join("\n");
 }
 
 /**

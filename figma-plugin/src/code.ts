@@ -1,7 +1,7 @@
 import type { FigmaFileReader } from "#/figma-plugin/FigmaFileReader";
 import { PluginFigmaFileReader, RestFigmaFileReader } from "#/figma-plugin/index";
 import { TokenConversionService, type TokenOutputFormat } from "#/figma-plugin/token-export/TokenConversionService";
-import { TokenArchitectureAnalyzer } from "#/figma-plugin/token-export/TokenArchitectureAnalyzer";
+import { TokenCheckAnalyzer } from "#/figma-plugin/token-export/TokenCheckAnalyzer";
 import { TokenAnalyticsAnalyzer } from "#/figma-plugin/token-export/TokenAnalyticsAnalyzer";
 import { TokenExporter } from "#/figma-plugin/token-export/TokenExporter";
 
@@ -20,7 +20,7 @@ figma.ui.onmessage = async (msg: PluginMessage) => {
     }
 
     if (msg.type === "ANALYZE_TOKENS") {
-        await analyzeTokens();
+        await analyzeTokens(msg.linting === true);
         return;
     }
 
@@ -41,19 +41,26 @@ figma.ui.onmessage = async (msg: PluginMessage) => {
     }
 };
 
-async function analyzeTokens(): Promise<void> {
+async function analyzeTokens(runFullLinting: boolean): Promise<void> {
     try {
         const result = await new TokenExporter().export();
-        const architectureReport = new TokenArchitectureAnalyzer().analyze(result.files);
-        const analyticsReport = new TokenAnalyticsAnalyzer().analyze(result.files, architectureReport.checks);
+        const conversionService = new TokenConversionService();
+        const listResult = await conversionService.readList(result.files);
+        const checkReport = new TokenCheckAnalyzer().analyze(
+            listResult.list,
+            listResult.issues,
+            result.files.flatMap((file) => file.architectureWarnings),
+            runFullLinting,
+        );
+        const analyticsReport = new TokenAnalyticsAnalyzer().analyze(result.files, checkReport.checks);
 
         figma.ui.postMessage({
             type: "TOKENS_ANALYZED",
             payload: {
                 summary: result.summary,
-                warnings: [...result.warnings, ...architectureReport.warnings],
+                warnings: [...result.warnings, ...checkReport.warnings],
                 analytics: analyticsReport,
-                architectureChecks: architectureReport.checks,
+                architectureChecks: checkReport.checks,
             },
         });
     } catch (error: unknown) {
@@ -167,7 +174,7 @@ function toTokenOutputFormat(type: PluginMessage["type"]): TokenOutputFormat | u
 
 type PluginMessage =
     | { type: "EXPORT_PLUGIN_JSON" }
-    | { type: "ANALYZE_TOKENS" }
+    | { type: "ANALYZE_TOKENS"; linting?: boolean }
     | { type: "EXPORT_TOKENS_JSON" }
     | { type: "EXPORT_TOKENS_DTCG" }
     | { type: "EXPORT_TOKENS_CSS" }

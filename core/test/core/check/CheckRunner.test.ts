@@ -97,6 +97,38 @@ describe("CheckRunner", () => {
         expect(issues[0].id).toBe("layer-reference");
     });
 
+    it("uses a declared source for property references when checking layers", () => {
+        const propertyReference = (pointer: string) => new TokenReference(pointer, "property");
+        const d = doc({
+            primitive: group({
+                color: new ColorToken(color()),
+            }),
+            semantic: group({
+                action: alias("primitive.color"),
+            }),
+            component: group({
+                background: new ColorToken(
+                    new ColorValue(
+                        propertyReference("#/primitive/color/$value/colorSpace"),
+                        [0, 0, 1],
+                        1,
+                    ),
+                    undefined,
+                    undefined,
+                    {
+                        "io.github.design-token-kit": {
+                            referenceSources: {
+                                "#/primitive/color/$value/colorSpace": "{semantic.action}",
+                            },
+                        },
+                    },
+                ),
+            }),
+        });
+
+        expect(runAll(d).filter((issue) => issue.id === "layer-reference")).toEqual([]);
+    });
+
     it("flags a raw value in a semantic token", () => {
         const d = doc({
             primitive: group({ red: new ColorToken(color()) }),
