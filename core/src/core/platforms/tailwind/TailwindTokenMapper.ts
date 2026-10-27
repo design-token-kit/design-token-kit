@@ -13,8 +13,10 @@ import { ShadowLayer } from "#/core/model/values/ShadowValue";
 import { StrokeStyleObject } from "#/core/model/values/StrokeStyleValue";
 import { TransitionValue } from "#/core/model/values/TransitionValue";
 import { FontWeightName } from "#/core/model/values/FontWeightName";
-import { FontWeightValue, TypographyValue } from "#/core/model/values/TypographyValue";
+import { FontFamilyValue, FontWeightValue, TypographyValue } from "#/core/model/values/TypographyValue";
+import { FontFamilyToken } from "#/core/model/tokens/FontFamilyToken";
 import { CssColorValueConverter } from "#/core/platforms/css/CssColorValueConverter";
+import { fontFamilyToCss, fontFamilyTokenToCss, type CssReferenceFormatter } from "#/core/platforms/css/CssFontValues";
 
 type TailwindNamespace =
     | "background-image"
@@ -75,6 +77,7 @@ const STRIPPED_SEGMENTS: Record<TailwindNamespace, Set<string>> = {
  */
 export class TailwindTokenMapper {
     readonly #cssColorValueConverter: CssColorValueConverter;
+    readonly #formatFontReference: CssReferenceFormatter = (reference) => this.#refToVar(reference.path, "font");
 
     constructor(options: TailwindTokenMapperOptions = {}) {
         this.#cssColorValueConverter = options.cssColorValueConverter ?? new CssColorValueConverter({ mode: "tailwind" });
@@ -118,7 +121,7 @@ export class TailwindTokenMapper {
         const namespace = this.#resolveNamespace(path, token);
         if (!namespace) return [];
 
-        const value = this.#tokenValueToCss(token.value, namespace);
+        const value: string | undefined = this.#tokenToCss(token, namespace);
         if (value === undefined) return [];
 
         return [{
@@ -179,7 +182,7 @@ export class TailwindTokenMapper {
                 property: this.#buildTextStylePropertyName(path, "font-weight"),
                 value: value.fontWeight instanceof TokenReference
                     ? this.#refToVar(value.fontWeight.path, "font-weight")
-                    : this.#normalizeFontWeight(value.fontWeight),
+                    : this.#fontWeightToNumber(value.fontWeight),
             },
         ];
     }
@@ -298,7 +301,11 @@ export class TailwindTokenMapper {
         return labels.some((label) => normalized === label.toLowerCase() || normalized.startsWith(`${label.toLowerCase()}-`));
     }
 
-    #normalizeFontWeight(value: FontWeightValue): string {
+    /**
+     * Tailwind font weight utilities take numbers, so a name is written as its
+     * weight, including `normal` and `bold`.
+     */
+    #fontWeightToNumber(value: FontWeightValue): string {
         return value instanceof FontWeightName ? String(value.weight) : String(value);
     }
 
@@ -307,11 +314,8 @@ export class TailwindTokenMapper {
     }
 
     #fontFamilyToCss(value: TypographyValue["fontFamily"]): string {
-        if (value instanceof TokenReference) return this.#refToVar(value.path, "font");
-        if (Array.isArray(value)) {
-            return value.map((item) => item instanceof TokenReference ? this.#refToVar(item.path, "font") : `"${item}"`).join(", ");
-        }
-        return `"${value}"`;
+        if (value instanceof TokenReference) return this.#formatFontReference(value);
+        return fontFamilyToCss(value, this.#formatFontReference);
     }
 
     #dimensionOrRefToCss(
@@ -352,6 +356,22 @@ export class TailwindTokenMapper {
         return `linear-gradient(180deg, ${stops.join(", ")})`;
     }
 
+    /**
+     * Converts a token to its CSS value, choosing the font family rule by token
+     * type.
+     *
+     * Font family values cannot be told apart from other string lists by their
+     * class alone, so the token type selects the font family rule.
+     */
+    #tokenToCss(token: TokenNode<unknown>, namespace: TailwindNamespace): string | undefined {
+        // Any token type arrives here; the checks below narrow its value.
+        const value: unknown = token.value;
+        if (token instanceof FontFamilyToken && !(value instanceof TokenReference)) {
+            return fontFamilyTokenToCss(value as FontFamilyValue, this.#formatFontReference);
+        }
+        return this.#tokenValueToCss(value, namespace);
+    }
+
     #tokenValueToCss(value: unknown, namespace: TailwindNamespace): string | undefined {
         if (value instanceof TokenReference) return this.#refToVar(value.path, namespace);
         if (value instanceof ColorValue) return this.#colorToCss(value);
@@ -359,7 +379,7 @@ export class TailwindTokenMapper {
         if (value instanceof DurationValue) return `${value.value}${value.unit}`;
         if (value instanceof CubicBezierValue) return `cubic-bezier(${value.p1x}, ${value.p1y}, ${value.p2x}, ${value.p2y})`;
         if (typeof value === "number") return String(value);
-        if (value instanceof FontWeightName) return this.#normalizeFontWeight(value);
+        if (value instanceof FontWeightName) return this.#fontWeightToNumber(value);
         if (typeof value === "string") return value;
 
         if (value instanceof ShadowLayer) return this.#shadowLayerToCss(value);
@@ -388,9 +408,7 @@ export class TailwindTokenMapper {
                     item instanceof ShadowLayer ? this.#shadowLayerToCss(item) : this.#refToVar(item.path, namespace),
                 ).join(", ");
             }
-            return value.map((item) =>
-                item instanceof TokenReference ? this.#refToVar(item.path, namespace) : `"${item}"`,
-            ).join(", ");
+            return undefined;
         }
 
         if (value instanceof TypographyValue) return undefined;

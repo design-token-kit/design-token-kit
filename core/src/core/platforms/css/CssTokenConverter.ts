@@ -15,9 +15,11 @@ import { StrokeStyleObject } from "#/core/model/values/StrokeStyleValue";
 import { TransitionValue } from "#/core/model/values/TransitionValue";
 import { ShadowLayer } from "#/core/model/values/ShadowValue";
 import { GradientStop } from "#/core/model/values/GradientValue";
-import { FontWeightName } from "#/core/model/values/FontWeightName";
-import { TypographyValue } from "#/core/model/values/TypographyValue";
+import { FontFamilyValue, FontWeightValue, TypographyValue } from "#/core/model/values/TypographyValue";
+import { FontFamilyToken } from "#/core/model/tokens/FontFamilyToken";
+import { FontWeightToken } from "#/core/model/tokens/FontWeightToken";
 import { CssColorValueConverter } from "#/core/platforms/css/CssColorValueConverter";
+import { fontFamilyToCss, fontFamilyTokenToCss, fontWeightToCss } from "#/core/platforms/css/CssFontValues";
 import type { TokenConverter } from "#/core/platforms/TokenConverter";
 
 /**
@@ -95,14 +97,10 @@ function shadowLayerToCss(layer: ShadowLayer, doc: Dtcg, base?: Dtcg): string {
 function typographyToCss(value: TypographyValue): string {
     const fontFamily = value.fontFamily instanceof TokenReference
         ? refToCssVar(value.fontFamily)
-        : Array.isArray(value.fontFamily)
-            ? value.fontFamily
-                .map((item) => item instanceof TokenReference ? refToCssVar(item) : `"${item}"`)
-                .join(", ")
-            : `"${value.fontFamily}"`;
+        : fontFamilyToCss(value.fontFamily, refToCssVar);
     const fontWeight = value.fontWeight instanceof TokenReference
         ? refToCssVar(value.fontWeight)
-        : value.fontWeight instanceof FontWeightName ? value.fontWeight.name : String(value.fontWeight);
+        : fontWeightToCss(value.fontWeight);
     const lineHeight = value.lineHeight instanceof TokenReference
         ? refToCssVar(value.lineHeight)
         : String(value.lineHeight);
@@ -125,6 +123,21 @@ function gradientToCss(value: Array<GradientStop | TokenReference>, doc: Dtcg, b
     return `linear-gradient(180deg, ${stops.join(", ")})`;
 }
 
+/**
+ * Converts a token to its CSS value, choosing the font rules by token type.
+ *
+ * Font weight and font family values cannot be told apart from other values by
+ * their class alone, so their token type selects the CSS rule.
+ */
+function tokenToCss(token: TokenNode<unknown>, doc: Dtcg, base?: Dtcg): string | undefined {
+    // Any token type arrives here; the checks below narrow its value.
+    const value: unknown = token.value;
+    if (value instanceof TokenReference) return refToCssVar(value);
+    if (token instanceof FontWeightToken) return fontWeightToCss(value as FontWeightValue);
+    if (token instanceof FontFamilyToken) return fontFamilyTokenToCss(value as FontFamilyValue, refToCssVar);
+    return tokenValueToCss(value, doc, base);
+}
+
 function tokenValueToCss(value: unknown, doc: Dtcg, base?: Dtcg): string | undefined {
     if (value instanceof TokenReference) return refToCssVar(value);
     if (value instanceof ColorValue) return colorToCss(value, doc, base);
@@ -132,7 +145,6 @@ function tokenValueToCss(value: unknown, doc: Dtcg, base?: Dtcg): string | undef
     if (value instanceof DurationValue) return `${value.value}${value.unit}`;
     if (value instanceof CubicBezierValue) return `cubic-bezier(${value.p1x}, ${value.p1y}, ${value.p2x}, ${value.p2y})`;
     if (typeof value === "number") return String(value);
-    if (value instanceof FontWeightName) return value.name;
     if (typeof value === "string") return value;
 
     if (value instanceof ShadowLayer) return shadowLayerToCss(value, doc, base);
@@ -164,9 +176,7 @@ function tokenValueToCss(value: unknown, doc: Dtcg, base?: Dtcg): string | undef
             );
             return parts.join(", ");
         }
-        return value.map((f) =>
-            f instanceof TokenReference ? refToCssVar(f) : `"${f}"`,
-        ).join(", ");
+        return undefined;
     }
 
     if (value instanceof TypographyValue) return typographyToCss(value);
@@ -177,7 +187,7 @@ function tokenValueToCss(value: unknown, doc: Dtcg, base?: Dtcg): string | undef
 function collectDeclarations(group: TokenGroup, path: TokenPath, doc: Dtcg, base?: Dtcg): Array<[string, string]> {
     const result: Array<[string, string]> = [];
     if (group.root !== undefined && path.toString()) {
-        const css = tokenValueToCss(group.root.value, doc, base);
+        const css = tokenToCss(group.root, doc, base);
         if (css !== undefined) result.push([tokenPathToCssVar(path.toString()), css]);
     }
     for (const [key, child] of group.entries()) {
@@ -185,7 +195,7 @@ function collectDeclarations(group: TokenGroup, path: TokenPath, doc: Dtcg, base
         if (child instanceof TokenGroup) {
             result.push(...collectDeclarations(child, childPath, doc, base));
         } else if (child instanceof TokenNode) {
-            const css = tokenValueToCss(child.value, doc, base);
+            const css = tokenToCss(child, doc, base);
             if (css !== undefined) {
                 result.push([tokenPathToCssVar(childPath.toString()), css]);
             }
@@ -200,7 +210,7 @@ function collectFromDoc(doc: Dtcg, base?: Dtcg): Array<[string, string]> {
         if (child instanceof TokenGroup) {
             result.push(...collectDeclarations(child, TokenPath.of(key), doc, base));
         } else if (child instanceof TokenNode) {
-            const css = tokenValueToCss(child.value, doc, base);
+            const css = tokenToCss(child, doc, base);
             if (css !== undefined) result.push([tokenPathToCssVar(TokenPath.of(key).toString()), css]);
         }
     }

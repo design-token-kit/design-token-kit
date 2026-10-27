@@ -66,7 +66,7 @@ describe("ScssTokenConverter", () => {
     });
 
     it("converts typography", () => {
-        expect(scss).toContain('$primitive-typography-body: 500 16px/1.5 "Inter", "Arial", "sans-serif";\n');
+        expect(scss).toContain('$primitive-typography-body: 500 16px/1.5 "Inter", "Arial", sans-serif;\n');
     });
 
     it("converts gradient", () => {
@@ -168,7 +168,7 @@ it("converts a simple color token", () => {
         const result = converter.convertDocument(doc(new Map([
             ["family", new FontFamilyToken("Inter")],
         ])));
-        expect(result).toBe("$family: Inter;\n");
+        expect(result).toBe('$family: "Inter";\n');
     });
 
     it("converts alias to SCSS variable reference", () => {
@@ -201,7 +201,7 @@ it("converts a simple color token", () => {
                 1.5,
             ))],
         ])));
-        expect(result).toBe('$typography: 500 16px/1.5 "Inter", $brandFonts-sans, "sans-serif";\n');
+        expect(result).toBe('$typography: 500 16px/1.5 "Inter", $brandFonts-sans, sans-serif;\n');
     });
 
     it("converts typography with string font family", () => {
@@ -346,7 +346,7 @@ it("converts a simple color token", () => {
         const result = converter.convertDocument(doc(new Map([
             ["fontFamily", new FontFamilyToken(["Inter", "Arial", "sans-serif"])],
         ])));
-        expect(result).toBe('$fontFamily: "Inter", "Arial", "sans-serif";\n');
+        expect(result).toBe('$fontFamily: "Inter", "Arial", sans-serif;\n');
     });
 
     it("converts array of only TokenReferences", () => {
@@ -503,5 +503,72 @@ it("converts a simple color token", () => {
             })));
             expect(result).toContain("$primitive_color_teal-500: #10a5a5;\n");
         });
+    });
+});
+
+describe("ScssTokenConverter font values", () => {
+    const converter = new ScssTokenConverter();
+
+    it("writes the issue example as valid CSS values", async () => {
+        const document = await readDtcg({
+            primitive: {
+                fontFamily: {
+                    body: { $type: "fontFamily", $value: ["Inter", "sans-serif"] },
+                },
+                fontWeight: {
+                    regular: { $type: "fontWeight", $value: "regular" },
+                    bold: { $type: "fontWeight", $value: "bold" },
+                },
+                typography: {
+                    body: {
+                        $type: "typography",
+                        $value: {
+                            fontFamily: "{primitive.fontFamily.body}",
+                            fontSize: { value: 16, unit: "px" },
+                            fontWeight: "{primitive.fontWeight.regular}",
+                            letterSpacing: { value: 0, unit: "px" },
+                            lineHeight: 1.5,
+                        },
+                    },
+                },
+            },
+        });
+
+        expect(converter.convertDocument(document)).toBe([
+            '$primitive-fontFamily-body: "Inter", sans-serif;',
+            "$primitive-fontWeight-regular: 400;",
+            "$primitive-fontWeight-bold: bold;",
+            "$primitive-typography-body: $primitive-fontWeight-regular 16px/1.5 $primitive-fontFamily-body;",
+            "",
+        ].join("\n"));
+    });
+
+    it("writes inline typography weight and family as valid CSS values", async () => {
+        const document = await readDtcg({
+            body: {
+                $type: "typography",
+                $value: {
+                    fontFamily: ["Inter", "sans-serif"],
+                    fontSize: { value: 16, unit: "px" },
+                    fontWeight: "semi-bold",
+                    letterSpacing: { value: 0, unit: "px" },
+                    lineHeight: 1.5,
+                },
+            },
+        });
+
+        expect(converter.convertDocument(document)).toBe('$body: 600 16px/1.5 "Inter", sans-serif;\n');
+    });
+
+    it("quotes a fontFamily token given as a single string", async () => {
+        const document = await readDtcg({ body: { $type: "fontFamily", $value: "Inter" } });
+
+        expect(converter.convertDocument(document)).toBe('$body: "Inter";\n');
+    });
+
+    it("writes a generic-only fontFamily token without quotes", async () => {
+        const document = await readDtcg({ code: { $type: "fontFamily", $value: ["monospace"] } });
+
+        expect(converter.convertDocument(document)).toBe("$code: monospace;\n");
     });
 });

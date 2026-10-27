@@ -1,0 +1,42 @@
+{
+  "$schema": "https://www.designtokens.org/schemas/2025.10/format.json",
+  "primitive": {
+    "fontFamily": {
+      "body": {
+        "$type": "fontFamily",
+        "$value": [
+          "Inter",
+          "sans-serif"
+        ]
+      }
+    },
+    "fontWeight": {
+      "regular": {
+        "$type": "fontWeight",
+        "$value": "regular"
+      },
+      "bold": {
+        "$type": "fontWeight",
+        "$value": "bold"
+      }
+    },
+    "typography": {
+      "body": {
+        "$type": "typography",
+        "$value": {
+          "fontFamily": "{primitive.fontFamily.body}",
+          "fontSize": {
+            "value": 16,
+            "unit": "px"
+          },
+          "fontWeight": "{primitive.fontWeight.regular}",
+          "letterSpacing": {
+            "value": 0,
+            "unit": "px"
+          },
+          "lineHeight": 1.5
+        }
+      }
+    }
+  }
+}

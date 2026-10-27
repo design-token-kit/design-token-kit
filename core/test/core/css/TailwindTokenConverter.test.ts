@@ -134,7 +134,7 @@ describe("TailwindTokenConverter", () => {
     });
 
     it("flattens typography tokens into tailwind namespaces", () => {
-        expect(css).toContain('--font-primitive-body: "Inter", "Arial", "sans-serif";');
+        expect(css).toContain('--font-primitive-body: "Inter", "Arial", sans-serif;');
         expect(css).toContain("--text-primitive-body: 16px;");
         expect(css).toContain("--text-primitive-body--line-height: 1.5;");
         expect(css).toContain("--text-primitive-body--letter-spacing: 0px;");

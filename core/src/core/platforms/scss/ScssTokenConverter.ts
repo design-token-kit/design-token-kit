@@ -15,9 +15,16 @@ import { GradientStop } from "#/core/model/values/GradientValue";
 import { ShadowLayer } from "#/core/model/values/ShadowValue";
 import { StrokeStyleObject } from "#/core/model/values/StrokeStyleValue";
 import { TransitionValue } from "#/core/model/values/TransitionValue";
-import { FontWeightName } from "#/core/model/values/FontWeightName";
-import { TypographyValue } from "#/core/model/values/TypographyValue";
+import { FontFamilyValue, FontWeightValue, TypographyValue } from "#/core/model/values/TypographyValue";
+import { FontFamilyToken } from "#/core/model/tokens/FontFamilyToken";
+import { FontWeightToken } from "#/core/model/tokens/FontWeightToken";
 import { CssColorValueConverter } from "#/core/platforms/css/CssColorValueConverter";
+import {
+    fontFamilyToCss,
+    fontFamilyTokenToCss,
+    fontWeightToCss,
+    type CssReferenceFormatter,
+} from "#/core/platforms/css/CssFontValues";
 import type { TokenConverter } from "#/core/platforms/TokenConverter";
 import type { ScssTokenOutput } from "#/core/platforms/scss/ScssTokenOutput";
 
@@ -128,18 +135,15 @@ function shadowLayerToScss(layer: ShadowLayer, separator: string): string {
 }
 
 function typographyToScss(value: TypographyValue, separator: string): string {
+    const formatReference: CssReferenceFormatter = (reference) => refToScssVar(reference, separator);
     const fontFamily = value.fontFamily instanceof TokenReference
-        ? refToScssVar(value.fontFamily, separator)
-        : Array.isArray(value.fontFamily)
-            ? value.fontFamily
-                .map((item) => item instanceof TokenReference ? refToScssVar(item, separator) : `"${item}"`)
-                .join(", ")
-            : `"${value.fontFamily}"`;
+        ? formatReference(value.fontFamily)
+        : fontFamilyToCss(value.fontFamily, formatReference);
     const fontWeight = value.fontWeight instanceof TokenReference
-        ? refToScssVar(value.fontWeight, separator)
-        : value.fontWeight instanceof FontWeightName ? value.fontWeight.name : String(value.fontWeight);
+        ? formatReference(value.fontWeight)
+        : fontWeightToCss(value.fontWeight);
     const lineHeight = value.lineHeight instanceof TokenReference
-        ? refToScssVar(value.lineHeight, separator)
+        ? formatReference(value.lineHeight)
         : String(value.lineHeight);
 
     return `${fontWeight} ${dimensionOrRefToScss(value.fontSize, separator)}/${lineHeight} ${fontFamily}`;
@@ -160,6 +164,22 @@ function gradientToScss(value: Array<GradientStop | TokenReference>, separator: 
     return `linear-gradient(180deg, ${stops.join(", ")})`;
 }
 
+/**
+ * Converts a token to its SCSS value, choosing the font rules by token type.
+ *
+ * Font weight and font family values cannot be told apart from other values by
+ * their class alone, so their token type selects the CSS rule.
+ */
+function tokenToScss(token: TokenNode<unknown>, separator: string): string | undefined {
+    // Any token type arrives here; the checks below narrow its value.
+    const value: unknown = token.value;
+    const formatReference: CssReferenceFormatter = (reference) => refToScssVar(reference, separator);
+    if (value instanceof TokenReference) return formatReference(value);
+    if (token instanceof FontWeightToken) return fontWeightToCss(value as FontWeightValue);
+    if (token instanceof FontFamilyToken) return fontFamilyTokenToCss(value as FontFamilyValue, formatReference);
+    return tokenValueToScss(value, separator);
+}
+
 function tokenValueToScss(value: unknown, separator: string): string | undefined {
     if (value instanceof TokenReference) return refToScssVar(value, separator);
     if (value instanceof ColorValue) return colorToCss(value);
@@ -167,7 +187,6 @@ function tokenValueToScss(value: unknown, separator: string): string | undefined
     if (value instanceof DurationValue) return `${value.value}${value.unit}`;
     if (value instanceof CubicBezierValue) return `cubic-bezier(${value.p1x}, ${value.p1y}, ${value.p2x}, ${value.p2y})`;
     if (typeof value === "number") return String(value);
-    if (value instanceof FontWeightName) return value.name;
     if (typeof value === "string") return value;
 
     if (value instanceof ShadowLayer) return shadowLayerToScss(value, separator);
@@ -199,9 +218,7 @@ function tokenValueToScss(value: unknown, separator: string): string | undefined
             );
             return parts.join(", ");
         }
-        return value.map((item) =>
-            item instanceof TokenReference ? refToScssVar(item, separator) : `"${item}"`,
-        ).join(", ");
+        return undefined;
     }
 
     if (value instanceof TypographyValue) return typographyToScss(value, separator);
@@ -212,7 +229,7 @@ function tokenValueToScss(value: unknown, separator: string): string | undefined
 function collectDeclarations(group: TokenGroup, path: TokenPath, separator: string): Array<[string, string]> {
     const result: Array<[string, string]> = [];
     if (group.root !== undefined && path.toString()) {
-        const scss = tokenValueToScss(group.root.value, separator);
+        const scss = tokenToScss(group.root, separator);
         if (scss !== undefined) result.push([tokenPathToScssVar(path.toString(), separator), scss]);
     }
     for (const [key, child] of group.entries()) {
@@ -220,7 +237,7 @@ function collectDeclarations(group: TokenGroup, path: TokenPath, separator: stri
         if (child instanceof TokenGroup) {
             result.push(...collectDeclarations(child, childPath, separator));
         } else if (child instanceof TokenNode) {
-            const scss = tokenValueToScss(child.value, separator);
+            const scss = tokenToScss(child, separator);
             if (scss !== undefined) {
                 result.push([tokenPathToScssVar(childPath.toString(), separator), scss]);
             }
@@ -235,7 +252,7 @@ function collectFromDoc(doc: Dtcg, separator: string): Array<[string, string]> {
         if (child instanceof TokenGroup) {
             result.push(...collectDeclarations(child, TokenPath.of(key), separator));
         } else if (child instanceof TokenNode) {
-            const scss = tokenValueToScss(child.value, separator);
+            const scss = tokenToScss(child, separator);
             if (scss !== undefined) result.push([tokenPathToScssVar(TokenPath.of(key).toString(), separator), scss]);
         }
     }

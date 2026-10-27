@@ -23,6 +23,7 @@ import { GradientStop } from "#/core/model/values/GradientValue";
 import { ShadowLayer } from "#/core/model/values/ShadowValue";
 import { FontWeightName } from "#/core/model/values/FontWeightName";
 import { TypographyValue } from "#/core/model/values/TypographyValue";
+import { readDtcg } from "../../support/readDtcg";
 
 describe("TailwindTokenMapper", () => {
     const mapper = new TailwindTokenMapper();
@@ -48,7 +49,7 @@ describe("TailwindTokenMapper", () => {
 
         expect(declarations).toEqual(expect.arrayContaining([
             { property: "--color-brand", value: "#ff0000" },
-            { property: "--font-fontFamily", value: "Inter" },
+            { property: "--font-fontFamily", value: "\"Inter\"" },
             { property: "--font-weight-fontWeight", value: "600" },
             { property: "--ease-ease", value: "cubic-bezier(0.2, 0.8, 0.2, 1)" },
             { property: "--breakpoint-desktop", value: "1440px" },
@@ -248,5 +249,57 @@ describe("TailwindTokenMapper", () => {
         })));
 
         expect(declarations).toContainEqual({ property: "--spacing-md", value: "16px" });
+    });
+});
+
+describe("TailwindTokenMapper font values", () => {
+    const mapper = new TailwindTokenMapper();
+
+    it("writes generic families without quotes", async () => {
+        const document = await readDtcg({
+            font: {
+                body: { $type: "fontFamily", $value: ["Inter", "sans-serif"] },
+                code: { $type: "fontFamily", $value: "monospace" },
+            },
+        });
+
+        expect(mapper.collectDocument(document)).toEqual([
+            { property: "--font-body", value: '"Inter", sans-serif' },
+            { property: "--font-code", value: "monospace" },
+        ]);
+    });
+
+    it("writes generic families in a typography value without quotes", async () => {
+        const document = await readDtcg({
+            body: {
+                $type: "typography",
+                $value: {
+                    fontFamily: ["Inter", "sans-serif"],
+                    fontSize: { value: 16, unit: "px" },
+                    fontWeight: "semi-bold",
+                    letterSpacing: { value: 0, unit: "px" },
+                    lineHeight: 1.5,
+                },
+            },
+        });
+
+        expect(mapper.collectDocument(document)).toEqual(expect.arrayContaining([
+            { property: "--font-body", value: '"Inter", sans-serif' },
+            { property: "--text-body--font-weight", value: "600" },
+        ]));
+    });
+
+    it("writes font weight names as numbers", async () => {
+        const document = await readDtcg({
+            fontWeight: {
+                regular: { $type: "fontWeight", $value: "regular" },
+                bold: { $type: "fontWeight", $value: "bold" },
+            },
+        });
+
+        expect(mapper.collectDocument(document)).toEqual([
+            { property: "--font-weight-regular", value: "400" },
+            { property: "--font-weight-bold", value: "700" },
+        ]);
     });
 });

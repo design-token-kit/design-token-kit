@@ -1,4 +1,6 @@
 import { TokenPath } from "#/core/model/TokenPath";
+import { FontWeightName } from "#/core/model/values/FontWeightName";
+import { fontWeightToCss } from "#/core/platforms/css/CssFontValues";
 import { TOKEN_HTML_SHOWCASE_CSS } from "#/core/showcase/TokenHtmlShowcaseStyles";
 import {
     BorderTokenAggregator,
@@ -780,10 +782,8 @@ ${this.renderTokens(visibleScopes, visibleThemes, parsed.entries)}
     }
 
     private normalizeFontWeight(value?: string): string | undefined {
-        if (value === "regular") {
-            return "400";
-        }
-        return value;
+        const name: FontWeightName | undefined = value === undefined ? undefined : FontWeightName.find(value);
+        return name === undefined ? value : fontWeightToCss(name);
     }
 
     private escapeRegExp(value: string): string {
