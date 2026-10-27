@@ -1,6 +1,0 @@
-:root {
-  --primitive-fontFamily-body: "Inter", sans-serif;
-  --primitive-fontWeight-regular: 400;
-  --primitive-fontWeight-bold: bold;
-  --primitive-typography-body: var(--primitive-fontWeight-regular) 16px/1.5 var(--primitive-fontFamily-body);
-}
