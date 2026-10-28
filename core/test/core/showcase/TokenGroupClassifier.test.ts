@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { TokenGroupClassifier } from "#/core/showcase/TokenGroupClassifier";
-import type { ScopedTokenEntry, ThemeBucket, TokenEntry } from "#/core/showcase/CssTokenParser";
+import type { ScopedTokenEntry, TokenEntry } from "#/core/showcase/CssTokenParser";
 
 function entry(name: string, value: string, scope = "primitive", themeName?: string): ScopedTokenEntry {
     return { name, value, scope, themeName };
@@ -37,43 +37,6 @@ describe("TokenGroupClassifier", () => {
 
         it("returns empty map for empty input", () => {
             expect(classifier.groupEntriesByScope([])).toEqual(new Map());
-        });
-    });
-
-    describe("getPrimitiveThemes", () => {
-        it("keeps only primitive-scoped entries from each theme", () => {
-            const themes: ThemeBucket[] = [
-                {
-                    name: "base",
-                    entries: [
-                        entry("--primitive-color-brand", "#fff", "primitive"),
-                        entry("--semantic-color-text", "var(--x)", "semantic"),
-                    ],
-                },
-            ];
-            const result = classifier.getPrimitiveThemes(themes);
-            expect(result[0].entries).toHaveLength(1);
-            expect(result[0].entries[0].name).toBe("--primitive-color-brand");
-        });
-
-        it("omits themes that have no primitive entries", () => {
-            const themes: ThemeBucket[] = [
-                {
-                    name: "dark",
-                    entries: [entry("--semantic-color-text", "var(--x)", "semantic")],
-                },
-            ];
-            expect(classifier.getPrimitiveThemes(themes)).toHaveLength(0);
-        });
-
-        it("preserves theme name", () => {
-            const themes: ThemeBucket[] = [
-                {
-                    name: "base.dark",
-                    entries: [entry("--primitive-color-brand", "#000", "primitive")],
-                },
-            ];
-            expect(classifier.getPrimitiveThemes(themes)[0].name).toBe("base.dark");
         });
     });
 

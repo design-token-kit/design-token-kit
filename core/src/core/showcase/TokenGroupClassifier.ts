@@ -1,6 +1,5 @@
 import {
     ScopedTokenEntry,
-    ThemeBucket,
     TokenEntry,
 } from "#/core/showcase/CssTokenParser";
 
@@ -9,7 +8,7 @@ import {
  *
  * @remarks
  * Sorts tokens by scope: `primitive`, `semantic`, `component`,
- * separates primitive themes and sorts groups in a stable order.
+ * sorts groups in a stable order.
  *
  * For visual sections uses simple heuristics by name and value
  * of CSS variable: colors, typography, spacing, shadows, motion and others.
@@ -28,15 +27,6 @@ export class TokenGroupClassifier {
         }
 
         return scopes;
-    }
-
-    getPrimitiveThemes(themes: ThemeBucket[]): ThemeBucket[] {
-        return themes
-            .map((theme) => ({
-                name: theme.name,
-                entries: theme.entries.filter((entry) => entry.scope === "primitive"),
-            }))
-            .filter((theme) => theme.entries.length > 0);
     }
 
     getOrderedScopes(
