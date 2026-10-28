@@ -460,7 +460,7 @@ ${this.renderTokens(visibleScopes, visibleThemes, parsed.entries)}
                 html += `<section class="token-section token-section--theme-scope" id="${this.esc(this.sectionId("scope", `${theme.name}-${scope}`))}">\n`;
                 html += `<h2 class="token-category">${this.esc(scope)}</h2>\n`;
                 if (scope === "semantic") {
-                    html += this.renderSemanticTokens(tokens, entries, `semantic-${theme.name}`);
+                    html += this.renderSemanticTokens(tokens, entries, `semantic-${theme.name}`, theme.name);
                 } else {
                     html += this.renderGroupedTokens(tokens, `${scope}-${theme.name}`);
                 }
@@ -471,8 +471,13 @@ ${this.renderTokens(visibleScopes, visibleThemes, parsed.entries)}
         return html;
     }
 
-    private renderSemanticTokens(tokens: TokenEntry[], entries: ScopedTokenEntry[], idPrefix = "semantic"): string {
-        const tokenMap = this.createTokenMap(entries);
+    private renderSemanticTokens(
+        tokens: TokenEntry[],
+        entries: ScopedTokenEntry[],
+        idPrefix = "semantic",
+        themeName?: string,
+    ): string {
+        const tokenMap = this.createTokenMap(entries, themeName);
         const groups = this.groupSemanticTokens(tokens);
         if (groups.length === 0) {
             return "";
@@ -795,12 +800,16 @@ ${this.renderTokens(visibleScopes, visibleThemes, parsed.entries)}
             .map((match) => match[1]);
     }
 
-    private createTokenMap(entries: ScopedTokenEntry[]): Map<string, string> {
+    private createTokenMap(entries: ScopedTokenEntry[], themeName?: string): Map<string, string> {
         const map = new Map<string, string>();
-        for (const entry of entries) {
-            if (!map.has(entry.name)) {
-                map.set(entry.name, entry.value);
-            }
+        const relevantEntries = themeName === undefined
+            ? entries
+            : entries.filter((entry) => entry.themeName === undefined
+                || entry.themeName === "base"
+                || entry.themeName === themeName);
+
+        for (const entry of relevantEntries) {
+            map.set(entry.name, entry.value);
         }
         return map;
     }
