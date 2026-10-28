@@ -6,22 +6,24 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Changed
 
-- Made HRDT and DESIGN.md readers reject unknown font weight names with
-  `invalid-font-weight`.
-  They used to pass them through (#10).
-- Reported an unknown font weight name in DTCG as one `invalid-font-weight`
-  error instead of several schema errors (#10).
-- Quoted a `fontFamily` token given as one string, so the string must name a
-  single family.
-  Use an array for a fallback list (#10).
+- #10 Invalid font weights and generic font families in CSS output
+  - Made HRDT and DESIGN.md readers reject unknown font weight names with
+    `invalid-font-weight`.
+    They used to pass them through.
+  - Reported an unknown font weight name in DTCG as one `invalid-font-weight`
+    error instead of several schema errors.
+  - Quoted a `fontFamily` token given as one string, so the string must name a
+    single family.
+    Use an array for a fallback list.
 
 ### Fixed
 
-- Wrote CSS and SCSS font weight names other than `normal` and `bold` as
-  numbers, such as `400` for `regular` (#10).
-- Wrote generic font families, such as `sans-serif`, without quotes in CSS,
-  SCSS, and Tailwind CSS outputs.
-  This includes the script-specific forms such as `generic(fangsong)` (#10).
+- #10 Invalid font weights and generic font families in CSS output
+  - Wrote CSS and SCSS font weight names other than `normal` and `bold` as
+    numbers, such as `400` for `regular`.
+  - Wrote generic font families, such as `sans-serif`, without quotes in CSS,
+    SCSS, and Tailwind CSS outputs.
+    This includes the script-specific forms such as `generic(fangsong)`.
 
 ## [3.1.0] - 2026-10-26
 
