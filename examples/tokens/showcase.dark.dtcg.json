@@ -175,7 +175,7 @@
             }
           }
         },
-        "brand": {
+        "blue": {
           "400": {
             "$type": "color",
             "$value": {
@@ -229,7 +229,7 @@
             }
           }
         },
-        "success": {
+        "green": {
           "400": {
             "$type": "color",
             "$value": {
@@ -270,7 +270,7 @@
             }
           }
         },
-        "warning": {
+        "amber": {
           "400": {
             "$type": "color",
             "$value": {
@@ -311,7 +311,7 @@
             }
           }
         },
-        "danger": {
+        "rose": {
           "400": {
             "$type": "color",
             "$value": {
@@ -352,7 +352,7 @@
             }
           }
         },
-        "info": {
+        "sky": {
           "400": {
             "$type": "color",
             "$value": {
@@ -393,7 +393,7 @@
             }
           }
         },
-        "accent": {
+        "violet": {
           "400": {
             "$type": "color",
             "$value": {
@@ -438,6 +438,37 @@
   },
   "semantic": {
     "color": {
+      "brand": {
+        "400": { "$type": "color", "$value": "{primitive.color.blue.400}" },
+        "500": { "$type": "color", "$value": "{primitive.color.blue.500}" },
+        "600": { "$type": "color", "$value": "{primitive.color.blue.600}" },
+        "700": { "$type": "color", "$value": "{primitive.color.blue.700}" }
+      },
+      "accent": {
+        "400": { "$type": "color", "$value": "{primitive.color.violet.400}" },
+        "500": { "$type": "color", "$value": "{primitive.color.violet.500}" },
+        "600": { "$type": "color", "$value": "{primitive.color.violet.600}" }
+      },
+      "success": {
+        "400": { "$type": "color", "$value": "{primitive.color.green.400}" },
+        "500": { "$type": "color", "$value": "{primitive.color.green.500}" },
+        "600": { "$type": "color", "$value": "{primitive.color.green.600}" }
+      },
+      "warning": {
+        "400": { "$type": "color", "$value": "{primitive.color.amber.400}" },
+        "500": { "$type": "color", "$value": "{primitive.color.amber.500}" },
+        "600": { "$type": "color", "$value": "{primitive.color.amber.600}" }
+      },
+      "danger": {
+        "400": { "$type": "color", "$value": "{primitive.color.rose.400}" },
+        "500": { "$type": "color", "$value": "{primitive.color.rose.500}" },
+        "600": { "$type": "color", "$value": "{primitive.color.rose.600}" }
+      },
+      "info": {
+        "400": { "$type": "color", "$value": "{primitive.color.sky.400}" },
+        "500": { "$type": "color", "$value": "{primitive.color.sky.500}" },
+        "600": { "$type": "color", "$value": "{primitive.color.sky.600}" }
+      },
       "background-surface": {
         "$value": "{primitive.color.neutral.50}"
       },
