@@ -12,7 +12,9 @@
   "ui": "ui.html",
   "networkAccess": {
     "allowedDomains": [
-      "https://api.figma.com"
+      "https://api.figma.com",
+      "https://fonts.googleapis.com",
+      "https://fonts.gstatic.com"
     ]
   }
 }

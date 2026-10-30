@@ -10,13 +10,15 @@ const COMPATIBILITY_CHECK_IDS = new Set([
     "raw-value-usage",
     "bad-reference",
 ]);
-const ARCHITECTURE_ALIAS_PATTERN = /^(.+) uses architecture layer alias "([^"]+)"; prefer canonical layer "([^"]+)"\.$/;
+const LAYER_ALIAS_FAILED_NAME = "Non-canonical layer names";
+const ARCHITECTURE_ALIAS_PATTERN =/^(.+) uses architecture layer alias "([^"]+)"; prefer canonical layer "([^"]+)"\.$/;
 
 const CARD_DEFINITIONS: readonly CardDefinition[] = [
     {
         id: "root-layer",
         issueIds: ["root-layer"],
         name: "Architecture layers are defined",
+        failedName: "Tokens outside architecture layers",
         description: "Token paths start with a configured root layer.",
         compatibilitySeverity: "warning",
         issueHeading: "Use primitive, semantic, or component as the root layer.",
@@ -25,9 +27,11 @@ const CARD_DEFINITIONS: readonly CardDefinition[] = [
         id: "layer-reference",
         issueIds: ["layer-reference"],
         name: "References follow the layer order",
-        description: "semantic -> primitive, component -> semantic",
+        failedName: "Invalid layer references",
+        issueFilter: (issue) => !isComponentReferenceIssue(issue),
+        description: "Allowed references: semantic → primitive and component → semantic. References within the same layer are not allowed.",
         compatibilitySeverity: "warning",
-        issueHeading: "Use references only in this order: semantic -> primitive, component -> semantic.",
+        issueHeading: "Use a raw value or update the token structure to follow the allowed layer dependencies.",
     },
     {
         id: "raw-value-usage",
@@ -75,7 +79,9 @@ const CARD_DEFINITIONS: readonly CardDefinition[] = [
         id: "missing-description",
         issueIds: ["missing-description"],
         name: "Tokens have descriptions",
-        description: "Tokens define a non-empty description.",
+        failedName: "Missing token descriptions",
+        description: "Tokens should have a non-empty $description to improve clarity and maintainability.",
+        issueHeading: "Add a description in the variable settings in Figma, then run the analysis again.",
     },
     {
         id: "bad-tailwind-namespace",
@@ -127,6 +133,7 @@ export class TokenCheckAnalyzer {
                     && (definition.issueFilter === undefined || definition.issueFilter(issue))),
                 definition.issueHeading,
                 runFullLinting ? undefined : definition.compatibilitySeverity,
+                definition.failedName,
             )).filter((_card, index) => {
                 const definition = CARD_DEFINITIONS[index];
                 return definition === undefined || runFullLinting || definition.issueIds.some((id) => checks.some((check) => check.id === id));
@@ -170,6 +177,8 @@ interface CardDefinition {
     id: string;
     issueIds: readonly string[];
     name: string;
+    /** Problem-oriented title shown instead of {@link name} when the check fails. */
+    failedName?: string;
     description: string;
     issueHeading?: string;
     issueFilter?: (issue: CheckIssue) => boolean;
@@ -183,10 +192,11 @@ function toCard(
     issues: CheckIssue[],
     issueHeading?: string,
     preferredSeverity?: TokenCheckSeverity,
+    failedName?: string,
 ): TokenCheckCard {
     const passed = issues.length === 0;
     return {
-        name,
+        name: passed ? name : failedName ?? name,
         description,
         docsUrl: `${FIGMA_PLUGIN_GUIDE_URL}#${id}`,
         passed,
@@ -218,13 +228,20 @@ function toArchitectureDescription(list: DtcgList | undefined): string {
 
 function applyArchitectureWarnings(cards: TokenCheckCard[], warnings: string[]): string[] {
     const groups = summarizeArchitectureWarnings(warnings);
-    const rootCard = cards.find((card) => card.name === "Architecture layers are defined");
+    const rootCard = cards.find((card) => card.docsUrl.endsWith("#root-layer"));
     if (rootCard !== undefined && groups.length > 0) {
+        if (rootCard.passed) {
+            rootCard.name = LAYER_ALIAS_FAILED_NAME;
+        }
         rootCard.passed = false;
         rootCard.severity = rootCard.severity === "error" ? "error" : "warning";
-        rootCard.issueHeading = groups.length === 1
-            ? `Prefer the canonical layer name "${groups[0]!.canonicalLayer}".`
-            : "Prefer canonical layer names.";
+        const group = groups.length === 1 ? groups[0] : undefined;
+        rootCard.description = group === undefined
+            ? `Non-canonical layer names ${formatQuotedList(groups.map((item) => item.alias))} detected. Consider renaming them to ${formatQuotedList(unique(groups.map((item) => item.canonicalLayer)))} for consistency.`
+            : `Non-canonical layer name “${group.alias}” detected. Consider renaming it to “${group.canonicalLayer}” for consistency.`;
+        rootCard.issueHeading = group === undefined
+            ? "Rename layer aliases to their canonical layer names."
+            : `Rename the “${group.alias}” group to “${group.canonicalLayer}”.`;
         rootCard.issues = [...rootCard.issues, ...groups.map(formatArchitectureWarning)];
     }
 
@@ -269,6 +286,10 @@ function summarizeIssues(issues: CheckIssue[]): string[] {
     }
 
     return [`${first} and ${messages.length - 1} more issues.`];
+}
+
+function formatQuotedList(values: string[]): string {
+    return values.map((value) => `“${value}”`).join(", ");
 }
 
 function unique(values: string[]): string[] {

@@ -84,8 +84,8 @@ describe("TokenCheckAnalyzer", () => {
         const compatibilityReport = new TokenCheckAnalyzer().analyze(new DtcgList(document), []);
         const fullReport = new TokenCheckAnalyzer().analyze(new DtcgList(document), [], [], true);
 
-        expect(compatibilityReport.checks.some((check) => check.name === "Tokens have descriptions")).toBe(false);
-        expect(fullReport.checks.find((check) => check.name === "Tokens have descriptions")).toMatchObject({
+        expect(compatibilityReport.checks.some((check) => check.name.includes("description"))).toBe(false);
+        expect(fullReport.checks.find((check) => check.name === "Missing token descriptions")).toMatchObject({
             severity: "warning",
             passed: false,
         });
@@ -97,13 +97,63 @@ describe("TokenCheckAnalyzer", () => {
             "components/button/label uses architecture layer alias \"components\"; prefer canonical layer \"component\".",
         ]);
 
-        expect(report.checks.find((check) => check.name === "Architecture layers are defined")).toMatchObject({
+        expect(report.checks.find((check) => check.name === "Non-canonical layer names")).toMatchObject({
             passed: false,
             severity: "warning",
+            description: "Non-canonical layer name “components” detected. Consider renaming it to “component” for consistency.",
+            issueHeading: "Rename the “components” group to “component”.",
             notes: [],
             issues: ["\"components/button/background\" and 1 more tokens use the alias \"components\"."],
         });
         expect(report.warnings).toEqual([]);
+    });
+
+    it("names tokens without a root layer separately from layer aliases", () => {
+        const document = read({
+            color: {
+                red: { $type: "color", $value: { colorSpace: "srgb", components: [1, 0, 0], alpha: 1 } },
+            },
+        });
+
+        const report = new TokenCheckAnalyzer().analyze(new DtcgList(document), []);
+
+        expect(report.checks.find((check) => check.name === "Tokens outside architecture layers")).toMatchObject({
+            passed: false,
+            severity: "warning",
+        });
+    });
+
+    it("reports component-to-component references only on the component card", () => {
+        const document = read({
+            primitive: {
+                color: {
+                    blue: { $type: "color", $value: { colorSpace: "srgb", components: [0, 0, 1], alpha: 1 } },
+                },
+            },
+            semantic: {
+                color: {
+                    action: { $type: "color", $value: "{primitive.color.blue}" },
+                },
+            },
+            component: {
+                button: {
+                    background: { $type: "color", $value: "{semantic.color.action}" },
+                },
+                link: {
+                    background: { $type: "color", $value: "{component.button.background}" },
+                },
+            },
+        });
+
+        const report = new TokenCheckAnalyzer().analyze(new DtcgList(document), [], [], true);
+
+        expect(report.checks.find((check) => check.name === "References follow the layer order")).toMatchObject({
+            passed: true,
+        });
+        expect(report.checks.find((check) => check.name === "Component tokens stay independent")).toMatchObject({
+            passed: false,
+            severity: "error",
+        });
     });
 
     it("keeps legacy architecture severity without full linting", () => {
@@ -122,9 +172,9 @@ describe("TokenCheckAnalyzer", () => {
         const compatibilityReport = new TokenCheckAnalyzer().analyze(new DtcgList(document), []);
         const fullReport = new TokenCheckAnalyzer().analyze(new DtcgList(document), [], [], true);
 
-        expect(compatibilityReport.checks.find((check) => check.name === "References follow the layer order"))
+        expect(compatibilityReport.checks.find((check) => check.name === "Invalid layer references"))
             .toMatchObject({ severity: "warning", passed: false });
-        expect(fullReport.checks.find((check) => check.name === "References follow the layer order"))
+        expect(fullReport.checks.find((check) => check.name === "Invalid layer references"))
             .toMatchObject({ severity: "error", passed: false });
     });
 });
