@@ -481,6 +481,42 @@ describe("TokenHtmlShowcaseRenderer", () => {
                 /data-token-name="--semantic-color-border-focus"[\s\S]*?resolved:<\/span> <code>#f43f5e<\/code>/,
             );
         });
+
+        it("resolves theme references when the theme entries precede base entries", () => {
+            const html = renderer.renderPage({
+                entries: [
+                    entry("--semantic-color-action-primary", "var(--primitive-color-red)", "semantic", "red"),
+                    entry("--semantic-color-border-focus", "var(--semantic-color-action-primary)", "semantic", "red"),
+                    entry("--primitive-color-blue", "#2c4df3", "primitive", "base"),
+                    entry("--primitive-color-red", "#f43f5e", "primitive", "base"),
+                    entry("--semantic-color-action-primary", "var(--primitive-color-blue)", "semantic", "base"),
+                    entry("--semantic-color-border-focus", "var(--semantic-color-action-primary)", "semantic", "base"),
+                ],
+                themes: [
+                    {
+                        name: "red",
+                        entries: [
+                            entry("--semantic-color-action-primary", "var(--primitive-color-red)", "semantic", "red"),
+                            entry("--semantic-color-border-focus", "var(--semantic-color-action-primary)", "semantic", "red"),
+                        ],
+                    },
+                    {
+                        name: "base",
+                        entries: [
+                            entry("--primitive-color-blue", "#2c4df3", "primitive", "base"),
+                            entry("--primitive-color-red", "#f43f5e", "primitive", "base"),
+                            entry("--semantic-color-action-primary", "var(--primitive-color-blue)", "semantic", "base"),
+                            entry("--semantic-color-border-focus", "var(--semantic-color-action-primary)", "semantic", "base"),
+                        ],
+                    },
+                ],
+            });
+
+            const redSection = html.slice(html.indexOf("Theme: red"), html.indexOf("Theme: base"));
+            expect(redSection).toMatch(
+                /data-token-name="--semantic-color-border-focus"[\s\S]*?resolved:<\/span> <code>#f43f5e<\/code>/,
+            );
+        });
     });
 
     describe("renderPage - motion tokens", () => {

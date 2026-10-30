@@ -804,9 +804,10 @@ ${this.renderTokens(visibleScopes, visibleThemes, parsed.entries)}
         const map = new Map<string, string>();
         const relevantEntries = themeName === undefined
             ? entries
-            : entries.filter((entry) => entry.themeName === undefined
-                || entry.themeName === "base"
-                || entry.themeName === themeName);
+            : [
+                ...entries.filter((entry) => entry.themeName === undefined || entry.themeName === "base"),
+                ...entries.filter((entry) => entry.themeName === themeName),
+            ];
 
         for (const entry of relevantEntries) {
             map.set(entry.name, entry.value);

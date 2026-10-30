@@ -2,32 +2,6 @@
   "$schema": "https://www.designtokens.org/schemas/2025.10/format.json",
   "primitive": {
     "color": {
-        "white": {
-          "$type": "color",
-          "$value": {
-            "colorSpace": "srgb",
-            "components": [
-              1,
-              1,
-              1
-            ],
-            "alpha": 1,
-            "hex": "#ffffff"
-          }
-        },
-        "black": {
-          "$type": "color",
-          "$value": {
-            "colorSpace": "srgb",
-            "components": [
-              0,
-              0,
-              0
-            ],
-            "alpha": 1,
-            "hex": "#000000"
-          }
-        },
         "overlay": {
           "60": {
             "$type": "color",
@@ -469,8 +443,14 @@
         "500": { "$type": "color", "$value": "{primitive.color.dark-sky.500}" },
         "600": { "$type": "color", "$value": "{primitive.color.dark-sky.600}" }
       },
+      "background-canvas": {
+        "$value": "{primitive.color.dark-neutral.50}"
+      },
       "background-surface": {
         "$value": "{primitive.color.dark-neutral.50}"
+      },
+      "background-muted": {
+        "$value": "{primitive.color.dark-neutral.100}"
       },
       "background-overlay": {
         "$value": "{primitive.color.overlay.60}"
@@ -489,6 +469,21 @@
       },
       "text-inverse": {
         "$value": "{primitive.color.dark-neutral.50}"
+      },
+      "border-normal": {
+        "$value": "{primitive.color.dark-neutral.300}"
+      },
+      "border-strong": {
+        "$value": "{primitive.color.dark-neutral.500}"
+      },
+      "border-focus": {
+        "$value": "{semantic.color.brand.500}"
+      },
+      "action-secondary": {
+        "$value": "{primitive.color.dark-neutral.200}"
+      },
+      "action-secondary-hover": {
+        "$value": "{primitive.color.dark-neutral.300}"
       }
     }
   }
