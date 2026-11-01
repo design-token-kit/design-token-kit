@@ -1,0 +1,15 @@
+<!--
+  Score shield, kept for later use. It showed the token architecture score on
+  the Token tab: the share of passed checks, out of 100.
+
+  The outline and the number take the tone of the score:
+    100       success: fill #F1FAF5, stroke #1F9D55, text #17703E
+    50 to 99  warning: fill #FFFBF2, stroke #F2A516, text #8A5200
+    below 50  error:   fill #FFF6F5, stroke #C8372D, text #9B1F17
+  In the plugin UI these are the --color-<tone>-bg, -icon and -text tokens.
+  The number uses font-size 13 for 100 and 15 otherwise, weight 800.
+-->
+<svg xmlns="http://www.w3.org/2000/svg" width="44" height="48" viewBox="0 0 44 48" role="img" aria-label="Score 60 of 100">
+  <path d="M22 2.5 39.5 9.2v14.6c0 10.6-7 17.6-17.5 21.7C11.5 41.4 4.5 34.4 4.5 23.8V9.2L22 2.5Z" fill="#FFFBF2" stroke="#F2A516" stroke-width="2.5" stroke-linejoin="round" />
+  <text x="22" y="24.5" text-anchor="middle" dominant-baseline="central" font-family="Manrope, 'Segoe UI', system-ui, sans-serif" font-size="15" font-weight="800" fill="#8A5200">60</text>
+</svg>
