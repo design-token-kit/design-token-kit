@@ -1,5 +1,9 @@
 import type { AuditCategory, AuditFinding, UncheckedSubject } from "@design-token-kit/core/core/audit/AuditFinding";
-import { auditTextContrastSamples, type ContrastScore } from "@design-token-kit/core/core/audit/accessibility/ContrastAudit";
+import {
+    auditTextContrastSamples,
+    computeContrastScore,
+    type ContrastScore,
+} from "@design-token-kit/core/core/audit/accessibility/ContrastAudit";
 import {
     toAccessibilitySettings,
     type AccessibilityOptions,
@@ -17,15 +21,15 @@ import type { AuditedNode, SampledTextNode } from "#/figma-plugin/design-audit/F
 import type { SampledProperty } from "#/figma-plugin/design-audit/FigmaUsageSampler";
 
 const DOCS_URL = "https://design-token-kit.github.io/docs/guides/figma-plugin/";
+const NON_TEXT_CONTRAST_DOCS_URL = "https://www.w3.org/WAI/WCAG22/Understanding/non-text-contrast.html";
 
 /**
  * Audits sampled Figma nodes and groups the findings for the Design tab.
  *
- * Text nodes are audited for automated WCAG text contrast, and the properties
- * of every layer for token usage. Nodes whose contrast cannot be measured form
- * a separate manual-review group and do not affect the score. Symbolic text
- * with an uncertain role is included in that group rather than guessed to be
- * either readable text or an icon.
+ * Text nodes are audited for automated WCAG text contrast, symbolic graphics
+ * are reported for non-text contrast review, and the properties of every layer
+ * are audited for token usage. Nodes whose contrast cannot be measured form a
+ * separate manual-review group and do not affect the score.
  */
 export class DesignAuditor {
     readonly #options: AccessibilityOptions;
@@ -46,12 +50,19 @@ export class DesignAuditor {
     ): DesignAuditReport {
         const settings = toAccessibilitySettings(this.#options);
         const byId = new Map(nodes.map((entry) => [entry.node.id, entry.node]));
-        const { findings, unchecked, score } = auditTextContrastSamples(nodes.map((entry) => entry.sample), settings);
+        const nonTextCandidates = nodes.filter(isNonTextCandidate);
+        const textNodes = nodes.filter((entry) => !isNonTextCandidate(entry));
+        const { findings, unchecked, score: textScore } = auditTextContrastSamples(
+            textNodes.map((entry) => entry.sample),
+            settings,
+        );
+        const score = addManualReviews(textScore, nonTextCandidates.length);
         const usage = auditUsageSamples(properties.map((entry) => entry.sample), candidates);
         const sampled = new Map(properties.map((entry) => [entry.sample.id, entry]));
 
         const groups = [
             ...GROUP_DEFINITIONS.map((definition) => toGroup(definition, findings, byId, settings)),
+            toNonTextManualGroup(nonTextCandidates, byId),
             ...USAGE_GROUP_DEFINITIONS.map((definition) => toUsageGroup(definition, usage.findings, sampled)),
             toUncheckedGroup(unchecked, byId),
         ].filter((group): group is FindingGroup => group !== undefined);
@@ -67,7 +78,11 @@ export class DesignAuditor {
                 accessibility: nodes.length > 0 ? score : undefined,
                 tokenUsage: usage.score,
             },
-            counts: { errors, warnings: warnings + usage.findings.length, notChecked: unchecked.length },
+            counts: {
+                errors,
+                warnings: warnings + usage.findings.length,
+                notChecked: unchecked.length + nonTextCandidates.length,
+            },
             contrastErrors: findings.filter((finding) => finding.id === "text-contrast" && finding.severity === "error").length,
             groups,
         };
@@ -92,8 +107,9 @@ export interface DesignAuditReport {
 
     /**
      * Scores of each category, kept apart: accessibility is scored from
-     * automated text contrast checks, token usage from the share of properties
-     * without a finding.
+     * automated text contrast checks, while symbolic non-text candidates only
+     * contribute manual-review counts. Token usage is scored from the share of
+     * properties without a finding.
      */
     readonly scores: {
         readonly accessibility?: AccessibilityScore;
@@ -214,6 +230,41 @@ function toUncheckedGroup(unchecked: UncheckedSubject[], nodes: Map<string, Audi
             return toFindingNode(subject.subjectId, node?.manualReviewReason ?? node?.problem ?? "translucent", nodes);
         }),
     };
+}
+
+function toNonTextManualGroup(
+    candidates: readonly SampledTextNode[],
+    nodes: Map<string, AuditedNode>,
+): FindingGroup | undefined {
+    if (candidates.length === 0) return undefined;
+    return {
+        id: "non-text-contrast-unchecked",
+        severity: "not-checked",
+        category: "accessibility",
+        title: "Non-text contrast needs manual review",
+        description: "Some graphical elements need manual review to determine their purpose or contrast.",
+        docsUrl: NON_TEXT_CONTRAST_DOCS_URL,
+        nodes: candidates.map((candidate) => toFindingNode(
+            candidate.node.id,
+            candidate.sample.manualReviewReason
+                ?? candidate.node.manualReviewReason
+                ?? "the graphical element's purpose or contrast is uncertain",
+            nodes,
+        )),
+    };
+}
+
+function isNonTextCandidate(entry: SampledTextNode): boolean {
+    return entry.sample.manualReviewReason !== undefined;
+}
+
+function addManualReviews(score: ContrastScore, additionalReviews: number): ContrastScore {
+    return computeContrastScore(
+        score.passed,
+        score.failed,
+        score.manualReview + additionalReviews,
+        score.skipped,
+    );
 }
 
 function toFindingNode(id: string, meta: string, nodes: Map<string, AuditedNode>): FindingNode {

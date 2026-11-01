@@ -43,9 +43,18 @@ const UNCHECKED_GROUP = {
     severity: "not-checked",
     category: "accessibility",
     title: "Contrast needs manual review",
-    description: "Some text uses images, gradients, mixed fills, or transparency, so contrast could not be measured automatically.",
+    description: "Some text uses images, gradients, mixed fills, transparency, or symbols with an uncertain role, so contrast needs manual review.",
     docsUrl: "https://design-token-kit.github.io/docs/guides/figma-plugin/#design-audit-manual-review",
     nodes: nodes("Hero", 3, () => "gradient"),
+};
+const NON_TEXT_GROUP = {
+    id: "non-text-contrast-unchecked",
+    severity: "not-checked",
+    category: "accessibility",
+    title: "Non-text contrast needs manual review",
+    description: "Some graphical elements need manual review to determine their purpose or contrast.",
+    docsUrl: "https://www.w3.org/WAI/WCAG22/Understanding/non-text-contrast.html",
+    nodes: nodes("Arrow", 1, () => "the graphical symbol role is uncertain"),
 };
 
 const USAGE_GROUP = {
@@ -145,7 +154,8 @@ describe("Design tab", () => {
         expect(textOf(ui.get("#accessibility-grade"))).toBe("B");
         expect(ui.get("#accessibility-grade").className).toBe("grade");
         expect(textOf(ui.get("#accessibility-verdict"))).toBe("Automated text contrast checks only");
-        expect(textOf(ui.get("#accessibility-result-text"))).toBe("2 issues · 10 layers");
+        expect(ui.get("#accessibility-verdict").className).toBe("score-summary__verdict score-summary__verdict--neutral");
+        expect(textOf(ui.get("#accessibility-result-text"))).toBe("3 failed · 3 manual review");
         expect(textOf(ui.get("#accessibility-passed"))).toBe("17");
         expect(textOf(ui.get("#accessibility-failed"))).toBe("3");
         expect(textOf(ui.get("#accessibility-manual-review"))).toBe("3");
@@ -190,10 +200,11 @@ describe("Design tab", () => {
     });
 
     it("confirms when no text fails the contrast minimum", () => {
-        openWithReport({ errors: 0, contrastErrors: 0, passed: 20, failed: 0, groups: [] });
+        openWithReport({ errors: 0, contrastErrors: 0, passed: 20, failed: 0, manualReview: 0, notChecked: 0, groups: [] });
 
         expect(textOf(ui.get("#accessibility-verdict"))).toBe("Automated text contrast checks only");
-        expect(ui.get("#accessibility-verdict").className).toBe("score-summary__verdict");
+        expect(ui.get("#accessibility-verdict").className).toBe("score-summary__verdict score-summary__verdict--neutral");
+        expect(textOf(ui.get("#accessibility-result-text"))).toBe("0 failed · 0 manual review");
     });
 
     it("does not show a score when every text layer needs a manual contrast check", () => {
@@ -211,7 +222,8 @@ describe("Design tab", () => {
 
         expect(textOf(ui.get("#accessibility-score"))).toBe("N/A");
         expect(textOf(ui.get("#accessibility-verdict"))).toBe("No automated contrast checks could be evaluated");
-        expect(ui.get("#accessibility-verdict").className).toContain("score-summary__verdict--warning");
+        expect(ui.get("#accessibility-verdict").className).toBe("score-summary__verdict score-summary__verdict--neutral");
+        expect(textOf(ui.get("#accessibility-result-text"))).toBe("0 failed · 0 manual review");
     });
 
     it("lists the issues, with what could not be checked in a section of its own", () => {
@@ -224,6 +236,19 @@ describe("Design tab", () => {
             "Contrast needs manual review",
         ]);
         expect(textOf(ui.get("#accessibility-groups .group__count"))).toBe("7 layers");
+    });
+
+    it("renders and selects non-text contrast manual-review findings", () => {
+        openWithReport({ groups: [NON_TEXT_GROUP] });
+
+        const group = ui.get("#accessibility-groups .group");
+        expect(textOf(group.querySelector(".group__title")!)).toBe("Non-text contrast needs manual review");
+        group.querySelector<HTMLButtonElement>(".group__head")!.click();
+        expect(textOf(group.querySelector(".group__description")!)).toBe(NON_TEXT_GROUP.description);
+        expect(group.querySelector<HTMLAnchorElement>(".docs")?.href).toContain("non-text-contrast.html");
+
+        group.querySelector<HTMLButtonElement>(".node-row .pick")!.click();
+        expect(ui.sent.at(-1)).toEqual({ type: "SELECT_NODES", ids: ["Arrow:0"] });
     });
 
     it("shows findings only in their category block", () => {
@@ -259,6 +284,21 @@ describe("Design tab", () => {
 
         head.click();
         expect(body.hidden).toBe(true);
+    });
+
+    it("keeps long finding details separated from the expandable header", () => {
+        const description = "This longer description wraps naturally and keeps the documentation link below it without touching the card border.";
+        openWithReport({ groups: [{ ...CONTRAST_GROUP, description }] });
+
+        const group = ui.get("#accessibility-groups .group");
+        const head = group.querySelector<HTMLButtonElement>(".group__head")!;
+        head.click();
+        const body = group.querySelector<HTMLElement>(".group__body")!;
+
+        expect(textOf(body.querySelector(".group__description")!)).toBe(description);
+        expect(body.querySelector(".docs")).not.toBeNull();
+        expect(ui.window.getComputedStyle(body).paddingTop).toBe("8px");
+        expect(body.style.height).toBe("");
     });
 
     it("shows each layer with its path and measurement", () => {

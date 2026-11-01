@@ -1135,6 +1135,14 @@
             background: var(--color-warning-icon);
         }
 
+        .score-summary__verdict--neutral {
+            color: var(--color-text-muted);
+        }
+
+        .score-summary__verdict--neutral::before {
+            display: none;
+        }
+
         .score-summary__coverage {
             font-size: var(--font-size-sm);
             color: var(--color-text-muted);
@@ -1456,7 +1464,7 @@
             display: flex;
             flex-direction: column;
             gap: 8px;
-            padding: 0 14px 10px 44px;
+            padding: 8px 14px 12px 44px;
         }
 
         .group__description {
@@ -2472,7 +2480,7 @@
     function renderAccessibilityAudit(report) {
         const { accessibility } = report.scores;
         accessibilityLevel.textContent = report.level;
-        renderAccessibilityStatistics(report.groups);
+        renderAccessibilityStatistics(accessibility);
         if (accessibility === undefined || accessibility.score === undefined) {
             renderAccessibilitySummary(accessibility ?? { passed: 0, failed: 0, manualReview: 0 });
             renderUnavailableAccessibilityScore();
@@ -2481,7 +2489,7 @@
         }
         renderAccessibilitySummary(accessibility);
         renderGrade(accessibilityScore, accessibilityGrade, accessibility);
-        accessibilityVerdict.className = "score-summary__verdict";
+        accessibilityVerdict.className = "score-summary__verdict score-summary__verdict--neutral";
         accessibilityVerdict.textContent = "Automated text contrast checks only";
         renderAccessibilityFormula(accessibility, report.level);
         renderAccessibilityFindings();
@@ -2491,7 +2499,7 @@
         accessibilityScore.textContent = "N/A";
         accessibilityGrade.textContent = "";
         accessibilityGrade.className = "grade";
-        accessibilityVerdict.className = "score-summary__verdict score-summary__verdict--warning";
+        accessibilityVerdict.className = "score-summary__verdict score-summary__verdict--neutral";
         accessibilityVerdict.textContent = "No automated contrast checks could be evaluated";
         accessibilityFormula.replaceChildren(
             "No score: there are no evaluated contrast checks.",
@@ -2504,10 +2512,11 @@
         accessibilityManualReview.textContent = String(accessibility.manualReview);
     }
 
-    function renderAccessibilityStatistics(groups) {
-        const accessibilityGroups = groups.filter((group) => group.category === "accessibility");
-        const layerCount = new Set(accessibilityGroups.flatMap((group) => group.nodes.map((node) => node.id))).size;
-        accessibilityResultText.textContent = `${formatCount(accessibilityGroups.length, "issue")} · ${formatCount(layerCount, "layer")}`;
+    function renderAccessibilityStatistics(accessibility) {
+        const failed = accessibility?.failed ?? 0;
+        const manualReview = accessibility?.manualReview ?? 0;
+        accessibilityResultText.textContent = `${formatCount(failed, "failed", "failed")} · `
+            + `${formatCount(manualReview, "manual review", "manual review")}`;
     }
 
     function renderAccessibilityFormula(accessibility, level) {

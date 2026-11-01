@@ -210,9 +210,11 @@ describe("FigmaTextSampler", () => {
             text("Arrow", LABEL, { characters: "→", fills: [solid("#ff3737")] }),
             text("Arrow label", LABEL, { characters: "→ Next" }),
             text("Decorative star", LABEL, { characters: "★" }),
+            text("Ascii arrow", LABEL, { characters: ">" }),
         ])]));
 
         expect(entries.map((entry) => entry.sample.manualReviewReason)).toEqual([
+            expect.stringContaining("graphical symbol"),
             expect.stringContaining("graphical symbol"),
             expect.stringContaining("graphical symbol"),
             expect.stringContaining("graphical symbol"),

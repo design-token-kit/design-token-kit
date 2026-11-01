@@ -117,8 +117,9 @@ type LayerOutcome = "opaque" | "continue" | ColorProblem;
 const PRIVATE_USE_GLYPH = /[-\u{F0000}-\u{FFFFD}\u{100000}-\u{10FFFD}]/u;
 
 // Arrows and other graphical symbols can be readable characters or icons.
-const GRAPHICAL_SYMBOL = /[\p{So}\p{Sk}]/u;
-const ARROW_SYMBOL = /[\u{2190}-\u{21FF}\u{27F0}-\u{27FF}\u{2900}-\u{297F}\u{2B00}-\u{2BFF}]/u;
+const GRAPHICAL_SYMBOL = /[\p{S}]/u;
+const READABLE_SYMBOLS = new Set(["+", "=", "$", "%", "€", "£", "¥", "₹"]);
+const WORD_CHARACTER = /[\p{L}\p{N}]/u;
 
 /**
  * Whether a text layer holds text rather than text used as a shape.
@@ -140,7 +141,10 @@ function readManualReviewReason(node: TextNode): string | undefined {
         return "the layer contains a private-use glyph, and Figma does not expose "
             + "whether it is an icon or readable text";
     }
-    if (characters.some((character) => GRAPHICAL_SYMBOL.test(character) || ARROW_SYMBOL.test(character))) {
+    const hasWordCharacter = characters.some((character) => WORD_CHARACTER.test(character));
+    const hasGraphicalSymbol = characters.some((character) => GRAPHICAL_SYMBOL.test(character)
+        && !(hasWordCharacter && READABLE_SYMBOLS.has(character)));
+    if (hasGraphicalSymbol) {
         return "the layer contains a graphical symbol whose icon or text purpose "
             + "cannot be determined from Figma data";
     }

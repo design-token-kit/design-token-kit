@@ -4,7 +4,7 @@ import { FigmaTextSampler } from "#/figma-plugin/design-audit/FigmaTextSampler";
 import type { SrgbColor } from "@design-token-kit/core/core/audit/color/SrgbColor";
 import type { TokenCandidate, UsageSample } from "@design-token-kit/core/core/audit/usage/UsageSample";
 import type { SampledProperty } from "#/figma-plugin/design-audit/FigmaUsageSampler";
-import { frame, gradient, page, solid, text, textNodes } from "./figmaNodes";
+import { booleanOperation, frame, gradient, page, solid, text, textNodes } from "./figmaNodes";
 
 const CARD = { x: 0, y: 0, width: 200, height: 100 };
 const LABEL = { x: 20, y: 20, width: 80, height: 20 };
@@ -130,9 +130,54 @@ describe("DesignAuditor", () => {
         });
         expect(report.groups.map((group) => [group.id, group.nodes.map((node) => node.name)])).toEqual([
             ["text-contrast-aa", ["Label"]],
-            ["text-contrast-unchecked", ["Arrow"]],
+            ["non-text-contrast-unchecked", ["Arrow"]],
         ]);
         expect(report.groups[1].nodes[0].meta).toContain("graphical symbol");
+        expect(report.groups[1]).toMatchObject({
+            title: "Non-text contrast needs manual review",
+            description: "Some graphical elements need manual review to determine their purpose or contrast.",
+            docsUrl: "https://www.w3.org/WAI/WCAG22/Understanding/non-text-contrast.html",
+        });
+    });
+
+    it("does not duplicate ambiguous symbols or treat decorative graphics as failures", () => {
+        const nodes = new FigmaTextSampler().sample(textNodes(page("Page", [
+            frame("Card", CARD, [solid("#ffffff")], [
+                text("Arrow", LABEL, { characters: "→" }),
+                text("Star", LABEL, { characters: "★" }),
+            ]),
+        ])));
+
+        const report = new DesignAuditor().audit(nodes);
+
+        expect(report.groups).toHaveLength(1);
+        expect(report.groups[0].id).toBe("non-text-contrast-unchecked");
+        expect(report.groups[0].nodes.map((node) => node.name)).toEqual(["Arrow", "Star"]);
+        expect(report.counts).toEqual({ errors: 0, warnings: 0, notChecked: 2 });
+        expect(report.scores.accessibility).toMatchObject({
+            evaluated: 0,
+            passed: 0,
+            failed: 0,
+            manualReview: 2,
+        });
+        expect(report.scores.accessibility?.score).toBeUndefined();
+    });
+
+    it("keeps symbolic elements with uncertain backgrounds in manual review", () => {
+        const root = page("Page", [frame("Card", CARD, [solid("#ffffff")], [
+            booleanOperation("Unknown background", CARD, [solid("#000000")]),
+            text("Arrow", LABEL, { characters: "→" }),
+        ])]);
+        const nodes = new FigmaTextSampler().sample(textNodes(root));
+
+        const report = new DesignAuditor().audit(nodes);
+
+        expect(nodes[0].sample.background).toBeUndefined();
+        expect(report.groups).toEqual([expect.objectContaining({
+            id: "non-text-contrast-unchecked",
+            nodes: [{ id: "text:Arrow", name: "Arrow", path: "Card", meta: expect.stringContaining("graphical symbol") }],
+        })]);
+        expect(report.scores.accessibility).toMatchObject({ evaluated: 0, manualReview: 1 });
     });
 
     it("reports a clean page with a perfect score", () => {
