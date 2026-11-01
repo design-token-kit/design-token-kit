@@ -176,7 +176,7 @@ describe("plugin entrypoint", () => {
                 coverage: expect.objectContaining({ total: 3, bound: 0, percent: 0 }),
                 counts: { errors: 1, warnings: 3, notChecked: 0 },
                 scores: {
-                    accessibility: { score: 98, grade: "A", errors: 1, warnings: 0 },
+                    accessibility: { score: 0, grade: "F", evaluated: 1, passed: 0, failed: 1, manualReview: 0, skipped: 0 },
                     tokenUsage: { score: 0, grade: "F", clean: 0, total: 3 },
                 },
             }),

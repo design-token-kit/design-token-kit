@@ -104,6 +104,8 @@ export { auditGrade, computeAuditScore } from "#/core/audit/AuditScore";
 export type { AuditScore, AuditGrade, AuditScoreWeights } from "#/core/audit/AuditScore";
 export { auditTextSamples, accessibilityRules, listAuditRules } from "#/core/audit/accessibility/AccessibilityAudit";
 export type { TextAuditOptions } from "#/core/audit/accessibility/AccessibilityAudit";
+export { auditTextContrastSamples, computeContrastScore } from "#/core/audit/accessibility/ContrastAudit";
+export type { ContrastAuditResult, ContrastScore } from "#/core/audit/accessibility/ContrastAudit";
 export type { AccessibilityOptions } from "#/core/audit/accessibility/AccessibilitySettings";
 export type { TextSample } from "#/core/audit/accessibility/TextSample";
 export type { TextAuditRule, TextAuditResult } from "#/core/audit/accessibility/TextAuditRule";

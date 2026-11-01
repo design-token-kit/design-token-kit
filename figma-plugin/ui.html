@@ -1195,6 +1195,29 @@
             padding: 10px 14px;
         }
 
+        .accessibility-score__summary {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            gap: 4px;
+            padding: 10px 14px;
+            border-left: 1px solid var(--color-border-divider);
+            color: var(--color-text-muted);
+            font-size: var(--font-size-sm);
+        }
+
+        .accessibility-score__summary strong {
+            color: var(--color-text-primary);
+        }
+
+        .accessibility-score__disclaimer {
+            grid-column: 1 / -1;
+            margin: 0 14px 10px;
+            color: var(--color-text-muted);
+            font-size: var(--font-size-xs);
+            line-height: 1.4;
+        }
+
         .token-usage-score {
             grid-template-columns: auto minmax(0, 1fr);
         }
@@ -1378,6 +1401,10 @@
         .group.is-open {
             border-color: #CFC4B1;
             box-shadow: var(--shadow-card-hover);
+        }
+
+        .group--manual-review {
+            background: var(--color-bg-subtle);
         }
 
         .group__head {
@@ -1833,7 +1860,7 @@
                             <h2>Design audit</h2>
                         </div>
                         <p id="audit-meta" class="subtle token-stats" hidden></p>
-                        <p class="lead">Text contrast against WCAG, font sizes and line heights of the text layers, and whether layers use variables and styles. <span>Read-only: your Figma file is never changed.</span></p>
+            <p class="lead">Automated text contrast checks and token usage findings for the selected layers. <span>Read-only: your Figma file is never changed.</span></p>
                     </div>
                     <div class="arch-head__actions">
                         <button id="run-audit" class="btn btn--primary" type="button">
@@ -1859,21 +1886,27 @@
                 <section id="accessibility-audit" class="card audit-category" aria-labelledby="accessibility-title">
                     <header class="audit-category__head">
                         <div class="audit-category__title">
-                            <h2 id="accessibility-title">Accessibility</h2>
-                            <p>Text contrast against WCAG, font sizes and line heights.</p>
+                            <h2 id="accessibility-title">Accessibility checks</h2>
+                            <p>WCAG 2.2 <span id="accessibility-level">AA</span> - Automated audit</p>
                         </div>
                         <span id="accessibility-result-text" class="audit-category__result"></span>
                     </header>
                     <section class="audit-score accessibility-score" aria-label="Accessibility score">
                         <div class="score-summary__value accessibility-score__value">
                             <span id="accessibility-score" class="score-summary__number"></span>
-                            <span id="accessibility-score-max" class="score-summary__max">/100</span>
                             <span id="accessibility-grade" class="grade"></span>
+                            <span class="score-summary__label">checks passed</span>
                         </div>
                         <div class="accessibility-score__verdict">
                             <span id="accessibility-verdict" class="score-summary__verdict"></span>
                             <button id="accessibility-formula-toggle" class="text-btn" type="button" aria-expanded="false" aria-controls="accessibility-formula">How is the score calculated?</button>
                         </div>
+                        <div id="accessibility-summary" class="accessibility-score__summary" aria-label="Accessibility check summary">
+                            <span><strong id="accessibility-passed">0</strong> Passed</span>
+                            <span><strong id="accessibility-failed">0</strong> Failed</span>
+                            <span><strong id="accessibility-manual-review">0</strong> Manual review</span>
+                        </div>
+                        <p id="accessibility-disclaimer" class="accessibility-score__disclaimer">Score reflects automated checks only. It does not indicate WCAG conformance.</p>
                         <div id="accessibility-formula" class="score-formula" hidden></div>
                     </section>
                     <div id="accessibility-groups" class="audit-groups" aria-live="polite"></div>
@@ -1903,7 +1936,7 @@
                 </section>
             </div>
 
-            <p id="audit-status" class="card audit-status">Run the audit to check text contrast, font sizes, line heights and the use of variables on this page.</p>
+            <p id="audit-status" class="card audit-status">Run the audit to check text contrast and the use of variables on this page.</p>
         </section>
     </div>
 </div>
@@ -1958,9 +1991,12 @@
     const accessibilityAudit = document.getElementById("accessibility-audit");
     const tokenUsageAudit = document.getElementById("token-usage-audit");
     const accessibilityScore = document.getElementById("accessibility-score");
-    const accessibilityScoreMax = document.getElementById("accessibility-score-max");
     const accessibilityGrade = document.getElementById("accessibility-grade");
     const accessibilityVerdict = document.getElementById("accessibility-verdict");
+    const accessibilityLevel = document.getElementById("accessibility-level");
+    const accessibilityPassed = document.getElementById("accessibility-passed");
+    const accessibilityFailed = document.getElementById("accessibility-failed");
+    const accessibilityManualReview = document.getElementById("accessibility-manual-review");
     const auditCoverage = document.getElementById("audit-coverage");
     const usageScore = document.getElementById("usage-score");
     const usageGrade = document.getElementById("usage-grade");
@@ -2419,48 +2455,53 @@
         const hasText = report.nodeCount > 0;
         const hasTokenUsage = layerCount > 0 && report.scores.tokenUsage !== undefined;
         const isEmpty = !hasText && !hasTokenUsage;
-        auditResults.hidden = isEmpty;
+        auditResults.hidden = false;
         auditStatus.hidden = !isEmpty;
         if (isEmpty) {
             showAuditStatus(`There are no visible layers in ${where} to audit.`);
-            return;
         }
 
-        accessibilityAudit.hidden = !hasText;
+        accessibilityAudit.hidden = !hasText && !isEmpty;
         tokenUsageAudit.hidden = !hasTokenUsage;
         renderAccessibilityAudit(report);
-        renderTokenUsageAudit(report);
+        if (hasTokenUsage) {
+            renderTokenUsageAudit(report);
+        }
     }
 
     function renderAccessibilityAudit(report) {
         const { accessibility } = report.scores;
+        accessibilityLevel.textContent = report.level;
         renderAccessibilityStatistics(report.groups);
-        if (accessibility === undefined) {
+        if (accessibility === undefined || accessibility.score === undefined) {
+            renderAccessibilitySummary(accessibility ?? { passed: 0, failed: 0, manualReview: 0 });
             renderUnavailableAccessibilityScore();
             renderAccessibilityFindings();
             return;
         }
+        renderAccessibilitySummary(accessibility);
         renderGrade(accessibilityScore, accessibilityGrade, accessibility);
-        accessibilityVerdict.className = report.contrastErrors > 0
-            ? "score-summary__verdict"
-            : "score-summary__verdict score-summary__verdict--success";
-        accessibilityVerdict.textContent = report.contrastErrors > 0
-            ? `Fails WCAG ${report.level} until ${formatCount(report.contrastErrors, "error")} ${report.contrastErrors === 1 ? "is" : "are"} fixed`
-            : `Text contrast meets WCAG ${report.level}`;
+        accessibilityVerdict.className = "score-summary__verdict";
+        accessibilityVerdict.textContent = "Automated text contrast checks only";
         renderAccessibilityFormula(accessibility, report.level);
         renderAccessibilityFindings();
     }
 
     function renderUnavailableAccessibilityScore() {
         accessibilityScore.textContent = "N/A";
-        accessibilityScoreMax.hidden = true;
         accessibilityGrade.textContent = "";
         accessibilityGrade.className = "grade";
         accessibilityVerdict.className = "score-summary__verdict score-summary__verdict--warning";
-        accessibilityVerdict.textContent = "Text contrast could not be evaluated automatically";
+        accessibilityVerdict.textContent = "No automated contrast checks could be evaluated";
         accessibilityFormula.replaceChildren(
-            "No score: every text layer needs a manual contrast check.",
+            "No score: there are no evaluated contrast checks.",
         );
+    }
+
+    function renderAccessibilitySummary(accessibility) {
+        accessibilityPassed.textContent = String(accessibility.passed);
+        accessibilityFailed.textContent = String(accessibility.failed);
+        accessibilityManualReview.textContent = String(accessibility.manualReview);
     }
 
     function renderAccessibilityStatistics(groups) {
@@ -2471,11 +2512,10 @@
 
     function renderAccessibilityFormula(accessibility, level) {
         accessibilityFormula.replaceChildren(
-            ...formulaTitle("Accessibility = 100 − 2 × errors − 0.1 × warnings"),
-            `${formatCount(accessibility.errors, "error")} and ${formatCount(accessibility.warnings, "warning")} on text: `
-                + `100 − ${formatNumber(2 * accessibility.errors)} − ${formatNumber(0.1 * accessibility.warnings)} ≈ ${accessibility.score}. `
-                + "Text that could not be checked does not count. "
-                + `Only text contrast is a WCAG ${level} criterion; small text and tight lines are readability guidelines.`,
+            ...formulaTitle("Score = Passed ÷ (Passed + Failed) × 100"),
+            `${accessibility.passed} ÷ (${accessibility.passed} + ${accessibility.failed}) × 100 = ${accessibility.score}%. `
+                + `${accessibility.manualReview} manual review ${accessibility.manualReview === 1 ? "result" : "results"} excluded. `
+                + `Only automated WCAG 2.2 ${level} text contrast checks are included.`,
         );
     }
 
@@ -2498,10 +2538,7 @@
     }
 
     function renderGrade(scoreElement, gradeElement, { score, grade }) {
-        scoreElement.textContent = String(score);
-        if (scoreElement === accessibilityScore) {
-            accessibilityScoreMax.hidden = false;
-        }
+        scoreElement.textContent = scoreElement === accessibilityScore ? `${score}%` : String(score);
         gradeElement.textContent = grade;
         gradeElement.className = grade === "A" || grade === "B" ? "grade" : grade === "C" ? "grade grade--fair" : "grade grade--poor";
     }
@@ -2522,12 +2559,12 @@
         const unchecked = groups.filter((group) => group.severity === "not-checked");
         const children = checked.map(createFindingGroup);
         if (unchecked.length > 0) {
-            children.push(createSectionTitle("Not checked", "Needs a manual check · does not affect the score"), ...unchecked.map(createFindingGroup));
+            children.push(createSectionTitle("Manual review", "Does not affect the score"), ...unchecked.map(createFindingGroup));
         }
         if (children.length === 0) {
             const empty = document.createElement("p");
             empty.className = "audit-status";
-            empty.textContent = "No accessibility or readability issues found.";
+            empty.textContent = "No automated text contrast issues found.";
             children.push(empty);
         }
         accessibilityGroups.replaceChildren(...children);
@@ -2562,7 +2599,7 @@
 
     function createFindingGroup(group) {
         const article = document.createElement("article");
-        article.className = "group";
+        article.className = group.severity === "not-checked" ? "group group--manual-review" : "group";
 
         const head = document.createElement("button");
         head.className = "group__head";
@@ -2590,15 +2627,19 @@
         const description = document.createElement("p");
         description.className = "group__description";
         description.textContent = group.description;
-        const fix = document.createElement("div");
-        fix.className = "group__fix";
-        const fixLabel = document.createElement("span");
-        fixLabel.className = "group__fix-label";
-        fixLabel.textContent = "Fix";
-        const fixText = document.createElement("span");
-        fixText.textContent = group.fix;
-        fix.append(fixLabel, fixText);
-        details.append(description, fix);
+        details.append(description);
+        if (group.category === "token-usage" && group.fix !== undefined) {
+            const fix = document.createElement("div");
+            fix.className = "group__fix";
+            const fixLabel = document.createElement("span");
+            fixLabel.className = "group__fix-label";
+            fixLabel.textContent = "Fix";
+            const fixText = document.createElement("span");
+            fixText.textContent = group.fix;
+            fix.append(fixLabel, fixText);
+            details.append(fix);
+        }
+        details.append(createDocumentationLink(group));
 
         const rows = group.nodes.map((node) => createNodeRow(node, group.category));
         rows.slice(nodePreviewLimit).forEach((row) => {

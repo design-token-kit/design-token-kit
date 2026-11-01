@@ -88,12 +88,13 @@ export interface AuditedNode {
 /**
  * Why the contrast of a text node cannot be measured.
  */
-export type ColorProblem = "gradient" | "image" | "mixed";
+export type ColorProblem = "gradient" | "image" | "mixed" | "uncertain";
 
 const PROBLEM_MESSAGES: Record<ColorProblem, string> = {
     gradient: "the text or its background is a gradient, so the ratio cannot be calculated.",
     image: "the text sits on an image, so the ratio cannot be calculated.",
     mixed: "the text has several colours, so the ratio cannot be calculated for one.",
+    uncertain: "the background could not be determined reliably, so the ratio cannot be calculated.",
 };
 
 interface Point {
@@ -165,7 +166,9 @@ function readBackground(node: TextNode): SrgbColor | ColorProblem {
 
         const parentOpacity = inheritedParentOpacity * opacityOf(parent);
         const siblings = parent.children;
-        for (let index = siblings.indexOf(child as SceneNode) - 1; index >= 0; index--) {
+        const childIndex = siblings.findIndex((sibling) => sibling.id === child.id);
+        if (childIndex < 0) return "uncertain";
+        for (let index = childIndex - 1; index >= 0; index--) {
             const outcome = layerAt(siblings[index], center, layers, parentOpacity);
             if (outcome === "opaque") return blend(layers);
             if (outcome !== "continue") return outcome;
@@ -203,9 +206,182 @@ function layerAt(node: SceneNode, point: Point, layers: SrgbColor[], inheritedOp
         }
     }
     if ("fills" in node) {
-        return collectFills(node.fills, opacity, layers);
+        const fills = node.fills;
+        if (hasVisiblePaint(fills)) {
+            const coverage = geometryCoverage(node, point);
+            if (coverage === "uncertain") return "uncertain";
+            if (coverage === "outside") return "continue";
+        }
+        return collectFills(fills, opacity, layers);
     }
     return "continue";
+}
+
+type GeometryCoverage = "inside" | "outside" | "uncertain";
+
+/**
+ * Bounding boxes are not sufficient for Boolean and vector nodes: their
+ * geometry can leave parts of the box transparent. Figma exposes the actual
+ * fill paths for these nodes, so use them before treating a paint as opaque.
+ */
+function geometryCoverage(node: SceneNode, point: Point): GeometryCoverage {
+    if (node.type !== "BOOLEAN_OPERATION" && node.type !== "VECTOR") return "inside";
+
+    try {
+        const localPoint = inverseTransform(node.absoluteTransform, point);
+        const paths = node.fillGeometry;
+        if (paths.length === 0) return "uncertain";
+        let parsedPath = false;
+        for (const path of paths) {
+            const polygons = parsePath(path.data);
+            if (polygons === undefined) return "uncertain";
+            parsedPath = true;
+            if (path.windingRule !== "NONE" && pointInPath(polygons, path.windingRule, localPoint)) {
+                return "inside";
+            }
+        }
+        return parsedPath ? "outside" : "uncertain";
+    } catch {
+        // Older or partial plugin node implementations may not expose geometry.
+        return "uncertain";
+    }
+}
+
+function hasVisiblePaint(fills: readonly Paint[] | PluginAPI["mixed"]): boolean {
+    return typeof fills === "symbol" || fills.some((paint) => paint.visible !== false && (paint.opacity ?? 1) > 0);
+}
+
+function inverseTransform(transform: Transform, point: Point): Point {
+    const [[a, c, e], [b, d, f]] = transform;
+    const determinant = a * d - b * c;
+    if (determinant === 0) throw new Error("Node transform is not invertible");
+    const x = point.x - e;
+    const y = point.y - f;
+    return {
+        x: (d * x - c * y) / determinant,
+        y: (a * y - b * x) / determinant,
+    };
+}
+
+type PathPoint = Point;
+type Polygon = PathPoint[];
+type PathCommand = "M" | "L" | "Q" | "C" | "Z";
+
+const PATH_TOKEN = /[MLQCZ]|[-+]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][-+]?\d+)?/g;
+const PATH_ARITY: Record<Exclude<PathCommand, "Z">, number> = { M: 2, L: 2, Q: 4, C: 6 };
+
+function parsePath(data: string): Polygon[] | undefined {
+    const tokens = data.match(PATH_TOKEN);
+    if (tokens === null || tokens.length === 0) return undefined;
+
+    const polygons: Polygon[] = [];
+    let index = 0;
+    let command: PathCommand | undefined;
+    let current: PathPoint | undefined;
+    let start: PathPoint | undefined;
+    let polygon: Polygon | undefined;
+
+    while (index < tokens.length) {
+        if (isPathCommand(tokens[index])) {
+            command = tokens[index] as PathCommand;
+            index++;
+            if (command === "Z") {
+                if (polygon !== undefined && start !== undefined) {
+                    polygon.push(start);
+                    if (polygon.length >= 4) polygons.push(polygon);
+                }
+                current = start;
+                polygon = undefined;
+                command = undefined;
+                continue;
+            }
+        }
+        const drawCommand = command;
+        if (drawCommand === undefined || drawCommand === "Z") return undefined;
+
+        const arity = PATH_ARITY[drawCommand];
+        if (index + arity > tokens.length || tokens.slice(index, index + arity).some(isPathCommand)) return undefined;
+        const values = tokens.slice(index, index + arity).map(Number);
+        if (values.some((value) => !Number.isFinite(value))) return undefined;
+        index += arity;
+
+        if (drawCommand === "M") {
+            if (polygon !== undefined && polygon.length >= 3) polygons.push(polygon);
+            current = { x: values[0], y: values[1] };
+            start = current;
+            polygon = [current];
+            command = "L";
+        } else if (drawCommand === "L" && current !== undefined && polygon !== undefined) {
+            current = { x: values[0], y: values[1] };
+            polygon.push(current);
+        } else if (drawCommand === "Q" && current !== undefined && polygon !== undefined) {
+            const end = { x: values[2], y: values[3] };
+            polygon.push(...curvePoints(current, { x: values[0], y: values[1] }, undefined, end));
+            current = end;
+        } else if (drawCommand === "C" && current !== undefined && polygon !== undefined) {
+            const end = { x: values[4], y: values[5] };
+            polygon.push(...curvePoints(current, { x: values[0], y: values[1] }, { x: values[2], y: values[3] }, end));
+            current = end;
+        } else {
+            return undefined;
+        }
+    }
+
+    if (polygon !== undefined && polygon.length >= 3) polygons.push(polygon);
+    return polygons;
+}
+
+function isPathCommand(token: string): boolean {
+    return /^[MLQCZ]$/.test(token);
+}
+
+function curvePoints(start: Point, control: Point, secondControl: Point | undefined, end: Point): Point[] {
+    const points: Point[] = [];
+    for (let step = 1; step <= 12; step++) {
+        const t = step / 12;
+        const inverse = 1 - t;
+        if (secondControl === undefined) {
+            points.push({
+                x: inverse * inverse * start.x + 2 * inverse * t * control.x + t * t * end.x,
+                y: inverse * inverse * start.y + 2 * inverse * t * control.y + t * t * end.y,
+            });
+        } else {
+            points.push({
+                x: inverse ** 3 * start.x + 3 * inverse ** 2 * t * control.x + 3 * inverse * t ** 2 * secondControl.x + t ** 3 * end.x,
+                y: inverse ** 3 * start.y + 3 * inverse ** 2 * t * control.y + 3 * inverse * t ** 2 * secondControl.y + t ** 3 * end.y,
+            });
+        }
+    }
+    return points;
+}
+
+function pointInPath(polygons: readonly Polygon[], windingRule: "NONZERO" | "EVENODD", point: Point): boolean {
+    let winding = 0;
+    let crossings = 0;
+    for (const polygon of polygons) {
+        for (let index = 1; index < polygon.length; index++) {
+            const from = polygon[index - 1];
+            const to = polygon[index];
+            if (pointOnSegment(point, from, to)) return true;
+            if ((from.y > point.y) !== (to.y > point.y)) {
+                const intersection = from.x + (to.x - from.x) * (point.y - from.y) / (to.y - from.y);
+                if (intersection > point.x) {
+                    crossings++;
+                    winding += to.y > from.y ? 1 : -1;
+                }
+            }
+        }
+    }
+    return windingRule === "EVENODD" ? crossings % 2 === 1 : winding !== 0;
+}
+
+function pointOnSegment(point: Point, from: Point, to: Point): boolean {
+    const cross = (point.y - from.y) * (to.x - from.x) - (point.x - from.x) * (to.y - from.y);
+    if (Math.abs(cross) > 1e-7) return false;
+    return point.x >= Math.min(from.x, to.x) - 1e-7
+        && point.x <= Math.max(from.x, to.x) + 1e-7
+        && point.y >= Math.min(from.y, to.y) - 1e-7
+        && point.y <= Math.max(from.y, to.y) + 1e-7;
 }
 
 /**

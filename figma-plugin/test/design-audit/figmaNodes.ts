@@ -42,6 +42,21 @@ export function group(name: string, box: Box, children: FakeNode[], extra: Recor
     return { type: "GROUP", id: `group:${name}`, name, visible: true, opacity: 1, absoluteBoundingBox: box, children, ...extra };
 }
 
+export function booleanOperation(name: string, box: Box, fills: Paint[], fillGeometry: VectorPath[] = [], children: FakeNode[] = []): FakeNode {
+    return {
+        type: "BOOLEAN_OPERATION",
+        id: `boolean:${name}`,
+        name,
+        visible: true,
+        opacity: 1,
+        fills,
+        absoluteBoundingBox: box,
+        absoluteTransform: [[1, 0, box.x], [0, 1, box.y]],
+        fillGeometry,
+        children,
+    };
+}
+
 export function section(name: string, box: Box, fills: Paint[], children: FakeNode[] = []): FakeNode {
     return { type: "SECTION", id: `section:${name}`, name, visible: true, fills, absoluteBoundingBox: box, children };
 }

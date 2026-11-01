@@ -1,6 +1,5 @@
 import type { AuditCategory, AuditFinding, UncheckedSubject } from "@design-token-kit/core/core/audit/AuditFinding";
-import { computeAuditScore, type AuditScore } from "@design-token-kit/core/core/audit/AuditScore";
-import { auditTextSamples } from "@design-token-kit/core/core/audit/accessibility/AccessibilityAudit";
+import { auditTextContrastSamples, type ContrastScore } from "@design-token-kit/core/core/audit/accessibility/ContrastAudit";
 import {
     toAccessibilitySettings,
     type AccessibilityOptions,
@@ -22,11 +21,9 @@ const DOCS_URL = "https://design-token-kit.github.io/docs/guides/figma-plugin/";
 /**
  * Audits sampled Figma nodes and groups the findings for the Design tab.
  *
- * Text nodes are audited for accessibility and readability, the properties of
- * every layer for token usage. Each group is one problem, such as text
- * contrast below WCAG AA, with the nodes that have it, worst first. Nodes
- * whose contrast cannot be measured form a separate "not checked" group that
- * does not affect the score. Each category has its own score.
+ * Text nodes are audited for automated WCAG text contrast, and the properties
+ * of every layer for token usage. Nodes whose contrast cannot be measured form
+ * a separate manual-review group and do not affect the score.
  */
 export class DesignAuditor {
     readonly #options: AccessibilityOptions;
@@ -47,7 +44,7 @@ export class DesignAuditor {
     ): DesignAuditReport {
         const settings = toAccessibilitySettings(this.#options);
         const byId = new Map(nodes.map((entry) => [entry.node.id, entry.node]));
-        const { findings, unchecked } = auditTextSamples(nodes.map((entry) => entry.sample), settings);
+        const { findings, unchecked, score } = auditTextContrastSamples(nodes.map((entry) => entry.sample), settings);
         const usage = auditUsageSamples(properties.map((entry) => entry.sample), candidates);
         const sampled = new Map(properties.map((entry) => [entry.sample.id, entry]));
 
@@ -59,16 +56,13 @@ export class DesignAuditor {
 
         const errors = findings.filter((finding) => finding.severity === "error").length;
         const warnings = findings.length - errors;
-        const accessibility = nodes.length > 0 && unchecked.length >= nodes.length
-            ? undefined
-            : { ...computeAuditScore(errors, warnings), errors, warnings };
         return {
             level: settings.level,
             nodeCount: nodes.length,
             layerCount: new Set(properties.map((entry) => entry.node.id)).size,
             coverage: usage.coverage,
             scores: {
-                accessibility,
+                accessibility: nodes.length > 0 ? score : undefined,
                 tokenUsage: usage.score,
             },
             counts: { errors, warnings: warnings + usage.findings.length, notChecked: unchecked.length },
@@ -95,9 +89,9 @@ export interface DesignAuditReport {
     readonly coverage: TokenCoverage;
 
     /**
-     * Scores of each category, kept apart: accessibility is scored from the
-     * WCAG and readability findings of text, token usage from the share of
-     * properties without a finding.
+     * Scores of each category, kept apart: accessibility is scored from
+     * automated text contrast checks, token usage from the share of properties
+     * without a finding.
      */
     readonly scores: {
         readonly accessibility?: AccessibilityScore;
@@ -121,13 +115,9 @@ export interface DesignAuditReport {
 }
 
 /**
- * Accessibility score: `100 - 2 × errors - 0.1 × warnings`, with the numbers
- * it was computed from.
+ * Percentage score and outcome counts for automated text contrast checks.
  */
-export interface AccessibilityScore extends AuditScore {
-    readonly errors: number;
-    readonly warnings: number;
-}
+export type AccessibilityScore = ContrastScore;
 
 /**
  * One problem and the nodes that have it.
@@ -138,7 +128,7 @@ export interface FindingGroup {
     readonly category: AuditCategory;
     readonly title: string;
     readonly description: string;
-    readonly fix: string;
+    readonly fix?: string;
     readonly docsUrl: string;
     readonly nodes: FindingNode[];
 }
@@ -164,7 +154,7 @@ interface GroupDefinition {
     readonly severity: "error" | "warning";
     readonly title: (settings: AccessibilitySettings) => string;
     readonly description: (settings: AccessibilitySettings, worst: string | undefined) => string;
-    readonly fix: string;
+    readonly docsUrl: string;
 }
 
 const GROUP_DEFINITIONS: readonly GroupDefinition[] = [
@@ -172,34 +162,17 @@ const GROUP_DEFINITIONS: readonly GroupDefinition[] = [
         id: "text-contrast-aa",
         ruleId: "text-contrast",
         severity: "error",
-        title: () => "Text contrast is below WCAG AA",
+        title: () => "Low text contrast (WCAG AA)",
         description: (_settings, worst) => `Body text needs 4.5:1 and large text 3:1. The lowest ratio found is ${worst}.`,
-        fix: "Use a darker text colour on light surfaces and a lighter one on dark surfaces, ideally a semantic text variable.",
+        docsUrl: "https://www.w3.org/WAI/WCAG22/Understanding/contrast-minimum.html",
     },
     {
         id: "text-contrast-aaa",
         ruleId: "text-contrast",
         severity: "warning",
-        title: () => "Text contrast is below WCAG AAA",
+        title: () => "Low text contrast (WCAG AAA)",
         description: (_settings, worst) => `WCAG AAA asks 7:1 for body text and 4.5:1 for large text. The lowest ratio found is ${worst}.`,
-        fix: "Raise the contrast where the text must meet AAA, for example body copy and form labels.",
-    },
-    {
-        id: "text-size",
-        ruleId: "text-size",
-        severity: "warning",
-        title: (settings) => `Text is smaller than ${settings.minFontSizePx}px`,
-        description: (settings, worst) => `Text below ${settings.minFontSizePx}px is hard to read. The smallest size found is ${worst}.`,
-        fix: "Apply a text style from the typography scale that is large enough to read.",
-    },
-    {
-        id: "line-height",
-        ruleId: "line-height",
-        severity: "warning",
-        title: () => "Body text lines are too tight",
-        description: (settings, worst) => `Body text below ${settings.headingSizePx}px needs a line height of at least ${settings.minBodyLineHeight}. `
-            + `The tightest found is ${worst}.`,
-        fix: "Increase the line height, or apply a body text style.",
+        docsUrl: "https://www.w3.org/WAI/WCAG22/Understanding/contrast-enhanced.html",
     },
 ];
 
@@ -220,8 +193,7 @@ function toGroup(
         category: "accessibility",
         title: definition.title(settings),
         description: definition.description(settings, matching[0].measurement),
-        fix: definition.fix,
-        docsUrl: `${DOCS_URL}#${definition.ruleId}`,
+        docsUrl: definition.docsUrl,
         nodes: matching.map((finding) => toFindingNode(finding.subjectId, finding.measurement ?? "", nodes)),
     };
 }
@@ -232,10 +204,9 @@ function toUncheckedGroup(unchecked: UncheckedSubject[], nodes: Map<string, Audi
         id: "text-contrast-unchecked",
         severity: "not-checked",
         category: "accessibility",
-        title: "Text contrast could not be evaluated",
-        description: "The text sits on a gradient, an image or mixed fills, so the ratio cannot be calculated automatically.",
-        fix: "Check these by eye, or put a solid fill behind the text.",
-        docsUrl: `${DOCS_URL}#text-contrast`,
+        title: "Contrast needs manual review",
+        description: "Some text uses images, gradients, mixed fills, or transparency, so contrast could not be measured automatically.",
+        docsUrl: `${DOCS_URL}#design-audit-manual-review`,
         nodes: unchecked.map((subject) => {
             const node = nodes.get(subject.subjectId);
             return toFindingNode(subject.subjectId, node?.problem ?? "translucent", nodes);

@@ -8,6 +8,9 @@ interface ReportOptions {
     contrastErrors?: number;
     score?: number;
     grade?: string;
+    passed?: number;
+    failed?: number;
+    manualReview?: number;
     nodeCount?: number;
     layerCount?: number;
     coverage?: { total: number; bound: number; percent?: number };
@@ -30,30 +33,18 @@ const CONTRAST_GROUP = {
     id: "text-contrast-aa",
     severity: "error",
     category: "accessibility",
-    title: "Text contrast is below WCAG AA",
+    title: "Low text contrast (WCAG AA)",
     description: "Body text needs 4.5:1 and large text 3:1. The lowest ratio found is 2.1:1.",
-    fix: "Use a darker text colour.",
-    docsUrl: "#",
+    docsUrl: "https://www.w3.org/WAI/WCAG22/Understanding/contrast-minimum.html",
     nodes: nodes("Caption", 7, (index) => `${2 + index / 10}:1`),
-};
-const SIZE_GROUP = {
-    id: "text-size",
-    severity: "warning",
-    category: "accessibility",
-    title: "Text is smaller than 12px",
-    description: "Text below 12px is hard to read.",
-    fix: "Apply a larger text style.",
-    docsUrl: "#",
-    nodes: nodes("Tiny", 2, () => "10px"),
 };
 const UNCHECKED_GROUP = {
     id: "text-contrast-unchecked",
     severity: "not-checked",
     category: "accessibility",
-    title: "Text contrast could not be evaluated",
-    description: "The text sits on a gradient.",
-    fix: "Check these by eye.",
-    docsUrl: "#",
+    title: "Contrast needs manual review",
+    description: "Some text uses images, gradients, mixed fills, or transparency, so contrast could not be measured automatically.",
+    docsUrl: "https://design-token-kit.github.io/docs/guides/figma-plugin/#design-audit-manual-review",
     nodes: nodes("Hero", 3, () => "gradient"),
 };
 
@@ -82,13 +73,22 @@ function report(options: ReportOptions = {}) {
             layerCount: options.layerCount ?? 25,
             coverage: options.coverage ?? { total: 80, bound: 52, percent: 65, byProperty: {} },
             scores: {
-                accessibility: { score: options.score ?? 85, grade: options.grade ?? "B", errors: options.errors ?? 7, warnings: options.warnings ?? 2 },
-                ...(options.accessibilityUnavailable ? { accessibility: undefined } : {}),
+                accessibility: options.accessibilityUnavailable || (options.nodeCount ?? 40) === 0
+                    ? undefined
+                    : {
+                        score: options.score ?? 85,
+                        grade: options.grade ?? "B",
+                        evaluated: (options.passed ?? 17) + (options.failed ?? 3),
+                        passed: options.passed ?? 17,
+                        failed: options.failed ?? 3,
+                        manualReview: options.manualReview ?? options.notChecked ?? 3,
+                        skipped: 0,
+                    },
                 tokenUsage: options.tokenUsage === null ? undefined : options.tokenUsage ?? { score: 60, grade: "D", clean: 48, total: 80 },
             },
             counts: { errors: options.errors ?? 7, warnings: options.warnings ?? 2, notChecked: options.notChecked ?? 3 },
             contrastErrors: options.contrastErrors ?? 7,
-            groups: options.groups ?? [CONTRAST_GROUP, SIZE_GROUP, UNCHECKED_GROUP],
+            groups: options.groups ?? [CONTRAST_GROUP, UNCHECKED_GROUP],
         },
     };
 }
@@ -138,11 +138,17 @@ describe("Design tab", () => {
 
         expect(ui.get("#audit-results").hidden).toBe(false);
         expect(ui.get("#audit-status").hidden).toBe(true);
-        expect(textOf(ui.get("#accessibility-score"))).toBe("85");
+        expect(textOf(ui.get("#accessibility-score"))).toBe("85%");
+        expect(textOf(ui.get("#accessibility-title"))).toBe("Accessibility checks");
+        expect(textOf(ui.get("#accessibility-level")).trim()).toBe("AA");
+        expect(textOf(ui.get("#accessibility-disclaimer"))).toBe("Score reflects automated checks only. It does not indicate WCAG conformance.");
         expect(textOf(ui.get("#accessibility-grade"))).toBe("B");
         expect(ui.get("#accessibility-grade").className).toBe("grade");
-        expect(textOf(ui.get("#accessibility-verdict"))).toBe("Fails WCAG AA until 7 errors are fixed");
-        expect(textOf(ui.get("#accessibility-result-text"))).toBe("3 issues · 12 layers");
+        expect(textOf(ui.get("#accessibility-verdict"))).toBe("Automated text contrast checks only");
+        expect(textOf(ui.get("#accessibility-result-text"))).toBe("2 issues · 10 layers");
+        expect(textOf(ui.get("#accessibility-passed"))).toBe("17");
+        expect(textOf(ui.get("#accessibility-failed"))).toBe("3");
+        expect(textOf(ui.get("#accessibility-manual-review"))).toBe("3");
         expect(textOf(ui.get("#audit-meta"))).toBe("40 text layers · 25 layers checked for variables");
         expect(textOf(ui.get("#usage-score"))).toBe("60");
         expect(textOf(ui.get("#usage-grade"))).toBe("D");
@@ -160,7 +166,7 @@ describe("Design tab", () => {
         ui.click("#usage-formula-toggle");
         expect(ui.get("#accessibility-formula").hidden).toBe(false);
         expect(ui.get("#usage-formula").hidden).toBe(false);
-        expect(textOf(ui.get("#accessibility-formula"))).toContain("7 errors and 2 warnings on text: 100 − 14 − 0.2 ≈ 85.");
+        expect(textOf(ui.get("#accessibility-formula"))).toContain("17 ÷ (17 + 3) × 100 = 85%.");
         expect(textOf(ui.get("#usage-formula"))).toContain("48 of 80 properties are bound to a variable or style and not to a primitive: 60, rounded down. Not part of WCAG.");
     });
 
@@ -184,10 +190,10 @@ describe("Design tab", () => {
     });
 
     it("confirms when no text fails the contrast minimum", () => {
-        openWithReport({ errors: 0, contrastErrors: 0, groups: [SIZE_GROUP] });
+        openWithReport({ errors: 0, contrastErrors: 0, passed: 20, failed: 0, groups: [] });
 
-        expect(textOf(ui.get("#accessibility-verdict"))).toBe("Text contrast meets WCAG AA");
-        expect(ui.get("#accessibility-verdict").className).toContain("score-summary__verdict--success");
+        expect(textOf(ui.get("#accessibility-verdict"))).toBe("Automated text contrast checks only");
+        expect(ui.get("#accessibility-verdict").className).toBe("score-summary__verdict");
     });
 
     it("does not show a score when every text layer needs a manual contrast check", () => {
@@ -204,8 +210,7 @@ describe("Design tab", () => {
         });
 
         expect(textOf(ui.get("#accessibility-score"))).toBe("N/A");
-        expect(ui.get("#accessibility-score-max").hidden).toBe(true);
-        expect(textOf(ui.get("#accessibility-verdict"))).toBe("Text contrast could not be evaluated automatically");
+        expect(textOf(ui.get("#accessibility-verdict"))).toBe("No automated contrast checks could be evaluated");
         expect(ui.get("#accessibility-verdict").className).toContain("score-summary__verdict--warning");
     });
 
@@ -214,10 +219,9 @@ describe("Design tab", () => {
 
         const titles = Array.from(ui.document.querySelectorAll("#accessibility-groups .group__title, #accessibility-groups h3"), textOf);
         expect(titles).toEqual([
-            "Text contrast is below WCAG AA",
-            "Text is smaller than 12px",
-            "Not checked",
-            "Text contrast could not be evaluated",
+            "Low text contrast (WCAG AA)",
+            "Manual review",
+            "Contrast needs manual review",
         ]);
         expect(textOf(ui.get("#accessibility-groups .group__count"))).toBe("7 layers");
     });
@@ -226,12 +230,12 @@ describe("Design tab", () => {
         openWithReport({ groups: [CONTRAST_GROUP, USAGE_GROUP] });
 
         expect(Array.from(ui.document.querySelectorAll("#accessibility-groups .group__title"), textOf))
-            .toEqual(["Text contrast is below WCAG AA"]);
+            .toEqual(["Low text contrast (WCAG AA)"]);
         expect(Array.from(ui.document.querySelectorAll("#usage-groups .group__title"), textOf))
             .toEqual(["Colours are not bound to variables"]);
     });
 
-    it("opens a group to show its fix and the first five layers", () => {
+    it("opens an accessibility group without an inline Fix section", () => {
         openWithReport();
         const group = ui.get("#accessibility-groups .group");
         const head = group.querySelector<HTMLButtonElement>(".group__head")!;
@@ -242,7 +246,8 @@ describe("Design tab", () => {
         expect(body.hidden).toBe(false);
         expect(head.getAttribute("aria-expanded")).toBe("true");
         expect(group.classList.contains("is-open")).toBe(true);
-        expect(Array.from(group.querySelectorAll(".group__fix > span"), textOf)).toEqual(["Fix", "Use a darker text colour."]);
+        expect(group.querySelector(".group__fix")).toBeNull();
+        expect(group.querySelector<HTMLAnchorElement>(".docs")?.href).toContain("contrast-minimum.html");
 
         const rows = Array.from(group.querySelectorAll<HTMLElement>(".node-row"));
         expect(rows.filter((row) => !row.hidden)).toHaveLength(5);
@@ -284,7 +289,7 @@ describe("Design tab", () => {
     });
 
     it("shows layer names as text, never as markup", () => {
-        const group = { ...SIZE_GROUP, nodes: [{ id: "1:1", name: "<img src=x onerror=alert(1)>", path: "<b>Card</b>", meta: "10px" }] };
+        const group = { ...CONTRAST_GROUP, nodes: [{ id: "1:1", name: "<img src=x onerror=alert(1)>", path: "<b>Card</b>", meta: "10px" }] };
         openWithReport({ groups: [group] });
 
         expect(ui.document.querySelector("#accessibility-groups img")).toBeNull();
@@ -314,7 +319,8 @@ describe("Design tab", () => {
     it("explains an empty page", () => {
         openWithReport({ nodeCount: 0, layerCount: 0, groups: [] });
 
-        expect(ui.get("#audit-results").hidden).toBe(true);
+        expect(ui.get("#audit-results").hidden).toBe(false);
+        expect(textOf(ui.get("#accessibility-score"))).toBe("N/A");
         expect(textOf(ui.get("#audit-status"))).toBe("There are no visible layers in this page to audit.");
     });
 

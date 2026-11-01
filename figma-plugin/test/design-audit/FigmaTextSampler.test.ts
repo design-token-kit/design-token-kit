@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
+import { contrastRatio } from "@design-token-kit/core/core/audit/color/Wcag";
 import { FigmaTextSampler } from "#/figma-plugin/design-audit/FigmaTextSampler";
-import { frame, gradient, group, image, page, rect, section, solid, text, textNodes } from "./figmaNodes";
+import { booleanOperation, frame, gradient, group, image, page, rect, section, solid, text, textNodes } from "./figmaNodes";
 
 const CARD = { x: 0, y: 0, width: 200, height: 100 };
 const LABEL = { x: 20, y: 20, width: 80, height: 20 };
@@ -37,6 +38,89 @@ describe("FigmaTextSampler", () => {
         ]));
 
         expect(hex(entry.sample.background)).toBe("#10b981");
+    });
+
+    it("does not treat a Boolean operation's bounding box as painted geometry", () => {
+        const root = page("Page", [section("Grid variables", CARD, [solid("#ffffff")], [
+            frame(" ", CARD, [], [
+                frame("key", CARD, [], [
+                    frame(".key", CARD, [], [
+                        booleanOperation("Union", { x: 0, y: 0, width: 80, height: 20 }, [solid("#000000")], [
+                            { windingRule: "NONZERO", data: "M 0 0 L 20 0 L 20 20 L 0 20 Z" },
+                        ]),
+                        text("KEY", { x: 40, y: 0, width: 40, height: 20 }),
+                    ]),
+                ]),
+            ]),
+        ])]);
+
+        const [entry] = sampleOf(root);
+
+        expect(hex(entry.sample.background)).toBe("#ffffff");
+        expect(contrastRatio(entry.sample.foreground!, entry.sample.background!)).toBeGreaterThan(4.5);
+    });
+
+    it("requests manual review when Boolean geometry is unavailable", () => {
+        const root = page("Page", [frame("Card", CARD, [solid("#ffffff")], [
+            booleanOperation("Union", CARD, [solid("#000000")]),
+            text("KEY", LABEL),
+        ])]);
+
+        const [entry] = sampleOf(root);
+
+        expect(entry.node.problem).toBe("uncertain");
+        expect(entry.sample.background).toBeUndefined();
+    });
+
+    it("keeps a genuine contrast failure when Boolean geometry covers the text", () => {
+        const root = page("Page", [frame("Card", CARD, [solid("#ffffff")], [
+            booleanOperation("Union", CARD, [solid("#000000")], [
+                { windingRule: "NONZERO", data: "M 0 0 L 200 0 L 200 100 L 0 100 Z" },
+            ]),
+            text("KEY", LABEL),
+        ])]);
+
+        const [entry] = sampleOf(root);
+
+        expect(hex(entry.sample.background)).toBe("#000000");
+        expect(contrastRatio(entry.sample.foreground!, entry.sample.background!)).toBe(1);
+    });
+
+    it("finds a nested button surface when the text wrapper differs from the child wrapper", () => {
+        const buttonSurface = { ...solid("#f5f5f5"), boundVariables: {
+            color: { type: "VARIABLE_ALIAS", id: "variable:surface" },
+        } } as Paint;
+        const buttonText = { ...solid("#222222"), boundVariables: {
+            color: { type: "VARIABLE_ALIAS", id: "variable:text" },
+        } } as Paint;
+        const root = page("Page", [frame("Button", CARD, [solid("#222222")], [
+            rect("Surface", CARD, [buttonSurface]),
+            text("KEY", LABEL, { fills: [buttonText] }),
+        ])]);
+        const original = textNodes(root)[0];
+        const detached = { ...original, parent: original.parent } as TextNode;
+
+        const [entry] = new FigmaTextSampler().sample([detached]);
+
+        expect(entry.node.path).toBe("Button");
+        expect(hex(entry.sample.foreground)).toBe("#222222");
+        expect(hex(entry.sample.background)).toBe("#f5f5f5");
+        expect(entry.sample.foreground?.alpha).toBe(1);
+        expect(entry.sample.background?.alpha).toBe(1);
+        expect(contrastRatio(entry.sample.foreground!, entry.sample.background!)).toBeGreaterThan(4.5);
+    });
+
+    it("reports manual review when the parent-child relationship is incomplete", () => {
+        const root = page("Page", [frame("Button", CARD, [solid("#222222")], [text("KEY", LABEL)])]);
+        const original = textNodes(root)[0];
+        const incompleteParent = { ...frame("Unknown", CARD, [solid("#222222")], []), parent: null };
+        const detached = { ...original, parent: incompleteParent } as unknown as TextNode;
+
+        const [entry] = new FigmaTextSampler().sample([detached]);
+
+        expect(entry.node.problem).toBe("uncertain");
+        expect(entry.sample.colorProblem).toContain("could not be determined reliably");
+        expect(entry.sample.background).toBeUndefined();
     });
 
     it("ignores siblings painted above the text or away from it", () => {

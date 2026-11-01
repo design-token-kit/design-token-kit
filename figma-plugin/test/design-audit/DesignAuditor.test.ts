@@ -28,13 +28,14 @@ describe("DesignAuditor", () => {
         ]));
 
         expect(report.nodeCount).toBe(6);
-        expect(report.counts).toEqual({ errors: 2, warnings: 2, notChecked: 1 });
+        expect(report.counts).toEqual({ errors: 2, warnings: 0, notChecked: 1 });
         expect(report.contrastErrors).toBe(2);
-        expect(report.scores).toEqual({ accessibility: { score: 96, grade: "A", errors: 2, warnings: 2 }, tokenUsage: undefined });
+        expect(report.scores).toEqual({
+            accessibility: { score: 60, grade: "D", evaluated: 5, passed: 3, failed: 2, manualReview: 1, skipped: 0 },
+            tokenUsage: undefined,
+        });
         expect(report.groups.map((group) => [group.id, group.severity, group.nodes.map((node) => node.name)])).toEqual([
             ["text-contrast-aa", "error", ["Lighter", "Light"]],
-            ["text-size", "warning", ["Fine print"]],
-            ["line-height", "warning", ["Tight"]],
             ["text-contrast-unchecked", "not-checked", ["Title"]],
         ]);
     });
@@ -45,9 +46,10 @@ describe("DesignAuditor", () => {
         ])).groups;
 
         expect(contrast).toMatchObject({
-            title: "Text contrast is below WCAG AA",
+            title: "Low text contrast (WCAG AA)",
             category: "accessibility",
             description: "Body text needs 4.5:1 and large text 3:1. The lowest ratio found is 1.91:1.",
+            docsUrl: "https://www.w3.org/WAI/WCAG22/Understanding/contrast-minimum.html",
             nodes: [{ id: "text:Light", name: "Light", path: "Card", meta: "1.91:1" }],
         });
     });
@@ -64,12 +66,13 @@ describe("DesignAuditor", () => {
         expect(report.groups).toEqual([expect.objectContaining({
             id: "text-contrast-aaa",
             severity: "warning",
-            title: "Text contrast is below WCAG AAA",
+            title: "Low text contrast (WCAG AAA)",
             description: "WCAG AAA asks 7:1 for body text and 4.5:1 for large text. The lowest ratio found is 4.95:1.",
+            docsUrl: "https://www.w3.org/WAI/WCAG22/Understanding/contrast-enhanced.html",
         })]);
     });
 
-    it("names the configured thresholds in titles and descriptions", () => {
+    it("does not include readability guidelines in the Design accessibility audit", () => {
         const nodes = new FigmaTextSampler().sample(textNodes(page("Page", [
             frame("Card", CARD, [solid("#ffffff")], [
                 text("Small", LABEL, { fontSize: 13 }),
@@ -79,18 +82,8 @@ describe("DesignAuditor", () => {
 
         const report = new DesignAuditor({ minFontSizePx: 14, headingSizePx: 20, minBodyLineHeight: 1.4 }).audit(nodes);
 
-        expect(report.groups.map((group) => [group.title, group.description, group.docsUrl])).toEqual([
-            [
-                "Text is smaller than 14px",
-                "Text below 14px is hard to read. The smallest size found is 13px.",
-                "https://design-token-kit.github.io/docs/guides/figma-plugin/#text-size",
-            ],
-            [
-                "Body text lines are too tight",
-                "Body text below 20px needs a line height of at least 1.4. The tightest found is 1.2.",
-                "https://design-token-kit.github.io/docs/guides/figma-plugin/#line-height",
-            ],
-        ]);
+        expect(report.groups).toEqual([]);
+        expect(report.scores.accessibility).toMatchObject({ score: 100, grade: "A", passed: 2, failed: 0 });
     });
 
     it("marks text on a translucent background as not checked", () => {
@@ -107,10 +100,14 @@ describe("DesignAuditor", () => {
         expect(report.groups).toEqual([expect.objectContaining({
             id: "text-contrast-unchecked",
             severity: "not-checked",
+            title: "Contrast needs manual review",
+            description: "Some text uses images, gradients, mixed fills, or transparency, so contrast could not be measured automatically.",
+            docsUrl: "https://design-token-kit.github.io/docs/guides/figma-plugin/#design-audit-manual-review",
             nodes: [{ id: "1:2", name: "Floating", path: "Overlay", meta: "translucent" }],
         })]);
         expect(report.counts.notChecked).toBe(1);
-        expect(report.scores.accessibility).toBeUndefined();
+        expect(report.scores.accessibility).toMatchObject({ evaluated: 0, passed: 0, failed: 0, manualReview: 1 });
+        expect(report.scores.accessibility?.score).toBeUndefined();
     });
 
     it("reports a clean page with a perfect score", () => {
@@ -164,7 +161,7 @@ describe("DesignAuditor", () => {
             expect(report.counts).toEqual({ errors: 0, warnings: 4, notChecked: 0 });
             expect(report.coverage).toMatchObject({ total: 5, bound: 2, percent: 40 });
             expect(report.scores).toEqual({
-                accessibility: { score: 100, grade: "A", errors: 0, warnings: 0 },
+                accessibility: undefined,
                 tokenUsage: { score: 20, grade: "F", clean: 1, total: 5 },
             });
         });
