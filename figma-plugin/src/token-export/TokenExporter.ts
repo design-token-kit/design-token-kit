@@ -611,7 +611,7 @@ function createVariableIndex(variables: Variable[]): VariableIndex {
     return new Map(variables.map((variable) => [variable.id, variable]));
 }
 
-function toTokenType(variable: Variable): DtcgVariableTokenType | undefined {
+export function toTokenType(variable: Variable): DtcgVariableTokenType | undefined {
     const resolvedType = getVariableResolvedType(variable);
     if (resolvedType === "COLOR") {
         return "color";

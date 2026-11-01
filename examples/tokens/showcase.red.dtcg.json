@@ -131,6 +131,18 @@
         "400": { "$type": "color", "$value": "{primitive.color.sky.400}" },
         "500": { "$type": "color", "$value": "{primitive.color.sky.500}" },
         "600": { "$type": "color", "$value": "{primitive.color.sky.600}" }
+      },
+      "action-primary": {
+        "$type": "color",
+        "$value": "{primitive.color.red.600}",
+        "$description": "Primary action, one step darker than the brand red so white text on it reaches 4.5:1."
+      },
+      "action-primary-hover": { "$type": "color", "$value": "{primitive.color.red.700}" },
+      "action-primary-active": { "$type": "color", "$value": "{primitive.color.red.700}" },
+      "text-link": {
+        "$type": "color",
+        "$value": "{primitive.color.red.700}",
+        "$description": "Link text, dark enough to read on the light backgrounds."
       }
     }
   }

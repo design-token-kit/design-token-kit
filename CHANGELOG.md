@@ -4,6 +4,42 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+
+- #91 Design quality audit: accessibility and readability
+  - Added `TokenAuditor` to core and the `dtokens audit` command.
+    They report text and background color pairs below the WCAG contrast
+    minimum (`text-contrast`), typography below a readable font size
+    (`text-size`), and body text set too tightly (`line-height`), with a
+    0-100 score and an A-F grade.
+  - Paired text colors with backgrounds by their names, as `text-*` with
+    `background-*` in the same group and `on-X` with `X` only.
+  - Audited each theme over the base set, reporting only what it changes.
+  - Exported the WCAG helpers and `auditTextSamples`, so other sources, such
+    as Figma text nodes, can be audited by the same rules.
+  - Added the Design tab to the Figma plugin. It audits the text layers of the
+    current page or the whole file by the same rules, reading each layer's
+    background through the layers below it, shows the score, errors, warnings
+    and layers it could not check, and selects the reported layers in Figma.
+  - Left out of the plugin audit the text a reader does not see as text: masks,
+    layers inside a boolean operation and icon font glyphs. The line height is
+    audited for wrapped text only.
+  - Described the plugin audit, its checks and how it applies WCAG AA in
+    `figma-plugin/docs/design-audit.md`.
+- #91 Design quality audit: token usage
+  - Added `auditUsageSamples` and `TokenMatcher` to core. They report
+    properties that are hard-coded instead of bound to a token
+    (`hardcoded-value`) and properties bound to a token of the lowest layer
+    when higher layers exist (`primitive-binding`), suggest the token with the
+    same or a close value, and count the token coverage.
+  - Added token usage to the Design tab of the Figma plugin. It reads the
+    fills, strokes, radii, gaps, paddings and font sizes of the layers,
+    suggests local variables and styles for hard-coded values, flags layers
+    bound to primitive variables, and shows the token coverage.
+  - Scored accessibility and token usage apart on the Design tab, so token
+    usage findings do not lower the accessibility score. The token usage
+    score is the share of properties without a finding.
+
 ### Changed
 
 - #10 Invalid font weights and generic font families in CSS output
@@ -18,6 +54,18 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
+- #11 Example token sets
+  - Kept the playground primitives the same in every theme: colours are named
+    by hue (`blue`, `green`, `amber`, `red` instead of `brand`, `success`,
+    `warning`, `danger`), the palette holds the dark shades, and the dark theme
+    overrides semantic tokens only. Its page and surface backgrounds used to
+    stay white under light text.
+  - Raised the text contrast of the playground and showcase sets to WCAG AA in
+    every theme: status badges and the danger button set black text, the
+    primary button white text, and the tertiary text, the dark theme links and
+    the red theme primary action use darker or lighter shades.
+  - Described in the designer guide that themes change the semantic layer and
+    that palette colours are named by hue.
 - #10 Invalid font weights and generic font families in CSS output
   - Wrote CSS and SCSS font weight names other than `normal` and `bold` as
     numbers, such as `400` for `regular`.

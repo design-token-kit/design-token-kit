@@ -22,10 +22,29 @@ describe("help", () => {
         expect(result.stdout).toContain("--scope");
     });
 
+    it("documents the token architecture score in check help", () => {
+        const result = dtokens("check --help");
+        expect(result.stdout).toContain("Token architecture score:");
+        expect(result.stdout).toContain("Warnings and errors count equally");
+        expect(result.stdout).toContain("No score is reported");
+    });
+
     it("marks missing-description as opt-in in check help", () => {
         const result = dtokens("check --help");
         expect(result.stdout).toContain("missing-description");
         expect(result.stdout).toContain("opt-in");
+    });
+
+    it("shows exit codes in audit help", () => {
+        const result = dtokens("audit --help");
+        expect(result.stdout).toContain("Exit status:");
+        expect(result.stdout).toContain("errors found");
+    });
+
+    it("lists the audit command and its examples in the main help", () => {
+        const result = dtokens("--help");
+        expect(result.stdout).toContain("audit [options] [files...]");
+        expect(result.stdout).toContain("dtokens audit tokens.json tokens.dark.json");
     });
 
     it("shows exit codes in convert help", () => {

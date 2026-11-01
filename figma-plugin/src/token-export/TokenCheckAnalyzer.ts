@@ -10,7 +10,7 @@ const COMPATIBILITY_CHECK_IDS = new Set([
     "raw-value-usage",
     "bad-reference",
 ]);
-const LAYER_ALIAS_FAILED_NAME = "Non-canonical layer names";
+const LAYER_ALIAS_FAILED_NAME = "Non-standard layer names";
 const ARCHITECTURE_ALIAS_PATTERN =/^(.+) uses architecture layer alias "([^"]+)"; prefer canonical layer "([^"]+)"\.$/;
 
 const CARD_DEFINITIONS: readonly CardDefinition[] = [
@@ -18,8 +18,9 @@ const CARD_DEFINITIONS: readonly CardDefinition[] = [
         id: "root-layer",
         issueIds: ["root-layer"],
         name: "Architecture layers are defined",
-        failedName: "Tokens outside architecture layers",
+        failedName: "Tokens outside required layers",
         description: "Token paths start with a configured root layer.",
+        failedDescription: "Some tokens are outside the primitive, semantic, or component layers.",
         compatibilitySeverity: "warning",
         issueHeading: "Use primitive, semantic, or component as the root layer.",
     },
@@ -29,7 +30,7 @@ const CARD_DEFINITIONS: readonly CardDefinition[] = [
         name: "References follow the layer order",
         failedName: "Invalid layer references",
         issueFilter: (issue) => !isComponentReferenceIssue(issue),
-        description: "Allowed references: semantic → primitive and component → semantic. References within the same layer are not allowed.",
+        description: "Semantic tokens must reference primitives, and component tokens must reference semantics. References within the same layer are not allowed.",
         compatibilitySeverity: "warning",
         issueHeading: "Use a raw value or update the token structure to follow the allowed layer dependencies.",
     },
@@ -38,6 +39,8 @@ const CARD_DEFINITIONS: readonly CardDefinition[] = [
         issueIds: ["raw-value-usage"],
         name: "Raw values stay in primitive tokens",
         description: "Semantic and component tokens should use references.",
+        failedName: "Raw values outside primitive",
+        failedDescription: "Semantic and component tokens contain raw values instead of references.",
         compatibilitySeverity: "warning",
         issueHeading: "Move raw values to primitive tokens and reference them from semantic or component tokens.",
     },
@@ -46,6 +49,8 @@ const CARD_DEFINITIONS: readonly CardDefinition[] = [
         issueIds: ["bad-reference", "ref-to-group", "circular-reference", "deprecated-reference"],
         name: "No broken token references",
         description: "Every token reference points to an existing, valid token.",
+        failedName: "Token reference issues",
+        failedDescription: "Some references are missing, circular, point to groups, or use deprecated tokens.",
         issueHeading: "Create the missing token or update the reference.",
     },
     {
@@ -54,6 +59,8 @@ const CARD_DEFINITIONS: readonly CardDefinition[] = [
         issueFilter: isComponentReferenceIssue,
         name: "Component tokens stay independent",
         description: "Components should reference semantic tokens, not other components.",
+        failedName: "Component-to-component references",
+        failedDescription: "Component tokens reference other component tokens.",
         compatibilitySeverity: "warning",
         issueHeading: "Reference semantic tokens from component tokens.",
     },
@@ -62,18 +69,24 @@ const CARD_DEFINITIONS: readonly CardDefinition[] = [
         issueIds: ["type-mismatch"],
         name: "Token aliases keep their type",
         description: "Aliases resolve to tokens with a compatible type.",
+        failedName: "Token type mismatch",
+        failedDescription: "An alias points to a token with a different type.",
     },
     {
         id: "gradient-duplicate-stop",
         issueIds: ["gradient-duplicate-stop"],
         name: "Gradient stops are unambiguous",
         description: "Gradient stops use distinct positions.",
+        failedName: "Duplicate gradient stops",
+        failedDescription: "A gradient uses the same stop position more than once.",
     },
     {
         id: "empty-group",
         issueIds: ["empty-group"],
         name: "Token groups are not empty",
         description: "Named groups contain tokens or child groups.",
+        failedName: "Empty token groups",
+        failedDescription: "Some groups contain no tokens or child groups.",
     },
     {
         id: "missing-description",
@@ -81,6 +94,7 @@ const CARD_DEFINITIONS: readonly CardDefinition[] = [
         name: "Tokens have descriptions",
         failedName: "Missing token descriptions",
         description: "Tokens should have a non-empty $description to improve clarity and maintainability.",
+        failedDescription: "Some tokens have no description.",
         issueHeading: "Add a description in the variable settings in Figma, then run the analysis again.",
     },
     {
@@ -88,20 +102,24 @@ const CARD_DEFINITIONS: readonly CardDefinition[] = [
         issueIds: ["bad-tailwind-namespace"],
         name: "Tailwind namespaces are valid",
         description: "Tailwind namespace extensions use supported values.",
+        failedName: "Unsupported Tailwind namespace",
+        failedDescription: "Some tokens use unsupported Tailwind namespace values.",
     },
     {
         id: "bad-rem-base",
         issueIds: ["bad-rem-base"],
         name: "The rem base is valid",
         description: "The rem base extension uses a positive number.",
+        failedName: "Invalid rem base",
+        failedDescription: "The rem base must be a positive number.",
     },
 ];
 
-const NO_SOURCE_ISSUE: CheckIssue = {
-    id: "dtcg-reader",
-    message: "The plugin needs generated tokens before it can check architecture.",
-    severity: "error",
-};
+const EMPTY_TOKEN_CARD = {
+    name: "No tokens found",
+    description: "Add local Variables or Styles in Figma to run token checks.",
+} as const;
+const TOKEN_READ_FAILURE_DESCRIPTION = "The plugin could not read the generated token data.";
 
 export class TokenCheckAnalyzer {
 
@@ -114,17 +132,24 @@ export class TokenCheckAnalyzer {
         architectureWarnings: string[] = [],
         runFullLinting = false,
     ): TokenCheckReport {
+        if (list === undefined) {
+            const checks = readIssues.length > 0
+                ? [createTokenReadFailureCard(readIssues)]
+                : hasArchitectureAliasWarnings(architectureWarnings)
+                    ? [toCard("root-layer", "Architecture layers are defined", toArchitectureDescription(list), [])]
+                    : [createEmptyTokenCard()];
+            const hasArchitectureCard = checks.some((check) => check.state === undefined);
+            const warnings = hasArchitectureCard
+                ? applyArchitectureWarnings(checks, architectureWarnings)
+                : filterArchitectureWarnings(architectureWarnings);
+            return { checks, warnings };
+        }
+
         const checks = runFullLinting
             ? [...validationChecks(), ...lintingChecks()]
             : [...validationChecks(), ...lintingChecks()].filter((check) => COMPATIBILITY_CHECK_IDS.has(check.id));
-        const issues = list === undefined ? [] : new CheckRunner(checks).runList(list);
-        const readCardIssues = list === undefined && readIssues.length === 0
-            ? [NO_SOURCE_ISSUE]
-            : readIssues;
+        const issues = new CheckRunner(checks).runList(list);
         const cards = [
-            ...(readCardIssues.length === 0
-                ? []
-                : [toCard("dtcg-reader", "Token files are readable", "Generated token files are valid DTCG documents.", readCardIssues)]),
             ...CARD_DEFINITIONS.map((definition) => toCard(
                 definition.id,
                 definition.name,
@@ -134,6 +159,7 @@ export class TokenCheckAnalyzer {
                 definition.issueHeading,
                 runFullLinting ? undefined : definition.compatibilitySeverity,
                 definition.failedName,
+                definition.failedDescription,
             )).filter((_card, index) => {
                 const definition = CARD_DEFINITIONS[index];
                 return definition === undefined || runFullLinting || definition.issueIds.some((id) => checks.some((check) => check.id === id));
@@ -147,6 +173,27 @@ export class TokenCheckAnalyzer {
         };
     }
 
+}
+
+function createEmptyTokenCard(): TokenCheckCard {
+    return {
+        name: EMPTY_TOKEN_CARD.name,
+        description: EMPTY_TOKEN_CARD.description,
+        docsUrl: "",
+        passed: false,
+        severity: "info",
+        issues: [],
+        issueDetails: [],
+        notes: [],
+        state: "empty",
+    };
+}
+
+function createTokenReadFailureCard(issues: CheckIssue[]): TokenCheckCard {
+    return {
+        ...toCard("dtcg-reader", "Token data could not be checked", TOKEN_READ_FAILURE_DESCRIPTION, issues),
+        state: "read-failure",
+    };
 }
 
 /**
@@ -167,11 +214,13 @@ export interface TokenCheckCard {
     passed: boolean;
     severity: TokenCheckSeverity;
     issues: string[];
+    issueDetails: string[];
     issueHeading?: string;
     notes: string[];
+    state?: "empty" | "read-failure";
 }
 
-export type TokenCheckSeverity = "ok" | "warning" | "error";
+export type TokenCheckSeverity = "ok" | "warning" | "error" | "info";
 
 interface CardDefinition {
     id: string;
@@ -180,6 +229,7 @@ interface CardDefinition {
     /** Problem-oriented title shown instead of {@link name} when the check fails. */
     failedName?: string;
     description: string;
+    failedDescription?: string;
     issueHeading?: string;
     issueFilter?: (issue: CheckIssue) => boolean;
     compatibilitySeverity?: TokenCheckSeverity;
@@ -193,22 +243,32 @@ function toCard(
     issueHeading?: string,
     preferredSeverity?: TokenCheckSeverity,
     failedName?: string,
+    failedDescription?: string,
 ): TokenCheckCard {
     const passed = issues.length === 0;
     return {
         name: passed ? name : failedName ?? name,
-        description,
+        description: passed ? description : failedDescription ?? description,
         docsUrl: `${FIGMA_PLUGIN_GUIDE_URL}#${id}`,
         passed,
         severity: passed ? "ok" : preferredSeverity ?? toFailureSeverity(issues),
         issues: summarizeIssues(issues),
+        issueDetails: formatIssueMessages(issues),
         issueHeading,
         notes: [],
     };
 }
 
-function toFailureSeverity(issues: CheckIssue[]): Exclude<TokenCheckSeverity, "ok"> {
+function toFailureSeverity(issues: CheckIssue[]): Exclude<TokenCheckSeverity, "ok" | "info"> {
     return issues.some((issue) => issue.severity === "error") ? "error" : "warning";
+}
+
+function filterArchitectureWarnings(warnings: string[]): string[] {
+    return unique(warnings.filter((warning) => ARCHITECTURE_ALIAS_PATTERN.exec(warning) === null));
+}
+
+function hasArchitectureAliasWarnings(warnings: string[]): boolean {
+    return warnings.some((warning) => ARCHITECTURE_ALIAS_PATTERN.exec(warning) !== null);
 }
 
 function isComponentReferenceIssue(issue: CheckIssue): boolean {
@@ -236,16 +296,15 @@ function applyArchitectureWarnings(cards: TokenCheckCard[], warnings: string[]):
         rootCard.passed = false;
         rootCard.severity = rootCard.severity === "error" ? "error" : "warning";
         const group = groups.length === 1 ? groups[0] : undefined;
-        rootCard.description = group === undefined
-            ? `Non-canonical layer names ${formatQuotedList(groups.map((item) => item.alias))} detected. Consider renaming them to ${formatQuotedList(unique(groups.map((item) => item.canonicalLayer)))} for consistency.`
-            : `Non-canonical layer name “${group.alias}” detected. Consider renaming it to “${group.canonicalLayer}” for consistency.`;
+        rootCard.description = formatLayerAliasDescription(groups);
         rootCard.issueHeading = group === undefined
             ? "Rename layer aliases to their canonical layer names."
             : `Rename the “${group.alias}” group to “${group.canonicalLayer}”.`;
         rootCard.issues = [...rootCard.issues, ...groups.map(formatArchitectureWarning)];
+        rootCard.issueDetails = [...rootCard.issueDetails, ...formatArchitectureWarningDetails(warnings)];
     }
 
-    return unique(warnings.filter((warning) => ARCHITECTURE_ALIAS_PATTERN.exec(warning) === null));
+    return filterArchitectureWarnings(warnings);
 }
 
 function summarizeArchitectureWarnings(warnings: string[]): ArchitectureWarningGroup[] {
@@ -276,16 +335,38 @@ function formatArchitectureWarning(group: ArchitectureWarningGroup): string {
         : `"${group.path}" and ${group.count - 1} more tokens use the alias "${group.alias}".`;
 }
 
+function formatLayerAliasDescription(groups: ArchitectureWarningGroup[]): string {
+    const group = groups.length === 1 ? groups[0] : undefined;
+    if (group !== undefined) {
+        return `The layer name "${group.alias}" is supported, but "${group.canonicalLayer}" is recommended.`;
+    }
+
+    const aliases = formatQuotedList(unique(groups.map((item) => item.alias)));
+    const canonicalLayers = formatQuotedList(unique(groups.map((item) => item.canonicalLayer)));
+    return `The layer names ${aliases} are supported, but ${canonicalLayers} are recommended.`;
+}
+
 function summarizeIssues(issues: CheckIssue[]): string[] {
-    const messages = unique(issues.map((issue) => issue.sourcePath === undefined
-        ? issue.message
-        : `${issue.sourcePath}: ${issue.message}`));
+    const messages = formatIssueMessages(issues);
     const first = messages[0];
     if (first === undefined || messages.length === 1) {
         return messages;
     }
 
     return [`${first} and ${messages.length - 1} more issues.`];
+}
+
+function formatIssueMessages(issues: CheckIssue[]): string[] {
+    return unique(issues.map((issue) => issue.sourcePath === undefined
+        ? issue.message
+        : `${issue.sourcePath}: ${issue.message}`));
+}
+
+function formatArchitectureWarningDetails(warnings: string[]): string[] {
+    return unique(warnings.flatMap((warning) => {
+        const match = ARCHITECTURE_ALIAS_PATTERN.exec(warning);
+        return match === null ? [] : [`"${match[1]}" uses the alias "${match[2]}".`];
+    }));
 }
 
 function formatQuotedList(values: string[]): string {

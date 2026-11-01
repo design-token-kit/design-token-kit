@@ -28,6 +28,8 @@ https://design-token-kit.github.io/
   group references, type mismatches, and deprecated token usage
  * **Lint checks** - cross-layer references, raw value placement, empty groups,
    and optional missing token descriptions
+* **Design audit** - WCAG text contrast of text and background color pairs,
+  readable font sizes, and body text line heights, with a 0-100 score
 * **[HRDT YAML support][hrdt]** - a compact, human-readable alternative to
   DTCG JSON
 * **[DESIGN.md support][designmd]** -
@@ -176,6 +178,12 @@ write a parsed document back to any supported source format.
 ## Main APIs
 
 * `TokenChecker` - check token sources with the full pipeline
+* `TokenAuditor` - audit the design quality of token sources: text contrast
+  and readability
+* `auditTextSamples()` - apply the audit rules to text samples from any source
+* `TokenTextSampler` - build the text samples a token set implies
+* `contrastRatio()`, `minimumContrast()`, `isLargeText()`, `toSrgbColor()` -
+  WCAG contrast helpers
 * `DtcgListLoader` - load base and theme sources into a `DtcgList`
 * `tokenFormats` - the registry of readable formats
 * `FormatDescriptor` - everything one format declares: suffixes, detection, reader, writer
@@ -263,9 +271,85 @@ for (const issue of issues) {
 }
 ```
 
+Use `checkReport()` when the caller also needs the token architecture score.
+The score is the percentage of checks that ran and passed; warnings and errors
+count equally as failed checks.
+An unreadable source or a fail-fast pipeline that skips checks has no score.
+The report lists skipped check ids in `notChecked`.
+
+```ts
+const report = await new TokenChecker().checkReport(["./tokens.json"]);
+
+if (report.score !== undefined) {
+  console.log(`${report.score.score}/100 (${report.score.grade})`);
+}
+```
+
 Format and schema errors come from the reader itself, so a source that fails
 them yields no document at all - a half-built model would make every reference
 into it look broken. Use `CheckScope` to run only the checks you want on top.
+
+## Design Audit
+
+Use `TokenAuditor` to learn whether the design a token set describes is
+accessible and readable. `TokenChecker` tells whether tokens are valid;
+`TokenAuditor` tells whether text set with them can be read.
+
+```ts
+import { TokenAuditor } from "@design-token-kit/core";
+
+const result = await new TokenAuditor({ level: "AA" }).audit([
+  "./tokens.json",
+  "./tokens.dark.json",
+]);
+
+if (result.ok) {
+  const { findings, unchecked, score } = result.report;
+  for (const finding of findings) {
+    console.log(finding.id, finding.severity, finding.theme ?? "base", finding.message);
+  }
+  console.log(score !== undefined
+    ? `${unchecked.length} not checked, score ${score.score} (${score.grade})`
+    : `${unchecked.length} not checked, score unavailable`);
+}
+```
+
+Rules:
+
+* `text-contrast` (error) - contrast below the WCAG 2.2 AA minimum: 4.5:1 for
+  normal text, 3:1 for large text. With `level: "AAA"`, text that meets AA but
+  not AAA is a warning.
+* `text-size` (warning) - text below `minFontSizePx`, 12 by default.
+* `line-height` (warning) - text below `headingSizePx` (18 by default) whose
+  line height is below `minBodyLineHeight` (1.3 by default).
+
+`TokenTextSampler` turns a token set into text samples: pairs of a text and a
+background color, matched by name (`text-*` with `background-*`, `bg-*`,
+`surface-*` or `canvas-*` in the same group, `on-X` with `X`), and typography
+tokens. Each theme is sampled over the base set and keeps only what it changes.
+Pairs on a translucent background are returned as `unchecked` and do not
+affect the score. When every sample is unchecked, the score is unavailable.
+
+The score is `100 - 2 x errors - 0.1 x warnings`, rounded and never below 0,
+graded A (90+), B (80-89), C (70-79), D (60-69) or F. `scoreWeights` changes
+the weights.
+
+The rules do not depend on tokens. Any source that can describe its text - a
+Figma text node, for instance - can be audited with `auditTextSamples()`:
+
+```ts
+import { auditTextSamples } from "@design-token-kit/core";
+
+const { findings } = auditTextSamples([{
+  id: "1:23",
+  label: "Card / Caption",
+  foreground: { red: 0.63, green: 0.64, blue: 0.67, alpha: 1 },
+  background: { red: 1, green: 1, blue: 1, alpha: 1 },
+  fontSizePx: 11,
+  fontWeight: 400,
+  lineHeight: 1.2,
+}], { level: "AA" });
+```
 
 ## Browser API
 

@@ -1325,13 +1325,21 @@
         "$value": "{primitive.color.neutral.900}"
       },
       "text-secondary": {
-        "$value": "{primitive.color.neutral.600}"
+        "$value": "{primitive.color.neutral.700}"
       },
       "text-tertiary": {
-        "$value": "{primitive.color.neutral.400}"
+        "$value": "{primitive.color.neutral.600}"
       },
       "text-inverse": {
         "$value": "{primitive.color.white}"
+      },
+      "text-on-action": {
+        "$value": "{primitive.color.white}",
+        "$description": "Text on a filled primary action. White in every theme."
+      },
+      "text-on-status": {
+        "$value": "{primitive.color.black}",
+        "$description": "Text on a filled status colour. Black in every theme, since status colours are bright."
       },
       "text-link": {
         "$value": "{semantic.color.brand.500}"
@@ -1585,7 +1593,7 @@
           "$value": "{semantic.color.action-primary-active}"
         },
         "text": {
-          "$value": "{semantic.color.text-inverse}"
+          "$value": "{semantic.color.text-on-action}"
         },
         "radius": {
           "$value": "{semantic.shape.radius-md}"
@@ -1663,10 +1671,10 @@
           "$value": "{semantic.color.status-danger}"
         },
         "background-hover": {
-          "$value": "{semantic.color.status-danger-hover}"
+          "$value": "{semantic.color.danger.400}"
         },
         "text": {
-          "$value": "{semantic.color.text-inverse}"
+          "$value": "{semantic.color.text-on-status}"
         },
         "radius": {
           "$value": "{semantic.shape.radius-md}"
@@ -1779,7 +1787,7 @@
           "$value": "{semantic.color.status-success}"
         },
         "text": {
-          "$value": "{semantic.color.text-inverse}"
+          "$value": "{semantic.color.text-on-status}"
         },
         "radius": {
           "$value": "{semantic.shape.radius-full}"
@@ -1793,7 +1801,7 @@
           "$value": "{semantic.color.status-warning}"
         },
         "text": {
-          "$value": "{semantic.color.text-primary}"
+          "$value": "{semantic.color.text-on-status}"
         },
         "radius": {
           "$value": "{semantic.shape.radius-full}"
@@ -1807,7 +1815,7 @@
           "$value": "{semantic.color.status-danger}"
         },
         "text": {
-          "$value": "{semantic.color.text-inverse}"
+          "$value": "{semantic.color.text-on-status}"
         },
         "radius": {
           "$value": "{semantic.shape.radius-full}"
@@ -1821,7 +1829,7 @@
           "$value": "{semantic.color.status-info}"
         },
         "text": {
-          "$value": "{semantic.color.text-inverse}"
+          "$value": "{semantic.color.text-on-status}"
         },
         "radius": {
           "$value": "{semantic.shape.radius-full}"

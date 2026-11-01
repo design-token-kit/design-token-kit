@@ -6,6 +6,13 @@ export default tseslint.config(
     eslint.configs.recommended,
     tseslint.configs.recommended,
     {
+        // The Figma plugin rules read node types, so they need type information.
+        languageOptions: {
+            parserOptions: {
+                projectService: true,
+                tsconfigRootDir: import.meta.dirname,
+            },
+        },
         plugins: {
             "@figma/figma-plugins": figmaPlugin,
         },
@@ -22,6 +29,6 @@ export default tseslint.config(
         },
     },
     {
-        ignores: ["code.js", ".figma-build", "dist", "eslint.config.js"],
+        ignores: ["code.js", ".figma-build", "dist", "coverage", "eslint.config.js"],
     },
 );

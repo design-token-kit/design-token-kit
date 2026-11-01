@@ -8,6 +8,7 @@ describe("check", () => {
     it("passes for a fully valid file (default scope)", async () => {
         const result = await run(checkCommand, resolve(__dirname, "valid.json"));
         expect(result.status).toBe(0);
+        expect(result.stdout).toContain("Token architecture score: 100/100 (A)");
         expect(result.stdout).toContain("Check passed.");
     });
 
@@ -20,6 +21,15 @@ describe("check", () => {
         const result = await run(checkCommand, resolve(__dirname, "invalid-values.json"));
         expect(result.status).toBe(2);
         expect(result.stderr).toContain("[bad-reference]");
+        expect(result.stdout).toContain("Token architecture score: 80/100 (B)");
+    });
+
+    it("does not report a partial score when lint checks are skipped", async () => {
+        const result = await run(checkCommand, resolve(__dirname, "invalid-values.json"), "--scope", "lint");
+
+        expect(result.status).toBe(2);
+        expect(result.stdout).toContain("Token architecture score: unavailable");
+        expect(result.stdout).toContain("checks not run");
     });
 
     describe("--scope schema", () => {

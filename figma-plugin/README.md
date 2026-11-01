@@ -11,6 +11,9 @@ them through `@design-token-kit/core` to platform formats.
 - preserves local variable aliases as DTCG references when possible
 - exports variable modes as theme files
 - shows token counts, skipped entries, and warnings in the plugin UI
+- audits the text of the current page or the whole file for contrast and
+  readability, and its layers for hard-coded values and primitive variables,
+  and selects the layers it reports
 - keeps raw Plugin API and REST API JSON exports for diagnostics
 
 ## Scripts
@@ -47,6 +50,40 @@ There is no need to import `manifest.json` again.
 4. Click **...** next to the plugin.
 5. Select **Publish new version**.
 6. Click **Publish**.
+
+## Design Audit
+
+The **Design** tab audits the text layers of the current page, or of every page
+with **Entire file**, by the accessibility and readability rules of
+`@design-token-kit/core` (see `dtokens audit`):
+
+- **Text contrast is below WCAG AA** (error): contrast with the background
+  below 4.5:1, or 3:1 for large text (24px, or 18.66px bold).
+- **Text is smaller than 12px** (warning).
+- **Body text lines are too tight** (warning): wrapped text below 18px with a
+  line height below 1.3.
+
+It also audits whether the layers are built from tokens:
+
+- **Values are not bound to variables** (warning): fills, strokes, radii, gaps,
+  paddings and font sizes that are hard-coded, with the local variable or style
+  that has the same or a close value.
+- **Layers use primitive variables directly** (warning): properties bound to a
+  `primitive` variable where `semantic` ones exist.
+- **Token coverage**: the share of these properties bound to a variable or a
+  style.
+
+Each category has its own score from 0 to 100 with an A-F grade. Neither is a
+WCAG conformance level; only text contrast is a WCAG criterion.
+
+Text on a gradient or an image, and text with several colours, is listed under
+**Not checked** and does not affect the score. **Select** selects a layer in
+Figma and zooms to it. The audit is read-only: it never changes the file.
+
+[docs/design-audit.md](docs/design-audit.md) describes which layers are
+audited, how the text and background colours are read, each check, how the
+plugin applies WCAG AA, how tokens are suggested, the score, and the
+limitations.
 
 ## Exported Tokens
 

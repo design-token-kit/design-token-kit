@@ -1,3 +1,7 @@
+import { DesignAuditor } from "#/figma-plugin/design-audit/DesignAuditor";
+import { FigmaTextSampler } from "#/figma-plugin/design-audit/FigmaTextSampler";
+import { readTokenCandidates } from "#/figma-plugin/design-audit/FigmaTokenCandidates";
+import { FigmaUsageSampler } from "#/figma-plugin/design-audit/FigmaUsageSampler";
 import type { FigmaFileReader } from "#/figma-plugin/FigmaFileReader";
 import { PluginFigmaFileReader, RestFigmaFileReader } from "#/figma-plugin/index";
 import { TokenConversionService, type TokenOutputFormat } from "#/figma-plugin/token-export/TokenConversionService";
@@ -21,6 +25,16 @@ figma.ui.onmessage = async (msg: PluginMessage) => {
 
     if (msg.type === "ANALYZE_TOKENS") {
         await analyzeTokens(msg.linting === true);
+        return;
+    }
+
+    if (msg.type === "AUDIT_DESIGN") {
+        await auditDesign(msg.scope === "file" ? "file" : "page");
+        return;
+    }
+
+    if (msg.type === "SELECT_NODES") {
+        await selectNodes(msg.ids);
         return;
     }
 
@@ -74,6 +88,67 @@ async function analyzeTokens(runFullLinting: boolean): Promise<void> {
             },
         });
     }
+}
+
+async function auditDesign(scope: "page" | "file"): Promise<void> {
+    try {
+        if (scope === "file") {
+            await figma.loadAllPagesAsync();
+        }
+        const pages = scope === "file" ? figma.root.children : [figma.currentPage];
+        const textNodes = pages.flatMap((page) => page.findAllWithCriteria({ types: ["TEXT"] }));
+        const sampled = new FigmaTextSampler().sample(textNodes, scope === "file");
+        const [properties, candidates] = await Promise.all([
+            new FigmaUsageSampler().sample(pages, scope === "file"),
+            readTokenCandidates(),
+        ]);
+        const report = new DesignAuditor().audit(sampled, properties, candidates);
+
+        figma.ui.postMessage({
+            type: "DESIGN_AUDITED",
+            payload: { scope, ...report },
+        });
+    } catch (error: unknown) {
+        const message = getErrorMessage(error);
+        figma.notify(message, { error: true });
+        figma.ui.postMessage({
+            type: "DESIGN_AUDIT_FAILED",
+            payload: { message },
+        });
+    }
+}
+
+/**
+ * Selects nodes and brings them into view, switching to the page of the
+ * first one; nodes on other pages are left out.
+ */
+async function selectNodes(ids: readonly string[]): Promise<void> {
+    const found = await Promise.all(ids.map((id) => figma.getNodeByIdAsync(id)));
+    const nodes = found.filter((node): node is SceneNode => node !== null && isSceneNode(node));
+    const page = nodes.length === 0 ? undefined : pageOf(nodes[0]);
+    if (page === undefined) {
+        figma.notify("The selected layers no longer exist.");
+        return;
+    }
+
+    if (page.id !== figma.currentPage.id) {
+        await figma.setCurrentPageAsync(page);
+    }
+    const onPage = nodes.filter((node) => pageOf(node)?.id === page.id);
+    page.selection = onPage;
+    figma.viewport.scrollAndZoomIntoView(onPage);
+}
+
+function isSceneNode(node: BaseNode): node is SceneNode {
+    return node.type !== "DOCUMENT" && node.type !== "PAGE";
+}
+
+function pageOf(node: BaseNode): PageNode | undefined {
+    let current: BaseNode | null = node;
+    while (current !== null && current.type !== "PAGE") {
+        current = current.parent;
+    }
+    return current ?? undefined;
 }
 
 async function exportTokens(format: TokenOutputFormat): Promise<void> {
@@ -175,6 +250,8 @@ function toTokenOutputFormat(type: PluginMessage["type"]): TokenOutputFormat | u
 type PluginMessage =
     | { type: "EXPORT_PLUGIN_JSON" }
     | { type: "ANALYZE_TOKENS"; linting?: boolean }
+    | { type: "AUDIT_DESIGN"; scope?: "page" | "file" }
+    | { type: "SELECT_NODES"; ids: string[] }
     | { type: "EXPORT_TOKENS_JSON" }
     | { type: "EXPORT_TOKENS_DTCG" }
     | { type: "EXPORT_TOKENS_CSS" }

@@ -5,6 +5,7 @@ import {
     CheckScope,
     type CheckInfo,
     type CheckSelectionWarning,
+    type CheckScore,
 } from "@design-token-kit/core";
 import { toDocumentFormat } from "#commands/formats";
 import { hasErrors, printIssues } from "#commands/issues";
@@ -51,6 +52,12 @@ export const checkCommand = new Command("check")
     .option("--schema <path>", schemaOptionDescription())
     .option("-i, --inform [format]", "Input format: dtcg, hrdt, design-md (default: auto-detect)")
     .addHelpText("after", formatAvailableChecks(listChecks()))
+    .addHelpText("after", `
+Token architecture score:
+  100 x passed checks / checks that ran, rounded down.
+  Warnings and errors count equally as failed checks.
+  Grades: A 90+, B 80-89, C 70-79, D 60-69, F below 60.
+  No score is reported when the input cannot be read or fail-fast skips checks.`)
     .addHelpText("after", "\nExit status:\n  0  success\n  1  unexpected error\n  2  issues found")
     .action(async (files: string[], options: CheckOptions) => {
         try {
@@ -63,9 +70,15 @@ export const checkCommand = new Command("check")
                 inform: options.inform !== undefined ? toDocumentFormat(options.inform) : undefined,
             });
             printSelectionWarnings(checker.checkSelectionWarnings());
-            const issues = await checker.check(sources);
-            printIssues(issues);
-            if (hasErrors(issues)) {
+            const report = await checker.checkReport(sources);
+            printIssues(report.issues);
+            if (report.score !== undefined) {
+                console.log(formatScore(report.score));
+            }
+            else if (report.notChecked.length > 0) {
+                console.log(`Token architecture score: unavailable - ${count(report.notChecked.length, "check")} not run.`);
+            }
+            if (hasErrors(report.issues)) {
                 process.exit(EXIT_ISSUES);
             }
             console.log("Check passed.");
@@ -75,6 +88,17 @@ export const checkCommand = new Command("check")
             process.exit(EXIT_FAILURE);
         }
     });
+
+function formatScore(score: CheckScore): string {
+    return `Token architecture score: ${score.score}/100 (${score.grade}) - `
+        + `${count(score.passed, "passed check")}, `
+        + `${count(score.warnings, "warning")}, `
+        + `${count(score.errors, "error")}.`;
+}
+
+function count(value: number, noun: string): string {
+    return `${value} ${noun}${value === 1 ? "" : "s"}`;
+}
 
 function printSelectionWarnings(warnings: CheckSelectionWarning[]): void {
     for (const warning of warnings) {

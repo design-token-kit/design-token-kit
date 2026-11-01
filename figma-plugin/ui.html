@@ -280,6 +280,21 @@
             color: var(--color-success-text);
         }
 
+        .tab__loader {
+            width: 14px;
+            height: 14px;
+            border: 2px solid var(--color-brand-soft-border);
+            border-top-color: var(--color-brand-primary);
+            border-radius: 50%;
+            animation: tab-loader-spin .7s linear infinite;
+        }
+
+        @keyframes tab-loader-spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
         .sheet {
             padding: var(--size-sheet-padding);
             border: 1px solid var(--color-border-sheet);
@@ -341,65 +356,6 @@
         .subtle {
             font-size: var(--font-size-base-sm);
             color: var(--color-text-muted);
-        }
-
-        /* Status chip */
-
-        .chip {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            height: var(--size-chip-height);
-            padding: 0 9px;
-            border-radius: 12px;
-            background: var(--color-bg-segment);
-            color: var(--color-text-label);
-            font-size: var(--font-size-sm);
-            font-weight: 800;
-            white-space: nowrap;
-        }
-
-        .chip::before {
-            content: "";
-            flex: none;
-            width: 7px;
-            height: 7px;
-            border-radius: 4px;
-            background: currentColor;
-        }
-
-        .chip--error {
-            background: var(--color-error-badge-bg);
-            color: var(--color-error-text);
-        }
-
-        .chip--warning {
-            background: var(--color-warning-badge-bg);
-            color: var(--color-warning-text);
-        }
-
-        .chip--success {
-            background: var(--color-success-badge-bg);
-            color: var(--color-success-text);
-        }
-
-        .score {
-            flex: none;
-            display: block;
-            width: 44px;
-            height: 48px;
-        }
-
-        .score svg {
-            display: block;
-            width: 100%;
-            height: 100%;
-        }
-
-        .score text {
-            font-family: inherit;
-            font-weight: 800;
-            font-variant-numeric: tabular-nums;
         }
 
         /* Buttons */
@@ -575,11 +531,34 @@
             align-items: center;
             gap: 10px;
             flex-wrap: wrap;
-            margin-top: 12px;
             padding: 8px 12px;
             border: 1px solid var(--color-border-recommend);
             border-radius: var(--radius-lg);
-            background: var(--color-bg-tint);
+            background: transparent;
+        }
+
+        .architecture-overview {
+            margin-top: 12px;
+            overflow: hidden;
+            border: 1px solid var(--color-border-default);
+            border-radius: var(--radius-xl);
+            background: var(--color-bg-surface);
+        }
+
+        .architecture-overview .check-score {
+            margin: 0;
+            border: 0;
+            border-radius: 0;
+        }
+
+        .architecture-overview .recommend {
+            border: 0;
+            border-top: 1px solid var(--color-border-recommend);
+            border-radius: 0;
+        }
+
+        .architecture-overview .check-score[hidden] + .recommend {
+            border-top: 0;
         }
 
         .recommend__title {
@@ -608,6 +587,8 @@
 
         .layer-chain__arrow {
             color: var(--color-text-icon);
+            font-size: 16px;
+            font-weight: 800;
         }
 
         .layer-chip {
@@ -669,6 +650,11 @@
         .finding--error {
             border-color: var(--color-error-border);
             background: var(--color-error-bg);
+        }
+
+        .finding--info {
+            border-color: var(--color-border-default);
+            background: var(--color-bg-subtle);
         }
 
         .finding__head {
@@ -772,23 +758,24 @@
             color: var(--color-text-muted);
         }
 
-        .finding__fix {
-            display: flex;
-            align-items: baseline;
-            gap: 12px;
-        }
-
-        .finding__fix p {
-            flex: 1;
-            font-size: var(--font-size-base-sm);
-            line-height: 1.45;
-        }
-
-        .finding__fix strong {
+        button.examples__more {
+            width: 100%;
+            border: 0;
+            background: transparent;
             color: var(--color-brand-text);
+            font: inherit;
+            text-align: left;
+            text-decoration: underline;
+            text-underline-offset: 2px;
+            cursor: pointer;
+        }
+
+        button.examples__more:hover {
+            color: var(--color-brand-primary-hover);
         }
 
         .docs {
+            align-self: flex-end;
             flex: none;
             font-size: var(--font-size-base);
             font-weight: 700;
@@ -799,22 +786,55 @@
             text-decoration: underline;
         }
 
-        .passed {
-            margin-top: 12px;
+        .check-score {
+            border: 1px solid var(--color-border-default);
+            border-radius: var(--radius-xl);
+            background: var(--color-bg-surface);
+        }
+
+        .check-score__head {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            flex-wrap: wrap;
+            padding: 10px 10px 10px 14px;
+        }
+
+        .check-score__head .score-summary__value {
+            flex: none;
+        }
+
+        .check-score__verdict {
+            flex: 1;
+            min-width: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 4px;
+            padding-left: 14px;
+            border-left: 1px solid var(--color-border-divider);
+        }
+
+        .check-score .score-formula {
+            margin: 0 14px 12px;
         }
 
         .passed__toggle {
-            display: flex;
+            flex: none;
+            display: inline-flex;
             align-items: center;
             gap: 8px;
-            width: 100%;
-            padding: 4px 0;
+            height: var(--size-button-md);
+            padding: 0 10px;
             border: 0;
             border-radius: var(--radius-md);
             background: transparent;
             font-size: var(--font-size-base);
             font-weight: 800;
-            text-align: left;
+        }
+
+        .passed__toggle:hover {
+            background: var(--color-bg-subtle);
         }
 
         .passed__toggle .chevron {
@@ -825,8 +845,9 @@
             display: grid;
             grid-template-columns: repeat(2, minmax(0, 1fr));
             gap: 8px 16px;
-            margin: 8px 0 0;
-            padding: 0;
+            margin: 0;
+            padding: 12px 14px 14px;
+            border-top: 1px solid var(--color-border-divider);
             list-style: none;
         }
 
@@ -978,15 +999,581 @@
 
         /* Design tab */
 
-        .design-placeholder {
+        .audit-category {
             display: flex;
             flex-direction: column;
-            gap: 6px;
+            gap: 0;
         }
 
-        .design-placeholder__title {
-            font-size: var(--font-size-h3);
+        .audit-category__head {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 16px;
+        }
+
+        .audit-category__title {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .audit-category__title h2 {
+            font-size: var(--font-size-xl);
             font-weight: 800;
+        }
+
+        .audit-category__title p {
+            color: var(--color-text-body);
+            font-size: var(--font-size-base-sm);
+            line-height: 1.5;
+        }
+
+        .audit-category__result {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex: none;
+            align-self: flex-start;
+            margin-top: 3px;
+            color: var(--color-text-muted);
+            font-size: var(--font-size-sm);
+        }
+
+        .audit-score {
+            display: grid;
+            grid-template-columns: repeat(6, minmax(0, 1fr));
+            margin-top: 14px;
+            overflow: hidden;
+            border: 1px solid var(--color-border-default);
+            border-radius: var(--radius-xl);
+            background: var(--color-bg-surface);
+        }
+
+        .score-summary {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 6px;
+            padding: 12px 14px;
+        }
+
+        .score-summary__value {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .score-summary__number {
+            font-size: 30px;
+            font-weight: 800;
+            line-height: 1;
+        }
+
+        .score-summary__max {
+            font-size: var(--font-size-sm);
+            font-weight: 700;
+            color: var(--color-text-muted);
+        }
+
+        .grade {
+            display: inline-flex;
+            align-items: center;
+            height: 26px;
+            padding: 0 9px;
+            border: 1px solid var(--color-brand-soft-border);
+            border-radius: var(--radius-sm);
+            background: var(--color-brand-soft);
+            color: var(--color-brand-text);
+            font-size: var(--font-size-base);
+            font-weight: 800;
+        }
+
+        .grade--fair {
+            border-color: var(--color-warning-border);
+            background: var(--color-warning-badge-bg);
+            color: var(--color-warning-text);
+        }
+
+        .grade--poor {
+            border-color: var(--color-error-border);
+            background: var(--color-error-badge-bg);
+            color: var(--color-error-text);
+        }
+
+        .score-summary__verdict {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: var(--font-size-sm);
+            font-weight: 700;
+            color: var(--color-error-text);
+        }
+
+        .score-summary__verdict::before {
+            content: "";
+            flex: none;
+            width: 7px;
+            height: 7px;
+            border-radius: 4px;
+            background: var(--color-error-icon);
+        }
+
+        .score-summary__verdict--success {
+            color: var(--color-success-text);
+        }
+
+        .score-summary__verdict--success::before {
+            background: var(--color-success-icon);
+        }
+
+        .score-summary__verdict--warning {
+            color: var(--color-warning-text);
+        }
+
+        .score-summary__verdict--warning::before {
+            background: var(--color-warning-icon);
+        }
+
+        .score-summary__coverage {
+            font-size: var(--font-size-sm);
+            color: var(--color-text-muted);
+        }
+
+        .score-summary__label {
+            font-size: var(--font-size-xs);
+            font-weight: 700;
+            color: var(--color-text-label);
+        }
+
+        .audit-score .score-summary {
+            grid-column: span 3;
+        }
+
+        .audit-score .score-summary + .score-summary {
+            border-left: 1px solid var(--color-border-divider);
+        }
+
+        .audit-score--single .score-summary {
+            grid-column: 1 / -1;
+        }
+
+        .audit-score--single .score-summary + .score-summary {
+            border-left: 0;
+        }
+
+        .audit-score .score-summary[hidden] {
+            display: none;
+        }
+
+        .audit-category .audit-score .score-summary {
+            grid-column: 1 / -1;
+        }
+
+        .audit-category .audit-score .score-summary + .score-summary {
+            border-left: 0;
+        }
+
+        .accessibility-score {
+            grid-template-columns: auto minmax(0, 1fr) auto;
+        }
+
+        .accessibility-score__value {
+            flex: none;
+            align-self: stretch;
+            padding: 10px 14px;
+            border-right: 1px solid var(--color-border-divider);
+        }
+
+        .accessibility-score__verdict {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            justify-content: center;
+            gap: 4px;
+            min-width: 0;
+            padding: 10px 14px;
+        }
+
+        .token-usage-score {
+            grid-template-columns: auto minmax(0, 1fr);
+        }
+
+        .token-usage-score__value {
+            align-self: stretch;
+            padding: 10px 14px;
+            border-right: 1px solid var(--color-border-divider);
+        }
+
+        .token-usage-score__details {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            justify-content: center;
+            gap: 4px;
+            min-width: 0;
+            padding: 10px 14px;
+        }
+
+        .token-usage-score .score-formula {
+            grid-column: 1 / -1;
+            margin: 0 14px 12px;
+        }
+
+        .accessibility-score .score-formula {
+            grid-column: 1 / -1;
+            margin: 0 14px 12px;
+        }
+
+        .audit-formula-toggle {
+            margin-top: 8px;
+        }
+
+        .audit-score__cell {
+            grid-column: span 2;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 2px;
+            padding: 10px 4px;
+            border: 0;
+            border-top: 1px solid var(--color-border-divider);
+            border-left: 1px solid var(--color-border-divider);
+            background: transparent;
+            color: var(--color-text-primary);
+        }
+
+        .score-summary + .audit-score__cell {
+            border-left: 0;
+        }
+
+        .audit-score__cell:hover {
+            background: var(--color-bg-subtle);
+        }
+
+        .audit-score__cell[aria-pressed="true"] {
+            background: var(--color-brand-soft);
+        }
+
+        .audit-score__count {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 20px;
+            font-weight: 800;
+        }
+
+        .audit-score__label {
+            font-size: var(--font-size-xs);
+            font-weight: 600;
+            color: var(--color-text-muted);
+        }
+
+        .dot {
+            flex: none;
+            width: 8px;
+            height: 8px;
+            border-radius: 4px;
+            background: var(--color-error-icon);
+        }
+
+        .dot--warning {
+            border-radius: 2px;
+            background: var(--color-warning-icon);
+        }
+
+        .dot--unchecked {
+            border: 2px solid var(--color-text-icon);
+            background: transparent;
+        }
+
+        .score-formula {
+            margin-top: 10px;
+            padding: 12px 14px;
+            border: 1px solid var(--color-border-default);
+            border-radius: var(--radius-lg);
+            background: var(--color-bg-tint);
+            font-size: var(--font-size-base-sm);
+            line-height: 1.6;
+            color: var(--color-text-body);
+        }
+
+        .score-formula strong {
+            color: var(--color-text-primary);
+        }
+
+        .text-btn {
+            align-self: flex-start;
+            padding: 0;
+            border: 0;
+            background: transparent;
+            color: var(--color-brand-text);
+            font-size: var(--font-size-base-sm);
+            font-weight: 700;
+        }
+
+        .text-btn:hover {
+            text-decoration: underline;
+        }
+
+        .audit-filters {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin: 14px calc(var(--size-card-padding) * -1) 0;
+            padding: 12px var(--size-card-padding) 10px;
+            border-bottom: 1px solid var(--color-border-divider);
+        }
+
+        .audit-filters h2 {
+            font-size: 16px;
+            font-weight: 800;
+        }
+
+        .audit-filters__result {
+            margin-left: auto;
+            font-size: var(--font-size-sm);
+            color: var(--color-text-muted);
+        }
+
+        .audit-groups {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            padding-top: 12px;
+        }
+
+        .audit-section-title {
+            display: flex;
+            align-items: baseline;
+            gap: 8px;
+            padding: 10px 2px 0;
+        }
+
+        .audit-section-title h3 {
+            font-size: var(--font-size-base);
+            font-weight: 800;
+            letter-spacing: .06em;
+            text-transform: uppercase;
+            color: var(--color-text-body);
+        }
+
+        .audit-section-title span {
+            font-size: var(--font-size-sm);
+            color: var(--color-text-muted);
+        }
+
+        .group {
+            border: 1px solid var(--color-border-default);
+            border-radius: var(--radius-xl);
+            background: var(--color-bg-surface);
+        }
+
+        .group:hover {
+            border-color: var(--color-border-strong);
+        }
+
+        .group.is-open {
+            border-color: #CFC4B1;
+            box-shadow: var(--shadow-card-hover);
+        }
+
+        .group__head {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            width: 100%;
+            padding: 12px 14px;
+            border: 0;
+            border-radius: var(--radius-xl);
+            background: transparent;
+            text-align: left;
+            color: var(--color-text-primary);
+        }
+
+        .group__titles {
+            flex: 1;
+            min-width: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 1px;
+        }
+
+        .group__title {
+            font-size: var(--font-size-lg-plus);
+            font-weight: 800;
+            line-height: 1.3;
+        }
+
+        .group__category {
+            font-size: var(--font-size-sm);
+            color: var(--color-text-muted);
+        }
+
+        .group__count {
+            flex: none;
+            display: inline-flex;
+            align-items: center;
+            height: var(--size-chip-height);
+            padding: 0 9px;
+            border-radius: 12px;
+            background: var(--color-bg-hover);
+            color: var(--color-text-label);
+            font-size: var(--font-size-sm);
+            font-weight: 700;
+        }
+
+        .group__body {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            padding: 0 14px 10px 44px;
+        }
+
+        .group__description {
+            font-size: var(--font-size-base);
+            line-height: 1.5;
+            color: var(--color-text-body);
+        }
+
+        .group__fix {
+            display: flex;
+            gap: 8px;
+            padding: 8px 10px;
+            border-radius: 9px;
+            background: var(--color-bg-subtle);
+            font-size: var(--font-size-base-sm);
+            line-height: 1.45;
+        }
+
+        .group__fix-label {
+            flex: none;
+            padding-top: 1px;
+            font-size: var(--font-size-2xs);
+            font-weight: 800;
+            letter-spacing: .05em;
+            text-transform: uppercase;
+            color: var(--color-brand-text);
+        }
+
+        .node-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 14px;
+            border-top: 1px solid var(--color-border-divider-soft);
+        }
+
+        .node-row:hover {
+            background: #FBF9F5;
+        }
+
+        .node-row.is-selected {
+            background: #F1FAF7;
+        }
+
+        .node-row__icon {
+            flex: none;
+            width: 14px;
+            height: 14px;
+            margin-left: 30px;
+            color: var(--color-layer-node);
+        }
+
+        .node-row__text {
+            flex: 1;
+            min-width: 0;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .node-row__name,
+        .node-row__path,
+        .node-row__note {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .node-row__note {
+            font-size: var(--font-size-xs);
+            color: var(--color-text-label);
+        }
+
+        .node-row__name {
+            font-size: var(--font-size-base);
+            font-weight: 700;
+        }
+
+        .node-row__path {
+            font-size: var(--font-size-xs);
+            color: var(--color-text-muted);
+        }
+
+        .node-row__meta {
+            flex: none;
+            padding: 3px 7px;
+            border-radius: var(--radius-xs);
+            background: var(--color-bg-subtle);
+            color: var(--color-text-label);
+            font-family: var(--font-mono);
+            font-size: var(--font-size-xs);
+        }
+
+        .pick {
+            flex: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            height: 28px;
+            padding: 0 10px;
+            border: 1px solid var(--color-brand-soft-border);
+            border-radius: var(--radius-sm);
+            background: var(--color-brand-soft);
+            color: var(--color-brand-text);
+            font-size: var(--font-size-sm);
+            font-weight: 700;
+        }
+
+        .pick:hover {
+            border-color: var(--color-brand-soft-border-hover);
+            background: var(--color-brand-soft-hover);
+        }
+
+        .pick[aria-pressed="true"] {
+            border-color: var(--color-brand-primary);
+            background: var(--color-brand-primary);
+            color: var(--color-text-on-primary);
+        }
+
+        .group__footer {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 14px 12px 44px;
+            border-top: 1px solid var(--color-border-divider-soft);
+            font-size: var(--font-size-sm);
+            color: var(--color-text-muted);
+        }
+
+        .group__footer .pick {
+            margin-left: auto;
+        }
+
+        .group__footer .text-btn {
+            align-self: center;
+        }
+
+        .audit-status {
+            margin-top: 14px;
+            padding: 18px 14px;
+            border: 1px dashed var(--color-border-strong);
+            border-radius: var(--radius-xl);
+            text-align: center;
+            font-size: var(--font-size-base);
+            color: var(--color-text-body);
         }
 
         /* Diagnostics */
@@ -1046,6 +1633,23 @@
         }
 
         @media (max-width: 560px) {
+            .audit-score {
+                grid-template-columns: repeat(3, minmax(0, 1fr));
+            }
+
+            .audit-score .score-summary {
+                grid-column: 1 / -1;
+            }
+
+            .audit-score .score-summary + .score-summary {
+                border-top: 1px solid var(--color-border-divider);
+                border-left: 0;
+            }
+
+            .audit-score__cell {
+                grid-column: auto;
+            }
+
             .arch-head {
                 flex-direction: column;
             }
@@ -1062,7 +1666,7 @@
     <div class="hero__copy">
         <span class="eyebrow">Design Token Kit</span>
         <h1>From Figma tokens to production code</h1>
-        <p>Export DTCG, CSS, SCSS, Tailwind v4, Android XML and SwiftUI. Check token architecture and audit design quality.</p>
+        <p>Export Figma Variables and Styles to DTCG, CSS, SCSS, Tailwind v4, Android XML, and SwiftUI. Validate token architecture and audit design accessibility and consistency — without modifying your Figma file.</p>
     </div>
     <img class="hero__logo" data-logo alt="Design Token Kit layered token logo">
 </header>
@@ -1077,7 +1681,8 @@
         <button id="design-tab" class="tab" type="button" aria-current="false" aria-controls="design-workspace">
             <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><circle cx="7" cy="7" r="4.5" /><path d="M10.4 10.4 14 14" /></svg>
             Design
-            <span class="badge badge--error" aria-label="8 design findings">8</span>
+            <span id="design-tab-loading" class="tab__loader" role="status" aria-label="Auditing" hidden></span>
+            <span id="design-tab-count" class="badge badge--error" hidden></span>
         </button>
     </nav>
 
@@ -1091,10 +1696,9 @@
                                 <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><path d="M8 1.8 14.2 5 8 8.2 1.8 5Z" /><path d="M1.8 8 8 11.2 14.2 8" /><path d="M1.8 11 8 14.2 14.2 11" /></svg>
                             </span>
                             <h2 id="architecture-title">Token architecture</h2>
-                            <span id="architecture-status" class="chip">Not analyzed</span>
                         </div>
+                        <p class="lead"><span id="rule-set-description"></span></p>
                         <p id="token-stats" class="subtle token-stats" hidden></p>
-                        <p class="lead"><span id="rule-set-description"></span> <span>Read-only: your Figma file is never changed.</span></p>
                     </div>
                     <div class="arch-head__actions">
                         <button id="analyze-tokens" class="btn btn--primary" type="button">
@@ -1114,30 +1718,43 @@
                     </div>
                 </div>
 
-                <div class="recommend">
-                    <span class="recommend__title">
-                        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M8 1.5 13.6 4.75V11.25L8 14.5 2.4 11.25V4.75Z" /></svg>
-                        Recommended architecture
-                    </span>
-                    <div class="layer-chain" aria-label="Component tokens reference semantic tokens, semantic tokens reference primitive tokens">
-                        <span class="layer-chip layer-chip--primitive">Primitive <span id="primitive-token-count" class="count" hidden></span></span>
-                        <span class="layer-chain__arrow" aria-hidden="true">←</span>
-                        <span class="layer-chip layer-chip--semantic">Semantic <span id="semantic-token-count" class="count" hidden></span></span>
-                        <span class="layer-chain__arrow" aria-hidden="true">←</span>
-                        <span class="layer-chip layer-chip--component">Component <span id="component-token-count" class="count" hidden></span></span>
+                <div class="architecture-overview">
+                    <div id="passed-checks" class="check-score" hidden>
+                        <div class="check-score__head">
+                            <div class="score-summary__value">
+                                <span id="architecture-score" class="score-summary__number"></span>
+                                <span id="architecture-score-max" class="score-summary__max">/100</span>
+                                <span id="architecture-grade" class="grade"></span>
+                            </div>
+                            <div class="check-score__verdict">
+                                <span id="architecture-verdict" class="score-summary__verdict"></span>
+                                <button id="architecture-formula-toggle" class="text-btn" type="button" aria-expanded="false" aria-controls="architecture-formula">How is this calculated?</button>
+                            </div>
+                            <button id="passed-toggle" class="passed__toggle" type="button" aria-expanded="false" aria-controls="passed-list">
+                                <span id="passed-label">Passed</span>
+                                <svg class="chevron" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6l4 4 4-4" /></svg>
+                            </button>
+                        </div>
+                        <div id="architecture-formula" class="score-formula" hidden></div>
+                        <ul id="passed-list" class="passed__list" hidden></ul>
                     </div>
-                    <a class="link" href="https://design-token-kit.github.io/docs/guides/figma-plugin/" target="_blank" rel="noopener noreferrer">Guide ↗</a>
-                </div>
 
-                <ul id="token-summary" class="findings" aria-live="polite"></ul>
-                <div id="passed-checks" class="passed" hidden>
-                    <button id="passed-toggle" class="passed__toggle" type="button" aria-expanded="false" aria-controls="passed-list">
-                        <span id="architecture-score" class="score" role="img"></span>
-                        <span id="passed-label">Passed</span>
-                        <svg class="chevron" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6l4 4 4-4" /></svg>
-                    </button>
-                    <ul id="passed-list" class="passed__list" hidden></ul>
+                    <div class="recommend">
+                        <span class="recommend__title">
+                            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M8 1.5 13.6 4.75V11.25L8 14.5 2.4 11.25V4.75Z" /></svg>
+                            Recommended architecture
+                        </span>
+                        <div class="layer-chain" aria-label="Component tokens reference semantic tokens, semantic tokens reference primitive tokens">
+                            <span class="layer-chip layer-chip--primitive">Primitive <span id="primitive-token-count" class="count" hidden></span></span>
+                            <span class="layer-chain__arrow" aria-hidden="true">→</span>
+                            <span class="layer-chip layer-chip--semantic">Semantic <span id="semantic-token-count" class="count" hidden></span></span>
+                            <span class="layer-chain__arrow" aria-hidden="true">→</span>
+                            <span class="layer-chip layer-chip--component">Component <span id="component-token-count" class="count" hidden></span></span>
+                        </div>
+                        <a class="link" href="https://design-token-kit.github.io/docs/guides/figma-plugin/" target="_blank" rel="noopener noreferrer">Architecture guide ↗</a>
+                    </div>
                 </div>
+                <ul id="token-summary" class="findings" aria-live="polite"></ul>
             </div>
 
             <div class="card" aria-labelledby="export-title">
@@ -1206,10 +1823,87 @@
         </section>
 
         <section id="design-workspace" class="stack" aria-label="Design" hidden>
-            <div class="card design-placeholder">
-                <h2 class="design-placeholder__title">Design audit</h2>
-                <p class="lead">Design quality checks will be available here soon.</p>
+            <div class="card">
+                <div class="arch-head">
+                    <div class="arch-head__copy">
+                        <div class="card-title">
+                            <span class="tile" aria-hidden="true">
+                                <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><circle cx="7" cy="7" r="4.5" /><path d="M10.4 10.4 14 14" /></svg>
+                            </span>
+                            <h2>Design audit</h2>
+                        </div>
+                        <p id="audit-meta" class="subtle token-stats" hidden></p>
+                        <p class="lead">Text contrast against WCAG, font sizes and line heights of the text layers, and whether layers use variables and styles. <span>Read-only: your Figma file is never changed.</span></p>
+                    </div>
+                    <div class="arch-head__actions">
+                        <button id="run-audit" class="btn btn--primary" type="button">
+                            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M13.5 8A5.5 5.5 0 1 1 11.8 4" /><path d="M12 1.5V4.5H9" /></svg>
+                            <span id="run-audit-label">Run audit</span>
+                        </button>
+                        <div class="field">
+                            <div class="field__head">
+                                <span id="audit-scope-label" class="field__label">Scope</span>
+                                <span id="audited-at" class="field__meta" hidden></span>
+                            </div>
+                            <div class="segmented" role="group" aria-labelledby="audit-scope-label">
+                                <button class="segment" type="button" data-audit-scope="page" aria-pressed="true">Current page</button>
+                                <button class="segment" type="button" data-audit-scope="file" aria-pressed="false">Entire file</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
             </div>
+
+            <div id="audit-results" class="stack" hidden>
+                <section id="accessibility-audit" class="card audit-category" aria-labelledby="accessibility-title">
+                    <header class="audit-category__head">
+                        <div class="audit-category__title">
+                            <h2 id="accessibility-title">Accessibility</h2>
+                            <p>Text contrast against WCAG, font sizes and line heights.</p>
+                        </div>
+                        <span id="accessibility-result-text" class="audit-category__result"></span>
+                    </header>
+                    <section class="audit-score accessibility-score" aria-label="Accessibility score">
+                        <div class="score-summary__value accessibility-score__value">
+                            <span id="accessibility-score" class="score-summary__number"></span>
+                            <span id="accessibility-score-max" class="score-summary__max">/100</span>
+                            <span id="accessibility-grade" class="grade"></span>
+                        </div>
+                        <div class="accessibility-score__verdict">
+                            <span id="accessibility-verdict" class="score-summary__verdict"></span>
+                            <button id="accessibility-formula-toggle" class="text-btn" type="button" aria-expanded="false" aria-controls="accessibility-formula">How is the score calculated?</button>
+                        </div>
+                        <div id="accessibility-formula" class="score-formula" hidden></div>
+                    </section>
+                    <div id="accessibility-groups" class="audit-groups" aria-live="polite"></div>
+                </section>
+
+                <section id="token-usage-audit" class="card audit-category" aria-labelledby="token-usage-title">
+                    <header class="audit-category__head">
+                        <div class="audit-category__title">
+                            <h2 id="token-usage-title">Token usage</h2>
+                            <p>Variables and styles applied to colours, spacing, radii and text.</p>
+                        </div>
+                        <span id="usage-result-text" class="audit-category__result"></span>
+                    </header>
+                    <section class="audit-score token-usage-score" aria-label="Token usage score">
+                        <div class="score-summary__value token-usage-score__value">
+                            <span id="usage-score" class="score-summary__number"></span>
+                            <span class="score-summary__max">/100</span>
+                            <span id="usage-grade" class="grade"></span>
+                        </div>
+                        <div class="token-usage-score__details">
+                            <span id="audit-coverage" class="score-summary__coverage"></span>
+                            <button id="usage-formula-toggle" class="text-btn" type="button" aria-expanded="false" aria-controls="usage-formula">How is the score calculated?</button>
+                        </div>
+                        <div id="usage-formula" class="score-formula" hidden></div>
+                    </section>
+                    <div id="usage-groups" class="audit-groups" aria-live="polite"></div>
+                </section>
+            </div>
+
+            <p id="audit-status" class="card audit-status">Run the audit to check text contrast, font sizes, line heights and the use of variables on this page.</p>
         </section>
     </div>
 </div>
@@ -1230,12 +1924,16 @@
     const tokenStats = document.getElementById("token-stats");
     const analyzedAt = document.getElementById("analyzed-at");
     const architectureScore = document.getElementById("architecture-score");
+    const architectureScoreMax = document.getElementById("architecture-score-max");
+    const architectureGrade = document.getElementById("architecture-grade");
+    const architectureVerdict = document.getElementById("architecture-verdict");
+    const architectureFormulaToggle = document.getElementById("architecture-formula-toggle");
+    const architectureFormula = document.getElementById("architecture-formula");
     const tokenSummary = document.getElementById("token-summary");
     const passedChecks = document.getElementById("passed-checks");
     const passedToggle = document.getElementById("passed-toggle");
     const passedLabel = document.getElementById("passed-label");
     const passedList = document.getElementById("passed-list");
-    const architectureStatus = document.getElementById("architecture-status");
     const ruleSetDescription = document.getElementById("rule-set-description");
     const tokenTabCount = document.getElementById("token-tab-count");
     const tokenWorkspace = document.getElementById("token-workspace");
@@ -1249,11 +1947,34 @@
     const analyzeTokensButton = document.getElementById("analyze-tokens");
     const analyzeTokensLabel = document.getElementById("analyze-tokens-label");
     const coreRulesButton = document.getElementById("core-rules");
+    const designTabCount = document.getElementById("design-tab-count");
+    const designTabLoading = document.getElementById("design-tab-loading");
+    const auditMeta = document.getElementById("audit-meta");
+    const auditedAt = document.getElementById("audited-at");
+    const auditScopeButtons = document.querySelectorAll("[data-audit-scope]");
+    const runAuditButton = document.getElementById("run-audit");
+    const runAuditLabel = document.getElementById("run-audit-label");
+    const auditResults = document.getElementById("audit-results");
+    const accessibilityAudit = document.getElementById("accessibility-audit");
+    const tokenUsageAudit = document.getElementById("token-usage-audit");
+    const accessibilityScore = document.getElementById("accessibility-score");
+    const accessibilityScoreMax = document.getElementById("accessibility-score-max");
+    const accessibilityGrade = document.getElementById("accessibility-grade");
+    const accessibilityVerdict = document.getElementById("accessibility-verdict");
+    const auditCoverage = document.getElementById("audit-coverage");
+    const usageScore = document.getElementById("usage-score");
+    const usageGrade = document.getElementById("usage-grade");
+    const accessibilityFormulaToggle = document.getElementById("accessibility-formula-toggle");
+    const accessibilityFormula = document.getElementById("accessibility-formula");
+    const usageFormulaToggle = document.getElementById("usage-formula-toggle");
+    const usageFormula = document.getElementById("usage-formula");
+    const accessibilityGroups = document.getElementById("accessibility-groups");
+    const accessibilityResultText = document.getElementById("accessibility-result-text");
+    const usageResultText = document.getElementById("usage-result-text");
+    const usageGroups = document.getElementById("usage-groups");
+    const auditStatus = document.getElementById("audit-status");
     const allChecksButton = document.getElementById("all-checks");
-    const ruleSetDescriptions = {
-        core: "Layers, reference order, raw values, broken references and component independence. Violations are shown as warnings.",
-        all: "Essentials plus alias types, gradient stops, empty groups, descriptions, Tailwind namespaces and rem base. Issues are classified as errors or warnings.",
-    };
+    const tokenArchitectureDescription = "Review token layers, references, and raw values. Essentials covers core architecture rules; All checks adds detailed validation and linting.";
     const chevronSvg = `<svg class="chevron" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6l4 4 4-4" /></svg>`;
     const passedIconSvg = `<svg class="check-icon" viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="9" fill="var(--color-success-icon)" /><path d="M6 10.3 8.6 12.8 14 7.4" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" /></svg>`;
     const failedIconSvgs = {
@@ -1264,10 +1985,21 @@
         error: `<svg class="severity-icon" viewBox="0 0 20 20" role="img" aria-label="Error"><circle cx="10" cy="10" r="9" fill="var(--color-error-icon)" /><path d="M10 5.5v5.3" stroke="#fff" stroke-width="2" stroke-linecap="round" /><circle cx="10" cy="14.2" r="1.2" fill="#fff" /></svg>`,
         warning: `<svg class="severity-icon" viewBox="0 0 20 20" role="img" aria-label="Warning"><path d="M10 2.5 18.2 17H1.8Z" fill="var(--color-warning-icon)" stroke="var(--color-warning-icon)" stroke-width="1.6" stroke-linejoin="round" /><path d="M10 7.6v4" stroke="var(--color-warning-on-icon)" stroke-width="1.9" stroke-linecap="round" /><circle cx="10" cy="14.3" r="1.1" fill="var(--color-warning-on-icon)" /></svg>`,
         pending: `<svg class="severity-icon" viewBox="0 0 20 20" aria-hidden="true"><path d="M17 10A7 7 0 1 1 14.9 5" fill="none" stroke="var(--color-brand-primary)" stroke-width="2" stroke-linecap="round" /></svg>`,
+        info: `<svg class="severity-icon" viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="8.2" fill="none" stroke="var(--color-text-icon)" stroke-width="1.8" /><path d="M10 9v4.6" stroke="var(--color-text-icon)" stroke-width="1.9" stroke-linecap="round" /><circle cx="10" cy="6.3" r="1.1" fill="var(--color-text-icon)" /></svg>`,
+        "not-checked": `<svg class="severity-icon" viewBox="0 0 20 20" role="img" aria-label="Not checked"><circle cx="10" cy="10" r="8.2" fill="none" stroke="var(--color-text-icon)" stroke-width="1.8" /><path d="M10 9v4.6" stroke="var(--color-text-icon)" stroke-width="1.9" stroke-linecap="round" /><circle cx="10" cy="6.3" r="1.1" fill="var(--color-text-icon)" /></svg>`,
     };
+    // The text layer glyph Figma shows in the layers panel.
+    const nodeIconSvg = `<svg class="node-row__icon" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><path d="M2.5 4V2.5h9V4" /><path d="M7 2.5v9" /><path d="M5.2 11.5h3.6" /></svg>`;
+    // The frame glyph Figma shows in the layers panel, for layers of any type.
+    const layerIconSvg = `<svg class="node-row__icon" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><path d="M4.5 1.5v11" /><path d="M9.5 1.5v11" /><path d="M1.5 4.5h11" /><path d="M1.5 9.5h11" /></svg>`;
+    const pickIconSvg = `<svg viewBox="0 0 14 14" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2.5 2.5 6 12l1.6-4.4L12 6Z" /></svg>`;
+    const nodePreviewLimit = 5;
     let runFullLinting = false;
     let latestAnalytics;
     let hasAnalysis = false;
+    let auditScope = "page";
+    let latestAudit;
+    let isAuditing = false;
 
     document.querySelectorAll("[data-logo]").forEach((image) => {
         image.src = logoDataUri;
@@ -1293,6 +2025,14 @@
     analyzeTokensButton.addEventListener("click", () => {
         requestTokenAnalysis();
     });
+
+    auditScopeButtons.forEach((button) => {
+        button.addEventListener("click", () => setAuditScope(button.dataset.auditScope));
+    });
+    runAuditButton.addEventListener("click", requestDesignAudit);
+    accessibilityFormulaToggle.addEventListener("click", () => toggleDisclosure(accessibilityFormulaToggle, accessibilityFormula));
+    usageFormulaToggle.addEventListener("click", () => toggleDisclosure(usageFormulaToggle, usageFormula));
+    architectureFormulaToggle.addEventListener("click", () => toggleDisclosure(architectureFormulaToggle, architectureFormula));
 
     coreRulesButton.addEventListener("click", () => setRuleSet(false));
     allChecksButton.addEventListener("click", () => setRuleSet(true));
@@ -1342,6 +2082,16 @@
             return;
         }
 
+        if (message?.type === "DESIGN_AUDITED") {
+            handleDesignAudited(message.payload);
+            return;
+        }
+
+        if (message?.type === "DESIGN_AUDIT_FAILED") {
+            handleDesignAuditFailed(message.payload.message);
+            return;
+        }
+
         if (message?.type !== "FILE_EXPORTED") {
             return;
         }
@@ -1363,7 +2113,7 @@
         hasAnalysis = true;
         setAnalysisLoading(false);
         renderTokenAnalytics(payload.analytics);
-        renderArchitectureChecks(payload.architectureChecks ?? []);
+            renderArchitectureChecks(payload.architectureChecks ?? [], payload.analytics?.architectureScore);
         renderWarnings(payload.warnings);
     }
 
@@ -1373,21 +2123,30 @@
         allChecksButton.disabled = isLoading;
         analyzeTokensButton.classList.toggle("is-loading", isLoading);
         if (isLoading) {
+            setTokenExportAvailability(false);
             analyzeTokensLabel.textContent = "Analyzing...";
             renderAnalysisPending();
             return;
         }
 
-        analyzeTokensLabel.textContent = hasAnalysis ? "Re-analyze" : "Analyze tokens";
+        setTokenExportAvailability((latestAnalytics?.totalTokens ?? 0) > 0);
+        analyzeTokensLabel.textContent = hasAnalysis ? "Run again" : "Analyze tokens";
     }
 
     function renderTokenAnalytics(analytics) {
         latestAnalytics = analytics;
+        setTokenExportAvailability((analytics?.totalTokens ?? 0) > 0);
         renderLayerCount("primitive-token-count", analytics?.primitiveTokens);
         renderLayerCount("semantic-token-count", analytics?.semanticTokens);
         renderLayerCount("component-token-count", analytics?.componentTokens);
         renderTokenStats(analytics);
         renderExportSubtitle();
+    }
+
+    function setTokenExportAvailability(hasTokens) {
+        tokenExportButtons.forEach((button) => {
+            button.disabled = !hasTokens;
+        });
     }
 
     function renderLayerCount(id, value) {
@@ -1432,7 +2191,7 @@
     }
 
     function renderRuleSetDescription() {
-        ruleSetDescription.textContent = runFullLinting ? ruleSetDescriptions.all : ruleSetDescriptions.core;
+        ruleSetDescription.textContent = tokenArchitectureDescription;
     }
 
     function renderAnalysisPending() {
@@ -1440,8 +2199,14 @@
         passedChecks.hidden = true;
     }
 
-    function renderArchitectureChecks(checks) {
-        renderArchitectureStatus(checks);
+    function renderArchitectureChecks(checks, score) {
+        const emptyState = checks.find((check) => check.state === "empty");
+        if (emptyState !== undefined) {
+            renderEmptyArchitectureState(emptyState);
+            return;
+        }
+
+        renderArchitectureStatus(checks, score);
         if (checks.length === 0) {
             renderAnalysisPending();
             return;
@@ -1451,6 +2216,36 @@
         const passed = checks.filter(isCheckPassed);
         tokenSummary.replaceChildren(...failedChecks.map(createArchitectureCheck));
         renderPassedChecks(passed, failedChecks, failedChecks.length === 0);
+    }
+
+    function renderEmptyArchitectureState(check) {
+        tokenTabCount.hidden = true;
+        passedChecks.hidden = true;
+        passedList.replaceChildren();
+        tokenSummary.replaceChildren(createEmptyArchitectureState(check));
+    }
+
+    function createEmptyArchitectureState(check) {
+        const item = document.createElement("li");
+        item.className = "finding finding--info";
+
+        const head = document.createElement("div");
+        head.className = "finding__head";
+        head.innerHTML = severityIconSvgs.info;
+        const title = document.createElement("span");
+        title.className = "finding__title";
+        title.textContent = check.name;
+        head.append(title);
+
+        const body = document.createElement("div");
+        body.className = "finding__body";
+        const description = document.createElement("p");
+        description.className = "finding__description";
+        description.textContent = check.description;
+        body.append(description);
+
+        item.append(head, body);
+        return item;
     }
 
     function isCheckPassed(check) {
@@ -1505,22 +2300,21 @@
         sheet.classList.toggle("sheet--first", isTokenWorkspace);
         tokenWorkspace.hidden = !isTokenWorkspace;
         designWorkspace.hidden = isTokenWorkspace;
+        if (!isTokenWorkspace && latestAudit === undefined && !isAuditing) {
+            requestDesignAudit();
+        }
     }
 
-    function renderArchitectureStatus(checks) {
+    function renderArchitectureStatus(checks, score) {
         const tone = toWorstSeverity(checks);
-        architectureStatus.className = tone === undefined ? "chip" : `chip chip--${tone}`;
 
         if (checks.length === 0) {
-            architectureStatus.textContent = "Not analyzed";
             tokenTabCount.hidden = true;
             return;
         }
 
         const failedChecks = checks.filter((check) => !isCheckPassed(check));
-        const passedCount = checks.length - failedChecks.length;
-        architectureStatus.textContent = `${passedCount} of ${checks.length} passed`;
-        renderArchitectureScore(Math.floor((passedCount / checks.length) * 100));
+        renderArchitectureScore(score);
         tokenTabCount.hidden = failedChecks.length === 0;
         tokenTabCount.textContent = String(failedChecks.length);
         tokenTabCount.className = `badge badge--${tone}`;
@@ -1528,12 +2322,395 @@
     }
 
     function renderArchitectureScore(score) {
-        const tone = score === 100 ? "success" : score >= 50 ? "warning" : "error";
-        architectureScore.setAttribute("aria-label", `Architecture score ${score} of 100`);
-        architectureScore.innerHTML = `<svg viewBox="0 0 44 48" aria-hidden="true">
-            <path d="M22 2.5 39.5 9.2v14.6c0 10.6-7 17.6-17.5 21.7C11.5 41.4 4.5 34.4 4.5 23.8V9.2L22 2.5Z" fill="var(--color-${tone}-bg)" stroke="var(--color-${tone}-icon)" stroke-width="2.5" stroke-linejoin="round" />
-            <text x="22" y="24.5" text-anchor="middle" dominant-baseline="central" font-size="${score === 100 ? 13 : 15}" fill="var(--color-${tone}-text)">${score}</text>
-        </svg>`;
+        if (score === undefined) {
+            architectureScore.textContent = "N/A";
+            architectureScoreMax.hidden = true;
+            architectureGrade.textContent = "";
+            architectureGrade.className = "grade";
+            architectureVerdict.className = "score-summary__verdict score-summary__verdict--warning";
+            architectureVerdict.textContent = "Score unavailable until token data can be checked";
+            architectureFormula.replaceChildren("No score: token data could not be checked.");
+            passedChecks.hidden = true;
+            return;
+        }
+
+        architectureScore.textContent = String(score.score);
+        architectureScoreMax.hidden = false;
+        architectureGrade.textContent = score.grade;
+        // The colour follows the share of passed checks: green at 100, amber
+        // while at least half pass, red below.
+        architectureGrade.className = score.score === 100 ? "grade" : score.score >= 50 ? "grade grade--fair" : "grade grade--poor";
+
+        const tone = score.errors > 0 ? "" : score.warnings > 0 ? " score-summary__verdict--warning" : " score-summary__verdict--success";
+        architectureVerdict.className = `score-summary__verdict${tone}`;
+        architectureVerdict.textContent = score.errors === 0 && score.warnings === 0
+            ? `All ${score.total} checks passed`
+            : `${[score.errors > 0 ? formatCount(score.errors, "error") : "", score.warnings > 0 ? formatCount(score.warnings, "warning") : ""]
+                .filter(Boolean)
+                .join(" and ")} to fix`;
+
+        const strong = document.createElement("strong");
+        strong.textContent = "Score = passed checks ÷ all checks × 100";
+        architectureFormula.replaceChildren(
+            strong,
+            document.createElement("br"),
+            `${score.passed} of ${formatCount(score.total, "check")} passed: ${score.score}. `
+                + "A check passes when it finds no issues; warnings and errors count alike. "
+                + "Grades: A 90+, B 80–89, C 70–79, D 60–69, F below 60.",
+        );
+    }
+
+    function requestDesignAudit() {
+        setAuditLoading(true);
+        parent.postMessage({ pluginMessage: { type: "AUDIT_DESIGN", scope: auditScope } }, "*");
+    }
+
+    function setAuditScope(scope) {
+        auditScope = scope;
+        auditScopeButtons.forEach((button) => {
+            button.setAttribute("aria-pressed", String(button.dataset.auditScope === scope));
+        });
+        requestDesignAudit();
+    }
+
+    function setAuditLoading(isLoading) {
+        isAuditing = isLoading;
+        runAuditButton.disabled = isLoading;
+        designTabLoading.hidden = !isLoading;
+        if (isLoading) {
+            designTabCount.hidden = true;
+        }
+        runAuditButton.classList.toggle("is-loading", isLoading);
+        runAuditLabel.textContent = isLoading ? "Auditing..." : latestAudit === undefined ? "Run audit" : "Run again";
+        if (isLoading && latestAudit === undefined) {
+            showAuditStatus(auditScope === "file" ? "Auditing the text in every page of the file..." : "Auditing the text on this page...");
+        }
+    }
+
+    function handleDesignAudited(report) {
+        latestAudit = report;
+        setAuditLoading(false);
+        renderDesignAudit();
+    }
+
+    function handleDesignAuditFailed(message) {
+        setAuditLoading(false);
+        auditResults.hidden = true;
+        showAuditStatus(`The audit failed: ${message}`);
+    }
+
+    function showAuditStatus(message) {
+        auditStatus.hidden = false;
+        auditStatus.textContent = message;
+    }
+
+    function renderDesignAudit() {
+        const report = latestAudit;
+        const where = report.scope === "file" ? "the file" : "this page";
+        auditMeta.hidden = false;
+        const layerCount = report.layerCount ?? 0;
+        auditMeta.textContent = `${formatCount(report.nodeCount, "text layer")} · ${formatCount(layerCount, "layer")} checked for variables`;
+        auditedAt.hidden = false;
+        auditedAt.textContent = `audited ${formatTime(new Date())}`;
+        designTabCount.hidden = report.counts.errors === 0;
+        designTabCount.textContent = String(report.counts.errors);
+        designTabCount.setAttribute("aria-label", `${formatCount(report.counts.errors, "design error")}`);
+
+        const hasText = report.nodeCount > 0;
+        const hasTokenUsage = layerCount > 0 && report.scores.tokenUsage !== undefined;
+        const isEmpty = !hasText && !hasTokenUsage;
+        auditResults.hidden = isEmpty;
+        auditStatus.hidden = !isEmpty;
+        if (isEmpty) {
+            showAuditStatus(`There are no visible layers in ${where} to audit.`);
+            return;
+        }
+
+        accessibilityAudit.hidden = !hasText;
+        tokenUsageAudit.hidden = !hasTokenUsage;
+        renderAccessibilityAudit(report);
+        renderTokenUsageAudit(report);
+    }
+
+    function renderAccessibilityAudit(report) {
+        const { accessibility } = report.scores;
+        renderAccessibilityStatistics(report.groups);
+        if (accessibility === undefined) {
+            renderUnavailableAccessibilityScore();
+            renderAccessibilityFindings();
+            return;
+        }
+        renderGrade(accessibilityScore, accessibilityGrade, accessibility);
+        accessibilityVerdict.className = report.contrastErrors > 0
+            ? "score-summary__verdict"
+            : "score-summary__verdict score-summary__verdict--success";
+        accessibilityVerdict.textContent = report.contrastErrors > 0
+            ? `Fails WCAG ${report.level} until ${formatCount(report.contrastErrors, "error")} ${report.contrastErrors === 1 ? "is" : "are"} fixed`
+            : `Text contrast meets WCAG ${report.level}`;
+        renderAccessibilityFormula(accessibility, report.level);
+        renderAccessibilityFindings();
+    }
+
+    function renderUnavailableAccessibilityScore() {
+        accessibilityScore.textContent = "N/A";
+        accessibilityScoreMax.hidden = true;
+        accessibilityGrade.textContent = "";
+        accessibilityGrade.className = "grade";
+        accessibilityVerdict.className = "score-summary__verdict score-summary__verdict--warning";
+        accessibilityVerdict.textContent = "Text contrast could not be evaluated automatically";
+        accessibilityFormula.replaceChildren(
+            "No score: every text layer needs a manual contrast check.",
+        );
+    }
+
+    function renderAccessibilityStatistics(groups) {
+        const accessibilityGroups = groups.filter((group) => group.category === "accessibility");
+        const layerCount = new Set(accessibilityGroups.flatMap((group) => group.nodes.map((node) => node.id))).size;
+        accessibilityResultText.textContent = `${formatCount(accessibilityGroups.length, "issue")} · ${formatCount(layerCount, "layer")}`;
+    }
+
+    function renderAccessibilityFormula(accessibility, level) {
+        accessibilityFormula.replaceChildren(
+            ...formulaTitle("Accessibility = 100 − 2 × errors − 0.1 × warnings"),
+            `${formatCount(accessibility.errors, "error")} and ${formatCount(accessibility.warnings, "warning")} on text: `
+                + `100 − ${formatNumber(2 * accessibility.errors)} − ${formatNumber(0.1 * accessibility.warnings)} ≈ ${accessibility.score}. `
+                + "Text that could not be checked does not count. "
+                + `Only text contrast is a WCAG ${level} criterion; small text and tight lines are readability guidelines.`,
+        );
+    }
+
+    function renderTokenUsageAudit(report) {
+        const { tokenUsage } = report.scores;
+        if (tokenUsage === undefined) {
+            return;
+        }
+
+        renderGrade(usageScore, usageGrade, tokenUsage);
+        const coverage = report.coverage;
+        auditCoverage.textContent = `Token coverage ${coverage.percent}%: ${coverage.bound} of `
+            + `${formatCount(coverage.total, "property", "properties")} use variables or styles`;
+        usageFormula.replaceChildren(
+            ...formulaTitle("Token usage = 100 × properties without findings ÷ properties"),
+            `${tokenUsage.clean} of ${formatCount(tokenUsage.total, "property", "properties")} are bound to a variable or style `
+                + `and not to a primitive: ${tokenUsage.score}, rounded down. Not part of WCAG.`,
+        );
+        renderUsageFindings();
+    }
+
+    function renderGrade(scoreElement, gradeElement, { score, grade }) {
+        scoreElement.textContent = String(score);
+        if (scoreElement === accessibilityScore) {
+            accessibilityScoreMax.hidden = false;
+        }
+        gradeElement.textContent = grade;
+        gradeElement.className = grade === "A" || grade === "B" ? "grade" : grade === "C" ? "grade grade--fair" : "grade grade--poor";
+    }
+
+    function formulaTitle(text) {
+        const title = document.createElement("strong");
+        title.textContent = text;
+        return [title, document.createElement("br")];
+    }
+
+    function renderAccessibilityFindings() {
+        const groups = latestAudit.groups.filter((group) => group.category === "accessibility");
+        renderAccessibilityFindingGroups(groups);
+    }
+
+    function renderAccessibilityFindingGroups(groups) {
+        const checked = groups.filter((group) => group.severity !== "not-checked");
+        const unchecked = groups.filter((group) => group.severity === "not-checked");
+        const children = checked.map(createFindingGroup);
+        if (unchecked.length > 0) {
+            children.push(createSectionTitle("Not checked", "Needs a manual check · does not affect the score"), ...unchecked.map(createFindingGroup));
+        }
+        if (children.length === 0) {
+            const empty = document.createElement("p");
+            empty.className = "audit-status";
+            empty.textContent = "No accessibility or readability issues found.";
+            children.push(empty);
+        }
+        accessibilityGroups.replaceChildren(...children);
+    }
+
+    function renderUsageFindings() {
+        const groups = latestAudit.groups.filter((group) => group.category === "token-usage");
+        const propertyCount = groups.reduce((sum, group) => sum + group.nodes.length, 0);
+        const layerCount = new Set(groups.flatMap((group) => group.nodes.map((node) => node.id))).size;
+        usageResultText.textContent = `${formatCount(groups.length, "issue")} · ${formatCount(propertyCount, "property", "properties")} · ${formatCount(layerCount, "layer")}`;
+
+        const children = groups.map(createFindingGroup);
+        if (children.length === 0) {
+            const empty = document.createElement("p");
+            empty.className = "audit-status";
+            empty.textContent = "All audited properties use variables or styles.";
+            children.push(empty);
+        }
+        usageGroups.replaceChildren(...children);
+    }
+
+    function createSectionTitle(title, note) {
+        const section = document.createElement("div");
+        section.className = "audit-section-title";
+        const heading = document.createElement("h3");
+        heading.textContent = title;
+        const caption = document.createElement("span");
+        caption.textContent = note;
+        section.append(heading, caption);
+        return section;
+    }
+
+    function createFindingGroup(group) {
+        const article = document.createElement("article");
+        article.className = "group";
+
+        const head = document.createElement("button");
+        head.className = "group__head";
+        head.type = "button";
+        head.setAttribute("aria-expanded", "false");
+        head.innerHTML = severityIconSvgs[group.severity];
+        const titles = document.createElement("span");
+        titles.className = "group__titles";
+        const title = document.createElement("span");
+        title.className = "group__title";
+        title.textContent = group.title;
+        titles.append(title);
+        const count = document.createElement("span");
+        count.className = "group__count";
+        count.textContent = group.category === "token-usage"
+            ? formatCount(group.nodes.length, "property", "properties")
+            : formatCount(group.nodes.length, "layer");
+        head.append(titles, count);
+        head.insertAdjacentHTML("beforeend", chevronSvg);
+
+        const body = document.createElement("div");
+        body.hidden = true;
+        const details = document.createElement("div");
+        details.className = "group__body";
+        const description = document.createElement("p");
+        description.className = "group__description";
+        description.textContent = group.description;
+        const fix = document.createElement("div");
+        fix.className = "group__fix";
+        const fixLabel = document.createElement("span");
+        fixLabel.className = "group__fix-label";
+        fixLabel.textContent = "Fix";
+        const fixText = document.createElement("span");
+        fixText.textContent = group.fix;
+        fix.append(fixLabel, fixText);
+        details.append(description, fix);
+
+        const rows = group.nodes.map((node) => createNodeRow(node, group.category));
+        rows.slice(nodePreviewLimit).forEach((row) => {
+            row.hidden = true;
+        });
+        body.append(details, ...rows, createGroupFooter(group, rows));
+
+        head.addEventListener("click", () => {
+            const isOpen = head.getAttribute("aria-expanded") === "true";
+            head.setAttribute("aria-expanded", String(!isOpen));
+            article.classList.toggle("is-open", !isOpen);
+            body.hidden = isOpen;
+        });
+        article.append(head, body);
+        return article;
+    }
+
+    function createNodeRow(node, category) {
+        const row = document.createElement("div");
+        row.className = "node-row";
+        row.dataset.nodeId = node.id;
+        row.innerHTML = category === "token-usage" ? layerIconSvg : nodeIconSvg;
+
+        const text = document.createElement("span");
+        text.className = "node-row__text";
+        const name = document.createElement("span");
+        name.className = "node-row__name";
+        name.textContent = node.name;
+        name.title = node.name;
+        const path = document.createElement("span");
+        path.className = "node-row__path";
+        path.textContent = node.path || "Page";
+        text.append(name, path);
+        if (node.note) {
+            const note = document.createElement("span");
+            note.className = "node-row__note";
+            note.textContent = node.note;
+            note.title = node.note;
+            text.append(note);
+        }
+
+        const meta = document.createElement("span");
+        meta.className = "node-row__meta";
+        meta.textContent = node.meta;
+
+        const pick = document.createElement("button");
+        pick.className = "pick";
+        pick.type = "button";
+        pick.textContent = "Select";
+        pick.dataset.pickIds = node.id;
+        pick.setAttribute("aria-pressed", "false");
+        pick.setAttribute("aria-label", node.path ? `Select ${node.name} in ${node.path}` : `Select ${node.name}`);
+        pick.addEventListener("click", () => selectAuditNodes([node.id]));
+
+        row.append(text, meta, pick);
+        return row;
+    }
+
+    function createGroupFooter(group, rows) {
+        const footer = document.createElement("div");
+        footer.className = "group__footer";
+        const shown = document.createElement("span");
+        const hasMore = rows.length > nodePreviewLimit;
+        shown.textContent = hasMore ? `Showing ${nodePreviewLimit} of ${rows.length}` : `All ${rows.length} shown`;
+        footer.append(shown);
+
+        if (hasMore) {
+            const showAll = document.createElement("button");
+            showAll.className = "text-btn";
+            showAll.type = "button";
+            showAll.textContent = "Show all";
+            showAll.addEventListener("click", () => {
+                rows.forEach((row) => {
+                    row.hidden = false;
+                });
+                shown.textContent = `All ${rows.length} shown`;
+                showAll.remove();
+            });
+            footer.append(showAll);
+        }
+
+        const ids = [...new Set(group.nodes.map((node) => node.id))];
+        const selectAll = document.createElement("button");
+        selectAll.className = "pick";
+        selectAll.type = "button";
+        selectAll.dataset.pickIds = ids.join(",");
+        selectAll.setAttribute("aria-pressed", "false");
+        selectAll.innerHTML = pickIconSvg;
+        selectAll.append(`Select all ${ids.length}`);
+        selectAll.addEventListener("click", () => selectAuditNodes(ids));
+        footer.append(selectAll);
+        return footer;
+    }
+
+    function selectAuditNodes(ids) {
+        const selected = new Set(ids);
+        const key = ids.join(",");
+        document.querySelectorAll("#accessibility-groups .node-row, #usage-groups .node-row").forEach((row) => {
+            row.classList.toggle("is-selected", selected.has(row.dataset.nodeId));
+        });
+        document.querySelectorAll("#accessibility-groups .pick, #usage-groups .pick").forEach((pick) => {
+            pick.setAttribute("aria-pressed", String(pick.dataset.pickIds === key));
+        });
+        parent.postMessage({ pluginMessage: { type: "SELECT_NODES", ids } }, "*");
+    }
+
+    function formatCount(value, noun, plural = `${noun}s`) {
+        return `${value} ${value === 1 ? noun : plural}`;
+    }
+
+    function formatNumber(value) {
+        return String(Number(value.toFixed(1)));
     }
 
     function toWorstSeverity(checks) {
@@ -1586,7 +2763,7 @@
         if (check.issues?.length > 0) {
             body.appendChild(createExampleList(check, issueCount));
         }
-        body.appendChild(createFixRow(check));
+        body.appendChild(createDocumentationLink(check));
 
         head.addEventListener("click", () => toggleDisclosure(head, body));
         item.append(head, body);
@@ -1606,15 +2783,32 @@
     function createExampleList(check, issueCount) {
         const container = document.createElement("div");
         container.className = "examples";
+        const compactIssues = check.issues ?? [];
+        const fullIssues = check.issueDetails;
+        const expandedIssues = fullIssues ?? compactIssues;
+        const moreCount = fullIssues === undefined
+            ? issueCount - compactIssues.length
+            : fullIssues.length - compactIssues.length;
+        let expanded = false;
 
-        check.issues.forEach((issue) => container.appendChild(createExample(issue, check)));
-        const moreCount = issueCount - check.issues.length;
-        if (moreCount > 0) {
-            const more = document.createElement("div");
+        const renderExamples = () => {
+            const visibleIssues = expanded ? expandedIssues : compactIssues;
+            container.replaceChildren(...visibleIssues.map((issue) => createExample(issue, check)));
+            if (moreCount <= 0) return;
+
+            const more = document.createElement("button");
+            more.type = "button";
             more.className = "examples__more";
-            more.textContent = `and ${moreCount} more`;
+            more.setAttribute("aria-expanded", String(expanded));
+            more.textContent = expanded ? "Show fewer" : `and ${moreCount} more`;
+            more.addEventListener("click", () => {
+                expanded = !expanded;
+                renderExamples();
+            });
             container.appendChild(more);
-        }
+        };
+
+        renderExamples();
 
         return container;
     }
@@ -1671,29 +2865,18 @@
         return element;
     }
 
-    function createFixRow(check) {
-        const row = document.createElement("div");
-        const fix = document.createElement("p");
-        row.className = "finding__fix";
-
-        if (check.issueHeading !== undefined && check.issueHeading !== "") {
-            const label = document.createElement("strong");
-            label.textContent = "Fix:";
-            fix.append(label, ` ${check.issueHeading.charAt(0).toLowerCase()}${check.issueHeading.slice(1)}`);
-        }
-        row.appendChild(fix);
-
+    function createDocumentationLink(check) {
         if (check.docsUrl !== undefined) {
             const link = document.createElement("a");
             link.className = "docs";
             link.href = check.docsUrl;
             link.target = "_blank";
             link.rel = "noopener noreferrer";
-            link.textContent = "Docs ↗";
-            row.appendChild(link);
+            link.textContent = "How to fix ↗";
+            return link;
         }
 
-        return row;
+        return document.createDocumentFragment();
     }
 
     function toggleDisclosure(button, content) {
@@ -1787,6 +2970,7 @@
     }
 
     requestTokenAnalysis();
+    requestDesignAudit();
 
 </script>
 </body>

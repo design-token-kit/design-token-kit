@@ -1,4 +1,5 @@
 import { TokenReference } from "@design-token-kit/core/core/model/TokenReference";
+import { computeCheckScore, type CheckScore } from "@design-token-kit/core/core/check/CheckScore";
 import type { ExportedTokenFile } from "#/figma-plugin/token-export/TokenExporter";
 import type { TokenCheckCard } from "#/figma-plugin/token-export/TokenCheckAnalyzer";
 
@@ -15,6 +16,14 @@ export class TokenAnalyticsAnalyzer {
         architectureChecks: TokenCheckCard[],
     ): TokenAnalyticsReport {
         const tokens = files.flatMap((file) => collectTokens(file.tokens));
+        const score = tokens.length === 0
+            ? undefined
+            : computeCheckScore(architectureChecks
+                .filter((check) => check.state === undefined && check.docsUrl.length > 0)
+                .map((check) => ({
+                    passed: check.passed,
+                    severity: check.severity === "error" ? "error" : "warning",
+                })));
 
         return {
             totalTokens: tokens.length,
@@ -28,6 +37,7 @@ export class TokenAnalyticsAnalyzer {
             architectureOkChecks: architectureChecks.filter((check) => check.severity === "ok").length,
             architectureWarningChecks: architectureChecks.filter((check) => check.severity === "warning").length,
             architectureErrorChecks: architectureChecks.filter((check) => check.severity === "error").length,
+            architectureScore: score,
         };
     }
 
@@ -48,6 +58,7 @@ export interface TokenAnalyticsReport {
     architectureOkChecks: number;
     architectureWarningChecks: number;
     architectureErrorChecks: number;
+    architectureScore: CheckScore | undefined;
 }
 
 const TOKEN_LAYERS = ["primitive", "semantic", "component"] as const;

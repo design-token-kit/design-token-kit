@@ -15,8 +15,8 @@ out recommendations for designers.
 
 | File | Role |
 | --- | --- |
-| `tokens.json` | Base theme: 151 tokens covering all 13 DTCG types |
-| `tokens.dark.json` | Dark theme: 12 colours and 2 shadows |
+| `tokens.json` | Base theme: 163 tokens covering all 13 DTCG types |
+| `tokens.dark.json` | Dark theme: 13 semantic colours and 2 semantic shadows |
 | `showcase.figma.js` | Builds the showcase page from the document's variables |
 
 The token file names follow the convention the Figma plugin uses when exporting
@@ -28,7 +28,8 @@ this set file by file.
 The set is built on three layers.
 
 `primitive` holds the palette, scales, curves and typefaces. It is the only
-layer carrying raw values.
+layer carrying raw values. Colours are named by hue (`blue`, `green`, `amber`,
+`red`), not by role, and the palette holds the shades of both themes.
 
 `semantic` maps primitives onto roles: background, text, borders, actions and
 statuses. Every token references a primitive.
@@ -38,9 +39,15 @@ Every token references a semantic token, never a primitive directly. The
 `layer-reference` rule requires that a semantic token always sits between a
 component and a primitive.
 
-The dark theme overrides the `primitive` layer only. The `semantic` and
-`component` layers are absent from it and inherit from the base theme. Switching
-themes changes the palette without touching roles or components.
+A primitive means the same in every theme: white stays white, `blue.500` stays
+the same blue. The dark theme overrides the `semantic` layer only, pointing roles
+at other primitives: `background-page` at `slate.900` instead of `white`,
+`action-primary` at the lighter `blue.400`. The `primitive` and `component`
+layers are absent from it and inherit from the base theme. Switching themes
+reassigns roles without touching the palette or components.
+
+Status colours are bright in both themes, so status badges set their text in
+`semantic.color.text-on-status`, which references black in every theme.
 
 Every token carries a `$description`. On import the descriptions become Figma
 variable descriptions and document the system inside the file itself.
@@ -133,6 +140,15 @@ npm run dtokens -- check --scope lint examples/playground/tokens.json examples/p
 ```
 
 Expected result: `Check passed.` with no warnings.
+
+Auditing text contrast and readability in both themes:
+
+```bash
+npm run dtokens -- audit examples/playground/tokens.json examples/playground/tokens.dark.json
+```
+
+Expected result: `Audit: 0 errors, 0 warnings, 0 not checked in 26 samples.
+Score 100 (A).`
 
 Inspecting the same set as CSS:
 

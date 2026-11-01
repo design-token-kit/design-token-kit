@@ -2,6 +2,7 @@ import { Command } from "commander";
 import { readFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { auditCommand } from "#commands/audit";
 import { checkCommand } from "#commands/check";
 import { convertCommand } from "#commands/convert";
 import { showcaseCommand } from "#commands/showcase";
@@ -12,9 +13,10 @@ const packageJson = JSON.parse(readFileSync(packageJsonPath, "utf8")) as { versi
 
 const program = new Command()
     .name("dtokens")
-    .description("CLI for design tokens: check, convert, showcase, stats. Supports DTCG JSON, HRDT YAML, and DESIGN.md.")
+    .description("CLI for design tokens: check, audit, convert, showcase, stats. Supports DTCG JSON, HRDT YAML, and DESIGN.md.")
     .version(packageJson.version, "-v, --version", "display version")
     .addCommand(checkCommand)
+    .addCommand(auditCommand)
     .addCommand(convertCommand)
     .addCommand(showcaseCommand)
     .addCommand(statsCommand)
@@ -26,6 +28,8 @@ Examples:
   $ dtokens check tokens.json --scope schema
   $ dtokens check tokens.json --scope lint
   $ dtokens check tokens.json --scope lint --checks layer-reference
+  $ dtokens audit tokens.json tokens.dark.json
+  $ dtokens audit tokens.json --level AAA --rules text-contrast
   $ dtokens convert tokens.yaml --inform hrdt --outform css --out ./dist/tokens.css
   $ dtokens convert tokens.yaml --inform hrdt --outform scss --out ./dist/tokens.scss
   $ dtokens convert tokens.json tokens.dark.json --outform scss --out ./dist/tokens.scss
