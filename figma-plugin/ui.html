@@ -1549,6 +1549,11 @@
 
         .node-row__meta {
             flex: none;
+            min-width: 0;
+            max-width: 40%;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
             padding: 3px 7px;
             border-radius: var(--radius-xs);
             background: var(--color-bg-subtle);
@@ -2681,12 +2686,16 @@
         const path = document.createElement("span");
         path.className = "node-row__path";
         path.textContent = node.path || "Page";
+        path.title = node.path || "Page";
         text.append(name, path);
         if (node.note) {
             const note = document.createElement("span");
             note.className = "node-row__note";
             note.textContent = node.note;
-            note.title = node.note;
+            note.title = node.detail ?? node.note;
+            if (node.detail !== undefined) {
+                note.setAttribute("aria-label", `${node.note}: ${node.detail}`);
+            }
             text.append(note);
         }
 

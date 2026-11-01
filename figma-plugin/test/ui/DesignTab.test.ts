@@ -54,7 +54,14 @@ const NON_TEXT_GROUP = {
     title: "Non-text contrast needs manual review",
     description: "Some graphical elements need manual review to determine their purpose or contrast.",
     docsUrl: "https://www.w3.org/WAI/WCAG22/Understanding/non-text-contrast.html",
-    nodes: nodes("Arrow", 1, () => "the graphical symbol role is uncertain"),
+    nodes: [{
+        id: "Arrow:0",
+        name: "Arrow 0",
+        path: "Card / Product",
+        meta: "3.58:1",
+        note: "Role unclear",
+        detail: "the graphical symbol role is uncertain",
+    }],
 };
 
 const USAGE_GROUP = {
@@ -249,6 +256,46 @@ describe("Design tab", () => {
 
         group.querySelector<HTMLButtonElement>(".node-row .pick")!.click();
         expect(ui.sent.at(-1)).toEqual({ type: "SELECT_NODES", ids: ["Arrow:0"] });
+        group.querySelector<HTMLButtonElement>(".group__footer .pick")!.click();
+        expect(ui.sent.at(-1)).toEqual({ type: "SELECT_NODES", ids: ["Arrow:0"] });
+    });
+
+    it("shortens non-text diagnostics while preserving long layer details and controls", () => {
+        const longName = "Arrow icon with a deliberately long Figma layer name that must remain selectable";
+        const longPath = "Toolbar / Navigation / Actions / Overflow menu / More controls";
+        const diagnostic = "the layer contains a private-use glyph, and Figma does not expose whether it is an icon or readable text";
+        const group = {
+            ...NON_TEXT_GROUP,
+            nodes: [{
+                id: "arrow:long",
+                name: longName,
+                path: longPath,
+                meta: "3.58:1",
+                note: "Role unclear",
+                detail: diagnostic,
+            }],
+        };
+        openWithReport({ groups: [group] });
+
+        const row = ui.get("#accessibility-groups .node-row");
+        const name = row.querySelector<HTMLElement>(".node-row__name")!;
+        const path = row.querySelector<HTMLElement>(".node-row__path")!;
+        const meta = row.querySelector<HTMLElement>(".node-row__meta")!;
+
+        expect(textOf(name)).toBe(longName);
+        expect(name.title).toBe(longName);
+        expect(textOf(path)).toBe(longPath);
+        expect(path.title).toBe(longPath);
+        expect(textOf(meta)).toBe("3.58:1");
+        const note = row.querySelector<HTMLElement>(".node-row__note")!;
+        expect(textOf(note)).toBe("Role unclear");
+        expect(note.title).toBe(diagnostic);
+        expect(note.getAttribute("aria-label")).toBe(`Role unclear: ${diagnostic}`);
+        expect(row.querySelector<HTMLButtonElement>(".pick")!.textContent).toBe("Select");
+        expect(textOf(row.closest(".group")!.querySelector(".group__footer .pick")!)).toBe("Select all 1");
+
+        row.querySelector<HTMLButtonElement>(".pick")!.click();
+        expect(ui.sent.at(-1)).toEqual({ type: "SELECT_NODES", ids: ["arrow:long"] });
     });
 
     it("shows findings only in their category block", () => {

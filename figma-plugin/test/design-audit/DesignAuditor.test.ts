@@ -132,12 +132,41 @@ describe("DesignAuditor", () => {
             ["text-contrast-aa", ["Label"]],
             ["non-text-contrast-unchecked", ["Arrow"]],
         ]);
-        expect(report.groups[1].nodes[0].meta).toContain("graphical symbol");
+        expect(report.groups[1].nodes[0]).toMatchObject({ meta: "3.58:1", note: "Role unclear" });
+        expect(report.groups[1].nodes[0].detail).toContain("graphical symbol");
         expect(report.groups[1]).toMatchObject({
             title: "Non-text contrast needs manual review",
             description: "Some graphical elements need manual review to determine their purpose or contrast.",
             docsUrl: "https://www.w3.org/WAI/WCAG22/Understanding/non-text-contrast.html",
         });
+    });
+
+    it("shows measured ratios below and above 3:1 without classifying the role", () => {
+        const nodes = new FigmaTextSampler().sample(textNodes(page("Page", [
+            frame("Card", CARD, [solid("#ffffff")], [
+                text("Passing arrow", LABEL, { characters: "→", fills: [solid("#ff3737")] }),
+                text("Low arrow", LABEL, { characters: "→", fills: [solid("#dddddd")] }),
+            ]),
+        ])));
+
+        const report = new DesignAuditor().audit(nodes);
+        const nonTextNodes = report.groups.find((group) => group.id === "non-text-contrast-unchecked")!.nodes;
+
+        expect(nonTextNodes.map((node) => node.meta)).toEqual(["3.58:1", "1.35:1"]);
+        expect(report.scores.accessibility).toMatchObject({ evaluated: 0, failed: 0, manualReview: 2 });
+    });
+
+    it("measures a translucent symbolic foreground over an opaque background", () => {
+        const nodes = new FigmaTextSampler().sample(textNodes(page("Page", [
+            frame("Card", CARD, [solid("#ffffff")], [
+                text("Transparent arrow", LABEL, { characters: "→", fills: [solid("#000000", 0.5)] }),
+            ]),
+        ])));
+
+        const report = new DesignAuditor().audit(nodes);
+
+        expect(report.groups[0].nodes[0].meta).toBe("3.97:1");
+        expect(report.scores.accessibility).toMatchObject({ evaluated: 0, failed: 0, manualReview: 1 });
     });
 
     it("does not duplicate ambiguous symbols or treat decorative graphics as failures", () => {
@@ -175,7 +204,14 @@ describe("DesignAuditor", () => {
         expect(nodes[0].sample.background).toBeUndefined();
         expect(report.groups).toEqual([expect.objectContaining({
             id: "non-text-contrast-unchecked",
-            nodes: [{ id: "text:Arrow", name: "Arrow", path: "Card", meta: expect.stringContaining("graphical symbol") }],
+            nodes: [{
+                id: "text:Arrow",
+                name: "Arrow",
+                path: "Card",
+                meta: "Contrast unavailable",
+                note: "Role unclear",
+                detail: expect.stringContaining("graphical symbol"),
+            }],
         })]);
         expect(report.scores.accessibility).toMatchObject({ evaluated: 0, manualReview: 1 });
     });

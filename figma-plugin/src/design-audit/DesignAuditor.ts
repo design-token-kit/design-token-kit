@@ -9,7 +9,12 @@ import {
     type AccessibilityOptions,
     type AccessibilitySettings,
 } from "@design-token-kit/core/core/audit/accessibility/AccessibilitySettings";
-import type { WcagLevel } from "@design-token-kit/core/core/audit/color/Wcag";
+import {
+    compositeOver,
+    contrastRatio,
+    formatContrastRatio,
+    type WcagLevel,
+} from "@design-token-kit/core/core/audit/color/Wcag";
 import {
     auditUsageSamples,
     formatUsageValue,
@@ -164,6 +169,9 @@ export interface FindingNode {
 
     /** What to do about the node, e.g. the variable to bind. */
     readonly note?: string;
+
+    /** Full diagnostic detail kept out of the main row when a short note is shown. */
+    readonly detail?: string;
 }
 
 interface GroupDefinition {
@@ -246,12 +254,28 @@ function toNonTextManualGroup(
         docsUrl: NON_TEXT_CONTRAST_DOCS_URL,
         nodes: candidates.map((candidate) => toFindingNode(
             candidate.node.id,
-            candidate.sample.manualReviewReason
-                ?? candidate.node.manualReviewReason
-                ?? "the graphical element's purpose or contrast is uncertain",
+            nonTextContrastMeta(candidate.sample),
             nodes,
+            {
+                note: "Role unclear",
+                detail: candidate.sample.manualReviewReason
+                    ?? candidate.node.manualReviewReason
+                    ?? "the graphical element's purpose or contrast is uncertain",
+            },
         )),
     };
+}
+
+function nonTextContrastMeta(sample: SampledTextNode["sample"]): string {
+    const { foreground, background } = sample;
+    if (sample.colorProblem !== undefined
+        || foreground === undefined
+        || background === undefined
+        || background.alpha < 1) {
+        return "Contrast unavailable";
+    }
+    const renderedForeground = compositeOver(foreground, background);
+    return formatContrastRatio(contrastRatio(renderedForeground, background));
 }
 
 function isNonTextCandidate(entry: SampledTextNode): boolean {
@@ -267,9 +291,14 @@ function addManualReviews(score: ContrastScore, additionalReviews: number): Cont
     );
 }
 
-function toFindingNode(id: string, meta: string, nodes: Map<string, AuditedNode>): FindingNode {
+function toFindingNode(
+    id: string,
+    meta: string,
+    nodes: Map<string, AuditedNode>,
+    extra: Pick<FindingNode, "note" | "detail"> = {},
+): FindingNode {
     const node = nodes.get(id);
-    return { id, name: node?.name ?? id, path: node?.path ?? "", meta };
+    return { id, name: node?.name ?? id, path: node?.path ?? "", meta, ...extra };
 }
 
 function measuredValue(finding: AuditFinding): number {
