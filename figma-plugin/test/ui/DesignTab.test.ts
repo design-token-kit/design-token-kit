@@ -157,7 +157,10 @@ describe("Design tab", () => {
         expect(textOf(ui.get("#accessibility-score"))).toBe("85%");
         expect(textOf(ui.get("#accessibility-title"))).toBe("Accessibility checks");
         expect(textOf(ui.get("#accessibility-level")).trim()).toBe("AA");
-        expect(textOf(ui.get("#accessibility-disclaimer"))).toBe("Score reflects automated checks only. It does not indicate WCAG conformance.");
+        expect(textOf(ui.get(".audit-category__title p"))).toContain("Text contrast is checked automatically");
+        expect(textOf(ui.get(".audit-category__title p"))).toContain("Icons and other visual elements need manual review");
+        expect(ui.get<HTMLAnchorElement>("#accessibility-standard-link").href).toBe("https://www.w3.org/TR/WCAG22/");
+        expect(ui.get<HTMLAnchorElement>("#accessibility-standard-link").target).toBe("_blank");
         expect(textOf(ui.get("#accessibility-grade"))).toBe("B");
         expect(ui.get("#accessibility-grade").className).toBe("grade");
         expect(textOf(ui.get("#accessibility-verdict"))).toBe("Automated text contrast checks only");

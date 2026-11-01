@@ -1218,14 +1218,6 @@
             color: var(--color-text-primary);
         }
 
-        .accessibility-score__disclaimer {
-            grid-column: 1 / -1;
-            margin: 0 14px 10px;
-            color: var(--color-text-muted);
-            font-size: var(--font-size-xs);
-            line-height: 1.4;
-        }
-
         .token-usage-score {
             grid-template-columns: auto minmax(0, 1fr);
         }
@@ -1900,7 +1892,15 @@
                     <header class="audit-category__head">
                         <div class="audit-category__title">
                             <h2 id="accessibility-title">Accessibility checks</h2>
-                            <p>WCAG 2.2 <span id="accessibility-level">AA</span> - Automated audit</p>
+                            <p>
+                                WCAG 2.2 <span id="accessibility-level">AA</span> ·
+                                Text contrast is checked automatically. Icons and other visual elements need manual review ·
+                                <a id="accessibility-standard-link"
+                                    href="https://www.w3.org/TR/WCAG22/"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    title="WCAG 2.2 standard table of contents">WCAG 2.2 standard</a>
+                            </p>
                         </div>
                         <span id="accessibility-result-text" class="audit-category__result"></span>
                     </header>
@@ -1919,7 +1919,6 @@
                             <span><strong id="accessibility-failed">0</strong> Failed</span>
                             <span><strong id="accessibility-manual-review">0</strong> Manual review</span>
                         </div>
-                        <p id="accessibility-disclaimer" class="accessibility-score__disclaimer">Score reflects automated checks only. It does not indicate WCAG conformance.</p>
                         <div id="accessibility-formula" class="score-formula" hidden></div>
                     </section>
                     <div id="accessibility-groups" class="audit-groups" aria-live="polite"></div>
@@ -2386,9 +2385,7 @@
         architectureScore.textContent = String(score.score);
         architectureScoreMax.hidden = false;
         architectureGrade.textContent = score.grade;
-        // The colour follows the share of passed checks: green at 100, amber
-        // while at least half pass, red below.
-        architectureGrade.className = score.score === 100 ? "grade" : score.score >= 50 ? "grade grade--fair" : "grade grade--poor";
+        architectureGrade.className = gradeClassName(score.grade);
 
         const tone = score.errors > 0 ? "" : score.warnings > 0 ? " score-summary__verdict--warning" : " score-summary__verdict--success";
         architectureVerdict.className = `score-summary__verdict${tone}`;
@@ -2554,7 +2551,11 @@
     function renderGrade(scoreElement, gradeElement, { score, grade }) {
         scoreElement.textContent = scoreElement === accessibilityScore ? `${score}%` : String(score);
         gradeElement.textContent = grade;
-        gradeElement.className = grade === "A" || grade === "B" ? "grade" : grade === "C" ? "grade grade--fair" : "grade grade--poor";
+        gradeElement.className = gradeClassName(grade);
+    }
+
+    function gradeClassName(grade) {
+        return grade === "A" || grade === "B" ? "grade" : grade === "C" ? "grade grade--fair" : "grade grade--poor";
     }
 
     function formulaTitle(text) {

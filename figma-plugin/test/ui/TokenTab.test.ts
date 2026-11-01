@@ -192,7 +192,12 @@ describe("Token tab", () => {
         ui.receive(analyzed(MIXED_CHECKS.map((item) => item.severity === "error" ? check(item.name, "ok") : item)));
         expect(textOf(ui.get("#architecture-score"))).toBe("60");
         expect(textOf(ui.get("#architecture-grade"))).toBe("D");
-        expect(ui.get("#architecture-grade").className).toBe("grade grade--fair");
+        expect(ui.get("#architecture-grade").className).toBe("grade grade--poor");
+
+        ui.receive(analyzed(MIXED_CHECKS.map((item, index) => index < 4 ? check(item.name, "ok") : item)));
+        expect(textOf(ui.get("#architecture-score"))).toBe("80");
+        expect(textOf(ui.get("#architecture-grade"))).toBe("B");
+        expect(ui.get("#architecture-grade").className).toBe("grade");
 
         ui.receive(analyzed(MIXED_CHECKS.map((item) => check(item.name, "ok"))));
         expect(textOf(ui.get("#architecture-score"))).toBe("100");
