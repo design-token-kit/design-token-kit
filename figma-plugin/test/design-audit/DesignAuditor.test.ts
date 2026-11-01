@@ -272,6 +272,7 @@ describe("DesignAuditor", () => {
 
             expect(group.stats).toBe("0 of 1 properties have a matching Variable or Style");
             expect(group.nodes[0].note).toBe("No match found");
+            expect(report.counts).toEqual({ errors: 0, warnings: 1, notChecked: 0 });
             expect(report.scores.tokenUsage).toMatchObject({ total: 1 });
         });
 

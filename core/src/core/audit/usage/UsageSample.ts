@@ -46,6 +46,9 @@ export interface UsageSample {
 
     /** The token the property is bound to; `undefined` for a hard-coded value. */
     readonly binding?: TokenBinding;
+
+    /** Effective Figma variable modes for this property, when they are known. */
+    readonly variableModes?: Readonly<Record<string, string>>;
 }
 
 /**
@@ -60,9 +63,12 @@ export interface TokenCandidate {
     /** Token layer the name declares; `undefined` when it declares none. */
     readonly layer?: string;
 
-    /** Resolved value. A token with several modes is one candidate per mode. */
+    /** Resolved value for the candidate's mode context. */
     readonly value: UsageValue;
 
     /** Properties the token is meant for; `undefined` for any property of its value type. */
     readonly properties?: readonly UsageProperty[];
+
+    /** Effective Figma variable modes used to resolve this candidate. */
+    readonly variableModes?: Readonly<Record<string, string>>;
 }

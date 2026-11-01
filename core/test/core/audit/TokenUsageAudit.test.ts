@@ -29,8 +29,12 @@ function candidate(name: string, value: UsageValue, extra: Partial<TokenCandidat
     return { kind: "variable", name, layer: ["primitive", "semantic", "component"].includes(layer) ? layer : undefined, value, ...extra };
 }
 
-function fill(value: UsageValue, binding?: TokenBinding): UsageSample {
-    return { id: "1:1#fill", label: "Card", property: "fill", value, binding };
+function fill(
+    value: UsageValue,
+    binding?: TokenBinding,
+    variableModes?: Readonly<Record<string, string>>,
+): UsageSample {
+    return { id: "1:1#fill", label: "Card", property: "fill", value, binding, variableModes };
 }
 
 const TOKENS: TokenCandidate[] = [
@@ -81,6 +85,21 @@ describe("TokenMatcher", () => {
         const tokens = [candidate("base/blue", color("#2563eb"), { layer: "base" }), candidate("role/accent", color("#2563eb"), { layer: "role" })];
         expect(new TokenMatcher(tokens, { layers: ["base", "role"] }).match("fill", color("#2563eb"))?.candidate.name).toBe("role/accent");
     });
+
+    it("matches variables only in the sample mode context while keeping styles mode-independent", () => {
+        const light = { theme: "light" };
+        const dark = { theme: "dark" };
+        const candidates = [
+            candidate("semantic/surface", color("#ffffff"), { variableModes: light }),
+            candidate("semantic/surface", color("#111111"), { variableModes: dark }),
+            { kind: "style" as const, name: "Surface style", value: color("#ffffff") },
+        ];
+        const matcher = new TokenMatcher(candidates);
+
+        expect(matcher.match("fill", color("#111111"), undefined, dark)?.candidate.name).toBe("semantic/surface");
+        expect(matcher.match("fill", color("#ffffff"), undefined, dark)?.candidate.name).toBe("Surface style");
+        expect(matcher.match("fill", color("#ffffff"), undefined)?.candidate.name).toBe("Surface style");
+    });
 });
 
 describe("auditUsageSamples", () => {
@@ -102,6 +121,17 @@ describe("auditUsageSamples", () => {
             measurement: "#2563eb",
             suggestion: { name: "semantic/accent", exact: true },
         }]);
+    });
+
+    it("does not suggest an exact variable from an inactive mode", () => {
+        const candidates = [
+            candidate("semantic/surface", color("#ffffff"), { variableModes: { theme: "light" } }),
+            candidate("semantic/surface", color("#111111"), { variableModes: { theme: "dark" } }),
+        ];
+        const [finding] = auditUsageSamples([fill(color("#ffffff"), undefined, { theme: "dark" })], candidates).findings;
+
+        expect(finding.message).toBe("Card: fill #ffffff is not bound to a token; no token has this value.");
+        expect(finding.suggestion).toBeUndefined();
     });
 
     it("reports a hard-coded value no token has", () => {

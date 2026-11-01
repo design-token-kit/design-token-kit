@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { contrastRatio, formatContrastRatio } from "@design-token-kit/core/core/audit/color/Wcag";
 import { FigmaTextSampler } from "#/figma-plugin/design-audit/FigmaTextSampler";
-import { booleanOperation, frame, gradient, group, image, page, rect, section, solid, text, textNodes } from "./figmaNodes";
+import { booleanOperation, frame, gradient, group, image, page, rect, section, solid, text, textNodes, vector } from "./figmaNodes";
 
 const CARD = { x: 0, y: 0, width: 200, height: 100 };
 const LABEL = { x: 20, y: 20, width: 80, height: 20 };
@@ -84,6 +84,21 @@ describe("FigmaTextSampler", () => {
 
         expect(hex(entry.sample.background)).toBe("#000000");
         expect(contrastRatio(entry.sample.foreground!, entry.sample.background!)).toBe(1);
+    });
+
+    it("uses a vector's painted geometry for adjacent text without auditing the vector as text", () => {
+        const root = page("Page", [frame("Card", CARD, [solid("#ffffff")], [
+            vector("Icon", { x: 0, y: 0, width: 80, height: 20 }, [solid("#000000")], [
+                { windingRule: "NONZERO", data: "M 0 0 L 20 0 L 20 20 L 0 20 Z" },
+            ]),
+            text("Label", { x: 10, y: 0, width: 20, height: 20 }),
+        ])]);
+
+        const entries = sampleOf(root);
+
+        expect(entries).toHaveLength(1);
+        expect(entries[0].node.name).toBe("Label");
+        expect(hex(entries[0].sample.background)).toBe("#000000");
     });
 
     it("finds a nested button surface when the text wrapper differs from the child wrapper", () => {

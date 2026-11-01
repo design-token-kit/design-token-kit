@@ -57,6 +57,21 @@ export function booleanOperation(name: string, box: Box, fills: Paint[], fillGeo
     };
 }
 
+export function vector(name: string, box: Box, fills: Paint[], fillGeometry: VectorPath[] = [], extra: Record<string, unknown> = {}): FakeNode {
+    return {
+        type: "VECTOR",
+        id: `vector:${name}`,
+        name,
+        visible: true,
+        opacity: 1,
+        fills,
+        absoluteBoundingBox: box,
+        absoluteTransform: [[1, 0, box.x], [0, 1, box.y]],
+        fillGeometry,
+        ...extra,
+    };
+}
+
 export function section(name: string, box: Box, fills: Paint[], children: FakeNode[] = []): FakeNode {
     return { type: "SECTION", id: `section:${name}`, name, visible: true, fills, absoluteBoundingBox: box, children };
 }

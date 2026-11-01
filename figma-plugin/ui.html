@@ -1036,8 +1036,9 @@
             flex: none;
             align-self: flex-start;
             margin-top: 3px;
-            color: var(--color-text-muted);
-            font-size: var(--font-size-sm);
+            color: var(--color-text-primary);
+            font-size: var(--font-size-base);
+            font-weight: 800;
         }
 
         .audit-score {
@@ -1201,21 +1202,6 @@
             gap: 4px;
             min-width: 0;
             padding: 10px 14px;
-        }
-
-        .accessibility-score__summary {
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            gap: 4px;
-            padding: 10px 14px;
-            border-left: 1px solid var(--color-border-divider);
-            color: var(--color-text-muted);
-            font-size: var(--font-size-sm);
-        }
-
-        .accessibility-score__summary strong {
-            color: var(--color-text-primary);
         }
 
         .token-usage-score {
@@ -1871,7 +1857,7 @@
                             <h2>Design audit</h2>
                         </div>
                         <p id="audit-meta" class="subtle token-stats" hidden></p>
-            <p class="lead">Review accessibility and token usage for the selected layers. <span>Read-only: your Figma file is never changed.</span></p>
+            <p class="lead">Review accessibility and token usage for the selected layers.</p>
                     </div>
                     <div class="arch-head__actions">
                         <button id="run-audit" class="btn btn--primary" type="button">
@@ -1919,11 +1905,6 @@
                         <div class="accessibility-score__verdict">
                             <span id="accessibility-verdict" class="score-summary__verdict"></span>
                             <button id="accessibility-formula-toggle" class="text-btn" type="button" aria-expanded="false" aria-controls="accessibility-formula">How is the score calculated?</button>
-                        </div>
-                        <div id="accessibility-summary" class="accessibility-score__summary" aria-label="Accessibility check summary">
-                            <span><strong id="accessibility-passed">0</strong> Passed</span>
-                            <span><strong id="accessibility-failed">0</strong> Failed</span>
-                            <span><strong id="accessibility-manual-review">0</strong> Manual review</span>
                         </div>
                         <div id="accessibility-formula" class="score-formula" hidden></div>
                     </section>
@@ -2012,9 +1993,6 @@
     const accessibilityGrade = document.getElementById("accessibility-grade");
     const accessibilityVerdict = document.getElementById("accessibility-verdict");
     const accessibilityLevel = document.getElementById("accessibility-level");
-    const accessibilityPassed = document.getElementById("accessibility-passed");
-    const accessibilityFailed = document.getElementById("accessibility-failed");
-    const accessibilityManualReview = document.getElementById("accessibility-manual-review");
     const auditCoverage = document.getElementById("audit-coverage");
     const usageScore = document.getElementById("usage-score");
     const usageGrade = document.getElementById("usage-grade");
@@ -2490,12 +2468,10 @@
         accessibilityLevel.textContent = report.level;
         renderAccessibilityStatistics(accessibility);
         if (accessibility === undefined || accessibility.score === undefined) {
-            renderAccessibilitySummary(accessibility ?? { passed: 0, failed: 0, manualReview: 0 });
             renderUnavailableAccessibilityScore();
             renderAccessibilityFindings();
             return;
         }
-        renderAccessibilitySummary(accessibility);
         renderGrade(accessibilityScore, accessibilityGrade, accessibility);
         accessibilityVerdict.className = "score-summary__verdict score-summary__verdict--neutral";
         accessibilityVerdict.textContent = "Automated text contrast checks only";
@@ -2514,16 +2490,12 @@
         );
     }
 
-    function renderAccessibilitySummary(accessibility) {
-        accessibilityPassed.textContent = String(accessibility.passed);
-        accessibilityFailed.textContent = String(accessibility.failed);
-        accessibilityManualReview.textContent = String(accessibility.manualReview);
-    }
-
     function renderAccessibilityStatistics(accessibility) {
+        const passed = accessibility?.passed ?? 0;
         const failed = accessibility?.failed ?? 0;
         const manualReview = accessibility?.manualReview ?? 0;
-        accessibilityResultText.textContent = `${formatCount(failed, "failed", "failed")} · `
+        accessibilityResultText.textContent = `${formatCount(passed, "passed", "passed")} · `
+            + `${formatCount(failed, "failed", "failed")} · `
             + `${formatCount(manualReview, "manual review", "manual review")}`;
     }
 

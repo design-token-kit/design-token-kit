@@ -135,5 +135,26 @@ describe("FigmaUsageSampler", () => {
 
         expect(entry.node).toEqual({ id: "rect:Swatch", name: "Swatch", path: "Home / Card" });
         expect(entry.sample).toMatchObject({ id: "rect:Swatch#0", label: "Swatch", binding: { kind: "variable", name: "missing variable" } });
+        expect(entry.sample.variableModes).toBeUndefined();
+        expect(entry.consumer).toBeDefined();
+    });
+
+    it("keeps the resolved mode map supplied by Figma for inherited and explicit modes", async () => {
+        const inherited = {
+            ...rect("Inherited dark", BOX, [solid("#000000")]),
+            resolvedVariableModes: { themes: "dark" },
+        };
+        const explicit = {
+            ...rect("Explicit light", BOX, [solid("#ffffff")]),
+            resolvedVariableModes: { themes: "light" },
+        };
+        const root = page("Home", [frame("Card", BOX, [], [inherited, explicit])]);
+
+        const sampled = await new FigmaUsageSampler().sample([root]);
+
+        expect(sampled.map((entry) => [entry.sample.label, entry.sample.variableModes])).toEqual([
+            ["Inherited dark", { themes: "dark" }],
+            ["Explicit light", { themes: "light" }],
+        ]);
     });
 });

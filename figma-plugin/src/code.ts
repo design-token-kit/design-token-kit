@@ -98,10 +98,9 @@ async function auditDesign(scope: "page" | "file"): Promise<void> {
         const pages = scope === "file" ? figma.root.children : [figma.currentPage];
         const textNodes = pages.flatMap((page) => page.findAllWithCriteria({ types: ["TEXT"] }));
         const sampled = new FigmaTextSampler().sample(textNodes, scope === "file");
-        const [properties, candidates] = await Promise.all([
-            new FigmaUsageSampler().sample(pages, scope === "file"),
-            readTokenCandidates(),
-        ]);
+        const properties = await new FigmaUsageSampler().sample(pages, scope === "file");
+        const consumers = properties.flatMap((entry) => entry.consumer === undefined ? [] : [entry.consumer]);
+        const candidates = await readTokenCandidates(consumers);
         const report = new DesignAuditor().audit(sampled, properties, candidates);
 
         figma.ui.postMessage({

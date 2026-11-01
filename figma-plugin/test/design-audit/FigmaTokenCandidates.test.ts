@@ -6,8 +6,44 @@ import { solid } from "./figmaNodes";
 const LIGHT = "mode:light";
 const DARK = "mode:dark";
 
-function variable(id: string, name: string, resolvedType: "COLOR" | "FLOAT", scopes: string[], valuesByMode: Record<string, unknown>, collection = "themes") {
-    return { id, name, resolvedType, scopes, valuesByMode, variableCollectionId: collection, description: "" };
+interface FakeVariable {
+    readonly id: string;
+    readonly name: string;
+    readonly resolvedType: "COLOR" | "FLOAT";
+    readonly scopes: string[];
+    readonly valuesByMode: Record<string, VariableValue>;
+    readonly variableCollectionId: string;
+    readonly description: string;
+    readonly resolveForConsumer: (consumer: SceneNode) => { value: VariableValue; resolvedType: "COLOR" | "FLOAT" };
+}
+
+function variable(
+    id: string,
+    name: string,
+    resolvedType: "COLOR" | "FLOAT",
+    scopes: string[],
+    valuesByMode: Record<string, VariableValue>,
+    collection = "themes",
+): FakeVariable {
+    const definition = { id, name, resolvedType, scopes, valuesByMode, variableCollectionId: collection, description: "" };
+    return {
+        ...definition,
+        resolveForConsumer: (consumer) => {
+            const modeId = consumer.resolvedVariableModes[definition.variableCollectionId];
+            const value = definition.valuesByMode[modeId];
+            if (value === undefined) throw new Error(`Missing mode ${modeId}`);
+            if (isAlias(value)) {
+                const target = VARIABLES.find((entry) => entry.id === value.id);
+                if (target === undefined) throw new Error(`Missing variable ${value.id}`);
+                return target.resolveForConsumer(consumer);
+            }
+            return { value, resolvedType };
+        },
+    };
+}
+
+function isAlias(value: VariableValue): value is VariableAlias {
+    return typeof value === "object" && value !== null && "type" in value && value.type === "VARIABLE_ALIAS";
 }
 
 function rgba(hex: string, a = 1) {
@@ -29,7 +65,11 @@ const ACCENT = variable("var:accent", "semantic/accent", "COLOR", ["FRAME_FILL",
 const EFFECT = variable("var:shadow", "semantic/shadow", "COLOR", ["EFFECT_COLOR"], { [LIGHT]: rgba("#000000", 0.2) });
 const SPACE = variable("var:space", "spacing/4", "FLOAT", ["GAP"], { "mode:value": 16 }, "palette");
 const OPACITY = variable("var:opacity", "opacity/50", "FLOAT", ["OPACITY"], { "mode:value": 0.5 }, "palette");
-const VARIABLES = [BLUE, ACCENT, EFFECT, SPACE, OPACITY];
+const VARIABLES: FakeVariable[] = [BLUE, ACCENT, EFFECT, SPACE, OPACITY];
+
+const LIGHT_CONSUMER = { resolvedVariableModes: { themes: LIGHT, palette: "mode:value" } } as unknown as SceneNode;
+const DARK_CONSUMER = { resolvedVariableModes: { themes: DARK, palette: "mode:value" } } as unknown as SceneNode;
+const UNKNOWN_CONSUMER = {} as SceneNode;
 
 function summary(candidate: Awaited<ReturnType<typeof readTokenCandidates>>[number]) {
     return [candidate.kind, candidate.name, candidate.layer ?? "-", formatUsageValue(candidate.value), candidate.properties?.join(",")];
@@ -55,14 +95,31 @@ describe("readTokenCandidates", () => {
         vi.unstubAllGlobals();
     });
 
-    it("reads variables in every mode for the properties their scopes allow, and paint and text styles", async () => {
-        expect((await readTokenCandidates()).map(summary)).toEqual([
-            ["variable", "primitive/blue/500", "primitive", "#2563eb", "fill,stroke"],
-            ["variable", "semantic/accent", "semantic", "#2563eb", "fill"],
-            ["variable", "semantic/accent", "semantic", "#93c5fd", "fill"],
-            ["variable", "spacing/4", "-", "16px", "gap,padding"],
-            ["style", "Brand", "-", "#2563eb", "fill,stroke"],
-            ["style", "Body/M", "-", "16px", "font-size"],
+    it("resolves variables for the effective mode of each consumer and keeps local styles mode-independent", async () => {
+        const candidates = await readTokenCandidates([LIGHT_CONSUMER, DARK_CONSUMER]);
+        const accentCandidates = candidates.filter((candidate) => candidate.name === "semantic/accent");
+
+        expect(accentCandidates.map((candidate) => [formatUsageValue(candidate.value), candidate.variableModes])).toEqual([
+            ["#2563eb", { themes: LIGHT, palette: "mode:value" }],
+            ["#93c5fd", { themes: DARK, palette: "mode:value" }],
         ]);
+        expect(candidates.filter((candidate) => candidate.name === "Brand").map(summary)).toEqual([
+            ["style", "Brand", "-", "#2563eb", "fill,stroke"],
+        ]);
+    });
+
+    it("does not create variable suggestions when the consumer mode cannot be determined", async () => {
+        const candidates = await readTokenCandidates([UNKNOWN_CONSUMER]);
+
+        expect(candidates.filter((candidate) => candidate.kind === "variable")).toEqual([]);
+        expect(candidates.filter((candidate) => candidate.kind === "style").map((candidate) => candidate.name)).toEqual(["Brand", "Body/M"]);
+    });
+
+    it("does not resolve a cross-collection alias when the target collection mode is missing", async () => {
+        const consumer = { resolvedVariableModes: { themes: LIGHT } } as unknown as SceneNode;
+        const candidates = await readTokenCandidates([consumer]);
+
+        expect(candidates.filter((candidate) => candidate.kind === "variable")).toEqual([]);
+        expect(candidates.filter((candidate) => candidate.kind === "style").map((candidate) => candidate.name)).toEqual(["Brand", "Body/M"]);
     });
 });

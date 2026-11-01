@@ -154,6 +154,7 @@ describe("Design tab", () => {
 
         expect(ui.get("#audit-results").hidden).toBe(false);
         expect(ui.get("#audit-status").hidden).toBe(true);
+        expect(textOf(ui.get("#design-workspace .lead"))).toBe("Review accessibility and token usage for the selected layers.");
         expect(textOf(ui.get("#accessibility-score"))).toBe("85%");
         expect(textOf(ui.get("#accessibility-title"))).toBe("Accessibility checks");
         expect(textOf(ui.get("#accessibility-level")).trim()).toBe("AA");
@@ -165,10 +166,8 @@ describe("Design tab", () => {
         expect(ui.get("#accessibility-grade").className).toBe("grade");
         expect(textOf(ui.get("#accessibility-verdict"))).toBe("Automated text contrast checks only");
         expect(ui.get("#accessibility-verdict").className).toBe("score-summary__verdict score-summary__verdict--neutral");
-        expect(textOf(ui.get("#accessibility-result-text"))).toBe("3 failed · 3 manual review");
-        expect(textOf(ui.get("#accessibility-passed"))).toBe("17");
-        expect(textOf(ui.get("#accessibility-failed"))).toBe("3");
-        expect(textOf(ui.get("#accessibility-manual-review"))).toBe("3");
+        expect(textOf(ui.get("#accessibility-result-text"))).toBe("17 passed · 3 failed · 3 manual review");
+        expect(ui.document.querySelector("#accessibility-summary")).toBeNull();
         expect(textOf(ui.get("#audit-meta"))).toBe("40 text layers · 25 layers checked for variables");
         expect(textOf(ui.get("#usage-score"))).toBe("60");
         expect(textOf(ui.get("#usage-grade"))).toBe("D");
@@ -214,7 +213,7 @@ describe("Design tab", () => {
 
         expect(textOf(ui.get("#accessibility-verdict"))).toBe("Automated text contrast checks only");
         expect(ui.get("#accessibility-verdict").className).toBe("score-summary__verdict score-summary__verdict--neutral");
-        expect(textOf(ui.get("#accessibility-result-text"))).toBe("0 failed · 0 manual review");
+        expect(textOf(ui.get("#accessibility-result-text"))).toBe("20 passed · 0 failed · 0 manual review");
     });
 
     it("does not show a score when every text layer needs a manual contrast check", () => {
@@ -233,7 +232,7 @@ describe("Design tab", () => {
         expect(textOf(ui.get("#accessibility-score"))).toBe("N/A");
         expect(textOf(ui.get("#accessibility-verdict"))).toBe("No automated contrast checks could be evaluated");
         expect(ui.get("#accessibility-verdict").className).toBe("score-summary__verdict score-summary__verdict--neutral");
-        expect(textOf(ui.get("#accessibility-result-text"))).toBe("0 failed · 0 manual review");
+        expect(textOf(ui.get("#accessibility-result-text"))).toBe("0 passed · 0 failed · 0 manual review");
     });
 
     it("lists the issues, with what could not be checked in a section of its own", () => {
@@ -477,6 +476,19 @@ describe("Design tab", () => {
 
         row.querySelector<HTMLButtonElement>(".pick")!.click();
         expect(ui.sent.at(-1)).toEqual({ type: "SELECT_NODES", ids: ["long-layer"] });
+    });
+
+    it("selects all hard-coded color properties while deduplicating layer IDs", () => {
+        openWithReport({ groups: [USAGE_GROUP] });
+
+        const group = ui.get("#usage-groups .group");
+        const selectAll = group.querySelector<HTMLButtonElement>(".group__footer .pick")!;
+        selectAll.click();
+
+        expect(ui.sent.at(-1)).toEqual({ type: "SELECT_NODES", ids: ["card", "button"] });
+        expect(Array.from(group.querySelectorAll<HTMLElement>(".node-row"))
+            .every((row) => row.classList.contains("is-selected"))).toBe(true);
+        expect(selectAll.getAttribute("aria-pressed")).toBe("true");
     });
 
     it("shows why the audit failed", () => {

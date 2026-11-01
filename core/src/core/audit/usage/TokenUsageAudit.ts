@@ -107,6 +107,8 @@ export interface TokenCoverage {
  *
  * The samples may come from a Figma document or from code; the rules do not
  * depend on the source.
+ * When a sample carries effective variable modes, variable suggestions are
+ * restricted to candidates resolved in the same mode context.
  *
  * @param candidates - Tokens available for the properties, to suggest from.
  */
@@ -125,13 +127,14 @@ export function auditUsageSamples(
     for (const sample of samples) {
         if (sample.binding === undefined) {
             if (runs(HARDCODED_VALUE)) {
-                findings.push(hardcodedFinding(sample, matcher.match(sample.property, sample.value)));
+                findings.push(hardcodedFinding(sample, matcher.match(sample.property, sample.value, undefined, sample.variableModes)));
             }
         } else if (sample.binding.layer === lowest
             && hasHigherLayerCandidate(candidates, sample.property, lowest, layers)
             && runs(PRIMITIVE_BINDING)) {
             const match = matcher.match(sample.property, sample.value,
-                (candidate) => candidate.layer !== undefined && candidate.layer !== lowest && layers.has(candidate.layer));
+                (candidate) => candidate.layer !== undefined && candidate.layer !== lowest && layers.has(candidate.layer),
+                sample.variableModes);
             findings.push(primitiveFinding(sample, sample.binding.name, lowest, match));
         }
     }

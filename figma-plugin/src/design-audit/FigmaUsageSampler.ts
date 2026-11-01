@@ -53,8 +53,10 @@ export class FigmaUsageSampler {
                     part: property.part,
                     value: property.value,
                     binding: property.ref === undefined ? undefined : bindings.get(refKey(property.ref)),
+                    variableModes: resolvedVariableModes(node),
                 },
                 node: audited,
+                consumer: node,
             };
         });
     }
@@ -66,6 +68,8 @@ export class FigmaUsageSampler {
 export interface SampledProperty {
     readonly sample: UsageSample;
     readonly node: AuditedNode;
+    /** The Figma node used to resolve variable aliases and modes. */
+    readonly consumer?: SceneNode;
 }
 
 interface BindingRef {
@@ -220,4 +224,10 @@ async function resolveBindings(refs: ReadonlyArray<BindingRef | undefined>): Pro
 
 function refKey(ref: BindingRef): string {
     return `${ref.kind}:${ref.id}`;
+}
+
+function resolvedVariableModes(node: SceneNode): Readonly<Record<string, string>> | undefined {
+    const modes = "resolvedVariableModes" in node ? node.resolvedVariableModes : undefined;
+    if (modes === undefined) return undefined;
+    return Object.keys(modes).length === 0 ? undefined : { ...modes };
 }

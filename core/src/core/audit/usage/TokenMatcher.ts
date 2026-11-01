@@ -61,16 +61,18 @@ export class TokenMatcher {
      * Finds the best token for a value of a property.
      *
      * @param accept - Narrows the candidates, e.g. to a layer.
+     * @param variableModes - Effective modes to restrict mode-aware variables to.
      * @returns The best match, or `undefined` when no token is close enough.
      */
     match(
         property: UsageProperty,
         value: UsageValue,
         accept: (candidate: TokenCandidate) => boolean = () => true,
+        variableModes?: Readonly<Record<string, string>>,
     ): TokenMatch | undefined {
         let best: RankedMatch | undefined;
         for (const candidate of this.#candidates) {
-            if (!appliesTo(candidate, property) || !accept(candidate)) continue;
+            if (!appliesTo(candidate, property) || !accept(candidate) || !matchesModes(candidate, variableModes)) continue;
             const distance = this.#distance(value, candidate.value);
             if (distance === undefined) continue;
 
@@ -114,6 +116,17 @@ interface RankedMatch {
 
 function appliesTo(candidate: TokenCandidate, property: UsageProperty): boolean {
     return candidate.properties === undefined || candidate.properties.includes(property);
+}
+
+function matchesModes(candidate: TokenCandidate, variableModes: Readonly<Record<string, string>> | undefined): boolean {
+    if (candidate.kind === "style") return true;
+    if (candidate.variableModes === undefined || variableModes === undefined) {
+        return candidate.variableModes === undefined && variableModes === undefined;
+    }
+    const candidateModes = Object.entries(candidate.variableModes);
+    const sampleModes = Object.entries(variableModes);
+    return candidateModes.length === sampleModes.length
+        && candidateModes.every(([collectionId, modeId]) => variableModes[collectionId] === modeId);
 }
 
 function compare(first: RankedMatch, second: RankedMatch): number {
