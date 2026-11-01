@@ -151,6 +151,7 @@ export interface FindingGroup {
     readonly category: AuditCategory;
     readonly title: string;
     readonly description: string;
+    readonly stats?: string;
     readonly fix?: string;
     readonly docsUrl: string;
     readonly nodes: FindingNode[];
@@ -312,7 +313,8 @@ interface UsageGroupDefinition {
     readonly properties: readonly UsageProperty[];
     readonly title: string;
     readonly description: (count: number, matched: number) => string;
-    readonly fix: string;
+    readonly statistics?: (count: number, matched: number) => string;
+    readonly fix?: string;
 }
 
 const PROPERTY_LABELS: Record<UsageProperty, string> = {
@@ -329,10 +331,9 @@ const USAGE_GROUP_DEFINITIONS: readonly UsageGroupDefinition[] = [
         id: "hardcoded-color",
         ruleId: "hardcoded-value",
         properties: ["fill", "stroke"],
-        title: "Colours are not bound to variables",
-        description: (count, matched) => "Hard-coded colours do not follow changes to the palette or the mode. "
-            + `${matched} of ${count} match a variable or style of this file.`,
-        fix: "Bind the colour to the suggested variable or style. A colour with no match is off the palette: pick the nearest one.",
+        title: "Hard-coded colors",
+        description: () => "Some fills and strokes use fixed colors instead of Variables or Styles.",
+        statistics: (count, matched) => `${matched} of ${count} properties have a matching Variable or Style`,
     },
     {
         id: "hardcoded-spacing",
@@ -383,6 +384,7 @@ function toUsageGroup(
         category: "token-usage",
         title: definition.title,
         description: definition.description(matching.length, matched),
+        stats: definition.statistics?.(matching.length, matched),
         fix: definition.fix,
         docsUrl: `${DOCS_URL}#${definition.ruleId}`,
         nodes: matching.map(({ finding, entry }) => ({
@@ -390,7 +392,7 @@ function toUsageGroup(
             name: entry.node.name,
             path: entry.node.path,
             meta: propertyMeta(entry.sample),
-            note: usageNote(finding),
+            note: usageNote(finding, definition.id === "hardcoded-color"),
         })),
     };
 }
@@ -405,11 +407,13 @@ function propertyMeta(sample: UsageSample): string {
     return `${label} ${formatUsageValue(sample.value)}`;
 }
 
-function usageNote(finding: AuditFinding): string {
+function usageNote(finding: AuditFinding, useColorSuggestionLabels = false): string {
     const suggestion = finding.suggestion === undefined ? undefined
-        : finding.suggestion.exact ? `Use ${finding.suggestion.name}` : `Closest: ${finding.suggestion.name}`;
+        : useColorSuggestionLabels
+            ? finding.suggestion.exact ? `Exact match: ${finding.suggestion.name}` : `Closest match: ${finding.suggestion.name}`
+            : finding.suggestion.exact ? `Use ${finding.suggestion.name}` : `Closest: ${finding.suggestion.name}`;
     if (finding.id === "primitive-binding") {
         return suggestion === undefined ? `Bound to ${finding.measurement}` : `Bound to ${finding.measurement} · ${suggestion}`;
     }
-    return suggestion ?? "No matching variable";
+    return suggestion ?? (useColorSuggestionLabels ? "No match found" : "No matching variable");
 }

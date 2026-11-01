@@ -1465,6 +1465,12 @@
             color: var(--color-text-body);
         }
 
+        .group__stats {
+            font-size: var(--font-size-sm);
+            line-height: 1.4;
+            color: var(--color-text-muted);
+        }
+
         .group__fix {
             display: flex;
             gap: 8px;
@@ -1865,7 +1871,7 @@
                             <h2>Design audit</h2>
                         </div>
                         <p id="audit-meta" class="subtle token-stats" hidden></p>
-            <p class="lead">Automated text contrast checks and token usage findings for the selected layers. <span>Read-only: your Figma file is never changed.</span></p>
+            <p class="lead">Review accessibility and token usage for the selected layers. <span>Read-only: your Figma file is never changed.</span></p>
                     </div>
                     <div class="arch-head__actions">
                         <button id="run-audit" class="btn btn--primary" type="button">
@@ -2643,6 +2649,12 @@
         description.className = "group__description";
         description.textContent = group.description;
         details.append(description);
+        if (group.stats !== undefined) {
+            const stats = document.createElement("p");
+            stats.className = "group__stats";
+            stats.textContent = group.stats;
+            details.append(stats);
+        }
         if (group.category === "token-usage" && group.fix !== undefined) {
             const fix = document.createElement("div");
             fix.className = "group__fix";

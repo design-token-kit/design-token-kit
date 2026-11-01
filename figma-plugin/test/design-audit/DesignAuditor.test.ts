@@ -250,14 +250,29 @@ describe("DesignAuditor", () => {
 
             expect(report.groups.map((group) => [group.id, group.category, group.nodes.map((node) => [node.name, node.meta, node.note])])).toEqual([
                 ["hardcoded-color", "token-usage", [
-                    ["Button", "Fill #2563eb", "Use semantic/accent"],
-                    ["Off palette", "Fill #ff0000", "No matching variable"],
+                    ["Button", "Fill #2563eb", "Exact match: semantic/accent"],
+                    ["Off palette", "Fill #ff0000", "No match found"],
                 ]],
                 ["hardcoded-spacing", "token-usage", [["Stack", "Padding top 15px", "Closest: spacing/4"]]],
                 ["primitive-binding", "token-usage", [["Link", "Fill #2563eb", "Bound to primitive/blue/500 · Use semantic/accent"]]],
             ]);
-            expect(report.groups[0].description).toBe("Hard-coded colours do not follow changes to the palette or the mode. "
-                + "1 of 2 match a variable or style of this file.");
+            expect(report.groups[0]).toMatchObject({
+                title: "Hard-coded colors",
+                description: "Some fills and strokes use fixed colors instead of Variables or Styles.",
+                stats: "1 of 2 properties have a matching Variable or Style",
+                fix: undefined,
+            });
+        });
+
+        it("reports zero matching color tokens without changing the warning count", () => {
+            const report = new DesignAuditor().audit([], [
+                property("Off palette", { property: "fill", value: { type: "color", color: { red: 1, green: 0, blue: 0, alpha: 1 } } }),
+            ]);
+            const group = report.groups.find((item) => item.id === "hardcoded-color")!;
+
+            expect(group.stats).toBe("0 of 1 properties have a matching Variable or Style");
+            expect(group.nodes[0].note).toBe("No match found");
+            expect(report.scores.tokenUsage).toMatchObject({ total: 1 });
         });
 
         it("scores token usage apart from accessibility and reports the coverage", () => {

@@ -68,14 +68,14 @@ const USAGE_GROUP = {
     id: "hardcoded-color",
     severity: "warning",
     category: "token-usage",
-    title: "Colours are not bound to variables",
-    description: "Hard-coded colours do not follow changes to the palette or the mode.",
-    fix: "Bind the colour to the suggested variable or style.",
+    title: "Hard-coded colors",
+    description: "Some fills and strokes use fixed colors instead of Variables or Styles.",
+    stats: "2 of 3 properties have a matching Variable or Style",
     docsUrl: "#",
     nodes: [
-        { id: "card", name: "Card", path: "Page", meta: "Fill #2563eb", note: "Use semantic/accent" },
-        { id: "card", name: "Card", path: "Page", meta: "Stroke #e5e7eb", note: "Closest: semantic/border" },
-        { id: "button", name: "Button", path: "Card", meta: "Padding top 13px", note: "No matching variable" },
+        { id: "card", name: "Card", path: "Page", meta: "Fill #2563eb", note: "Exact match: semantic/accent" },
+        { id: "card", name: "Card", path: "Page", meta: "Stroke #e5e7eb", note: "Closest match: semantic/border" },
+        { id: "button", name: "Button", path: "Card", meta: "Padding top 13px", note: "No match found" },
     ],
 };
 
@@ -307,7 +307,7 @@ describe("Design tab", () => {
         expect(Array.from(ui.document.querySelectorAll("#accessibility-groups .group__title"), textOf))
             .toEqual(["Low text contrast (WCAG AA)"]);
         expect(Array.from(ui.document.querySelectorAll("#usage-groups .group__title"), textOf))
-            .toEqual(["Colours are not bound to variables"]);
+            .toEqual(["Hard-coded colors"]);
     });
 
     it("opens an accessibility group without an inline Fix section", () => {
@@ -445,10 +445,38 @@ describe("Design tab", () => {
         const group = ui.get("#usage-groups .group");
 
         expect(textOf(group.querySelector(".group__count")!)).toBe("3 properties");
+        expect(textOf(group.querySelector(".group__description")!)).toBe("Some fills and strokes use fixed colors instead of Variables or Styles.");
+        expect(textOf(group.querySelector(".group__stats")!)).toBe("2 of 3 properties have a matching Variable or Style");
+        expect(group.querySelector(".group__fix")).toBeNull();
+        expect(group.querySelector<HTMLAnchorElement>(".docs")!.getAttribute("href")).toBe("#");
         expect(Array.from(group.querySelectorAll(".node-row__meta"), textOf)).toEqual(["Fill #2563eb", "Stroke #e5e7eb", "Padding top 13px"]);
-        expect(Array.from(group.querySelectorAll(".node-row__note"), textOf)).toEqual(["Use semantic/accent", "Closest: semantic/border", "No matching variable"]);
+        expect(Array.from(group.querySelectorAll(".node-row__note"), textOf)).toEqual(["Exact match: semantic/accent", "Closest match: semantic/border", "No match found"]);
         expect(textOf(ui.get("#usage-result-text"))).toBe("1 issue · 3 properties · 2 layers");
         expect(footerTexts(group)).toContain("Select all 2");
+    });
+
+    it("truncates long token suggestions without hiding layer selection", () => {
+        const longTokenName = "semantic/component/navigation/interactive-border-strong-hover";
+        const group = {
+            ...USAGE_GROUP,
+            nodes: [{
+                id: "long-layer",
+                name: "Navigation control with a long layer name",
+                path: "Page / Header / Navigation / Actions",
+                meta: "Stroke #e5e7eb",
+                note: `Closest match: ${longTokenName}`,
+            }],
+        };
+        openWithReport({ groups: [group] });
+
+        const row = ui.get("#usage-groups .node-row");
+        const note = row.querySelector<HTMLElement>(".node-row__note")!;
+        expect(textOf(note)).toBe(`Closest match: ${longTokenName}`);
+        expect(note.title).toBe(`Closest match: ${longTokenName}`);
+        expect(row.querySelector<HTMLButtonElement>(".pick")!.textContent).toBe("Select");
+
+        row.querySelector<HTMLButtonElement>(".pick")!.click();
+        expect(ui.sent.at(-1)).toEqual({ type: "SELECT_NODES", ids: ["long-layer"] });
     });
 
     it("shows why the audit failed", () => {
