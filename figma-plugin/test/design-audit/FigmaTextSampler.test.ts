@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { contrastRatio } from "@design-token-kit/core/core/audit/color/Wcag";
+import { contrastRatio, formatContrastRatio } from "@design-token-kit/core/core/audit/color/Wcag";
 import { FigmaTextSampler } from "#/figma-plugin/design-audit/FigmaTextSampler";
 import { booleanOperation, frame, gradient, group, image, page, rect, section, solid, text, textNodes } from "./figmaNodes";
 
@@ -177,7 +177,7 @@ describe("FigmaTextSampler", () => {
         expect(entries.map((entry) => entry.node.name)).toEqual(["Shown"]);
     });
 
-    it("skips text used as a shape: masks, boolean operation parts and icon glyphs", () => {
+    it("skips text used as a shape and reviews symbolic text", () => {
         const entries = sampleOf(page("Page", [
             frame("Card", CARD, [solid("#ffffff")], [
                 text("Mask", LABEL, { isMask: true }),
@@ -188,7 +188,36 @@ describe("FigmaTextSampler", () => {
             ]),
         ]));
 
-        expect(entries.map((entry) => entry.node.name)).toEqual(["Icon and label", "Label"]);
+        expect(entries.map((entry) => entry.node.name)).toEqual(["star", "Icon and label", "Label"]);
+        expect(entries[0].sample.manualReviewReason).toContain("private-use glyph");
+        expect(entries[1].sample.manualReviewReason).toContain("private-use glyph");
+        expect(entries[2].sample.manualReviewReason).toBeUndefined();
+    });
+
+    it("keeps readable single characters and keyboard labels as text", () => {
+        const entries = sampleOf(page("Page", [frame("Card", CARD, [solid("#ffffff")], [
+            text("Letter", LABEL, { characters: "A" }),
+            text("Number", LABEL, { characters: "1" }),
+            text("Shortcut", LABEL, { characters: "Ctrl+Enter" }),
+            text("Tab", LABEL, { characters: "Tab" }),
+        ])]));
+
+        expect(entries.every((entry) => entry.sample.manualReviewReason === undefined)).toBe(true);
+    });
+
+    it("routes arrows and mixed graphical symbols to manual review", () => {
+        const entries = sampleOf(page("Page", [frame("Card", CARD, [solid("#ffffff")], [
+            text("Arrow", LABEL, { characters: "→", fills: [solid("#ff3737")] }),
+            text("Arrow label", LABEL, { characters: "→ Next" }),
+            text("Decorative star", LABEL, { characters: "★" }),
+        ])]));
+
+        expect(entries.map((entry) => entry.sample.manualReviewReason)).toEqual([
+            expect.stringContaining("graphical symbol"),
+            expect.stringContaining("graphical symbol"),
+            expect.stringContaining("graphical symbol"),
+        ]);
+        expect(formatContrastRatio(contrastRatio(entries[0].sample.foreground!, entries[0].sample.background!))).toBe("3.58:1");
     });
 
     it("audits the line height of wrapped text only", () => {

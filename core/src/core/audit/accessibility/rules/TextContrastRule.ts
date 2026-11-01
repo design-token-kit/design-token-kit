@@ -37,6 +37,9 @@ export class TextContrastRule implements TextAuditRule {
     readonly defaultSeverity: IssueSeverity = "error";
 
     audit(sample: TextSample, settings: AccessibilitySettings): TextAuditResult {
+        if (sample.manualReviewReason !== undefined) {
+            return { findings: [], unchecked: [uncheckedSample(this, sample, sample.manualReviewReason)] };
+        }
         if (sample.colorProblem !== undefined) {
             return { findings: [], unchecked: [uncheckedSample(this, sample, sample.colorProblem)] };
         }

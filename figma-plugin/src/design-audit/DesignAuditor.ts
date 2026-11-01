@@ -23,7 +23,9 @@ const DOCS_URL = "https://design-token-kit.github.io/docs/guides/figma-plugin/";
  *
  * Text nodes are audited for automated WCAG text contrast, and the properties
  * of every layer for token usage. Nodes whose contrast cannot be measured form
- * a separate manual-review group and do not affect the score.
+ * a separate manual-review group and do not affect the score. Symbolic text
+ * with an uncertain role is included in that group rather than guessed to be
+ * either readable text or an icon.
  */
 export class DesignAuditor {
     readonly #options: AccessibilityOptions;
@@ -205,11 +207,11 @@ function toUncheckedGroup(unchecked: UncheckedSubject[], nodes: Map<string, Audi
         severity: "not-checked",
         category: "accessibility",
         title: "Contrast needs manual review",
-        description: "Some text uses images, gradients, mixed fills, or transparency, so contrast could not be measured automatically.",
+        description: "Some text uses images, gradients, mixed fills, transparency, or symbols with an uncertain role, so contrast needs manual review.",
         docsUrl: `${DOCS_URL}#design-audit-manual-review`,
         nodes: unchecked.map((subject) => {
             const node = nodes.get(subject.subjectId);
-            return toFindingNode(subject.subjectId, node?.problem ?? "translucent", nodes);
+            return toFindingNode(subject.subjectId, node?.manualReviewReason ?? node?.problem ?? "translucent", nodes);
         }),
     };
 }

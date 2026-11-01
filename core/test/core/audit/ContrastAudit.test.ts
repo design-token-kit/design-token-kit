@@ -76,6 +76,22 @@ describe("auditTextContrastSamples", () => {
 
         expect(result.score).toEqual({ evaluated: 0, passed: 0, failed: 0, manualReview: 0, skipped: 1 });
     });
+
+    it("excludes samples whose text role needs manual review from scoring", () => {
+        const result = auditTextContrastSamples([pair(0), {
+            ...pair(0x77),
+            id: "symbol",
+            label: "symbol",
+            manualReviewReason: "the symbol role is ambiguous",
+        }]);
+
+        expect(result.findings).toEqual([]);
+        expect(result.unchecked).toEqual([expect.objectContaining({
+            subjectId: "symbol",
+            message: "symbol: the symbol role is ambiguous",
+        })]);
+        expect(result.score).toMatchObject({ evaluated: 1, passed: 1, failed: 0, manualReview: 1 });
+    });
 });
 
 describe("computeContrastScore", () => {

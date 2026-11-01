@@ -38,6 +38,11 @@ export interface TextSample {
      */
     readonly colorProblem?: string;
 
+    /**
+     * Why this sample requires a human to decide whether it is readable text.
+     */
+    readonly manualReviewReason?: string;
+
     /** Font size in px. */
     readonly fontSizePx?: number;
 

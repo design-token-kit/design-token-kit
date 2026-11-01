@@ -101,13 +101,38 @@ describe("DesignAuditor", () => {
             id: "text-contrast-unchecked",
             severity: "not-checked",
             title: "Contrast needs manual review",
-            description: "Some text uses images, gradients, mixed fills, or transparency, so contrast could not be measured automatically.",
+            description: "Some text uses images, gradients, mixed fills, transparency, or symbols with an uncertain role, so contrast needs manual review.",
             docsUrl: "https://design-token-kit.github.io/docs/guides/figma-plugin/#design-audit-manual-review",
             nodes: [{ id: "1:2", name: "Floating", path: "Overlay", meta: "translucent" }],
         })]);
         expect(report.counts.notChecked).toBe(1);
         expect(report.scores.accessibility).toMatchObject({ evaluated: 0, passed: 0, failed: 0, manualReview: 1 });
         expect(report.scores.accessibility?.score).toBeUndefined();
+    });
+
+    it("reports symbolic text for manual review without failing or passing it", () => {
+        const nodes = new FigmaTextSampler().sample(textNodes(page("Page", [
+            frame("Card", CARD, [solid("#ffffff")], [
+                text("Arrow", LABEL, { characters: "→", fills: [solid("#ff3737")] }),
+                text("Label", LABEL, { fills: [solid("#777777")] }),
+            ]),
+        ])));
+
+        const report = new DesignAuditor().audit(nodes);
+
+        expect(report.contrastErrors).toBe(1);
+        expect(report.counts).toEqual({ errors: 1, warnings: 0, notChecked: 1 });
+        expect(report.scores.accessibility).toMatchObject({
+            evaluated: 1,
+            passed: 0,
+            failed: 1,
+            manualReview: 1,
+        });
+        expect(report.groups.map((group) => [group.id, group.nodes.map((node) => node.name)])).toEqual([
+            ["text-contrast-aa", ["Label"]],
+            ["text-contrast-unchecked", ["Arrow"]],
+        ]);
+        expect(report.groups[1].nodes[0].meta).toContain("graphical symbol");
     });
 
     it("reports a clean page with a perfect score", () => {

@@ -16,8 +16,10 @@ const WHITE: SrgbColor = { red: 1, green: 1, blue: 1, alpha: 1 };
  * cannot be measured; its sample carries the reason instead of the colour.
  *
  * Only text a reader sees is sampled: hidden, empty and unfilled layers are
- * left out, and so are layers that use text as a shape - masks, layers inside
- * a boolean operation, and icon font glyphs.
+ * left out, and so are layers that use text as a shape - masks and layers
+ * inside a boolean operation. Symbolic text whose purpose cannot be inferred
+ * from Figma's data is sampled for manual review rather than classified as an
+ * icon.
  */
 export class FigmaTextSampler {
 
@@ -40,6 +42,7 @@ export class FigmaTextSampler {
         const problem = typeof foreground === "string" ? foreground
             : typeof background === "string" ? background
             : undefined;
+        const manualReviewReason = readManualReviewReason(node);
         const fontSizePx = readFontSize(node);
 
         return {
@@ -49,6 +52,7 @@ export class FigmaTextSampler {
                 foreground: typeof foreground === "string" ? undefined : foreground,
                 background: typeof background === "string" ? undefined : background,
                 colorProblem: problem === undefined ? undefined : PROBLEM_MESSAGES[problem],
+                manualReviewReason,
                 fontSizePx,
                 fontWeight: readFontWeight(node),
                 lineHeight: readLineHeight(node, fontSizePx),
@@ -58,6 +62,7 @@ export class FigmaTextSampler {
                 name: node.name,
                 path: nodePath(node, includePageInPath),
                 problem,
+                manualReviewReason,
             },
         };
     }
@@ -83,6 +88,9 @@ export interface AuditedNode {
 
     /** Why the contrast of the node cannot be measured, when it cannot. */
     readonly problem?: ColorProblem;
+
+    /** Why the node's text role cannot be determined automatically. */
+    readonly manualReviewReason?: string;
 }
 
 /**
@@ -105,22 +113,38 @@ interface Point {
 /** Outcome of looking down through one layer. */
 type LayerOutcome = "opaque" | "continue" | ColorProblem;
 
-// Private Use Area code points, where icon fonts place their glyphs.
-const ICON_GLYPH = /[-\u{F0000}-\u{FFFFD}\u{100000}-\u{10FFFD}]/u;
+// Private Use Area code points, where icon fonts often place their glyphs.
+const PRIVATE_USE_GLYPH = /[-\u{F0000}-\u{FFFFD}\u{100000}-\u{10FFFD}]/u;
+
+// Arrows and other graphical symbols can be readable characters or icons.
+const GRAPHICAL_SYMBOL = /[\p{So}\p{Sk}]/u;
+const ARROW_SYMBOL = /[\u{2190}-\u{21FF}\u{27F0}-\u{27FF}\u{2900}-\u{297F}\u{2B00}-\u{2BFF}]/u;
 
 /**
- * Whether a text layer holds text to read, rather than text used as a shape:
- * a mask, a part of a boolean operation, or icon font glyphs.
+ * Whether a text layer holds text rather than text used as a shape.
  */
 function isReadableText(node: TextNode): boolean {
     if (node.isMask) return false;
     const characters = Array.from(node.characters.replace(/\s+/g, ""));
-    if (characters.length === 0 || characters.every((character) => ICON_GLYPH.test(character))) return false;
+    if (characters.length === 0) return false;
 
     for (let current = node.parent; current !== null && current.type !== "PAGE"; current = current.parent) {
         if (current.type === "BOOLEAN_OPERATION") return false;
     }
     return true;
+}
+
+function readManualReviewReason(node: TextNode): string | undefined {
+    const characters = Array.from(node.characters.replace(/\s+/g, ""));
+    if (characters.some((character) => PRIVATE_USE_GLYPH.test(character))) {
+        return "the layer contains a private-use glyph, and Figma does not expose "
+            + "whether it is an icon or readable text";
+    }
+    if (characters.some((character) => GRAPHICAL_SYMBOL.test(character) || ARROW_SYMBOL.test(character))) {
+        return "the layer contains a graphical symbol whose icon or text purpose "
+            + "cannot be determined from Figma data";
+    }
+    return undefined;
 }
 
 function isRendered(node: SceneNode): boolean {
