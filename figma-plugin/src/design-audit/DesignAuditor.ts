@@ -315,7 +315,34 @@ interface UsageGroupDefinition {
     readonly description: (count: number, matched: number) => string;
     readonly statistics?: (count: number, matched: number) => string;
     readonly fix?: string;
+    readonly suggestionLabels?: SuggestionLabels;
 }
+
+interface SuggestionLabels {
+    readonly exactPrefix: string;
+    readonly closestPrefix: string;
+    readonly missing: string;
+    readonly boundPrefix?: string;
+}
+
+const MATCHING_VALUE_SUGGESTION_LABELS: SuggestionLabels = {
+    exactPrefix: "Exact match: ",
+    closestPrefix: "Closest match: ",
+    missing: "No match found",
+};
+
+const FONT_SIZE_SUGGESTION_LABELS: SuggestionLabels = {
+    exactPrefix: "Exact font-size match: ",
+    closestPrefix: "Closest font-size match: ",
+    missing: "No font-size match found",
+};
+
+const PRIMITIVE_BINDING_SUGGESTION_LABELS: SuggestionLabels = {
+    exactPrefix: "Exact value match: ",
+    closestPrefix: "Closest value match: ",
+    missing: "No higher-level match found",
+    boundPrefix: "Bound to: ",
+};
 
 const PROPERTY_LABELS: Record<UsageProperty, string> = {
     "fill": "Fill",
@@ -334,33 +361,34 @@ const USAGE_GROUP_DEFINITIONS: readonly UsageGroupDefinition[] = [
         title: "Hard-coded colors",
         description: () => "Some fills and strokes use fixed colors instead of Variables or Styles.",
         statistics: (count, matched) => `${matched} of ${count} properties have a matching Variable or Style`,
+        suggestionLabels: MATCHING_VALUE_SUGGESTION_LABELS,
     },
     {
         id: "hardcoded-spacing",
         ruleId: "hardcoded-value",
         properties: ["gap", "padding", "corner-radius"],
-        title: "Spacing and radii are not bound to variables",
-        description: (count, matched) => "Hard-coded gaps, paddings and radii drift from the spacing scale. "
-            + `${matched} of ${count} match a variable of this file.`,
-        fix: "Bind the value to the suggested variable. A value with no match is off the scale: round it to a step of the scale.",
+        title: "Hard-coded spacing and radii",
+        description: () => "Some gaps, padding, and corner radii use fixed values instead of Variables.",
+        statistics: (count, matched) => `${matched} of ${count} properties have a matching Variable`,
+        suggestionLabels: MATCHING_VALUE_SUGGESTION_LABELS,
     },
     {
         id: "hardcoded-font-size",
         ruleId: "hardcoded-value",
         properties: ["font-size"],
-        title: "Text has no text style",
-        description: (count, matched) => "Text without a style or a font size variable drifts from the type scale. "
-            + `${matched} of ${count} match a text style or variable of this file.`,
-        fix: "Apply a text style from the typography scale.",
+        title: "Unbound font sizes",
+        description: () => "Some text uses fixed font sizes instead of Text Styles or Variables.",
+        statistics: (count, matched) => `${matched} of ${count} properties have a matching Text Style or Variable`,
+        suggestionLabels: FONT_SIZE_SUGGESTION_LABELS,
     },
     {
         id: "primitive-binding",
         ruleId: "primitive-binding",
         properties: ["fill", "stroke", "gap", "padding", "corner-radius", "font-size"],
-        title: "Layers use primitive variables directly",
-        description: (count, matched) => "Primitive variables hold raw values; layers should use semantic ones, "
-            + `which carry a role and follow modes. ${matched} of ${count} have a semantic variable with the same value.`,
-        fix: "Bind the suggested semantic variable instead of the primitive one.",
+        title: "Direct primitive bindings",
+        description: () => "Some layer properties use Primitive Variables directly instead of role-based tokens.",
+        statistics: (count, matched) => `${matched} of ${count} properties have a possible higher-level match`,
+        suggestionLabels: PRIMITIVE_BINDING_SUGGESTION_LABELS,
     },
 ];
 
@@ -392,7 +420,7 @@ function toUsageGroup(
             name: entry.node.name,
             path: entry.node.path,
             meta: propertyMeta(entry.sample),
-            note: usageNote(finding, definition.id === "hardcoded-color"),
+            note: usageNote(finding, definition.suggestionLabels),
         })),
     };
 }
@@ -407,13 +435,17 @@ function propertyMeta(sample: UsageSample): string {
     return `${label} ${formatUsageValue(sample.value)}`;
 }
 
-function usageNote(finding: AuditFinding, useColorSuggestionLabels = false): string {
+function usageNote(finding: AuditFinding, labels?: SuggestionLabels): string {
     const suggestion = finding.suggestion === undefined ? undefined
-        : useColorSuggestionLabels
-            ? finding.suggestion.exact ? `Exact match: ${finding.suggestion.name}` : `Closest match: ${finding.suggestion.name}`
-            : finding.suggestion.exact ? `Use ${finding.suggestion.name}` : `Closest: ${finding.suggestion.name}`;
+        : labels === undefined
+            ? finding.suggestion.exact ? `Use ${finding.suggestion.name}` : `Closest: ${finding.suggestion.name}`
+            : finding.suggestion.exact
+                ? `${labels.exactPrefix}${finding.suggestion.name}`
+                : `${labels.closestPrefix}${finding.suggestion.name}`;
     if (finding.id === "primitive-binding") {
-        return suggestion === undefined ? `Bound to ${finding.measurement}` : `Bound to ${finding.measurement} · ${suggestion}`;
+        const bound = `${labels?.boundPrefix ?? "Bound to "}${finding.measurement}`;
+        const match = suggestion ?? labels?.missing;
+        return match === undefined ? bound : `${bound} · ${match}`;
     }
-    return suggestion ?? (useColorSuggestionLabels ? "No match found" : "No matching variable");
+    return suggestion ?? (labels?.missing ?? "No matching variable");
 }

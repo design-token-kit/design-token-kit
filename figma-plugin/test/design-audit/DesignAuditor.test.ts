@@ -253,14 +253,28 @@ describe("DesignAuditor", () => {
                     ["Button", "Fill #2563eb", "Exact match: semantic/accent"],
                     ["Off palette", "Fill #ff0000", "No match found"],
                 ]],
-                ["hardcoded-spacing", "token-usage", [["Stack", "Padding top 15px", "Closest: spacing/4"]]],
-                ["primitive-binding", "token-usage", [["Link", "Fill #2563eb", "Bound to primitive/blue/500 · Use semantic/accent"]]],
+                ["hardcoded-spacing", "token-usage", [["Stack", "Padding top 15px", "Closest match: spacing/4"]]],
+                ["primitive-binding", "token-usage", [["Link", "Fill #2563eb", "Bound to: primitive/blue/500 · Exact value match: semantic/accent"]]],
             ]);
             expect(report.groups[0]).toMatchObject({
                 title: "Hard-coded colors",
                 description: "Some fills and strokes use fixed colors instead of Variables or Styles.",
                 stats: "1 of 2 properties have a matching Variable or Style",
                 fix: undefined,
+            });
+            expect(report.groups.find((group) => group.id === "hardcoded-spacing")).toMatchObject({
+                title: "Hard-coded spacing and radii",
+                description: "Some gaps, padding, and corner radii use fixed values instead of Variables.",
+                stats: "1 of 1 properties have a matching Variable",
+                fix: undefined,
+                docsUrl: "https://design-token-kit.github.io/docs/guides/figma-plugin/#hardcoded-value",
+            });
+            expect(report.groups.find((group) => group.id === "primitive-binding")).toMatchObject({
+                title: "Direct primitive bindings",
+                description: "Some layer properties use Primitive Variables directly instead of role-based tokens.",
+                stats: "1 of 1 properties have a possible higher-level match",
+                fix: undefined,
+                docsUrl: "https://design-token-kit.github.io/docs/guides/figma-plugin/#primitive-binding",
             });
         });
 
@@ -274,6 +288,82 @@ describe("DesignAuditor", () => {
             expect(group.nodes[0].note).toBe("No match found");
             expect(report.counts).toEqual({ errors: 0, warnings: 1, notChecked: 0 });
             expect(report.scores.tokenUsage).toMatchObject({ total: 1 });
+        });
+
+        it("reports zero matching spacing tokens without changing the warning count", () => {
+            const report = new DesignAuditor().audit([], [
+                property("Off scale", { property: "gap", value: { type: "dimension", px: 30 } }),
+            ], candidates);
+            const group = report.groups.find((item) => item.id === "hardcoded-spacing")!;
+
+            expect(group.stats).toBe("0 of 1 properties have a matching Variable");
+            expect(group.nodes[0].note).toBe("No match found");
+            expect(report.counts).toEqual({ errors: 0, warnings: 1, notChecked: 0 });
+            expect(report.scores.tokenUsage).toMatchObject({ total: 1 });
+        });
+
+        it("describes font-size matches without implying a complete text-style match", () => {
+            const fontProperties = [
+                property("Heading", { property: "font-size", value: { type: "dimension", px: 16 } }),
+                property("Body", { property: "font-size", value: { type: "dimension", px: 15 } }),
+                property("Display", { property: "font-size", value: { type: "dimension", px: 30 } }),
+            ];
+            const fontCandidates: TokenCandidate[] = [
+                { kind: "style", name: "Typography/Heading", value: { type: "dimension", px: 16 }, properties: ["font-size"] },
+                { kind: "variable", name: "typography/body-size", value: { type: "dimension", px: 14 }, properties: ["font-size"] },
+            ];
+            const report = new DesignAuditor().audit([], fontProperties, fontCandidates);
+            const group = report.groups.find((item) => item.id === "hardcoded-font-size")!;
+
+            expect(group).toMatchObject({
+                title: "Unbound font sizes",
+                description: "Some text uses fixed font sizes instead of Text Styles or Variables.",
+                stats: "2 of 3 properties have a matching Text Style or Variable",
+                fix: undefined,
+                docsUrl: "https://design-token-kit.github.io/docs/guides/figma-plugin/#hardcoded-value",
+            });
+            expect(group.nodes.map((node) => [node.name, node.meta, node.note])).toEqual([
+                ["Heading", "Font size 16px", "Exact font-size match: Typography/Heading"],
+                ["Body", "Font size 15px", "Closest font-size match: typography/body-size"],
+                ["Display", "Font size 30px", "No font-size match found"],
+            ]);
+            expect(report.counts).toEqual({ errors: 0, warnings: 3, notChecked: 0 });
+            expect(report.scores.tokenUsage).toMatchObject({ total: 3 });
+        });
+
+        it("distinguishes primitive bindings from exact, close and missing value matches", () => {
+            const primitiveProperties = [
+                property("Exact", {
+                    property: "fill",
+                    value: { type: "color", color: blue },
+                    binding: { kind: "variable", name: "primitive/blue/500", layer: "primitive" },
+                }),
+                property("Close", {
+                    property: "gap",
+                    value: { type: "dimension", px: 15 },
+                    binding: { kind: "variable", name: "primitive/spacing/4", layer: "primitive" },
+                }),
+                property("Missing", {
+                    property: "stroke",
+                    value: { type: "color", color: { red: 1, green: 0, blue: 0, alpha: 1 } },
+                    binding: { kind: "variable", name: "primitive/red/500", layer: "primitive" },
+                }),
+            ];
+            const primitiveCandidates: TokenCandidate[] = [
+                { kind: "variable", name: "semantic/accent", layer: "semantic", value: { type: "color", color: blue }, properties: ["fill", "stroke"] },
+                { kind: "variable", name: "semantic/spacing/4", layer: "semantic", value: { type: "dimension", px: 16 }, properties: ["gap"] },
+            ];
+            const report = new DesignAuditor().audit([], primitiveProperties, primitiveCandidates);
+            const group = report.groups.find((item) => item.id === "primitive-binding")!;
+
+            expect(group.stats).toBe("2 of 3 properties have a possible higher-level match");
+            expect(group.nodes.map((node) => node.note)).toEqual([
+                "Bound to: primitive/blue/500 · Exact value match: semantic/accent",
+                "Bound to: primitive/spacing/4 · Closest value match: semantic/spacing/4",
+                "Bound to: primitive/red/500 · No higher-level match found",
+            ]);
+            expect(report.counts).toEqual({ errors: 0, warnings: 3, notChecked: 0 });
+            expect(report.scores.tokenUsage).toMatchObject({ total: 3 });
         });
 
         it("scores token usage apart from accessibility and reports the coverage", () => {

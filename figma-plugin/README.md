@@ -11,8 +11,8 @@ them through `@design-token-kit/core` to platform formats.
 - preserves local variable aliases as DTCG references when possible
 - exports variable modes as theme files
 - shows token counts, skipped entries, and warnings in the plugin UI
-- audits the text of the current page or the whole file for contrast and
-  readability, and its layers for hard-coded values and primitive variables,
+- audits the text of the current page or the whole file for contrast, and its
+  layers for hard-coded values and primitive variables,
   and selects the layers it reports
 - keeps raw Plugin API and REST API JSON exports for diagnostics
 
@@ -54,15 +54,11 @@ There is no need to import `manifest.json` again.
 ## Design Audit
 
 The **Design** tab audits the text layers of the current page, or of every page
-with **Entire file**, by the accessibility and readability rules of
-`@design-token-kit/core` (see `dtokens audit`):
+with **Entire file**, for automated WCAG text contrast by using the same
+contrast rules as `@design-token-kit/core` (see `dtokens audit`):
 
 - **Text contrast is below WCAG AA** (error): contrast with the background
   below 4.5:1, or 3:1 for large text (24px, or 18.66px bold).
-- **Text is smaller than 12px** (warning).
-- **Body text lines are too tight** (warning): wrapped text below 18px with a
-  line height below 1.3.
-
 It also audits whether the layers are built from tokens:
 
 - **Values are not bound to variables** (warning): fills, strokes, radii, gaps,

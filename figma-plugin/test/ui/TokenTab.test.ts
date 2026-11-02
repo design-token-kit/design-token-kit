@@ -100,6 +100,7 @@ describe("Token tab", () => {
             { type: "AUDIT_DESIGN", scope: "page" },
         ]);
         expect(textOf(ui.get("#analyze-tokens-label"))).toBe("Analyzing...");
+        expect(ui.get("#token-tab-loading").hidden).toBe(false);
         expect(Array.from(ui.document.querySelectorAll<HTMLButtonElement>("[data-token-export-message]"))
             .every((button) => button.disabled)).toBe(true);
     });
@@ -108,6 +109,7 @@ describe("Token tab", () => {
         ui.receive(analyzed(MIXED_CHECKS));
 
         expect(textOf(ui.get("#token-tab-count"))).toBe("3");
+        expect(ui.get("#token-tab-loading").hidden).toBe(true);
         expect(textOf(ui.get("#token-stats"))).toBe("145 tokens · 44 references · 101 raw values · 2 themes");
         expect(ui.get("#analyzed-at").hidden).toBe(false);
         expect(textOf(ui.get("#analyzed-at"))).toMatch(/^analyzed /);
@@ -133,6 +135,29 @@ describe("Token tab", () => {
         expect(ui.get("#token-tab-count").hidden).toBe(true);
         expect(Array.from(ui.document.querySelectorAll<HTMLButtonElement>("[data-token-export-message]"))
             .every((button) => button.disabled)).toBe(true);
+    });
+
+    it("clears the loader after an initial analysis failure", () => {
+        ui.receive({ type: "EXPORT_FAILED", payload: { message: "token export failed" } });
+
+        expect(ui.get("#token-tab-loading").hidden).toBe(true);
+        expect(ui.get("#token-tab-count").hidden).toBe(true);
+        expect(textOf(ui.get("#analyze-tokens-label"))).toBe("Analyze tokens");
+    });
+
+    it("restores the previous issue badge after a failed rerun", () => {
+        ui.receive(analyzed(MIXED_CHECKS));
+        ui.click("#all-checks");
+
+        expect(ui.get("#token-tab-loading").hidden).toBe(false);
+        expect(ui.get("#token-tab-count").hidden).toBe(true);
+
+        ui.receive({ type: "EXPORT_FAILED", payload: { message: "token export failed" } });
+
+        expect(ui.get("#token-tab-loading").hidden).toBe(true);
+        expect(ui.get("#token-tab-count").hidden).toBe(false);
+        expect(textOf(ui.get("#token-tab-count"))).toBe("3");
+        expect(textOf(ui.get("#analyze-tokens-label"))).toBe("Run again");
     });
 
     it("lists failing checks as findings with their issue counts", () => {
@@ -166,21 +191,24 @@ describe("Token tab", () => {
         const expandableCheck = check("Expandable check", "warning", ["first issue and 2 more issues."], details);
         ui.receive(analyzed([expandableCheck]));
 
-        const examples = ui.get(".examples");
+        const examplesGroup = ui.get(".examples__group");
+        const examples = examplesGroup.querySelector<HTMLElement>(".examples")!;
         expect(examples.querySelectorAll(".example")).toHaveLength(1);
-        expect(textOf(examples.querySelector(".examples__more")!)).toBe("and 2 more");
-        expect(examples.querySelector(".examples__more")!.getAttribute("aria-expanded")).toBe("false");
+        expect(examples.querySelector(".examples__more")).toBeNull();
+        expect(examplesGroup.querySelector(".examples__footer .docs")).not.toBeNull();
+        expect(textOf(examplesGroup.querySelector(".examples__more")!)).toBe("and 2 more");
+        expect(examplesGroup.querySelector(".examples__more")!.getAttribute("aria-expanded")).toBe("false");
 
-        (examples.querySelector(".examples__more") as HTMLButtonElement).click();
+        (examplesGroup.querySelector(".examples__more") as HTMLButtonElement).click();
 
         expect(examples.querySelectorAll(".example")).toHaveLength(3);
-        expect(textOf(examples.querySelector(".examples__more")!)).toBe("Show fewer");
-        expect(examples.querySelector(".examples__more")!.getAttribute("aria-expanded")).toBe("true");
+        expect(textOf(examplesGroup.querySelector(".examples__more")!)).toBe("Show fewer");
+        expect(examplesGroup.querySelector(".examples__more")!.getAttribute("aria-expanded")).toBe("true");
 
-        (examples.querySelector(".examples__more") as HTMLButtonElement).click();
+        (examplesGroup.querySelector(".examples__more") as HTMLButtonElement).click();
 
         expect(examples.querySelectorAll(".example")).toHaveLength(1);
-        expect(textOf(examples.querySelector(".examples__more")!)).toBe("and 2 more");
+        expect(textOf(examplesGroup.querySelector(".examples__more")!)).toBe("and 2 more");
     });
 
     it("scores the share of passed checks with a grade coloured by the score", () => {
@@ -212,27 +240,30 @@ describe("Token tab", () => {
         ui.receive(analyzed([readFailureCheck()]));
 
         expect(textOf(ui.get("#architecture-score"))).toBe("N/A");
-        expect(textOf(ui.get("#architecture-verdict"))).toBe("Score unavailable until token data can be checked");
+        expect(ui.document.querySelector("#architecture-verdict")).toBeNull();
         expect(ui.get("#passed-checks").hidden).toBe(false);
     });
 
-    it("says what is left to fix, in the colour of the worst severity", () => {
+    it("keeps architecture status in the expandable check summary", () => {
         ui.receive(analyzed(MIXED_CHECKS));
-        expect(textOf(ui.get("#architecture-verdict"))).toBe("1 error and 2 warnings to fix");
-        expect(ui.get("#architecture-verdict").className).toBe("score-summary__verdict");
+        expect(ui.document.querySelector("#architecture-verdict")).toBeNull();
+        expect(textOf(ui.get("#passed-label"))).toBe("Passed 2 · Warnings 2 · Errors 1");
 
         ui.receive(analyzed(MIXED_CHECKS.map((item) => item.severity === "error" ? check(item.name, "ok") : item)));
-        expect(textOf(ui.get("#architecture-verdict"))).toBe("2 warnings to fix");
-        expect(ui.get("#architecture-verdict").className).toBe("score-summary__verdict score-summary__verdict--warning");
+        expect(ui.document.querySelector("#architecture-verdict")).toBeNull();
+        expect(textOf(ui.get("#passed-label"))).toBe("Passed 3 · Warnings 2");
 
         ui.receive(analyzed(MIXED_CHECKS.map((item) => check(item.name, "ok"))));
-        expect(textOf(ui.get("#architecture-verdict"))).toBe("All 5 checks passed");
-        expect(ui.get("#architecture-verdict").className).toBe("score-summary__verdict score-summary__verdict--success");
+        expect(ui.document.querySelector("#architecture-verdict")).toBeNull();
+        expect(textOf(ui.get("#passed-label"))).toBe("Passed · 5");
     });
 
     it("explains the score on request", () => {
         ui.receive(analyzed(MIXED_CHECKS));
 
+        expect(ui.get("#architecture-formula-toggle").textContent).toBe("?");
+        expect(ui.get("#architecture-formula-toggle").getAttribute("aria-label")).toBe("How is this calculated?");
+        expect(ui.get("#architecture-formula-toggle").getAttribute("title")).toBe("How is this calculated?");
         expect(ui.get("#architecture-formula").hidden).toBe(true);
         ui.click("#architecture-formula-toggle");
         expect(ui.get("#architecture-formula").hidden).toBe(false);

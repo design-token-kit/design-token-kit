@@ -6,7 +6,7 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
-- #91 Design quality audit: accessibility and readability
+- Design quality audit: accessibility and readability
   - Added `TokenAuditor` to core and the `dtokens audit` command.
     They report text and background color pairs below the WCAG contrast
     minimum (`text-contrast`), typography below a readable font size
@@ -18,15 +18,16 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   - Exported the WCAG helpers and `auditTextSamples`, so other sources, such
     as Figma text nodes, can be audited by the same rules.
   - Added the Design tab to the Figma plugin. It audits the text layers of the
-    current page or the whole file by the same rules, reading each layer's
-    background through the layers below it, shows the score, errors, warnings
-    and layers it could not check, and selects the reported layers in Figma.
+    current page or the whole file for automated text contrast, reading each
+    layer's background through the layers below it, shows the score, errors,
+    warnings and layers it could not check, and selects the reported layers in
+    Figma.
   - Left out of the plugin audit the text a reader does not see as text: masks,
     layers inside a boolean operation and icon font glyphs. The line height is
     audited for wrapped text only.
-  - Described the plugin audit, its checks and how it applies WCAG AA in
-    `figma-plugin/docs/design-audit.md`.
-- #91 Design quality audit: token usage
+  - Described the plugin audit, its checks and how it applies WCAG AA in the
+    Figma plugin README and the project documentation.
+- Design quality audit: token usage
   - Added `auditUsageSamples` and `TokenMatcher` to core. They report
     properties that are hard-coded instead of bound to a token
     (`hardcoded-value`) and properties bound to a token of the lowest layer

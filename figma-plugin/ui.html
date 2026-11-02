@@ -506,6 +506,7 @@
 
         .arch-head__actions {
             flex: none;
+            width: 200px;
             display: flex;
             flex-direction: column;
             align-items: stretch;
@@ -725,6 +726,20 @@
             background: var(--color-bg-surface);
         }
 
+        .examples__group {
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+        }
+
+        .examples__footer {
+            display: flex;
+            align-items: baseline;
+            gap: 10px;
+            width: 100%;
+            margin-top: 4px;
+        }
+
         .example {
             display: flex;
             align-items: center;
@@ -734,8 +749,7 @@
             font-size: var(--font-size-sm);
         }
 
-        .example + .example,
-        .examples__more {
+        .example + .example {
             border-top: 1px solid #F3ECDD;
         }
 
@@ -753,13 +767,13 @@
         }
 
         .examples__more {
-            padding: 5px 10px;
+            padding: 0 10px;
             font-size: var(--font-size-sm);
             color: var(--color-text-muted);
         }
 
         button.examples__more {
-            width: 100%;
+            width: auto;
             border: 0;
             background: transparent;
             color: var(--color-brand-text);
@@ -768,6 +782,13 @@
             text-decoration: underline;
             text-underline-offset: 2px;
             cursor: pointer;
+        }
+
+        .examples__footer .docs {
+            margin-left: auto;
+            align-self: baseline;
+            font-size: var(--font-size-sm);
+            line-height: inherit;
         }
 
         button.examples__more:hover {
@@ -999,6 +1020,27 @@
 
         /* Design tab */
 
+        .design-audit-shell {
+            padding: 0;
+            overflow: hidden;
+        }
+
+        .design-audit-shell > .arch-head {
+            padding: var(--size-card-padding);
+        }
+
+        .design-audit-results {
+            gap: 0;
+        }
+
+        .design-audit-results > .audit-category {
+            padding: var(--size-card-padding);
+            border: 0;
+            border-top: 1px solid var(--color-border-default);
+            border-radius: 0;
+            background: transparent;
+        }
+
         .audit-category {
             display: flex;
             flex-direction: column;
@@ -1187,6 +1229,14 @@
             grid-template-columns: auto minmax(0, 1fr) auto;
         }
 
+        .accessibility-score .passed__list {
+            grid-column: 1 / -1;
+        }
+
+        .accessibility-score .passed__toggle {
+            align-self: center;
+        }
+
         .accessibility-score__value {
             flex: none;
             align-self: stretch;
@@ -1205,7 +1255,7 @@
         }
 
         .token-usage-score {
-            grid-template-columns: auto minmax(0, 1fr);
+            grid-template-columns: auto minmax(0, 1fr) auto;
         }
 
         .token-usage-score__value {
@@ -1227,6 +1277,14 @@
         .token-usage-score .score-formula {
             grid-column: 1 / -1;
             margin: 0 14px 12px;
+        }
+
+        .token-usage-score .passed__list {
+            grid-column: 1 / -1;
+        }
+
+        .token-usage-score .passed__toggle {
+            align-self: center;
         }
 
         .accessibility-score .score-formula {
@@ -1324,6 +1382,28 @@
 
         .text-btn:hover {
             text-decoration: underline;
+        }
+
+        .formula-toggle {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 20px;
+            height: 20px;
+            padding: 0;
+            border: 1px solid var(--color-border-strong);
+            border-radius: 50%;
+            background: var(--color-bg-surface);
+            color: var(--color-brand-text);
+            font-size: var(--font-size-sm);
+            font-weight: 800;
+            line-height: 1;
+            cursor: pointer;
+        }
+
+        .formula-toggle:hover {
+            border-color: var(--color-brand-primary);
+            background: var(--color-brand-soft);
         }
 
         .audit-filters {
@@ -1439,10 +1519,20 @@
         }
 
         .group__body {
-            display: flex;
-            flex-direction: column;
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) auto;
+            align-items: start;
             gap: 8px;
             padding: 8px 14px 12px 44px;
+        }
+
+        .group__summary {
+            display: flex;
+            flex-direction: column;
+            gap: 0;
+            min-width: 0;
+            grid-column: 1;
+            grid-row: 1;
         }
 
         .group__description {
@@ -1458,6 +1548,7 @@
         }
 
         .group__fix {
+            grid-column: 1 / -1;
             display: flex;
             gap: 8px;
             padding: 8px 10px;
@@ -1475,6 +1566,12 @@
             letter-spacing: .05em;
             text-transform: uppercase;
             color: var(--color-brand-text);
+        }
+
+        .group__body > .docs {
+            grid-column: 2;
+            grid-row: 1;
+            align-self: start;
         }
 
         .node-row {
@@ -1574,7 +1671,7 @@
 
         .group__footer {
             display: flex;
-            align-items: center;
+            align-items: baseline;
             gap: 10px;
             padding: 10px 14px 12px 44px;
             border-top: 1px solid var(--color-border-divider-soft);
@@ -1587,7 +1684,20 @@
         }
 
         .group__footer .text-btn {
-            align-self: center;
+            align-self: baseline;
+        }
+
+        .group__footer .group__more {
+            font-size: var(--font-size-sm);
+            text-decoration: underline;
+            text-underline-offset: 2px;
+        }
+
+        .group__footer .docs {
+            margin-left: auto;
+            align-self: baseline;
+            font-size: inherit;
+            line-height: inherit;
         }
 
         .audit-status {
@@ -1678,6 +1788,10 @@
                 flex-direction: column;
             }
 
+            .arch-head__actions {
+                width: 100%;
+            }
+
             .formats,
             .passed__list {
                 grid-template-columns: minmax(0, 1fr);
@@ -1700,6 +1814,7 @@
         <button id="token-tab" class="tab" type="button" aria-current="page" aria-controls="token-workspace">
             <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 4 1.5 8 5 12M11 4l3.5 4L11 12M9.2 2.8 6.8 13.2" /></svg>
             Token
+            <span id="token-tab-loading" class="tab__loader" role="status" aria-label="Analyzing tokens" hidden></span>
             <span id="token-tab-count" class="badge" hidden></span>
         </button>
         <button id="design-tab" class="tab" type="button" aria-current="false" aria-controls="design-workspace">
@@ -1751,8 +1866,7 @@
                                 <span id="architecture-grade" class="grade"></span>
                             </div>
                             <div class="check-score__verdict">
-                                <span id="architecture-verdict" class="score-summary__verdict"></span>
-                                <button id="architecture-formula-toggle" class="text-btn" type="button" aria-expanded="false" aria-controls="architecture-formula">How is this calculated?</button>
+                                <button id="architecture-formula-toggle" class="formula-toggle" type="button" aria-label="How is this calculated?" title="How is this calculated?" aria-expanded="false" aria-controls="architecture-formula">?</button>
                             </div>
                             <button id="passed-toggle" class="passed__toggle" type="button" aria-expanded="false" aria-controls="passed-list">
                                 <span id="passed-label">Passed</span>
@@ -1847,7 +1961,7 @@
         </section>
 
         <section id="design-workspace" class="stack" aria-label="Design" hidden>
-            <div class="card">
+            <div class="card design-audit-shell">
                 <div class="arch-head">
                     <div class="arch-head__copy">
                         <div class="card-title">
@@ -1856,8 +1970,8 @@
                             </span>
                             <h2>Design audit</h2>
                         </div>
+                        <p class="lead">Use this audit to find accessibility issues, check text contrast, and spot inconsistent token usage in the selected layers before handoff.</p>
                         <p id="audit-meta" class="subtle token-stats" hidden></p>
-            <p class="lead">Review accessibility and token usage for the selected layers.</p>
                     </div>
                     <div class="arch-head__actions">
                         <button id="run-audit" class="btn btn--primary" type="button">
@@ -1877,16 +1991,16 @@
                     </div>
                 </div>
 
-            </div>
-
-            <div id="audit-results" class="stack" hidden>
+            <div id="audit-results" class="stack design-audit-results" hidden>
                 <section id="accessibility-audit" class="card audit-category" aria-labelledby="accessibility-title">
                     <header class="audit-category__head">
                         <div class="audit-category__title">
                             <h2 id="accessibility-title">Accessibility checks</h2>
                             <p>
                                 WCAG 2.2 <span id="accessibility-level">AA</span> ·
-                                Text contrast is checked automatically. Icons and other visual elements need manual review ·
+                                We check text contrast automatically.
+                                <br>
+                                Please review icons and other visual elements manually ·
                                 <a id="accessibility-standard-link"
                                     href="https://www.w3.org/TR/WCAG22/"
                                     target="_blank"
@@ -1894,19 +2008,21 @@
                                     title="WCAG 2.2 standard table of contents">WCAG 2.2 standard</a>
                             </p>
                         </div>
-                        <span id="accessibility-result-text" class="audit-category__result"></span>
                     </header>
                     <section class="audit-score accessibility-score" aria-label="Accessibility score">
                         <div class="score-summary__value accessibility-score__value">
                             <span id="accessibility-score" class="score-summary__number"></span>
                             <span id="accessibility-grade" class="grade"></span>
-                            <span class="score-summary__label">checks passed</span>
                         </div>
                         <div class="accessibility-score__verdict">
-                            <span id="accessibility-verdict" class="score-summary__verdict"></span>
-                            <button id="accessibility-formula-toggle" class="text-btn" type="button" aria-expanded="false" aria-controls="accessibility-formula">How is the score calculated?</button>
+                            <button id="accessibility-formula-toggle" class="formula-toggle" type="button" aria-label="How is the score calculated?" title="How is the score calculated?" aria-expanded="false" aria-controls="accessibility-formula">?</button>
                         </div>
+                        <button id="accessibility-checks-toggle" class="passed__toggle" type="button" aria-expanded="false" aria-controls="accessibility-checks-list">
+                            <span id="accessibility-checks-label">Passed</span>
+                            <svg class="chevron" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6l4 4 4-4" /></svg>
+                        </button>
                         <div id="accessibility-formula" class="score-formula" hidden></div>
+                        <ul id="accessibility-checks-list" class="passed__list" hidden></ul>
                     </section>
                     <div id="accessibility-groups" class="audit-groups" aria-live="polite"></div>
                 </section>
@@ -1917,7 +2033,6 @@
                             <h2 id="token-usage-title">Token usage</h2>
                             <p>Variables and styles applied to colours, spacing, radii and text.</p>
                         </div>
-                        <span id="usage-result-text" class="audit-category__result"></span>
                     </header>
                     <section class="audit-score token-usage-score" aria-label="Token usage score">
                         <div class="score-summary__value token-usage-score__value">
@@ -1926,13 +2041,18 @@
                             <span id="usage-grade" class="grade"></span>
                         </div>
                         <div class="token-usage-score__details">
-                            <span id="audit-coverage" class="score-summary__coverage"></span>
-                            <button id="usage-formula-toggle" class="text-btn" type="button" aria-expanded="false" aria-controls="usage-formula">How is the score calculated?</button>
+                            <button id="usage-formula-toggle" class="formula-toggle" type="button" aria-label="How is the score calculated?" title="How is the score calculated?" aria-expanded="false" aria-controls="usage-formula">?</button>
                         </div>
+                        <button id="usage-checks-toggle" class="passed__toggle" type="button" aria-expanded="false" aria-controls="usage-checks-list">
+                            <span id="usage-checks-label">Passed</span>
+                            <svg class="chevron" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6l4 4 4-4" /></svg>
+                        </button>
                         <div id="usage-formula" class="score-formula" hidden></div>
+                        <ul id="usage-checks-list" class="passed__list" hidden></ul>
                     </section>
                     <div id="usage-groups" class="audit-groups" aria-live="polite"></div>
                 </section>
+            </div>
             </div>
 
             <p id="audit-status" class="card audit-status">Run the audit to check text contrast and the use of variables on this page.</p>
@@ -1958,7 +2078,6 @@
     const architectureScore = document.getElementById("architecture-score");
     const architectureScoreMax = document.getElementById("architecture-score-max");
     const architectureGrade = document.getElementById("architecture-grade");
-    const architectureVerdict = document.getElementById("architecture-verdict");
     const architectureFormulaToggle = document.getElementById("architecture-formula-toggle");
     const architectureFormula = document.getElementById("architecture-formula");
     const tokenSummary = document.getElementById("token-summary");
@@ -1979,6 +2098,7 @@
     const analyzeTokensButton = document.getElementById("analyze-tokens");
     const analyzeTokensLabel = document.getElementById("analyze-tokens-label");
     const coreRulesButton = document.getElementById("core-rules");
+    const tokenTabLoading = document.getElementById("token-tab-loading");
     const designTabCount = document.getElementById("design-tab-count");
     const designTabLoading = document.getElementById("design-tab-loading");
     const auditMeta = document.getElementById("audit-meta");
@@ -1991,22 +2111,30 @@
     const tokenUsageAudit = document.getElementById("token-usage-audit");
     const accessibilityScore = document.getElementById("accessibility-score");
     const accessibilityGrade = document.getElementById("accessibility-grade");
-    const accessibilityVerdict = document.getElementById("accessibility-verdict");
     const accessibilityLevel = document.getElementById("accessibility-level");
-    const auditCoverage = document.getElementById("audit-coverage");
     const usageScore = document.getElementById("usage-score");
     const usageGrade = document.getElementById("usage-grade");
     const accessibilityFormulaToggle = document.getElementById("accessibility-formula-toggle");
     const accessibilityFormula = document.getElementById("accessibility-formula");
     const usageFormulaToggle = document.getElementById("usage-formula-toggle");
     const usageFormula = document.getElementById("usage-formula");
+    const usageChecksToggle = document.getElementById("usage-checks-toggle");
+    const usageChecksLabel = document.getElementById("usage-checks-label");
+    const usageChecksList = document.getElementById("usage-checks-list");
     const accessibilityGroups = document.getElementById("accessibility-groups");
-    const accessibilityResultText = document.getElementById("accessibility-result-text");
-    const usageResultText = document.getElementById("usage-result-text");
+    const accessibilityChecksToggle = document.getElementById("accessibility-checks-toggle");
+    const accessibilityChecksLabel = document.getElementById("accessibility-checks-label");
+    const accessibilityChecksList = document.getElementById("accessibility-checks-list");
     const usageGroups = document.getElementById("usage-groups");
     const auditStatus = document.getElementById("audit-status");
     const allChecksButton = document.getElementById("all-checks");
     const tokenArchitectureDescription = "Review token layers, references, and raw values. Essentials covers core architecture rules; All checks adds detailed validation and linting.";
+    const TOKEN_USAGE_CHECK_DEFINITIONS = [
+        { id: "hardcoded-color", name: "Hard-coded colors" },
+        { id: "hardcoded-spacing", name: "Hard-coded spacing and radii" },
+        { id: "hardcoded-font-size", name: "Unbound font sizes" },
+        { id: "primitive-binding", name: "Direct primitive bindings" },
+    ];
     const chevronSvg = `<svg class="chevron" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6l4 4 4-4" /></svg>`;
     const passedIconSvg = `<svg class="check-icon" viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="9" fill="var(--color-success-icon)" /><path d="M6 10.3 8.6 12.8 14 7.4" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" /></svg>`;
     const failedIconSvgs = {
@@ -2029,6 +2157,8 @@
     let runFullLinting = false;
     let latestAnalytics;
     let hasAnalysis = false;
+    let latestArchitectureChecks = [];
+    let latestArchitectureScore;
     let auditScope = "page";
     let latestAudit;
     let isAuditing = false;
@@ -2063,7 +2193,9 @@
     });
     runAuditButton.addEventListener("click", requestDesignAudit);
     accessibilityFormulaToggle.addEventListener("click", () => toggleDisclosure(accessibilityFormulaToggle, accessibilityFormula));
+    accessibilityChecksToggle.addEventListener("click", () => toggleDisclosure(accessibilityChecksToggle, accessibilityChecksList));
     usageFormulaToggle.addEventListener("click", () => toggleDisclosure(usageFormulaToggle, usageFormula));
+    usageChecksToggle.addEventListener("click", () => toggleDisclosure(usageChecksToggle, usageChecksList));
     architectureFormulaToggle.addEventListener("click", () => toggleDisclosure(architectureFormulaToggle, architectureFormula));
 
     coreRulesButton.addEventListener("click", () => setRuleSet(false));
@@ -2099,6 +2231,8 @@
             setAnalysisLoading(false);
             if (!hasAnalysis) {
                 renderArchitectureChecks([]);
+            } else {
+                renderArchitectureStatus(latestArchitectureChecks, latestArchitectureScore);
             }
             renderWarnings([message.payload.message]);
             return;
@@ -2144,8 +2278,10 @@
     function handleTokensAnalyzed(payload) {
         hasAnalysis = true;
         setAnalysisLoading(false);
+        latestArchitectureChecks = payload.architectureChecks ?? [];
+        latestArchitectureScore = payload.analytics?.architectureScore;
         renderTokenAnalytics(payload.analytics);
-            renderArchitectureChecks(payload.architectureChecks ?? [], payload.analytics?.architectureScore);
+        renderArchitectureChecks(latestArchitectureChecks, latestArchitectureScore);
         renderWarnings(payload.warnings);
     }
 
@@ -2153,8 +2289,10 @@
         analyzeTokensButton.disabled = isLoading;
         coreRulesButton.disabled = isLoading;
         allChecksButton.disabled = isLoading;
+        tokenTabLoading.hidden = !isLoading;
         analyzeTokensButton.classList.toggle("is-loading", isLoading);
         if (isLoading) {
+            tokenTabCount.hidden = true;
             setTokenExportAvailability(false);
             analyzeTokensLabel.textContent = "Analyzing...";
             renderAnalysisPending();
@@ -2359,8 +2497,6 @@
             architectureScoreMax.hidden = true;
             architectureGrade.textContent = "";
             architectureGrade.className = "grade";
-            architectureVerdict.className = "score-summary__verdict score-summary__verdict--warning";
-            architectureVerdict.textContent = "Score unavailable until token data can be checked";
             architectureFormula.replaceChildren("No score: token data could not be checked.");
             passedChecks.hidden = true;
             return;
@@ -2370,14 +2506,6 @@
         architectureScoreMax.hidden = false;
         architectureGrade.textContent = score.grade;
         architectureGrade.className = gradeClassName(score.grade);
-
-        const tone = score.errors > 0 ? "" : score.warnings > 0 ? " score-summary__verdict--warning" : " score-summary__verdict--success";
-        architectureVerdict.className = `score-summary__verdict${tone}`;
-        architectureVerdict.textContent = score.errors === 0 && score.warnings === 0
-            ? `All ${score.total} checks passed`
-            : `${[score.errors > 0 ? formatCount(score.errors, "error") : "", score.warnings > 0 ? formatCount(score.warnings, "warning") : ""]
-                .filter(Boolean)
-                .join(" and ")} to fix`;
 
         const strong = document.createElement("strong");
         strong.textContent = "Score = passed checks ÷ all checks × 100";
@@ -2439,7 +2567,17 @@
         const where = report.scope === "file" ? "the file" : "this page";
         auditMeta.hidden = false;
         const layerCount = report.layerCount ?? 0;
-        auditMeta.textContent = `${formatCount(report.nodeCount, "text layer")} · ${formatCount(layerCount, "layer")} checked for variables`;
+        auditMeta.replaceChildren();
+        const textLayerCount = document.createElement("strong");
+        textLayerCount.textContent = String(report.nodeCount);
+        const variableLayerCount = document.createElement("strong");
+        variableLayerCount.textContent = String(layerCount);
+        auditMeta.append(
+            textLayerCount,
+            ` ${report.nodeCount === 1 ? "text layer" : "text layers"} · `,
+            variableLayerCount,
+            ` ${layerCount === 1 ? "layer" : "layers"} checked for variables`,
+        );
         auditedAt.hidden = false;
         auditedAt.textContent = `audited ${formatTime(new Date())}`;
         designTabCount.hidden = report.counts.errors === 0;
@@ -2466,15 +2604,13 @@
     function renderAccessibilityAudit(report) {
         const { accessibility } = report.scores;
         accessibilityLevel.textContent = report.level;
-        renderAccessibilityStatistics(accessibility);
+        renderAccessibilityStatistics(accessibility, report.counts.notChecked);
         if (accessibility === undefined || accessibility.score === undefined) {
             renderUnavailableAccessibilityScore();
             renderAccessibilityFindings();
             return;
         }
         renderGrade(accessibilityScore, accessibilityGrade, accessibility);
-        accessibilityVerdict.className = "score-summary__verdict score-summary__verdict--neutral";
-        accessibilityVerdict.textContent = "Automated text contrast checks only";
         renderAccessibilityFormula(accessibility, report.level);
         renderAccessibilityFindings();
     }
@@ -2483,20 +2619,23 @@
         accessibilityScore.textContent = "N/A";
         accessibilityGrade.textContent = "";
         accessibilityGrade.className = "grade";
-        accessibilityVerdict.className = "score-summary__verdict score-summary__verdict--neutral";
-        accessibilityVerdict.textContent = "No automated contrast checks could be evaluated";
         accessibilityFormula.replaceChildren(
             "No score: there are no evaluated contrast checks.",
         );
     }
 
-    function renderAccessibilityStatistics(accessibility) {
+    function renderAccessibilityStatistics(accessibility, reportManualReviewCount) {
         const passed = accessibility?.passed ?? 0;
         const failed = accessibility?.failed ?? 0;
-        const manualReview = accessibility?.manualReview ?? 0;
-        accessibilityResultText.textContent = `${formatCount(passed, "passed", "passed")} · `
-            + `${formatCount(failed, "failed", "failed")} · `
-            + `${formatCount(manualReview, "manual review", "manual review")}`;
+        const manualReview = accessibility?.manualReview ?? reportManualReviewCount;
+        accessibilityChecksLabel.textContent = `Passed ${passed} · Failed ${failed}`;
+        accessibilityChecksList.replaceChildren(
+            ...(passed > 0 ? [createCheckListItem({ name: `Passed text contrast checks: ${passed}` }, passedIconSvg)] : []),
+            ...(failed > 0 ? [createCheckListItem({ name: `Failed text contrast checks: ${failed}` }, failedIconSvgs.error, "passed__item--error")] : []),
+            ...(manualReview > 0 ? [createCheckListItem({ name: `Manual review items: ${manualReview}` }, failedIconSvgs.warning, "passed__item--warning")] : []),
+        );
+        accessibilityChecksToggle.setAttribute("aria-expanded", "false");
+        accessibilityChecksList.hidden = true;
     }
 
     function renderAccessibilityFormula(accessibility, level) {
@@ -2515,15 +2654,30 @@
         }
 
         renderGrade(usageScore, usageGrade, tokenUsage);
-        const coverage = report.coverage;
-        auditCoverage.textContent = `Token coverage ${coverage.percent}%: ${coverage.bound} of `
-            + `${formatCount(coverage.total, "property", "properties")} use variables or styles`;
         usageFormula.replaceChildren(
             ...formulaTitle("Token usage = 100 × properties without findings ÷ properties"),
             `${tokenUsage.clean} of ${formatCount(tokenUsage.total, "property", "properties")} are bound to a variable or style `
                 + `and not to a primitive: ${tokenUsage.score}, rounded down. Not part of WCAG.`,
         );
+        renderTokenUsageChecks(report.groups);
         renderUsageFindings();
+    }
+
+    function renderTokenUsageChecks(groups) {
+        const tokenUsageGroups = new Map(
+            groups.filter((group) => group.category === "token-usage").map((group) => [group.id, group]),
+        );
+        const warningChecks = TOKEN_USAGE_CHECK_DEFINITIONS.filter((check) => tokenUsageGroups.has(check.id));
+        const passedChecks = TOKEN_USAGE_CHECK_DEFINITIONS.filter((check) => !tokenUsageGroups.has(check.id));
+        usageChecksLabel.textContent = warningChecks.length === 0
+            ? `Passed · ${passedChecks.length}`
+            : `Passed ${passedChecks.length} · Warnings ${warningChecks.length}`;
+        usageChecksList.replaceChildren(
+            ...warningChecks.map((check) => createCheckListItem(check, failedIconSvgs.warning, "passed__item--warning")),
+            ...passedChecks.map((check) => createCheckListItem(check, passedIconSvg)),
+        );
+        usageChecksToggle.setAttribute("aria-expanded", "false");
+        usageChecksList.hidden = true;
     }
 
     function renderGrade(scoreElement, gradeElement, { score, grade }) {
@@ -2565,9 +2719,6 @@
 
     function renderUsageFindings() {
         const groups = latestAudit.groups.filter((group) => group.category === "token-usage");
-        const propertyCount = groups.reduce((sum, group) => sum + group.nodes.length, 0);
-        const layerCount = new Set(groups.flatMap((group) => group.nodes.map((node) => node.id))).size;
-        usageResultText.textContent = `${formatCount(groups.length, "issue")} · ${formatCount(propertyCount, "property", "properties")} · ${formatCount(layerCount, "layer")}`;
 
         const children = groups.map(createFindingGroup);
         if (children.length === 0) {
@@ -2617,16 +2768,19 @@
         body.hidden = true;
         const details = document.createElement("div");
         details.className = "group__body";
+        const summary = document.createElement("div");
+        summary.className = "group__summary";
         const description = document.createElement("p");
         description.className = "group__description";
         description.textContent = group.description;
-        details.append(description);
+        summary.append(description);
         if (group.stats !== undefined) {
             const stats = document.createElement("p");
             stats.className = "group__stats";
             stats.textContent = group.stats;
-            details.append(stats);
+            summary.append(stats);
         }
+        details.append(summary);
         if (group.category === "token-usage" && group.fix !== undefined) {
             const fix = document.createElement("div");
             fix.className = "group__fix";
@@ -2638,7 +2792,9 @@
             fix.append(fixLabel, fixText);
             details.append(fix);
         }
-        details.append(createDocumentationLink(group));
+        if (!usesFooterDocumentation(group)) {
+            details.append(createDocumentationLink(group));
+        }
 
         const rows = group.nodes.map((node) => createNodeRow(node, group.category));
         rows.slice(nodePreviewLimit).forEach((row) => {
@@ -2701,39 +2857,50 @@
         return row;
     }
 
+    function usesFooterDocumentation(group) {
+        return group.docsUrl !== undefined;
+    }
+
     function createGroupFooter(group, rows) {
         const footer = document.createElement("div");
         footer.className = "group__footer";
-        const shown = document.createElement("span");
         const hasMore = rows.length > nodePreviewLimit;
-        shown.textContent = hasMore ? `Showing ${nodePreviewLimit} of ${rows.length}` : `All ${rows.length} shown`;
-        footer.append(shown);
-
+        let expanded = false;
         if (hasMore) {
-            const showAll = document.createElement("button");
-            showAll.className = "text-btn";
-            showAll.type = "button";
-            showAll.textContent = "Show all";
-            showAll.addEventListener("click", () => {
-                rows.forEach((row) => {
-                    row.hidden = false;
+            const more = document.createElement("button");
+            more.className = "text-btn group__more";
+            more.type = "button";
+            more.textContent = `and ${rows.length - nodePreviewLimit} more`;
+            more.addEventListener("click", () => {
+                expanded = !expanded;
+                rows.forEach((row, index) => {
+                    row.hidden = !expanded && index >= nodePreviewLimit;
                 });
-                shown.textContent = `All ${rows.length} shown`;
-                showAll.remove();
+                more.textContent = expanded ? "Show fewer" : `and ${rows.length - nodePreviewLimit} more`;
             });
-            footer.append(showAll);
+            footer.append(more);
+        } else {
+            const shown = document.createElement("span");
+            shown.textContent = `All ${rows.length} shown`;
+            footer.append(shown);
         }
 
-        const ids = [...new Set(group.nodes.map((node) => node.id))];
-        const selectAll = document.createElement("button");
-        selectAll.className = "pick";
-        selectAll.type = "button";
-        selectAll.dataset.pickIds = ids.join(",");
-        selectAll.setAttribute("aria-pressed", "false");
-        selectAll.innerHTML = pickIconSvg;
-        selectAll.append(`Select all ${ids.length}`);
-        selectAll.addEventListener("click", () => selectAuditNodes(ids));
-        footer.append(selectAll);
+        const hasFooterDocumentation = usesFooterDocumentation(group);
+        if (!hasFooterDocumentation || group.id === "primitive-binding") {
+            const ids = [...new Set(group.nodes.map((node) => node.id))];
+            const selectAll = document.createElement("button");
+            selectAll.className = "pick";
+            selectAll.type = "button";
+            selectAll.dataset.pickIds = ids.join(",");
+            selectAll.setAttribute("aria-pressed", "false");
+            selectAll.innerHTML = pickIconSvg;
+            selectAll.append(`Select all ${ids.length}`);
+            selectAll.addEventListener("click", () => selectAuditNodes(ids));
+            footer.append(selectAll);
+        }
+        if (hasFooterDocumentation) {
+            footer.append(createDocumentationLink(group));
+        }
         return footer;
     }
 
@@ -2807,7 +2974,9 @@
         if (check.issues?.length > 0) {
             body.appendChild(createExampleList(check, issueCount));
         }
-        body.appendChild(createDocumentationLink(check));
+        if (check.issues?.length === 0 || check.issues === undefined) {
+            body.appendChild(createDocumentationLink(check));
+        }
 
         head.addEventListener("click", () => toggleDisclosure(head, body));
         item.append(head, body);
@@ -2825,8 +2994,13 @@
     }
 
     function createExampleList(check, issueCount) {
+        const group = document.createElement("div");
+        group.className = "examples__group";
         const container = document.createElement("div");
         container.className = "examples";
+        const footer = document.createElement("div");
+        footer.className = "examples__footer";
+        group.append(container, footer);
         const compactIssues = check.issues ?? [];
         const fullIssues = check.issueDetails;
         const expandedIssues = fullIssues ?? compactIssues;
@@ -2838,23 +3012,25 @@
         const renderExamples = () => {
             const visibleIssues = expanded ? expandedIssues : compactIssues;
             container.replaceChildren(...visibleIssues.map((issue) => createExample(issue, check)));
-            if (moreCount <= 0) return;
-
-            const more = document.createElement("button");
-            more.type = "button";
-            more.className = "examples__more";
-            more.setAttribute("aria-expanded", String(expanded));
-            more.textContent = expanded ? "Show fewer" : `and ${moreCount} more`;
-            more.addEventListener("click", () => {
-                expanded = !expanded;
-                renderExamples();
-            });
-            container.appendChild(more);
+            footer.replaceChildren();
+            if (moreCount > 0) {
+                const more = document.createElement("button");
+                more.type = "button";
+                more.className = "examples__more";
+                more.setAttribute("aria-expanded", String(expanded));
+                more.textContent = expanded ? "Show fewer" : `and ${moreCount} more`;
+                more.addEventListener("click", () => {
+                    expanded = !expanded;
+                    renderExamples();
+                });
+                footer.append(more);
+            }
+            footer.append(createDocumentationLink(check));
         };
 
         renderExamples();
 
-        return container;
+        return group;
     }
 
     function createExample(issue, check) {

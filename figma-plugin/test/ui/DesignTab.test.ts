@@ -79,6 +79,51 @@ const USAGE_GROUP = {
     ],
 };
 
+const SPACING_GROUP = {
+    id: "hardcoded-spacing",
+    severity: "warning",
+    category: "token-usage",
+    title: "Hard-coded spacing and radii",
+    description: "Some gaps, padding, and corner radii use fixed values instead of Variables.",
+    stats: "2 of 3 properties have a matching Variable",
+    docsUrl: "#hardcoded-value",
+    nodes: [
+        { id: "stack", name: "Stack", path: "Page", meta: "Padding top 16px", note: "Exact match: spacing/4" },
+        { id: "card", name: "Card", path: "Page", meta: "Radius 9px", note: "Closest match: spacing/4" },
+        { id: "grid", name: "Grid", path: "Page", meta: "Gap 30px", note: "No match found" },
+    ],
+};
+
+const FONT_SIZE_GROUP = {
+    id: "hardcoded-font-size",
+    severity: "warning",
+    category: "token-usage",
+    title: "Unbound font sizes",
+    description: "Some text uses fixed font sizes instead of Text Styles or Variables.",
+    stats: "2 of 3 properties have a matching Text Style or Variable",
+    docsUrl: "#hardcoded-value",
+    nodes: [
+        { id: "heading", name: "Heading", path: "Page", meta: "Font size 16px", note: "Exact font-size match: Typography/Heading" },
+        { id: "body", name: "Body", path: "Page", meta: "Font size 15px", note: "Closest font-size match: typography/body-size" },
+        { id: "display", name: "Display", path: "Page", meta: "Font size 30px", note: "No font-size match found" },
+    ],
+};
+
+const PRIMITIVE_BINDING_GROUP = {
+    id: "primitive-binding",
+    severity: "warning",
+    category: "token-usage",
+    title: "Direct primitive bindings",
+    description: "Some layer properties use Primitive Variables directly instead of role-based tokens.",
+    stats: "2 of 3 properties have a possible higher-level match",
+    docsUrl: "#primitive-binding",
+    nodes: [
+        { id: "exact", name: "Exact", path: "Page", meta: "Fill #2563eb", note: "Bound to: primitive/blue/500 · Exact value match: semantic/accent" },
+        { id: "close", name: "Close", path: "Page", meta: "Gap 15px", note: "Bound to: primitive/spacing/4 · Closest value match: semantic/spacing/4" },
+        { id: "missing", name: "Missing", path: "Page", meta: "Stroke #ff0000", note: "Bound to: primitive/red/500 · No higher-level match found" },
+    ],
+};
+
 function report(options: ReportOptions = {}) {
     return {
         type: "DESIGN_AUDITED",
@@ -141,6 +186,7 @@ describe("Design tab", () => {
 
         expect(auditMessages()).toEqual([{ type: "AUDIT_DESIGN", scope: "page" }]);
         expect(ui.get<HTMLButtonElement>("#run-audit").disabled).toBe(true);
+        expect(ui.get("#design-tab-loading").hidden).toBe(false);
         expect(textOf(ui.get("#run-audit-label"))).toBe("Auditing...");
         expect(textOf(ui.get("#audit-status"))).toBe("Auditing the text on this page...");
 
@@ -154,25 +200,32 @@ describe("Design tab", () => {
 
         expect(ui.get("#audit-results").hidden).toBe(false);
         expect(ui.get("#audit-status").hidden).toBe(true);
-        expect(textOf(ui.get("#design-workspace .lead"))).toBe("Review accessibility and token usage for the selected layers.");
+        expect(ui.get("#design-workspace > .design-audit-shell > #audit-results")).not.toBeNull();
+        expect(textOf(ui.get("#design-workspace .lead"))).toBe("Use this audit to find accessibility issues, check text contrast, and spot inconsistent token usage in the selected layers before handoff.");
         expect(textOf(ui.get("#accessibility-score"))).toBe("85%");
         expect(textOf(ui.get("#accessibility-title"))).toBe("Accessibility checks");
         expect(textOf(ui.get("#accessibility-level")).trim()).toBe("AA");
-        expect(textOf(ui.get(".audit-category__title p"))).toContain("Text contrast is checked automatically");
-        expect(textOf(ui.get(".audit-category__title p"))).toContain("Icons and other visual elements need manual review");
+        expect(ui.get("#accessibility-formula-toggle").textContent).toBe("?");
+        expect(ui.get("#accessibility-formula-toggle").getAttribute("aria-label")).toBe("How is the score calculated?");
+        expect(ui.get("#usage-formula-toggle").textContent).toBe("?");
+        expect(ui.get("#usage-formula-toggle").getAttribute("aria-label")).toBe("How is the score calculated?");
+        expect(textOf(ui.get(".audit-category__title p"))).toContain("We check text contrast automatically");
+        expect(textOf(ui.get(".audit-category__title p"))).toContain("Please review icons and other visual elements manually");
+        expect(ui.get(".audit-category__title p br")).not.toBeNull();
         expect(ui.get<HTMLAnchorElement>("#accessibility-standard-link").href).toBe("https://www.w3.org/TR/WCAG22/");
         expect(ui.get<HTMLAnchorElement>("#accessibility-standard-link").target).toBe("_blank");
         expect(textOf(ui.get("#accessibility-grade"))).toBe("B");
         expect(ui.get("#accessibility-grade").className).toBe("grade");
-        expect(textOf(ui.get("#accessibility-verdict"))).toBe("Automated text contrast checks only");
-        expect(ui.get("#accessibility-verdict").className).toBe("score-summary__verdict score-summary__verdict--neutral");
-        expect(textOf(ui.get("#accessibility-result-text"))).toBe("17 passed · 3 failed · 3 manual review");
+        expect(textOf(ui.get("#accessibility-checks-label"))).toBe("Passed 17 · Failed 3");
+        expect(ui.get("#accessibility-checks-list").hidden).toBe(true);
         expect(ui.document.querySelector("#accessibility-summary")).toBeNull();
         expect(textOf(ui.get("#audit-meta"))).toBe("40 text layers · 25 layers checked for variables");
+        expect(Array.from(ui.get("#audit-meta").querySelectorAll("strong"), textOf)).toEqual(["40", "25"]);
+        expect(ui.window.getComputedStyle(ui.get("#token-workspace .arch-head__actions")).width).toBe("200px");
+        expect(ui.window.getComputedStyle(ui.get("#design-workspace .arch-head__actions")).width).toBe("200px");
         expect(textOf(ui.get("#usage-score"))).toBe("60");
         expect(textOf(ui.get("#usage-grade"))).toBe("D");
         expect(ui.get("#usage-grade").className).toBe("grade grade--poor");
-        expect(textOf(ui.get("#audit-coverage"))).toBe("Token coverage 65%: 52 of 80 properties use variables or styles");
         expect(ui.get("#accessibility-audit").hidden).toBe(false);
         expect(ui.get("#token-usage-audit").hidden).toBe(false);
         expect(ui.get("#audited-at").hidden).toBe(false);
@@ -187,6 +240,14 @@ describe("Design tab", () => {
         expect(ui.get("#usage-formula").hidden).toBe(false);
         expect(textOf(ui.get("#accessibility-formula"))).toContain("17 ÷ (17 + 3) × 100 = 85%.");
         expect(textOf(ui.get("#usage-formula"))).toContain("48 of 80 properties are bound to a variable or style and not to a primitive: 60, rounded down. Not part of WCAG.");
+
+        ui.click("#accessibility-checks-toggle");
+        expect(ui.get("#accessibility-checks-list").hidden).toBe(false);
+        expect(Array.from(ui.document.querySelectorAll("#accessibility-checks-list li"), textOf)).toEqual([
+            "Passed text contrast checks: 17",
+            "Failed text contrast checks: 3",
+            "Manual review items: 3",
+        ]);
     });
 
     it("shows the number of errors on the tab", () => {
@@ -211,9 +272,7 @@ describe("Design tab", () => {
     it("confirms when no text fails the contrast minimum", () => {
         openWithReport({ errors: 0, contrastErrors: 0, passed: 20, failed: 0, manualReview: 0, notChecked: 0, groups: [] });
 
-        expect(textOf(ui.get("#accessibility-verdict"))).toBe("Automated text contrast checks only");
-        expect(ui.get("#accessibility-verdict").className).toBe("score-summary__verdict score-summary__verdict--neutral");
-        expect(textOf(ui.get("#accessibility-result-text"))).toBe("20 passed · 0 failed · 0 manual review");
+        expect(textOf(ui.get("#accessibility-checks-label"))).toBe("Passed 20 · Failed 0");
     });
 
     it("does not show a score when every text layer needs a manual contrast check", () => {
@@ -230,9 +289,12 @@ describe("Design tab", () => {
         });
 
         expect(textOf(ui.get("#accessibility-score"))).toBe("N/A");
-        expect(textOf(ui.get("#accessibility-verdict"))).toBe("No automated contrast checks could be evaluated");
-        expect(ui.get("#accessibility-verdict").className).toBe("score-summary__verdict score-summary__verdict--neutral");
-        expect(textOf(ui.get("#accessibility-result-text"))).toBe("0 passed · 0 failed · 0 manual review");
+        expect(textOf(ui.get("#accessibility-checks-label"))).toBe("Passed 0 · Failed 0");
+
+        ui.click("#accessibility-checks-toggle");
+        expect(Array.from(ui.document.querySelectorAll("#accessibility-checks-list li"), textOf)).toEqual([
+            "Manual review items: 3",
+        ]);
     });
 
     it("lists the issues, with what could not be checked in a section of its own", () => {
@@ -254,12 +316,11 @@ describe("Design tab", () => {
         expect(textOf(group.querySelector(".group__title")!)).toBe("Non-text contrast needs manual review");
         group.querySelector<HTMLButtonElement>(".group__head")!.click();
         expect(textOf(group.querySelector(".group__description")!)).toBe(NON_TEXT_GROUP.description);
-        expect(group.querySelector<HTMLAnchorElement>(".docs")?.href).toContain("non-text-contrast.html");
+        expect(group.querySelector<HTMLAnchorElement>(".group__footer .docs")?.href).toContain("non-text-contrast.html");
 
         group.querySelector<HTMLButtonElement>(".node-row .pick")!.click();
         expect(ui.sent.at(-1)).toEqual({ type: "SELECT_NODES", ids: ["Arrow:0"] });
-        group.querySelector<HTMLButtonElement>(".group__footer .pick")!.click();
-        expect(ui.sent.at(-1)).toEqual({ type: "SELECT_NODES", ids: ["Arrow:0"] });
+        expect(group.querySelector(".group__footer .pick")).toBeNull();
     });
 
     it("shortens non-text diagnostics while preserving long layer details and controls", () => {
@@ -294,7 +355,7 @@ describe("Design tab", () => {
         expect(note.title).toBe(diagnostic);
         expect(note.getAttribute("aria-label")).toBe(`Role unclear: ${diagnostic}`);
         expect(row.querySelector<HTMLButtonElement>(".pick")!.textContent).toBe("Select");
-        expect(textOf(row.closest(".group")!.querySelector(".group__footer .pick")!)).toBe("Select all 1");
+        expect(textOf(row.closest(".group")!.querySelector(".group__footer .docs")!)).toBe("How to fix ↗");
 
         row.querySelector<HTMLButtonElement>(".pick")!.click();
         expect(ui.sent.at(-1)).toEqual({ type: "SELECT_NODES", ids: ["arrow:long"] });
@@ -321,22 +382,24 @@ describe("Design tab", () => {
         expect(head.getAttribute("aria-expanded")).toBe("true");
         expect(group.classList.contains("is-open")).toBe(true);
         expect(group.querySelector(".group__fix")).toBeNull();
-        expect(group.querySelector<HTMLAnchorElement>(".docs")?.href).toContain("contrast-minimum.html");
+        expect(group.querySelector(".group__body > .docs")).toBeNull();
+        expect(group.querySelector<HTMLAnchorElement>(".group__footer .docs")?.href).toContain("contrast-minimum.html");
+        expect(group.querySelector(".group__footer .pick")).toBeNull();
 
         const rows = Array.from(group.querySelectorAll<HTMLElement>(".node-row"));
         expect(rows.filter((row) => !row.hidden)).toHaveLength(5);
-        expect(footerTexts(group)).toEqual(["Showing 5 of 7", "Show all", "Select all 7"]);
+        expect(footerTexts(group)).toEqual(["and 2 more", "How to fix ↗"]);
 
         group.querySelector<HTMLButtonElement>(".group__footer .text-btn")!.click();
         expect(rows.every((row) => !row.hidden)).toBe(true);
-        expect(footerTexts(group)).toEqual(["All 7 shown", "Select all 7"]);
+        expect(footerTexts(group)).toEqual(["Show fewer", "How to fix ↗"]);
 
         head.click();
         expect(body.hidden).toBe(true);
     });
 
     it("keeps long finding details separated from the expandable header", () => {
-        const description = "This longer description wraps naturally and keeps the documentation link below it without touching the card border.";
+        const description = "This longer description wraps naturally and keeps the documentation link aligned with it without touching the card border.";
         openWithReport({ groups: [{ ...CONTRAST_GROUP, description }] });
 
         const group = ui.get("#accessibility-groups .group");
@@ -345,7 +408,10 @@ describe("Design tab", () => {
         const body = group.querySelector<HTMLElement>(".group__body")!;
 
         expect(textOf(body.querySelector(".group__description")!)).toBe(description);
-        expect(body.querySelector(".docs")).not.toBeNull();
+        const docs = group.querySelector<HTMLAnchorElement>(".group__footer .docs")!;
+        expect(docs).not.toBeNull();
+        expect(ui.window.getComputedStyle(body).display).toBe("grid");
+        expect(ui.window.getComputedStyle(docs).marginLeft).toBe("auto");
         expect(ui.window.getComputedStyle(body).paddingTop).toBe("8px");
         expect(body.style.height).toBe("");
     });
@@ -361,7 +427,7 @@ describe("Design tab", () => {
         expect(second.querySelector(".pick")!.getAttribute("aria-label")).toBe("Select Caption 1 in Card / Product");
     });
 
-    it("selects one layer or every layer of a group in Figma", () => {
+    it("selects one layer from an accessibility group in Figma", () => {
         openWithReport();
         const rows = Array.from(ui.document.querySelectorAll<HTMLElement>("#accessibility-groups .group:first-of-type .node-row"));
 
@@ -370,11 +436,8 @@ describe("Design tab", () => {
         expect(rows.map((row) => row.classList.contains("is-selected"))).toEqual([false, true, false, false, false, false, false]);
         expect(rows[1].querySelector(".pick")!.getAttribute("aria-pressed")).toBe("true");
 
-        ui.document.querySelector<HTMLButtonElement>("#accessibility-groups .group__footer .pick")!.click();
-        expect(ui.sent.at(-1)).toEqual({ type: "SELECT_NODES", ids: CONTRAST_GROUP.nodes.map((node) => node.id) });
-        expect(rows.every((row) => row.classList.contains("is-selected"))).toBe(true);
-        expect(rows[1].querySelector(".pick")!.getAttribute("aria-pressed")).toBe("false");
-        expect(ui.get("#accessibility-groups .group__footer .pick").getAttribute("aria-pressed")).toBe("true");
+        expect(rows.every((row, index) => row.classList.contains("is-selected") === (index === 1))).toBe(true);
+        expect(ui.document.querySelector("#accessibility-groups .group__footer .pick")).toBeNull();
     });
 
     it("shows layer names as text, never as markup", () => {
@@ -439,6 +502,37 @@ describe("Design tab", () => {
         expect(textOf(ui.get("#usage-formula"))).not.toContain("Accessibility");
     });
 
+    it("summarizes and expands all token usage checks", () => {
+        openWithReport({ groups: [USAGE_GROUP] });
+
+        expect(textOf(ui.get("#usage-checks-label"))).toBe("Passed 3 · Warnings 1");
+        expect(ui.get("#usage-checks-list").hidden).toBe(true);
+
+        ui.click("#usage-checks-toggle");
+
+        expect(ui.get("#usage-checks-list").hidden).toBe(false);
+        expect(Array.from(ui.document.querySelectorAll("#usage-checks-list li"), textOf)).toEqual([
+            "Hard-coded colors",
+            "Hard-coded spacing and radii",
+            "Unbound font sizes",
+            "Direct primitive bindings",
+        ]);
+        expect(ui.get("#usage-checks-toggle").getAttribute("aria-expanded")).toBe("true");
+    });
+
+    it("marks all token usage checks as passed when there are no findings", () => {
+        openWithReport({ groups: [] });
+
+        expect(textOf(ui.get("#usage-checks-label"))).toBe("Passed · 4");
+        ui.click("#usage-checks-toggle");
+        expect(Array.from(ui.document.querySelectorAll("#usage-checks-list li"), textOf)).toEqual([
+            "Hard-coded colors",
+            "Hard-coded spacing and radii",
+            "Unbound font sizes",
+            "Direct primitive bindings",
+        ]);
+    });
+
     it("lists token usage findings by property, with the variable to use", () => {
         openWithReport({ groups: [USAGE_GROUP] });
         const group = ui.get("#usage-groups .group");
@@ -447,11 +541,90 @@ describe("Design tab", () => {
         expect(textOf(group.querySelector(".group__description")!)).toBe("Some fills and strokes use fixed colors instead of Variables or Styles.");
         expect(textOf(group.querySelector(".group__stats")!)).toBe("2 of 3 properties have a matching Variable or Style");
         expect(group.querySelector(".group__fix")).toBeNull();
-        expect(group.querySelector<HTMLAnchorElement>(".docs")!.getAttribute("href")).toBe("#");
+        expect(group.querySelector(".group__body > .docs")).toBeNull();
+        expect(group.querySelector<HTMLAnchorElement>(".group__footer .docs")!.getAttribute("href")).toBe("#");
+        expect(group.querySelector(".group__footer .pick")).toBeNull();
         expect(Array.from(group.querySelectorAll(".node-row__meta"), textOf)).toEqual(["Fill #2563eb", "Stroke #e5e7eb", "Padding top 13px"]);
         expect(Array.from(group.querySelectorAll(".node-row__note"), textOf)).toEqual(["Exact match: semantic/accent", "Closest match: semantic/border", "No match found"]);
-        expect(textOf(ui.get("#usage-result-text"))).toBe("1 issue · 3 properties · 2 layers");
-        expect(footerTexts(group)).toContain("Select all 2");
+        expect(footerTexts(group)).toContain("How to fix ↗");
+    });
+
+    it("renders hard-coded spacing and radii with compact matching statistics", () => {
+        openWithReport({ groups: [SPACING_GROUP] });
+        const group = ui.get("#usage-groups .group");
+
+        expect(textOf(group.querySelector(".group__title")!)).toBe("Hard-coded spacing and radii");
+        expect(textOf(group.querySelector(".group__description")!)).toBe("Some gaps, padding, and corner radii use fixed values instead of Variables.");
+        expect(textOf(group.querySelector(".group__stats")!)).toBe("2 of 3 properties have a matching Variable");
+        expect(group.querySelector(".group__fix")).toBeNull();
+        expect(group.querySelector(".group__body > .docs")).toBeNull();
+        expect(group.querySelector<HTMLAnchorElement>(".group__footer .docs")!.getAttribute("href")).toBe("#hardcoded-value");
+        expect(group.querySelector(".group__footer .pick")).toBeNull();
+        expect(Array.from(group.querySelectorAll(".node-row__meta"), textOf)).toEqual(["Padding top 16px", "Radius 9px", "Gap 30px"]);
+        expect(Array.from(group.querySelectorAll(".node-row__note"), textOf)).toEqual([
+            "Exact match: spacing/4",
+            "Closest match: spacing/4",
+            "No match found",
+        ]);
+        expect(footerTexts(group)).toContain("How to fix ↗");
+
+        group.querySelector<HTMLButtonElement>(".node-row .pick")!.click();
+        expect(ui.sent.at(-1)).toEqual({ type: "SELECT_NODES", ids: ["stack"] });
+    });
+
+    it("renders unbound font sizes without implying a complete text-style match", () => {
+        openWithReport({ groups: [FONT_SIZE_GROUP] });
+        const group = ui.get("#usage-groups .group");
+
+        expect(textOf(group.querySelector(".group__title")!)).toBe("Unbound font sizes");
+        expect(textOf(group.querySelector(".group__description")!)).toBe("Some text uses fixed font sizes instead of Text Styles or Variables.");
+        expect(textOf(group.querySelector(".group__stats")!)).toBe("2 of 3 properties have a matching Text Style or Variable");
+        expect(group.querySelector(".group__fix")).toBeNull();
+        expect(group.querySelector(".group__body > .docs")).toBeNull();
+        expect(group.querySelector<HTMLAnchorElement>(".group__footer .docs")!.getAttribute("href")).toBe("#hardcoded-value");
+        expect(group.querySelector(".group__footer .pick")).toBeNull();
+        expect(Array.from(group.querySelectorAll(".node-row__meta"), textOf)).toEqual([
+            "Font size 16px",
+            "Font size 15px",
+            "Font size 30px",
+        ]);
+        expect(Array.from(group.querySelectorAll(".node-row__note"), textOf)).toEqual([
+            "Exact font-size match: Typography/Heading",
+            "Closest font-size match: typography/body-size",
+            "No font-size match found",
+        ]);
+        expect(footerTexts(group)).toContain("How to fix ↗");
+
+        group.querySelector<HTMLButtonElement>(".node-row .pick")!.click();
+        expect(ui.sent.at(-1)).toEqual({ type: "SELECT_NODES", ids: ["heading"] });
+    });
+
+    it("renders direct primitive bindings with value-match details and both selection controls", () => {
+        openWithReport({ groups: [PRIMITIVE_BINDING_GROUP] });
+        const group = ui.get("#usage-groups .group");
+
+        expect(textOf(group.querySelector(".group__title")!)).toBe("Direct primitive bindings");
+        expect(textOf(group.querySelector(".group__description")!)).toBe("Some layer properties use Primitive Variables directly instead of role-based tokens.");
+        expect(textOf(group.querySelector(".group__stats")!)).toBe("2 of 3 properties have a possible higher-level match");
+        expect(group.querySelector(".group__fix")).toBeNull();
+        expect(group.querySelector(".group__body > .docs")).toBeNull();
+        expect(group.querySelector<HTMLAnchorElement>(".group__footer .docs")!.getAttribute("href")).toBe("#primitive-binding");
+        expect(Array.from(group.querySelectorAll(".node-row__meta"), textOf)).toEqual([
+            "Fill #2563eb",
+            "Gap 15px",
+            "Stroke #ff0000",
+        ]);
+        expect(Array.from(group.querySelectorAll(".node-row__note"), textOf)).toEqual([
+            "Bound to: primitive/blue/500 · Exact value match: semantic/accent",
+            "Bound to: primitive/spacing/4 · Closest value match: semantic/spacing/4",
+            "Bound to: primitive/red/500 · No higher-level match found",
+        ]);
+        expect(footerTexts(group)).toEqual(["All 3 shown", "Select all 3", "How to fix ↗"]);
+
+        group.querySelector<HTMLButtonElement>(".node-row .pick")!.click();
+        expect(ui.sent.at(-1)).toEqual({ type: "SELECT_NODES", ids: ["exact"] });
+        group.querySelector<HTMLButtonElement>(".group__footer .pick")!.click();
+        expect(ui.sent.at(-1)).toEqual({ type: "SELECT_NODES", ids: ["exact", "close", "missing"] });
     });
 
     it("truncates long token suggestions without hiding layer selection", () => {
@@ -478,17 +651,17 @@ describe("Design tab", () => {
         expect(ui.sent.at(-1)).toEqual({ type: "SELECT_NODES", ids: ["long-layer"] });
     });
 
-    it("selects all hard-coded color properties while deduplicating layer IDs", () => {
+    it("keeps individual hard-coded color selection with the footer documentation link", () => {
         openWithReport({ groups: [USAGE_GROUP] });
 
         const group = ui.get("#usage-groups .group");
-        const selectAll = group.querySelector<HTMLButtonElement>(".group__footer .pick")!;
-        selectAll.click();
+        const select = group.querySelector<HTMLButtonElement>(".node-row .pick")!;
+        select.click();
 
-        expect(ui.sent.at(-1)).toEqual({ type: "SELECT_NODES", ids: ["card", "button"] });
-        expect(Array.from(group.querySelectorAll<HTMLElement>(".node-row"))
-            .every((row) => row.classList.contains("is-selected"))).toBe(true);
-        expect(selectAll.getAttribute("aria-pressed")).toBe("true");
+        expect(ui.sent.at(-1)).toEqual({ type: "SELECT_NODES", ids: ["card"] });
+        expect(group.querySelector<HTMLElement>(".node-row")!.classList.contains("is-selected")).toBe(true);
+        expect(select.getAttribute("aria-pressed")).toBe("true");
+        expect(group.querySelector(".group__footer .pick")).toBeNull();
     });
 
     it("shows why the audit failed", () => {
