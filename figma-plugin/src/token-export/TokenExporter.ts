@@ -1,6 +1,10 @@
 import { mapColorTokenName, mapTokenName } from "#/figma-plugin/token-export/TokenNameMapper";
 import { TokenCounter } from "#/figma-plugin/token-export/TokenCounter";
 import { TokenDocumentBuilder } from "#/figma-plugin/token-export/TokenDocumentBuilder";
+import {
+    REFERENCE_SOURCES_EXTENSION,
+    REFERENCE_SOURCES_NAMESPACE,
+} from "@design-token-kit/core/core/model/ReferenceSourcesExtension";
 
 export type { TokenCounts } from "#/figma-plugin/token-export/TokenCounter";
 
@@ -179,9 +183,6 @@ interface ModeExport {
 }
 
 const DIMENSION_SCOPES: VariableScope[] = ["GAP", "CORNER_RADIUS", "WIDTH_HEIGHT", "STROKE_FLOAT"];
-const FIGMA_EXTENSION_NAMESPACE = "io.github.design-token-kit";
-const REFERENCE_SOURCES_EXTENSION = "referenceSources";
-
 export class TokenExporter {
     readonly #documentBuilder = new TokenDocumentBuilder();
     readonly #tokenCounter = new TokenCounter();
@@ -412,7 +413,7 @@ function addReferenceSources(
         ...token,
         $extensions: {
             ...(token.$extensions ?? {}),
-            [FIGMA_EXTENSION_NAMESPACE]: {
+            [REFERENCE_SOURCES_NAMESPACE]: {
                 [REFERENCE_SOURCES_EXTENSION]: Object.fromEntries(
                     Object.entries(referenceSources).map(([pointer, sourcePath]) => [pointer, toDtcgReference(sourcePath)]),
                 ),

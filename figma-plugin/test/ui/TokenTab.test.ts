@@ -37,10 +37,12 @@ const ANALYTICS = {
 function analyzed(checks: unknown[], analytics = ANALYTICS) {
     const checkResults = checks as Array<{ passed: boolean; severity: string; state?: string }>;
     const scoredChecks = checkResults.filter((check) => check.state === undefined);
-    const architectureScore = computeCheckScore(scoredChecks.map((check) => ({
-        passed: check.passed,
-        severity: check.severity === "error" ? "error" : "warning",
-    })));
+    const architectureScore = checkResults.some((check) => check.state === "not-checked")
+        ? undefined
+        : computeCheckScore(scoredChecks.map((check) => ({
+            passed: check.passed,
+            severity: check.severity === "error" ? "error" : "warning",
+        })));
     return {
         type: "TOKENS_ANALYZED",
         payload: {
@@ -72,6 +74,20 @@ function emptyTokenState() {
         issues: [],
         notes: [],
         state: "empty",
+    };
+}
+
+function notCheckedCheck() {
+    return {
+        name: "Architecture checks not run",
+        description: "Layer and raw-value checks were skipped because token validation failed.",
+        docsUrl: "",
+        passed: false,
+        severity: "info",
+        issues: [],
+        issueDetails: [],
+        notes: [],
+        state: "not-checked",
     };
 }
 
@@ -242,6 +258,23 @@ describe("Token tab", () => {
         expect(textOf(ui.get("#architecture-score"))).toBe("N/A");
         expect(ui.document.querySelector("#architecture-verdict")).toBeNull();
         expect(ui.get("#passed-checks").hidden).toBe(false);
+    });
+
+    it("explains when architecture checks were skipped after validation errors", () => {
+        ui.receive(analyzed([
+            check("Token reference issues", "error", ["semantic.color.broken references a missing token"]),
+            notCheckedCheck(),
+        ]));
+
+        expect(textOf(ui.get("#architecture-score"))).toBe("N/A");
+        expect(textOf(ui.get("#architecture-formula"))).toContain("some architecture checks were not run");
+        const findings = Array.from(ui.document.querySelectorAll("#token-summary > li"));
+        expect(findings.map((item) => textOf(item.querySelector(".finding__title")!))).toEqual([
+            "Token reference issues",
+            "Architecture checks not run",
+        ]);
+        expect(findings[1]!.className).toBe("finding finding--info");
+        expect(findings[1]!.querySelector(".finding__count")).toBeNull();
     });
 
     it("keeps architecture status in the expandable check summary", () => {

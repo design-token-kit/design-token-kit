@@ -43,6 +43,13 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Changed
 
+- Figma composed color aliases now preserve their source aliases in the public
+  DTCG extension `io.github.design-token-kit.referenceSources`. The core
+  `layer-reference` check and CLI use this metadata to keep Figma and exported
+  token architecture results consistent. See the Figma plugin README for the
+  extension structure. Layer diagnostics also expose the resolved target path
+  through the optional `CheckIssue.targetPath` field.
+
 - #10 Invalid font weights and generic font families in CSS output
   - Made HRDT and DESIGN.md readers reject unknown font weight names with
     `invalid-font-weight`.

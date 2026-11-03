@@ -131,6 +131,10 @@ async function toDtcgList(files: ExportedTokenFile[]): Promise<DtcgListReadResul
         }
     }
 
+    if (issues.some((issue) => issue.severity === "error")) {
+        return { issues };
+    }
+
     return { list: new DtcgList(base, themes), issues };
 }
 

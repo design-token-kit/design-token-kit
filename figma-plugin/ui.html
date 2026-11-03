@@ -2382,9 +2382,14 @@
             return;
         }
 
-        const failedChecks = checks.filter((check) => !isCheckPassed(check));
-        const passed = checks.filter(isCheckPassed);
-        tokenSummary.replaceChildren(...failedChecks.map(createArchitectureCheck));
+        const checked = checks.filter((check) => check.state !== "not-checked");
+        const failedChecks = checked.filter((check) => !isCheckPassed(check));
+        const passed = checked.filter(isCheckPassed);
+        const notChecked = checks.filter((check) => check.state === "not-checked");
+        tokenSummary.replaceChildren(
+            ...failedChecks.map(createArchitectureCheck),
+            ...notChecked.map(createNotCheckedArchitectureState),
+        );
         renderPassedChecks(passed, failedChecks, failedChecks.length === 0);
     }
 
@@ -2402,6 +2407,29 @@
         const head = document.createElement("div");
         head.className = "finding__head";
         head.innerHTML = severityIconSvgs.info;
+        const title = document.createElement("span");
+        title.className = "finding__title";
+        title.textContent = check.name;
+        head.append(title);
+
+        const body = document.createElement("div");
+        body.className = "finding__body";
+        const description = document.createElement("p");
+        description.className = "finding__description";
+        description.textContent = check.description;
+        body.append(description);
+
+        item.append(head, body);
+        return item;
+    }
+
+    function createNotCheckedArchitectureState(check) {
+        const item = document.createElement("li");
+        item.className = "finding finding--info";
+
+        const head = document.createElement("div");
+        head.className = "finding__head";
+        head.innerHTML = severityIconSvgs["not-checked"];
         const title = document.createElement("span");
         title.className = "finding__title";
         title.textContent = check.name;
@@ -2478,26 +2506,30 @@
     function renderArchitectureStatus(checks, score) {
         const tone = toWorstSeverity(checks);
 
-        if (checks.length === 0) {
+        const checked = checks.filter((check) => check.state !== "not-checked");
+        if (checked.length === 0) {
             tokenTabCount.hidden = true;
             return;
         }
 
-        const failedChecks = checks.filter((check) => !isCheckPassed(check));
-        renderArchitectureScore(score);
+        const failedChecks = checked.filter((check) => !isCheckPassed(check));
+        renderArchitectureScore(score, checks);
         tokenTabCount.hidden = failedChecks.length === 0;
         tokenTabCount.textContent = String(failedChecks.length);
         tokenTabCount.className = `badge badge--${tone}`;
         tokenTabCount.setAttribute("aria-label", `${failedChecks.length} failing checks`);
     }
 
-    function renderArchitectureScore(score) {
+    function renderArchitectureScore(score, checks) {
         if (score === undefined) {
             architectureScore.textContent = "N/A";
             architectureScoreMax.hidden = true;
             architectureGrade.textContent = "";
             architectureGrade.className = "grade";
-            architectureFormula.replaceChildren("No score: token data could not be checked.");
+            const hasNotCheckedChecks = checks.some((check) => check.state === "not-checked");
+            architectureFormula.replaceChildren(hasNotCheckedChecks
+                ? "No score: some architecture checks were not run."
+                : "No score: token data could not be checked.");
             passedChecks.hidden = true;
             return;
         }
@@ -2925,15 +2957,16 @@
     }
 
     function toWorstSeverity(checks) {
-        if (checks.length === 0) {
+        const checked = checks.filter((check) => check.state !== "not-checked");
+        if (checked.length === 0) {
             return undefined;
         }
 
-        if (checks.some((check) => !isCheckPassed(check) && check.severity === "error")) {
+        if (checked.some((check) => !isCheckPassed(check) && check.severity === "error")) {
             return "error";
         }
 
-        return checks.some((check) => !isCheckPassed(check)) ? "warning" : "success";
+        return checked.some((check) => !isCheckPassed(check)) ? "warning" : "success";
     }
 
     function createArchitectureCheck(check) {

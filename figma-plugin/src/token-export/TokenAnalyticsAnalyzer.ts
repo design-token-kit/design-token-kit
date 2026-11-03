@@ -16,7 +16,8 @@ export class TokenAnalyticsAnalyzer {
         architectureChecks: TokenCheckCard[],
     ): TokenAnalyticsReport {
         const tokens = files.flatMap((file) => collectTokens(file.tokens));
-        const score = tokens.length === 0
+        const hasNotRunChecks = architectureChecks.some((check) => check.state === "not-checked");
+        const score = tokens.length === 0 || hasNotRunChecks
             ? undefined
             : computeCheckScore(architectureChecks
                 .filter((check) => check.state === undefined && check.docsUrl.length > 0)

@@ -125,6 +125,18 @@ describe("TokenConversionService", () => {
         expect(scss.map((file) => file.fileName)).toEqual(["tokens.scss", "tokens.dark.scss"]);
     });
 
+    it("does not return a token list when a theme cannot be read", async () => {
+        const result = await new TokenConversionService().readList([
+            exportedFile("tokens.json", tokenDocument("#ffffff"), {}, true),
+            exportedFile("tokens.dark.json", "{", {}, true),
+        ]);
+
+        expect(result.list).toBeUndefined();
+        expect(result.issues).toEqual(expect.arrayContaining([
+            expect.objectContaining({ sourcePath: "tokens.dark.json" }),
+        ]));
+    });
+
     it("converts platform formats from the first downloadable file when base is absent", async () => {
         const file = exportedFile("brand.json", tokenDocument("#ffffff"), {}, true);
         const service = new TokenConversionService();

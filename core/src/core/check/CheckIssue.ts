@@ -25,6 +25,11 @@ export interface CheckIssue {
     readonly tokenPath?: TokenPath;
 
     /**
+     * Path to the token addressed by a reference, when the issue concerns one.
+     */
+    readonly targetPath?: TokenPath;
+
+    /**
      * Message text.
      */
     readonly message: string;

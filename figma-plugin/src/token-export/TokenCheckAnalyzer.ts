@@ -13,17 +13,19 @@ const COMPATIBILITY_CHECK_IDS = new Set([
 const LAYER_ALIAS_FAILED_NAME = "Non-standard layer names";
 const ARCHITECTURE_ALIAS_PATTERN =/^(.+) uses architecture layer alias "([^"]+)"; prefer canonical layer "([^"]+)"\.$/;
 
+const ROOT_LAYER_CARD_DEFINITION = {
+    id: "root-layer",
+    issueIds: ["root-layer"],
+    name: "Architecture layers are defined",
+    failedName: "Tokens outside required layers",
+    description: "Token paths start with a configured root layer.",
+    failedDescription: "Some tokens are outside the primitive, semantic, or component layers.",
+    compatibilitySeverity: "warning",
+    issueHeading: "Use primitive, semantic, or component as the root layer.",
+} as const;
+
 const CARD_DEFINITIONS: readonly CardDefinition[] = [
-    {
-        id: "root-layer",
-        issueIds: ["root-layer"],
-        name: "Architecture layers are defined",
-        failedName: "Tokens outside required layers",
-        description: "Token paths start with a configured root layer.",
-        failedDescription: "Some tokens are outside the primitive, semantic, or component layers.",
-        compatibilitySeverity: "warning",
-        issueHeading: "Use primitive, semantic, or component as the root layer.",
-    },
+    ROOT_LAYER_CARD_DEFINITION,
     {
         id: "layer-reference",
         issueIds: ["layer-reference"],
@@ -120,6 +122,7 @@ const EMPTY_TOKEN_CARD = {
     description: "Add local Variables or Styles in Figma to run token checks.",
 } as const;
 const TOKEN_READ_FAILURE_DESCRIPTION = "The plugin could not read the generated token data.";
+const TOKEN_CHECKS_NOT_RUN_DESCRIPTION = "Layer and raw-value checks were skipped because token validation failed. Fix the validation errors and run the analysis again.";
 
 export class TokenCheckAnalyzer {
 
@@ -133,11 +136,7 @@ export class TokenCheckAnalyzer {
         runFullLinting = false,
     ): TokenCheckReport {
         if (list === undefined) {
-            const checks = readIssues.length > 0
-                ? [createTokenReadFailureCard(readIssues)]
-                : hasArchitectureAliasWarnings(architectureWarnings)
-                    ? [toCard("root-layer", "Architecture layers are defined", toArchitectureDescription(list), [])]
-                    : [createEmptyTokenCard()];
+            const checks = createUnavailableTokenChecks(readIssues, architectureWarnings);
             const hasArchitectureCard = checks.some((check) => check.state === undefined);
             const warnings = hasArchitectureCard
                 ? applyArchitectureWarnings(checks, architectureWarnings)
@@ -145,26 +144,28 @@ export class TokenCheckAnalyzer {
             return { checks, warnings };
         }
 
-        const checks = runFullLinting
-            ? [...validationChecks(), ...lintingChecks()]
-            : [...validationChecks(), ...lintingChecks()].filter((check) => COMPATIBILITY_CHECK_IDS.has(check.id));
-        const issues = new CheckRunner(checks).runList(list);
-        const cards = [
-            ...CARD_DEFINITIONS.map((definition) => toCard(
-                definition.id,
-                definition.name,
-                definition.id === "root-layer" ? toArchitectureDescription(list) : definition.description,
-                issues.filter((issue) => definition.issueIds.includes(issue.id)
-                    && (definition.issueFilter === undefined || definition.issueFilter(issue))),
-                definition.issueHeading,
-                runFullLinting ? undefined : definition.compatibilitySeverity,
-                definition.failedName,
-                definition.failedDescription,
-            )).filter((_card, index) => {
-                const definition = CARD_DEFINITIONS[index];
-                return definition === undefined || runFullLinting || definition.issueIds.some((id) => checks.some((check) => check.id === id));
-            }),
-        ];
+        const validation = validationChecks().filter((check) => runFullLinting || COMPATIBILITY_CHECK_IDS.has(check.id));
+        const linting = lintingChecks().filter((check) => runFullLinting || COMPATIBILITY_CHECK_IDS.has(check.id));
+        const validationIssues = new CheckRunner(validation).runList(list);
+        const lintingSkipped = hasErrors(validationIssues);
+        const checks = lintingSkipped ? validation : [...validation, ...linting];
+        const issues = lintingSkipped
+            ? validationIssues
+            : [...validationIssues, ...new CheckRunner(linting).runList(list)];
+        const activeDefinitions = CARD_DEFINITIONS.filter((definition) =>
+            definition.issueIds.some((id) => checks.some((check) => check.id === id)));
+        const cards = activeDefinitions.map((definition) => toCard(
+            definition,
+            issues.filter((issue) => definition.issueIds.includes(issue.id)
+                && (definition.issueFilter === undefined || definition.issueFilter(issue))),
+            {
+                description: definition.id === "root-layer" ? toArchitectureDescription(list) : undefined,
+                preferredSeverity: runFullLinting ? undefined : definition.compatibilitySeverity,
+            },
+        ));
+        if (lintingSkipped) {
+            cards.push(createChecksNotRunCard());
+        }
         const remainingWarnings = applyArchitectureWarnings(cards, architectureWarnings);
 
         return {
@@ -173,6 +174,21 @@ export class TokenCheckAnalyzer {
         };
     }
 
+}
+
+function createUnavailableTokenChecks(
+    readIssues: CheckIssue[],
+    architectureWarnings: string[],
+): TokenCheckCard[] {
+    if (readIssues.length > 0) {
+        return [createTokenReadFailureCard(readIssues)];
+    }
+
+    if (hasArchitectureAliasWarnings(architectureWarnings)) {
+        return [toCard(ROOT_LAYER_CARD_DEFINITION, [], { description: toArchitectureDescription(undefined) })];
+    }
+
+    return [createEmptyTokenCard()];
 }
 
 function createEmptyTokenCard(): TokenCheckCard {
@@ -191,8 +207,27 @@ function createEmptyTokenCard(): TokenCheckCard {
 
 function createTokenReadFailureCard(issues: CheckIssue[]): TokenCheckCard {
     return {
-        ...toCard("dtcg-reader", "Token data could not be checked", TOKEN_READ_FAILURE_DESCRIPTION, issues),
+        ...toCard({
+            id: "dtcg-reader",
+            issueIds: [],
+            name: "Token data could not be checked",
+            description: TOKEN_READ_FAILURE_DESCRIPTION,
+        }, issues),
         state: "read-failure",
+    };
+}
+
+function createChecksNotRunCard(): TokenCheckCard {
+    return {
+        name: "Architecture checks not run",
+        description: TOKEN_CHECKS_NOT_RUN_DESCRIPTION,
+        docsUrl: "",
+        passed: false,
+        severity: "info",
+        issues: [],
+        issueDetails: [],
+        notes: [],
+        state: "not-checked",
     };
 }
 
@@ -217,7 +252,7 @@ export interface TokenCheckCard {
     issueDetails: string[];
     issueHeading?: string;
     notes: string[];
-    state?: "empty" | "read-failure";
+    state?: "empty" | "read-failure" | "not-checked";
 }
 
 export type TokenCheckSeverity = "ok" | "warning" | "error" | "info";
@@ -236,31 +271,37 @@ interface CardDefinition {
 }
 
 function toCard(
-    id: string,
-    name: string,
-    description: string,
+    definition: CardDefinition,
     issues: CheckIssue[],
-    issueHeading?: string,
-    preferredSeverity?: TokenCheckSeverity,
-    failedName?: string,
-    failedDescription?: string,
+    options: CardOptions = {},
 ): TokenCheckCard {
     const passed = issues.length === 0;
     return {
-        name: passed ? name : failedName ?? name,
-        description: passed ? description : failedDescription ?? description,
-        docsUrl: `${FIGMA_PLUGIN_GUIDE_URL}#${id}`,
+        name: passed ? definition.name : definition.failedName ?? definition.name,
+        description: passed
+            ? options.description ?? definition.description
+            : definition.failedDescription ?? options.description ?? definition.description,
+        docsUrl: `${FIGMA_PLUGIN_GUIDE_URL}#${definition.id}`,
         passed,
-        severity: passed ? "ok" : preferredSeverity ?? toFailureSeverity(issues),
+        severity: passed ? "ok" : options.preferredSeverity ?? toFailureSeverity(issues),
         issues: summarizeIssues(issues),
         issueDetails: formatIssueMessages(issues),
-        issueHeading,
+        issueHeading: definition.issueHeading,
         notes: [],
     };
 }
 
+interface CardOptions {
+    description?: string;
+    preferredSeverity?: TokenCheckSeverity;
+}
+
 function toFailureSeverity(issues: CheckIssue[]): Exclude<TokenCheckSeverity, "ok" | "info"> {
     return issues.some((issue) => issue.severity === "error") ? "error" : "warning";
+}
+
+function hasErrors(issues: CheckIssue[]): boolean {
+    return issues.some((issue) => issue.severity === "error");
 }
 
 function filterArchitectureWarnings(warnings: string[]): string[] {
@@ -272,7 +313,15 @@ function hasArchitectureAliasWarnings(warnings: string[]): boolean {
 }
 
 function isComponentReferenceIssue(issue: CheckIssue): boolean {
-    return /^component\..+ \(component\) references .+ \(component\);/.test(issue.message);
+    const sourceSegments = issue.tokenPath?.segments();
+    const targetSegments = issue.targetPath?.segments();
+    if (sourceSegments?.[0] !== "component" || targetSegments?.[0] !== "component") {
+        return false;
+    }
+
+    const sourceComponent = sourceSegments[1];
+    const targetComponent = targetSegments[1];
+    return sourceComponent !== undefined && targetComponent !== undefined && sourceComponent !== targetComponent;
 }
 
 function toArchitectureDescription(list: DtcgList | undefined): string {

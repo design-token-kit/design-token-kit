@@ -73,6 +73,10 @@ export { TokenHtmlShowcaseBuilder } from "#/core/showcase/TokenHtmlShowcaseBuild
 export { TokenStatsBuilder } from "#/core/stats/TokenStatsBuilder";
 export { TokenStatsCalculator } from "#/core/stats/TokenStatsCalculator";
 export { TokenStatsHtmlRenderer } from "#/core/stats/TokenStatsHtmlRenderer";
+export {
+    REFERENCE_SOURCES_EXTENSION,
+    REFERENCE_SOURCES_NAMESPACE,
+} from "#/core/model/ReferenceSourcesExtension";
 export { TokenChecker } from "#/core/check/TokenChecker";
 export type { CheckerOptions, CheckSelectionWarning, CheckSelectionProblem, TokenCheckReport } from "#/core/check/TokenChecker";
 export { CheckScope } from "#/core/check/CheckScope";

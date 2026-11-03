@@ -142,3 +142,33 @@ Examples:
 
 Aliases are not inferred by matching raw values.
 Unresolvable aliases are skipped and reported as warnings.
+
+## Reference provenance extension
+
+When a Figma colour is composed from aliases to individual color properties, the
+exporter preserves the original aliases in the DTCG token's `$extensions`:
+
+```json
+{
+  "$extensions": {
+    "io.github.design-token-kit": {
+      "referenceSources": {
+        "#/primitive/color/blue/$value/colorSpace": "{semantic.color.action}"
+      }
+    }
+  }
+}
+```
+
+The `referenceSources` object maps a DTCG property reference in `$value` to the
+original token alias exported from Figma. Its keys are JSON Pointers and its
+values are DTCG curly-brace token references.
+
+This metadata is needed when the property reference points to a resolved source
+property but the original Figma alias points to a different token layer. Core's
+`layer-reference` check reads it to preserve the architecture of the Figma
+alias graph. The CLI therefore uses the same result when checking the exported
+file.
+
+The extension is optional. DTCG readers that do not know it can ignore the
+vendor-specific namespace and still read the token value.

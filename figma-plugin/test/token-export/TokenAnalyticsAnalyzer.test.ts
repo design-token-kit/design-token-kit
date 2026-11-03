@@ -137,6 +137,15 @@ describe("TokenAnalyticsAnalyzer", () => {
         expect(analytics.totalTokens).toBe(0);
         expect(analytics.architectureScore).toBeUndefined();
     });
+
+    it("does not calculate an architecture score when checks were skipped", () => {
+        const analytics = new TokenAnalyticsAnalyzer().analyze(
+            [tokenFile("tokens.json", { primitive: { color: { blue: token("color", "#0000ff") } } })],
+            [architectureCheck("error"), notCheckedArchitectureCheck()],
+        );
+
+        expect(analytics.architectureScore).toBeUndefined();
+    });
 });
 
 function token(type: string, value: unknown): Record<string, unknown> {
@@ -166,5 +175,19 @@ function architectureCheck(severity: TokenCheckCard["severity"]): TokenCheckCard
         issues: [],
         issueDetails: [],
         notes: [],
+    };
+}
+
+function notCheckedArchitectureCheck(): TokenCheckCard {
+    return {
+        name: "Architecture checks not run",
+        description: "Layer checks were skipped.",
+        docsUrl: "",
+        passed: false,
+        severity: "info",
+        issues: [],
+        issueDetails: [],
+        notes: [],
+        state: "not-checked",
     };
 }

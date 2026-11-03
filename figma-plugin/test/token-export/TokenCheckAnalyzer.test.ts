@@ -126,16 +126,12 @@ describe("TokenCheckAnalyzer", () => {
         })), [], [], true);
 
         const expectedFailures = [
-            ["Raw values outside primitive", "Semantic and component tokens contain raw values instead of references."],
             ["Token reference issues", "Some references are missing, circular, point to groups, or use deprecated tokens."],
-            ["Component-to-component references", "Component tokens reference other component tokens."],
-            ["Tokens outside required layers", "Some tokens are outside the primitive, semantic, or component layers."],
             ["Token type mismatch", "An alias points to a token with a different type."],
             ["Duplicate gradient stops", "A gradient uses the same stop position more than once."],
-            ["Empty token groups", "Some groups contain no tokens or child groups."],
-            ["Missing token descriptions", "Some tokens have no description."],
             ["Unsupported Tailwind namespace", "Some tokens use unsupported Tailwind namespace values."],
             ["Invalid rem base", "The rem base must be a positive number."],
+            ["Architecture checks not run", "Layer and raw-value checks were skipped because token validation failed. Fix the validation errors and run the analysis again."],
         ] as const;
 
         for (const [name, description] of expectedFailures) {
@@ -190,6 +186,35 @@ describe("TokenCheckAnalyzer", () => {
         expect(fullReport.checks.find((check) => check.name === "Missing token descriptions")).toMatchObject({
             severity: "warning",
             passed: false,
+        });
+    });
+
+    it("does not run architecture checks after validation errors", () => {
+        const report = new TokenCheckAnalyzer().analyze(new DtcgList(read({
+            primitive: {
+                color: {
+                    blue: {
+                        $type: "color",
+                        $value: { colorSpace: "srgb", components: [0, 0, 1], alpha: 1 },
+                    },
+                },
+            },
+            semantic: {
+                color: {
+                    broken: { $type: "color", $value: "{primitive.color.missing}" },
+                },
+            },
+        })), []);
+
+        expect(report.checks.find((check) => check.name === "Token reference issues")).toMatchObject({
+            passed: false,
+            severity: "error",
+        });
+        expect(report.checks.find((check) => check.name === "Raw values outside primitive")).toBeUndefined();
+        expect(report.checks.find((check) => check.name === "Architecture checks not run")).toMatchObject({
+            passed: false,
+            severity: "info",
+            state: "not-checked",
         });
     });
 
@@ -259,6 +284,37 @@ describe("TokenCheckAnalyzer", () => {
         expect(report.checks.find((check) => check.name === "Component-to-component references")).toMatchObject({
             passed: false,
             severity: "error",
+        });
+    });
+
+    it("keeps references within one component on the layer-order card", () => {
+        const document = read({
+            primitive: {
+                color: {
+                    blue: { $type: "color", $value: { colorSpace: "srgb", components: [0, 0, 1], alpha: 1 } },
+                },
+            },
+            semantic: {
+                color: {
+                    action: { $type: "color", $value: "{primitive.color.blue}" },
+                },
+            },
+            component: {
+                button: {
+                    base: { $type: "color", $value: "{semantic.color.action}" },
+                    hover: { $type: "color", $value: "{component.button.base}" },
+                },
+            },
+        });
+
+        const report = new TokenCheckAnalyzer().analyze(new DtcgList(document), [], [], true);
+
+        expect(report.checks.find((check) => check.name === "Invalid layer references")).toMatchObject({
+            passed: false,
+            severity: "error",
+        });
+        expect(report.checks.find((check) => check.name === "Component tokens stay independent")).toMatchObject({
+            passed: true,
         });
     });
 
