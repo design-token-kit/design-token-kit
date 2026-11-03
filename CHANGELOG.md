@@ -24,6 +24,13 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   - Wrote generic font families, such as `sans-serif`, without quotes in CSS,
     SCSS, and Tailwind CSS outputs.
     This includes the script-specific forms such as `generic(fangsong)`.
+- Rebuilt the playground dark theme to remap `semantic` tokens instead of
+  redefining primitive values.
+  The dark palette moved into the shared palette as further scale steps.
+- Fixed the playground dark theme page background, which stayed white under
+  light text.
+- Described theming in `docs/designer.adoc` as semantic remapping, with modes on
+  the `Semantic` collection only.
 
 ## [3.1.0] - 2026-10-26
 

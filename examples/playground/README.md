@@ -15,8 +15,8 @@ out recommendations for designers.
 
 | File | Role |
 | --- | --- |
-| `tokens.json` | Base theme: 151 tokens covering all 13 DTCG types |
-| `tokens.dark.json` | Dark theme: 12 colours and 2 shadows |
+| `tokens.json` | Base theme: 162 tokens covering all 13 DTCG types |
+| `tokens.dark.json` | Dark theme: 13 colour roles and 2 shadow roles |
 | `showcase.figma.js` | Builds the showcase page from the document's variables |
 
 The token file names follow the convention the Figma plugin uses when exporting
@@ -38,9 +38,17 @@ Every token references a semantic token, never a primitive directly. The
 `layer-reference` rule requires that a semantic token always sits between a
 component and a primitive.
 
-The dark theme overrides the `primitive` layer only. The `semantic` and
-`component` layers are absent from it and inherit from the base theme. Switching
-themes changes the palette without touching roles or components.
+The dark theme overrides the `semantic` layer only: it points roles at other
+primitives. The `primitive` and `component` layers are absent from it and
+inherit from the base theme. Switching themes changes roles without touching
+primitive values or components.
+
+A primitive keeps its value in every theme, so `primitive.color.slate.100` is
+the same light grey in both. The colours the dark theme needs live in the shared
+palette as further steps of the same scales, such as `slate.800` or `brand.400`.
+Figma gives a variable a value in every mode of its collection, so the import
+gives modes to the `Semantic` collection only and the `Primitive` collection
+keeps a single one.
 
 Every token carries a `$description`. On import the descriptions become Figma
 variable descriptions and document the system inside the file itself.
