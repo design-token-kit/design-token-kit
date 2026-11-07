@@ -72,14 +72,19 @@ It also audits whether the layers are built from tokens:
 Each category has its own score from 0 to 100 with an A-F grade. Neither is a
 WCAG conformance level; only text contrast is a WCAG criterion.
 
+The token usage audit reports two warnings:
+
+- **Values are not bound to variables** (`hardcoded-value`): a color, spacing,
+  radius, or font size is hard-coded instead of bound to a variable or style.
+- **Layers use primitive variables directly** (`primitive-binding`): a property
+  is bound to a primitive variable while a higher-layer token is available.
+
+The token usage score is separate from the accessibility score.
+It is the share of audited properties without a token usage finding.
+
 Text on a gradient or an image, and text with several colours, is listed under
 **Not checked** and does not affect the score. **Select** selects a layer in
 Figma and zooms to it. The audit is read-only: it never changes the file.
-
-[docs/design-audit.md](docs/design-audit.md) describes which layers are
-audited, how the text and background colours are read, each check, how the
-plugin applies WCAG AA, how tokens are suggested, the score, and the
-limitations.
 
 ## Exported Tokens
 

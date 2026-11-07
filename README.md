@@ -123,6 +123,10 @@ structure right but misses format details.
   * Readable font sizes (text-size)
   * Body text line heights (line-height)
   * A 0-100 score with an A-F grade
+* Audit token usage:
+  * Hard-coded values instead of token bindings (hardcoded-value)
+  * Direct bindings to primitive tokens when higher layers exist (primitive-binding)
+  * Token coverage and a separate usage score
 * Convert between DTCG JSON, HRDT YAML, and DESIGN.md
 * Generate CSS and SCSS from token files, including Tailwind CSS v4 `@theme`
   output, SwiftUI source, Android resource XML, and a Figma script creating

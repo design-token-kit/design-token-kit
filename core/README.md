@@ -182,6 +182,9 @@ write a parsed document back to any supported source format.
   and readability
 * `auditTextSamples()` - apply the audit rules to text samples from any source
 * `TokenTextSampler` - build the text samples a token set implies
+* `auditUsageSamples()` - audit whether design properties are bound to tokens
+* `TokenMatcher` - find exact or close token matches for usage samples
+* `computeTokenCoverage()` / `computeTokenUsageScore()` - measure token usage
 * `contrastRatio()`, `minimumContrast()`, `isLargeText()`, `toSrgbColor()` -
   WCAG contrast helpers
 * `DtcgListLoader` - load base and theme sources into a `DtcgList`
@@ -350,6 +353,25 @@ const { findings } = auditTextSamples([{
   lineHeight: 1.2,
 }], { level: "AA" });
 ```
+
+## Token Usage Audit
+
+Use `auditUsageSamples()` to check whether design properties are built from
+tokens.
+The audit is source-independent, so Figma adapters and other integrations can
+provide the samples.
+
+It reports two warnings:
+
+* `hardcoded-value` - a color, spacing, radius, or font size is not bound to a
+  token and may have an exact or close token suggestion
+* `primitive-binding` - a property is bound to the lowest layer while a token
+  from a higher layer exists
+
+The result includes token coverage and a separate usage score.
+Token usage does not affect the accessibility score.
+The public API expects `UsageSample` values and `TokenCandidate` values from the
+integration that is being audited.
 
 ## Browser API
 
