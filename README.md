@@ -49,8 +49,8 @@ to DTCG JSON. DTCG token trees can be converted to DESIGN.md via
 `--outform design-md`.
 
 HRDT YAML files are automatically converted to DTCG JSON and then passed to the
-standard command pipeline: checking, CSS conversion, showcase generation, and
-statistics reporting.
+standard command pipeline: checking, design audit, CSS conversion, showcase
+generation, and statistics reporting.
 
 Node.js 20.19.0 or newer is required.
 Building this repository requires npm 11.19.0.
@@ -118,6 +118,11 @@ structure right but misses format details.
   * Raw value placement rules (raw-value-usage)
   * Empty group detection (empty-group)
   * Optional missing token description detection (missing-description)
+* Audit design quality:
+  * WCAG text contrast of text and background color pairs (text-contrast)
+  * Readable font sizes (text-size)
+  * Body text line heights (line-height)
+  * A 0-100 score with an A-F grade
 * Convert between DTCG JSON, HRDT YAML, and DESIGN.md
 * Generate CSS and SCSS from token files, including Tailwind CSS v4 `@theme`
   output, SwiftUI source, Android resource XML, and a Figma script creating
@@ -185,9 +190,10 @@ npm run dist
 ## Packages
 
 - [`@design-token-kit/core`](core/README.md) - core library for validation,
-  parsing, platform conversion, HTML showcase generation, and token statistics
+  design audit, parsing, platform conversion, HTML showcase generation, and token statistics
 - [`@design-token-kit/cli`](cli/README.md) - command line interface `dtokens`
-  for checking, conversion, showcase generation, and token statistics
+  for checking, design audit, conversion, showcase generation, and token
+  statistics
 
 ## Package Documentation
 

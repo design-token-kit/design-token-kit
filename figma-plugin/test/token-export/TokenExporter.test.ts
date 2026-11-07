@@ -1,5 +1,4 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { TokenArchitectureAnalyzer } from "#/figma-plugin/token-export/TokenArchitectureAnalyzer";
 import { TokenExporter } from "#/figma-plugin/token-export/TokenExporter";
 
 describe("TokenExporter", () => {
@@ -231,8 +230,6 @@ describe("TokenExporter", () => {
         });
 
         const result = await new TokenExporter().export();
-        const report = new TokenArchitectureAnalyzer().analyze(result.files);
-
         expect(result.files[0]?.tokens).toMatchObject({
             semantic: {
                 color: {
@@ -247,7 +244,7 @@ describe("TokenExporter", () => {
                 },
             },
         });
-        expect(report.warnings).toEqual([]);
+        expect(result.warnings).toEqual([]);
     });
 
     it("references the resolved alias target when the direct target has no token path", async () => {
@@ -315,10 +312,20 @@ describe("TokenExporter", () => {
                 },
             },
         });
-        expect(result.files[0]?.referenceSources).toEqual({
-            "component.card.disabled": {
-                "#/primitive/color/blue/$value/colorSpace": ["semantic", "color", "action"],
-                "#/primitive/color/blue/$value/components": ["semantic", "color", "action"],
+        expect(result.files[0]?.tokens).toMatchObject({
+            component: {
+                card: {
+                    disabled: {
+                        $extensions: {
+                            "io.github.design-token-kit": {
+                                referenceSources: {
+                                    "#/primitive/color/blue/$value/colorSpace": "{semantic.color.action}",
+                                    "#/primitive/color/blue/$value/components": "{semantic.color.action}",
+                                },
+                            },
+                        },
+                    },
+                },
             },
         });
     });
@@ -398,8 +405,6 @@ describe("TokenExporter", () => {
         });
 
         const result = await new TokenExporter().export();
-        const report = new TokenArchitectureAnalyzer().analyze(result.files);
-
         expect(result.files[0]?.tokens).toMatchObject({
             component: {
                 card: {
@@ -413,14 +418,24 @@ describe("TokenExporter", () => {
                 },
             },
         });
-        expect(result.files[0]?.referenceSources).toEqual({
-            "component.card.disabled": {
-                "#/primitive/color/blue/$value/colorSpace": ["semantic", "color", "action"],
-                "#/primitive/color/blue/$value/components": ["semantic", "color", "action"],
-                "#/primitive/opacity/disabled/$value": ["semantic", "opacity", "disabled"],
+        expect(result.files[0]?.tokens).toMatchObject({
+            component: {
+                card: {
+                    disabled: {
+                        $extensions: {
+                            "io.github.design-token-kit": {
+                                referenceSources: {
+                                    "#/primitive/color/blue/$value/colorSpace": "{semantic.color.action}",
+                                    "#/primitive/color/blue/$value/components": "{semantic.color.action}",
+                                    "#/primitive/opacity/disabled/$value": "{semantic.opacity.disabled}",
+                                },
+                            },
+                        },
+                    },
+                },
             },
         });
-        expect(report.warnings).toEqual([]);
+        expect(result.warnings).toEqual([]);
     });
 
     it("treats an unscoped float alias used as color opacity as a number", async () => {

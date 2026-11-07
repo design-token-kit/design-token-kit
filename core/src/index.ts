@@ -73,12 +73,18 @@ export { TokenHtmlShowcaseBuilder } from "#/core/showcase/TokenHtmlShowcaseBuild
 export { TokenStatsBuilder } from "#/core/stats/TokenStatsBuilder";
 export { TokenStatsCalculator } from "#/core/stats/TokenStatsCalculator";
 export { TokenStatsHtmlRenderer } from "#/core/stats/TokenStatsHtmlRenderer";
+export {
+    REFERENCE_SOURCES_EXTENSION,
+    REFERENCE_SOURCES_NAMESPACE,
+} from "#/core/model/ReferenceSourcesExtension";
 export { TokenChecker } from "#/core/check/TokenChecker";
-export type { CheckerOptions, CheckSelectionWarning, CheckSelectionProblem } from "#/core/check/TokenChecker";
+export type { CheckerOptions, CheckSelectionWarning, CheckSelectionProblem, TokenCheckReport } from "#/core/check/TokenChecker";
 export { CheckScope } from "#/core/check/CheckScope";
 
 export { CheckRunner } from "#/core/check/CheckRunner";
 export type { Check } from "#/core/check/Check";
+export { computeCheckScore } from "#/core/check/CheckScore";
+export type { CheckScore, CheckScoreInput, CheckGrade } from "#/core/check/CheckScore";
 export { TokenCheck } from "#/core/check/TokenCheck";
 export type { CheckContext, ResolvedRef } from "#/core/check/CheckContext";
 export { ReferenceCheck } from "#/core/check/checks/ReferenceCheck";
@@ -94,6 +100,44 @@ export { EmptyGroupCheck } from "#/core/check/checks/EmptyGroupCheck";
 export { MissingDescriptionCheck } from "#/core/check/checks/MissingDescriptionCheck";
 export { TailwindNamespaceCheck } from "#/core/check/checks/TailwindNamespaceCheck";
 export { RemBaseCheck } from "#/core/check/checks/RemBaseCheck";
+
+export { TokenAuditor } from "#/core/audit/TokenAuditor";
+export type { AuditorOptions, AuditResult, AuditSuccess, AuditFailure, AuditReport } from "#/core/audit/TokenAuditor";
+export type { AuditCategory, AuditFinding, TokenSuggestion, UncheckedSubject, AuditRuleInfo } from "#/core/audit/AuditFinding";
+export { auditGrade, computeAuditScore } from "#/core/audit/AuditScore";
+export type { AuditScore, AuditGrade, AuditScoreWeights } from "#/core/audit/AuditScore";
+export { auditTextSamples, accessibilityRules, listAuditRules } from "#/core/audit/accessibility/AccessibilityAudit";
+export type { TextAuditOptions } from "#/core/audit/accessibility/AccessibilityAudit";
+export { auditTextContrastSamples, computeContrastScore } from "#/core/audit/accessibility/ContrastAudit";
+export type { ContrastAuditResult, ContrastScore } from "#/core/audit/accessibility/ContrastAudit";
+export type { AccessibilityOptions } from "#/core/audit/accessibility/AccessibilitySettings";
+export type { TextSample } from "#/core/audit/accessibility/TextSample";
+export type { TextAuditRule, TextAuditResult } from "#/core/audit/accessibility/TextAuditRule";
+export { TokenTextSampler } from "#/core/audit/tokens/TokenTextSampler";
+export { toSrgbColor, formatSrgbColor } from "#/core/audit/color/SrgbColor";
+export type { SrgbColor } from "#/core/audit/color/SrgbColor";
+export {
+    WCAG_LEVELS,
+    relativeLuminance,
+    contrastRatio,
+    compositeOver,
+    isLargeText,
+    minimumContrast,
+    formatContrastRatio,
+} from "#/core/audit/color/Wcag";
+export type { WcagLevel } from "#/core/audit/color/Wcag";
+export { colorDistance } from "#/core/audit/color/ColorDistance";
+export {
+    auditUsageSamples,
+    computeTokenCoverage,
+    computeTokenUsageScore,
+    formatUsageValue,
+    listTokenUsageRules,
+} from "#/core/audit/usage/TokenUsageAudit";
+export type { TokenUsageOptions, TokenUsageResult, TokenUsageScore, TokenCoverage } from "#/core/audit/usage/TokenUsageAudit";
+export { TokenMatcher } from "#/core/audit/usage/TokenMatcher";
+export type { TokenMatch, TokenMatcherOptions } from "#/core/audit/usage/TokenMatcher";
+export type { UsageProperty, UsageValue, UsageSample, TokenBinding, TokenCandidate } from "#/core/audit/usage/UsageSample";
 
 import { CssTokenConverter } from "#/core/platforms/css/CssTokenConverter";
 import { ScssTokenConverter } from "#/core/platforms/scss/ScssTokenConverter";

@@ -24,6 +24,8 @@ https://design-token-kit.github.io/
   references, type mismatches, and deprecated token usage
 * **Lint checks** - cross-layer reference, raw value placement, empty group,
   and missing token description rules
+* **Design audit** - WCAG text contrast of text and background color pairs,
+  readable font sizes, and body text line heights, with a 0-100 score
 * **[HRDT YAML support][hrdt]** - a compact, human-readable alternative
   to DTCG JSON
 * **[DESIGN.md support][designmd]** -
@@ -66,6 +68,7 @@ Run the basic flow with `npx`:
 
 ```bash
 npx @design-token-kit/cli check tokens.json
+npx @design-token-kit/cli audit tokens.json
 npx @design-token-kit/cli convert tokens.json --out ./tokens.css
 npx @design-token-kit/cli showcase tokens.json --out ./showcase.html --open
 ```
@@ -182,6 +185,8 @@ Convert token documents between DTCG JSON, HRDT YAML, and DESIGN.md.
 * `check [options] [files...]` - check DTCG JSON, HRDT YAML, or DESIGN.md
   token files: schema, model correctness, lint.
 * `validate [files...]` - alias for `check`.
+* `audit [options] [files...]` - audit the design quality of token files:
+  text contrast and readability.
 * `convert [options] [files...]` - convert a token file to DTCG JSON,
   HRDT YAML, DESIGN.md, CSS, SCSS, Tailwind CSS v4 theme CSS, SwiftUI,
   a Figma script, or Android resource XML.
@@ -203,6 +208,18 @@ Convert token documents between DTCG JSON, HRDT YAML, and DESIGN.md.
   When omitted, default-enabled checks run.
   An explicit list runs only the listed checks.
   `missing-description` is opt-in and must be listed explicitly.
+* `--schema <path>` - DTCG JSON Schema: directory path or built-in resource
+  (`2025.10`, `2025.10-design.md`). Defaults to `2025.10`.
+* `-i, --inform [format]` - input format: `dtcg`, `hrdt`, `design-md`
+  (default: auto-detect).
+
+### audit
+
+* `--level <level>` - WCAG level text contrast is audited against: `AA` or
+  `AAA`. Defaults to `AA`.
+* `--rules <ids>` - comma-separated allow-list of audit rules. When omitted,
+  every rule runs.
+* `--min-font-size <px>` - smallest readable font size in px. Defaults to `12`.
 * `--schema <path>` - DTCG JSON Schema: directory path or built-in resource
   (`2025.10`, `2025.10-design.md`). Defaults to `2025.10`.
 * `-i, --inform [format]` - input format: `dtcg`, `hrdt`, `design-md`
@@ -279,6 +296,12 @@ Scopes:
 Run `dtokens check --help` to list the available check ids with their
 scope, severity, and description.
 
+When token checks run, the command also prints the token architecture score.
+It is the percentage of checks that ran and passed, with warnings and errors
+counted equally as failed checks.
+Schema-only, unreadable, and fail-fast incomplete inputs have no score.
+The command reports how many checks were not run in the latter cases.
+
 Exit status:
 
 * `0`: success
@@ -292,6 +315,70 @@ dtokens check tokens.json --scope lint --checks layer-reference
 dtokens check tokens.json --scope lint --checks missing-description
 dtokens check DESIGN.md --inform design-md --scope validate
 ```
+
+## Design Audit
+
+Audit whether the design a token set describes is accessible and readable.
+`check` tells whether tokens are valid and follow the layer architecture;
+`audit` tells whether text set with them can be read.
+
+```bash
+dtokens audit tokens.json
+dtokens audit tokens.json tokens.dark.json
+dtokens audit tokens.json --level AAA
+dtokens audit tokens.json --rules text-contrast
+```
+
+The first source is the base token set, the others are themes.
+Each theme is audited over the base, and reports only what it changes.
+
+Rules:
+
+* `text-contrast` (error) - text whose contrast with its background is below
+  the WCAG 2.2 AA minimum: 4.5:1 for normal text, 3:1 for large text
+  (24px, or 18.66px bold).
+  With `--level AAA`, text that meets AA but not AAA (7:1 and 4.5:1) is a
+  warning.
+* `text-size` (warning) - typography below the smallest readable font size,
+  12px by default.
+* `line-height` (warning) - body text, below 18px, whose line height is below
+  1.3.
+
+Tokens do not say which text color is meant for which background, so the
+audit pairs them by name:
+
+* Colors named `text-*`, `foreground-*`, or `fg-*` (or held in a `text` group)
+  are paired with colors named `background-*`, `bg-*`, `surface-*`, or
+  `canvas-*` in the same group, e.g. `semantic.color.text-primary` with
+  `semantic.color.background-canvas`, or `component.button.primary.text` with
+  `component.button.primary.background-hover`.
+* `on-X` and `text-on-X` colors are paired with the color `X` only, and `X`
+  is then not paired with other text colors.
+* Inverse colors are paired with inverse colors only.
+* Disabled colors, which WCAG exempts, and overlays are skipped.
+* A pair is held to the large text minimum when its group holds a typography
+  token of large text; otherwise it is held to the normal text minimum.
+
+Translucent text is composited over its background.
+Text on a translucent background cannot be evaluated, because the contrast
+depends on what lies behind it; such pairs are listed as `not checked` and do
+not affect the score.
+
+The audit ends with a summary and a score:
+`100 - 2 x errors - 0.1 x warnings`, rounded and never below 0.
+Grades: A 90 and above, B 80 to 89, C 70 to 79, D 60 to 69, F below 60.
+
+```text
+[text-contrast] error: tokens.json - semantic.color.text-tertiary on semantic.color.background-canvas: contrast 2.49:1 (#a1a4aa on #ffffff) is below 4.5:1, the WCAG AA minimum for normal text.
+[text-size] warning: tokens.json - primitive.typography.caption: font size 10px is below the 12px minimum for readable text.
+Audit: 1 error, 1 warning, 0 not checked in 4 samples. Score 98 (A).
+```
+
+Exit status:
+
+* `0`: no errors
+* `1`: unexpected error
+* `2`: errors found, or the sources cannot be read
 
 ## Document Conversion
 

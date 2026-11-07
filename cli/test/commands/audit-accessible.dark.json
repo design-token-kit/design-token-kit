@@ -1,0 +1,9 @@
+{
+  "$schema": "https://www.designtokens.org/schemas/2025.10/format.json",
+  "$description": "Audit requisite - a theme over audit-accessible.json that points secondary text at a light primitive, so it fails text-contrast on the unchanged canvas. Used by: audit.",
+  "semantic": {
+    "color": {
+      "text-secondary": {"$value": "{primitive.color.white}"}
+    }
+  }
+}

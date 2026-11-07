@@ -11,6 +11,12 @@ export default defineConfig({
             include: ["src/**/*.ts"],
             exclude: ["src/**/index.ts"],
             reporter: ["text", "json", "html", "lcov"],
+            thresholds: {
+                statements: 97,
+                branches: 81,
+                functions: 98,
+                lines: 97,
+            },
         },
     },
 });

@@ -8,6 +8,7 @@ import { CheckScope } from "#/core/check/CheckScope";
 import { TokenLayers } from "#/core/check/TokenLayers";
 import { validationChecks, lintingChecks, listChecks } from "#/core/check/checks/Checks";
 import type { CheckInfo } from "#/core/check/checks/Checks";
+import { computeCheckScore, type CheckScore } from "#/core/check/CheckScore";
 
 /**
  * Checks token sources, stopping at the first stage that reports errors.
@@ -46,21 +47,55 @@ export class TokenChecker {
      * error-free.
      */
     async check(sources: string[]): Promise<CheckIssue[]> {
+        const report = await this.checkReport(sources);
+        return report.issues;
+    }
+
+    /**
+     * Runs the pipeline and summarizes the checks that actually ran.
+     *
+     * Reading and schema failures have no score because no token checks ran.
+     */
+    async checkReport(sources: string[]): Promise<TokenCheckReport> {
+        const validationChecksToRun = this.#scope.includes(CheckScope.VALIDATE)
+            ? this.#select(validationChecks())
+            : [];
+        const lintChecksToRun = this.#scope.includes(CheckScope.LINT)
+            ? this.#select(lintingChecks())
+            : [];
+        const requestedChecks: Check[] = [...validationChecksToRun, ...lintChecksToRun];
         const read = await this.#loader.read(sources, this.#inform);
         if (!read.ok) {
-            return read.issues;
+            return {
+                issues: read.issues,
+                notChecked: requestedChecks.map((check) => check.id),
+            };
         }
 
         // Warnings the readers raised are reported alongside the model checks:
         // they did not stop the load, but the author still wants to see them.
         const issues: CheckIssue[] = [...read.issues];
-        if (this.#scope.includes(CheckScope.VALIDATE)) {
-            issues.push(...this.#run(validationChecks(), read.list));
-        }
+        const evaluatedChecks: Check[] = [];
+        evaluatedChecks.push(...validationChecksToRun);
+        issues.push(...this.#runSelected(validationChecksToRun, read.list));
         if (!hasErrors(issues) && this.#scope.includes(CheckScope.LINT)) {
-            issues.push(...this.#run(lintingChecks(), read.list));
+            evaluatedChecks.push(...lintChecksToRun);
+            issues.push(...this.#runSelected(lintChecksToRun, read.list));
         }
-        return issues;
+        const notChecked = requestedChecks
+            .filter((check) => !evaluatedChecks.some((evaluatedCheck) => evaluatedCheck.id === check.id))
+            .map((check) => check.id);
+
+        return {
+            issues,
+            notChecked,
+            score: notChecked.length === 0
+                ? computeCheckScore(evaluatedChecks.map((check) => ({
+                    passed: !issues.some((issue) => issue.id === check.id),
+                    severity: check.defaultSeverity,
+                })))
+                : undefined,
+        };
     }
 
     /**
@@ -95,12 +130,11 @@ export class TokenChecker {
         return undefined;
     }
 
-    #run(checks: Check[], list: DtcgList): CheckIssue[] {
-        const selected = this.#select(checks);
-        if (selected.length === 0) {
+    #runSelected(checks: Check[], list: DtcgList): CheckIssue[] {
+        if (checks.length === 0) {
             return [];
         }
-        return new CheckRunner(selected, this.#layers).runList(list);
+        return new CheckRunner(checks, this.#layers).runList(list);
     }
 
     #select(checks: Check[]): Check[] {
@@ -115,6 +149,15 @@ export class TokenChecker {
         const enabled = new Set(this.#allowList);
         return checks.filter((check) => enabled.has(check.id));
     }
+}
+
+/**
+ * Results from checking token sources and the checks that were executed.
+ */
+export interface TokenCheckReport {
+    readonly issues: CheckIssue[];
+    readonly notChecked: string[];
+    readonly score?: CheckScore;
 }
 
 function hasErrors(issues: CheckIssue[]): boolean {

@@ -150,6 +150,19 @@
           }
         },
         "dark-blue": {
+          "300": {
+            "$type": "color",
+            "$value": {
+              "colorSpace": "srgb",
+              "components": [
+                0.557,
+                0.635,
+                0.984
+              ],
+              "alpha": 1,
+              "hex": "#8ea2fb"
+            }
+          },
           "400": {
             "$type": "color",
             "$value": {
@@ -469,6 +482,10 @@
       },
       "text-inverse": {
         "$value": "{primitive.color.dark-neutral.50}"
+      },
+      "text-link": {
+        "$value": "{primitive.color.dark-blue.300}",
+        "$description": "Link text, lightened to read on the dark backgrounds."
       },
       "border-normal": {
         "$value": "{primitive.color.dark-neutral.300}"

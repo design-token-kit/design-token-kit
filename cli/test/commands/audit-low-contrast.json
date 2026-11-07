@@ -1,0 +1,44 @@
+{
+  "$schema": "https://www.designtokens.org/schemas/2025.10/format.json",
+  "$description": "Audit requisite - one low contrast pair (text-tertiary on background-canvas), one pair on a translucent background, and a caption below the readable font size. Used by: audit.",
+  "primitive": {
+    "color": {
+      "white": {
+        "$type": "color",
+        "$value": {"colorSpace":"srgb","components":[1,1,1],"alpha":1,"hex":"#ffffff"}
+      },
+      "gray-400": {
+        "$type": "color",
+        "$value": {"colorSpace":"srgb","components":[0.6314,0.6431,0.6667],"alpha":1,"hex":"#a1a4aa"}
+      },
+      "gray-900": {
+        "$type": "color",
+        "$value": {"colorSpace":"srgb","components":[0.1020,0.1020,0.1020],"alpha":1,"hex":"#1a1a1a"}
+      },
+      "glass": {
+        "$type": "color",
+        "$value": {"colorSpace":"srgb","components":[1,1,1],"alpha":0.6,"hex":"#ffffff"}
+      }
+    },
+    "typography": {
+      "caption": {
+        "$type": "typography",
+        "$value": {
+          "fontFamily": ["Inter", "sans-serif"],
+          "fontSize": {"value": 10, "unit": "px"},
+          "fontWeight": 400,
+          "letterSpacing": {"value": 0, "unit": "px"},
+          "lineHeight": 1.4
+        }
+      }
+    }
+  },
+  "semantic": {
+    "color": {
+      "text-primary": {"$value": "{primitive.color.gray-900}"},
+      "text-tertiary": {"$value": "{primitive.color.gray-400}"},
+      "background-canvas": {"$value": "{primitive.color.white}"},
+      "background-glass": {"$value": "{primitive.color.glass}"}
+    }
+  }
+}

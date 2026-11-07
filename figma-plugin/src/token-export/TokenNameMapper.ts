@@ -12,6 +12,15 @@ const TOKEN_LAYER_BY_ALIAS = new Map([
     ["components", "component"],
 ]);
 
+/**
+ * Returns the token layer a Figma variable or style name starts with, such as
+ * `primitive` for `Primitives/Blue/500`, or `undefined` when it names none.
+ */
+export function declaredTokenLayer(name: string): string | undefined {
+    const first = slugifyPathSegment(name.split("/")[0] ?? "");
+    return TOKEN_LAYER_BY_ALIAS.get(first);
+}
+
 export function mapColorTokenName(name: string): TokenNameMapping | undefined {
     return mapTokenName(name, ["primitive", "color"]);
 }

@@ -186,6 +186,13 @@ describe("TokenChecker", () => {
             expect(issues).toEqual([]);
         });
 
+        it("reports a score for the checks that ran", async () => {
+            const report = await new TokenChecker({ scope: CheckScope.LINT }).checkReport([VALID]);
+
+            expect(report.notChecked).toEqual([]);
+            expect(report.score).toMatchObject({ score: 100, grade: "A", passed: 9, total: 9, warnings: 0, errors: 0 });
+        });
+
         it("accepts a semantic color composed from primitive property references", async () => {
             const issues = await new TokenChecker({ scope: CheckScope.LINT }).check([COMPOSED_COLOR_REFS]);
 
@@ -201,10 +208,12 @@ describe("TokenChecker", () => {
         // stage reports first, naming the token rather than the schema branch
         // that did not match.
         it("stops at the reading stage and skips model checks", async () => {
-            const issues = await new TokenChecker({ scope: CheckScope.LINT }).check([SCHEMA_INVALID_COLOR]);
-            expect(issues.length).toBeGreaterThan(0);
-            expect(ids(issues)).toContain("invalid-color");
-            expect(ids(issues)).not.toContain("bad-reference");
+            const report = await new TokenChecker({ scope: CheckScope.LINT }).checkReport([SCHEMA_INVALID_COLOR]);
+            expect(report.issues.length).toBeGreaterThan(0);
+            expect(ids(report.issues)).toContain("invalid-color");
+            expect(ids(report.issues)).not.toContain("bad-reference");
+            expect(report.score).toBeUndefined();
+            expect(report.notChecked).toHaveLength(9);
         });
 
         it("stops at the model stage and skips lint checks", async () => {

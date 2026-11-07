@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { TokenAnalyticsAnalyzer } from "#/figma-plugin/token-export/TokenAnalyticsAnalyzer";
-import type { TokenArchitectureCheckResult } from "#/figma-plugin/token-export/TokenArchitectureAnalyzer";
+import type { TokenCheckCard } from "#/figma-plugin/token-export/TokenCheckAnalyzer";
 import type { ExportedTokenFile } from "#/figma-plugin/token-export/TokenExporter";
 
 describe("TokenAnalyticsAnalyzer", () => {
@@ -56,6 +56,14 @@ describe("TokenAnalyticsAnalyzer", () => {
             architectureOkChecks: 1,
             architectureWarningChecks: 1,
             architectureErrorChecks: 1,
+            architectureScore: {
+                score: 33,
+                grade: "F",
+                passed: 1,
+                total: 3,
+                warnings: 1,
+                errors: 1,
+            },
         });
     });
 
@@ -119,6 +127,25 @@ describe("TokenAnalyticsAnalyzer", () => {
         expect(analytics.referenceTokens).toBe(1);
         expect(analytics.rawValueTokens).toBe(2);
     });
+
+    it("does not calculate an architecture score for an empty export", () => {
+        const analytics = new TokenAnalyticsAnalyzer().analyze(
+            [tokenFile("tokens.json", {})],
+            [architectureCheck("error")],
+        );
+
+        expect(analytics.totalTokens).toBe(0);
+        expect(analytics.architectureScore).toBeUndefined();
+    });
+
+    it("does not calculate an architecture score when checks were skipped", () => {
+        const analytics = new TokenAnalyticsAnalyzer().analyze(
+            [tokenFile("tokens.json", { primitive: { color: { blue: token("color", "#0000ff") } } })],
+            [architectureCheck("error"), notCheckedArchitectureCheck()],
+        );
+
+        expect(analytics.architectureScore).toBeUndefined();
+    });
 });
 
 function token(type: string, value: unknown): Record<string, unknown> {
@@ -138,7 +165,7 @@ function tokenFile(fileName: string, tokens: Record<string, unknown>): ExportedT
     };
 }
 
-function architectureCheck(severity: TokenArchitectureCheckResult["severity"]): TokenArchitectureCheckResult {
+function architectureCheck(severity: TokenCheckCard["severity"]): TokenCheckCard {
     return {
         name: severity,
         description: severity,
@@ -146,6 +173,21 @@ function architectureCheck(severity: TokenArchitectureCheckResult["severity"]): 
         passed: severity === "ok",
         severity,
         issues: [],
+        issueDetails: [],
         notes: [],
+    };
+}
+
+function notCheckedArchitectureCheck(): TokenCheckCard {
+    return {
+        name: "Architecture checks not run",
+        description: "Layer checks were skipped.",
+        docsUrl: "",
+        passed: false,
+        severity: "info",
+        issues: [],
+        issueDetails: [],
+        notes: [],
+        state: "not-checked",
     };
 }

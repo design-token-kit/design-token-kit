@@ -1,0 +1,34 @@
+{
+  "$schema": "https://www.designtokens.org/schemas/2025.10/format.json",
+  "$description": "Audit requisite - dark text on a light background with readable body typography; passes every audit rule at AA. Used by: audit.",
+  "primitive": {
+    "color": {
+      "white": {
+        "$type": "color",
+        "$value": {"colorSpace":"srgb","components":[1,1,1],"alpha":1,"hex":"#ffffff"}
+      },
+      "gray-600": {
+        "$type": "color",
+        "$value": {"colorSpace":"srgb","components":[0.4392,0.4392,0.4392],"alpha":1,"hex":"#707070"}
+      }
+    },
+    "typography": {
+      "body": {
+        "$type": "typography",
+        "$value": {
+          "fontFamily": ["Inter", "sans-serif"],
+          "fontSize": {"value": 16, "unit": "px"},
+          "fontWeight": 400,
+          "letterSpacing": {"value": 0, "unit": "px"},
+          "lineHeight": 1.5
+        }
+      }
+    }
+  },
+  "semantic": {
+    "color": {
+      "text-secondary": {"$value": "{primitive.color.gray-600}"},
+      "background-canvas": {"$value": "{primitive.color.white}"}
+    }
+  }
+}

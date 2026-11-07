@@ -61,6 +61,12 @@ export default defineConfig({
             provider: "istanbul",
             include: ["src/**/*.ts"],
             reporter: ["text", "json", "html", "lcov"],
+            thresholds: {
+                statements: 90,
+                branches: 81,
+                functions: 96,
+                lines: 91,
+            },
         },
     },
 });
