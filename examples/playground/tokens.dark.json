@@ -4,7 +4,7 @@
     "color": {
       "background-page": {
         "$value": "{primitive.color.slate.900}",
-        "$description": "Page background in the dark theme."
+        "$description": "Page background: the darkest neutral."
       },
       "background-surface": {
         "$value": "{primitive.color.slate.800}",
@@ -12,57 +12,57 @@
       },
       "background-overlay": {
         "$value": "{primitive.color.overlay.64}",
-        "$description": "Denser dimming beneath a modal layer in the dark theme."
+        "$description": "Denser dimming beneath a modal layer."
       },
       "text-default": {
         "$value": "{primitive.color.slate.100}",
-        "$description": "Primary text colour in the dark theme."
+        "$description": "Primary text: the lightest neutral."
       },
       "text-muted": {
         "$value": "{primitive.color.slate.400}",
-        "$description": "Muted secondary text in the dark theme."
+        "$description": "Muted secondary text."
       },
       "text-inverse": {
         "$value": "{primitive.color.slate.900}",
-        "$description": "Text on a brand or status background, which is light in the dark theme."
+        "$description": "Text on a brand background: dark, since the brand colour is light in the dark theme."
       },
       "border-default": {
         "$value": "{primitive.color.slate.700}",
-        "$description": "Colour of an ordinary border in the dark theme."
+        "$description": "Colour of an ordinary border."
       },
       "border-focus": {
-        "$value": "{primitive.color.brand.400}",
-        "$description": "Focus ring colour in the dark theme."
+        "$value": "{primitive.color.blue.400}",
+        "$description": "Border colour in the focus state."
       },
       "action-primary": {
-        "$value": "{primitive.color.brand.400}",
-        "$description": "Background of the primary action in the dark theme."
+        "$value": "{primitive.color.blue.400}",
+        "$description": "Colour of the primary action, lightened for a dark background."
       },
       "action-primary-hover": {
-        "$value": "{primitive.color.brand.300}",
-        "$description": "Background of the primary action on hover in the dark theme."
+        "$value": "{primitive.color.blue.300}",
+        "$description": "Colour of the primary action on hover."
       },
       "status-success": {
-        "$value": "{primitive.color.success.400}",
-        "$description": "Success status colour in the dark theme."
+        "$value": "{primitive.color.green.400}",
+        "$description": "Colour of the success status, lightened for a dark background."
       },
       "status-warning": {
-        "$value": "{primitive.color.warning.400}",
-        "$description": "Warning status colour in the dark theme."
+        "$value": "{primitive.color.amber.400}",
+        "$description": "Colour of the warning status, lightened for a dark background."
       },
       "status-danger": {
-        "$value": "{primitive.color.danger.400}",
-        "$description": "Error status colour in the dark theme."
+        "$value": "{primitive.color.red.400}",
+        "$description": "Colour of the danger status, lightened for a dark background."
       }
     },
     "motion": {
       "shadow-surface": {
         "$value": "{primitive.shadow.surface-dense}",
-        "$description": "Shadow of a raised surface in the dark theme."
+        "$description": "Surface shadow, denser on a dark background."
       },
       "shadow-overlay": {
         "$value": "{primitive.shadow.overlay-dense}",
-        "$description": "Shadow of a floating layer in the dark theme."
+        "$description": "Floating layer shadow, denser on a dark background."
       }
     }
   }
