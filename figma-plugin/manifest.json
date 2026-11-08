@@ -13,6 +13,7 @@
   "networkAccess": {
     "allowedDomains": [
       "https://api.figma.com",
+      "https://api-js.mixpanel.com",
       "https://fonts.googleapis.com",
       "https://fonts.gstatic.com"
     ]

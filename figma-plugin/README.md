@@ -18,10 +18,46 @@ them through `@design-token-kit/core` to platform formats.
 
 ## Scripts
 
-- `npm run build` - compile TypeScript and build the plugin bundle
+- `npm run build` - build the production plugin bundle for publication
+- `npm run build:development` - build a local plugin bundle without Mixpanel
+  requests
 - `npm run lint` - run ESLint
-- `npm run test` - rebuild and run Vitest tests
-- `npm run watch` - rebuild on file changes
+- `npm run test` - build a test bundle without Mixpanel requests and run Vitest
+  tests
+- `npm run watch` - rebuild the development bundle on file changes
+
+All build modes write to `.figma-build/code.js`, so the last build command wins.
+Use only `npm run build` before publishing. Use `npm run build:development`
+before loading the plugin locally in Figma. Do not use the production build for
+manual development testing, because it sends test activity to Mixpanel.
+
+## Mixpanel Analytics
+
+The plugin sends pseudonymous usage events through the Mixpanel Track API.
+It disables IP geolocation and never sends token contents, file names, node
+names, or Figma access tokens.
+
+The public project token is configured in `ui.html` as
+`MIXPANEL_PROJECT_TOKEN`.
+The manifest allows requests to `https://api-js.mixpanel.com`.
+
+The token is intentionally client-side because a Mixpanel project token only
+identifies the destination project and is intended for untrusted clients.
+
+The random anonymous installation identifier is created by the plugin code and
+stored with `figma.clientStorage`, which is scoped by Figma to the current user
+and plugin ID. It is not derived from a Figma file or personal information.
+
+Production builds send events with `analytics_environment: production`.
+Development and test builds disable Mixpanel requests.
+
+Tracked events are `plugin_opened`, `token_analysis_started`,
+`tokens_analyzed`, `design_audit_started`, `design_audit_completed`,
+`tokens_exported`, and `file_exported`.
+The export event records that the plugin started an export, not that the user
+completed or accepted the browser download.
+The initial token analysis and design audit run automatically for the UI, but
+their start and completion events are sent only after a user action.
 
 ## Publishing The Plugin
 

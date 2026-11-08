@@ -5,6 +5,8 @@ describe("plugin entrypoint", () => {
     const showUI = vi.fn();
     const notify = vi.fn();
     const postMessage = vi.fn();
+    const clientStorageGet = vi.fn();
+    const clientStorageSet = vi.fn();
     const pluginUi: { onmessage?: (message: { type: string; [key: string]: unknown }) => Promise<void> } = {};
 
     beforeEach(async () => {
@@ -12,12 +14,18 @@ describe("plugin entrypoint", () => {
         showUI.mockReset();
         notify.mockReset();
         postMessage.mockReset();
+        clientStorageGet.mockReset().mockResolvedValue(undefined);
+        clientStorageSet.mockReset().mockResolvedValue(undefined);
         pluginUi.onmessage = undefined;
         vi.stubGlobal("__html__", "<main></main>");
         vi.stubGlobal("figma", {
             root: { id: "0:0", name: "My Token File", children: [] },
             showUI,
             notify,
+            clientStorage: {
+                getAsync: clientStorageGet,
+                setAsync: clientStorageSet,
+            },
             ui: {
                 postMessage,
                 ...pluginUi,
@@ -38,6 +46,24 @@ describe("plugin entrypoint", () => {
     it("initializes the plugin UI", () => {
         expect(showUI).toHaveBeenCalledWith("<main></main>", { width: 720, height: 720 });
         expect(pluginUi.onmessage).toBeTypeOf("function");
+    });
+
+    it("loads the analytics identity from Figma client storage", async () => {
+        await Promise.resolve();
+
+        expect(clientStorageGet).toHaveBeenCalledWith("design-token-kit.analytics.distinct-id");
+        expect(clientStorageSet).toHaveBeenCalledWith(
+            "design-token-kit.analytics.distinct-id",
+            expect.stringMatching(/^dtk-[a-z0-9-]{16,128}$/),
+        );
+        expect(postMessage).toHaveBeenCalledWith(expect.objectContaining({
+            type: "ANALYTICS_CONFIGURED",
+            payload: expect.objectContaining({
+                distinctId: expect.stringMatching(/^dtk-[a-z0-9-]{16,128}$/),
+                enabled: false,
+                environment: "test",
+            }),
+        }));
     });
 
     it("notifies when REST export has no file key", async () => {

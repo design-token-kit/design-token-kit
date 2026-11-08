@@ -9,6 +9,7 @@ const __dirname = path.dirname(__filename);
 export interface PluginTestContext {
     sendMessage: (message: PluginMessage) => Promise<void>;
     postedMessages: Array<{ type: string; payload: unknown }>;
+    analyticsMessages: Array<{ type: string; payload: unknown }>;
 }
 
 interface PluginMessage {
@@ -25,6 +26,7 @@ export function loadPluginContext(options: LoadPluginContextOptions = {}): Plugi
     const codePath = path.join(__dirname, "..", "..", ".figma-build", "code.js");
     const code = readFileSync(codePath, "utf8");
     const postedMessages: Array<{ type: string; payload: unknown }> = [];
+    const analyticsMessages: Array<{ type: string; payload: unknown }> = [];
     const context = {
         __html__: "",
         console: globalThis.console,
@@ -36,11 +38,20 @@ export function loadPluginContext(options: LoadPluginContextOptions = {}): Plugi
                 children: [],
             },
             fileKey: "test-file-key",
+            clientStorage: {
+                getAsync: async () => undefined,
+                setAsync: async () => {},
+            },
             loadAllPagesAsync: async () => {},
             showUI() {},
             notify() {},
             ui: {
                 postMessage(message: { type: string; payload: unknown }) {
+                    if (message.type === "ANALYTICS_CONFIGURED") {
+                        analyticsMessages.push(message);
+                        return;
+                    }
+
                     postedMessages.push(message);
                 },
             },
@@ -53,6 +64,7 @@ export function loadPluginContext(options: LoadPluginContextOptions = {}): Plugi
 
     return {
         postedMessages,
+        analyticsMessages,
         async sendMessage(message: PluginMessage) {
             const pluginUi = context.figma.ui as { onmessage?: (message: PluginMessage) => Promise<void> };
             if (pluginUi.onmessage === undefined) {

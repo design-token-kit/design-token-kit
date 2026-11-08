@@ -10,11 +10,12 @@
     "main": "code.js",
     "scripts": {
         "build": "tsc --noEmit && vite build",
+        "build:development": "tsc --noEmit && vite build --mode development",
         "lint": "eslint .",
-        "test": "npm run build && vitest run",
-        "test:coverage": "npm run build && vitest run --coverage",
+        "test": "tsc --noEmit && vite build --mode test && vitest run",
+        "test:coverage": "tsc --noEmit && vite build --mode test && vitest run --coverage",
         "lint:fix": "eslint . --fix",
-        "watch": "npm run build -- --watch"
+        "watch": "tsc --noEmit && vite build --mode development --watch"
     },
     "author": "",
     "license": "MIT",

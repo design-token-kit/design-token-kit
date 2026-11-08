@@ -8,9 +8,12 @@ import { TokenConversionService, type TokenOutputFormat } from "#/figma-plugin/t
 import { TokenCheckAnalyzer } from "#/figma-plugin/token-export/TokenCheckAnalyzer";
 import { TokenAnalyticsAnalyzer } from "#/figma-plugin/token-export/TokenAnalyticsAnalyzer";
 import { TokenExporter } from "#/figma-plugin/token-export/TokenExporter";
+import { getOrCreateAnalyticsDistinctId } from "#/figma-plugin/analytics/AnalyticsIdentity";
 
 const MISSING_FILE_KEY_MESSAGE = "REST export requires figma.fileKey. "
     + "Reload the plugin after manifest update or run it as a private/local plugin.";
+const ANALYTICS_ENABLED = __DTK_ANALYTICS_ENABLED__;
+const ANALYTICS_ENVIRONMENT = __DTK_ANALYTICS_ENVIRONMENT__;
 
 figma.showUI(__html__, {
     width: 720,
@@ -54,6 +57,20 @@ figma.ui.onmessage = async (msg: PluginMessage) => {
         await exportWithReader(new RestFigmaFileReader(msg.accessToken, fileKey));
     }
 };
+
+void initializeAnalytics();
+
+async function initializeAnalytics(): Promise<void> {
+    const distinctId = await getOrCreateAnalyticsDistinctId(figma.clientStorage);
+    figma.ui.postMessage({
+        type: "ANALYTICS_CONFIGURED",
+        payload: {
+            distinctId,
+            enabled: ANALYTICS_ENABLED,
+            environment: ANALYTICS_ENVIRONMENT,
+        },
+    });
+}
 
 async function analyzeTokens(runFullLinting: boolean): Promise<void> {
     try {

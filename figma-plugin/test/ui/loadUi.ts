@@ -13,6 +13,7 @@ const UI_HTML = readFileSync(path.join(__dirname, "..", "..", "ui.html"), "utf8"
 export interface LoadedUi {
     readonly window: DOMWindow;
     readonly document: Document;
+    readonly analyticsRequests: Array<{ url: string; body: string | undefined }>;
 
     /** Plugin messages the UI has sent, oldest first. */
     readonly sent: Array<Record<string, unknown>>;
@@ -35,11 +36,30 @@ export interface LoadedUi {
  * Inside Figma the UI posts to `parent`, which is the window itself here, so
  * `postMessage` is replaced before the script runs to record the messages.
  */
-export function loadUi(): LoadedUi {
+interface LoadUiOptions {
+    fetch?: typeof globalThis.fetch;
+}
+
+export function loadUi(options: LoadUiOptions = {}): LoadedUi {
     const sent: Array<Record<string, unknown>> = [];
+    const analyticsRequests: Array<{ url: string; body: string | undefined }> = [];
     const dom = new JSDOM(UI_HTML, {
         runScripts: "dangerously",
         beforeParse(window) {
+            window.fetch = ((input: RequestInfo | URL, init?: RequestInit) => {
+                analyticsRequests.push({
+                    url: String(input),
+                    body: typeof init?.body === "string" ? init.body : undefined,
+                });
+                if (options.fetch !== undefined) {
+                    return options.fetch(input, init);
+                }
+
+                return Promise.resolve({ ok: true, status: 200 }) as Promise<Response>;
+            }) as typeof globalThis.fetch;
+            window.URL.createObjectURL = (() => "blob:test") as typeof window.URL.createObjectURL;
+            window.URL.revokeObjectURL = (() => {}) as typeof window.URL.revokeObjectURL;
+            window.HTMLAnchorElement.prototype.click = () => {};
             window.postMessage = ((message: { pluginMessage: Record<string, unknown> }) => {
                 sent.push(message.pluginMessage);
             }) as DOMWindow["postMessage"];
@@ -58,6 +78,7 @@ export function loadUi(): LoadedUi {
     return {
         window,
         document: window.document,
+        analyticsRequests,
         sent,
         receive(pluginMessage) {
             window.dispatchEvent(new window.MessageEvent("message", { data: { pluginMessage } }));
