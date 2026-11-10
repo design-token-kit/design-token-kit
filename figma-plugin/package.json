@@ -31,12 +31,12 @@
         "@figma/plugin-typings": "1.131.0",
         "@types/jsdom": "21.1.7",
         "@types/node": "24.10.1",
-        "@vitest/coverage-istanbul": "4.1.7",
+        "@vitest/coverage-istanbul": "4.1.12",
         "eslint": "9.39.4",
         "jsdom": "26.1.0",
         "typescript": "5.9.3",
         "typescript-eslint": "8.57.1",
-        "vite": "8.0.10",
-        "vitest": "4.1.7"
+        "vite": "8.3.7",
+        "vitest": "4.1.12"
     }
 }
