@@ -16,6 +16,16 @@ This release drops support for Node.js 20, which reached its end of life on
 - Developing the repository requires Node.js 22.18.0 or newer.
   CI checks Node.js 22, 24 and 26.
 
+### Security
+
+- Updated vite 8.0.10 -> 8.3.8.
+- Updated vitest, @vitest/coverage-istanbul, @vitest/coverage-v8 4.1.7 -> 5.1.1.
+- Updated tsup 8.5.1 -> 9.0.0 (esbuild 0.27.7 -> 0.28.2).
+- Updated typescript-eslint 8.57.1 -> 8.73.0.
+- Updated minimatch 10.2.3 -> 11.0.5 through an npm override.
+- Added `npm run check:overrides`, which reports overrides that can be removed.
+- Open: picomatch 4.0.7 (GHSA-fc5q-39xc-vjpf), no fixed release yet.
+
 ## [3.2.0] - 2026-11-07
 
 ### Added
