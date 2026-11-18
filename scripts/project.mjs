@@ -231,6 +231,7 @@ export class Release {
         }
 
         this.#project.assertClean();
+        this.#project.npm(["run", "check:overrides"], this.#project.path());
         this.#bumpVersions(version);
         this.#project.build();
         this.#project.test();
