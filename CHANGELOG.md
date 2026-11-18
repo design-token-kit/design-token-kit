@@ -4,6 +4,18 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+This release drops support for Node.js 20, which reached its end of life on
+2026-04-30.
+
+### Changed
+
+- **BREAKING** `@design-token-kit/core` and `@design-token-kit/cli` require
+  Node.js 22.12.0 or newer.
+  Projects that stay on Node.js 20 can keep using version 3.x.
+- Built the Node.js output of core and the CLI for Node.js 22.
+- Developing the repository requires Node.js 22.18.0 or newer.
+  CI checks Node.js 22, 24 and 26.
+
 ## [3.2.0] - 2026-11-07
 
 ### Added

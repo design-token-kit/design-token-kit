@@ -43,7 +43,7 @@
         "lib"
     ],
     "engines": {
-        "node": ">=20.19.0"
+        "node": ">=22.12.0"
     },
     "scripts": {
         "build": "tsc --noEmit && vite build && vite build --config vite.browser.config.ts",
@@ -60,11 +60,11 @@
     "devDependencies": {
         "@microsoft/api-extractor": "7.58.7",
         "@types/node": "24.10.1",
-        "@vitest/coverage-istanbul": "4.1.7",
-        "@vitest/coverage-v8": "4.1.7",
+        "@vitest/coverage-istanbul": "5.1.1",
+        "@vitest/coverage-v8": "5.1.1",
         "typescript": "5.9.3",
-        "vite": "8.0.10",
-        "vite-plugin-dts": "5.0.1",
-        "vitest": "4.1.7"
+        "vite": "8.3.8",
+        "vite-plugin-dts": "5.1.2",
+        "vitest": "5.1.1"
     }
 }

@@ -68,7 +68,7 @@ export default defineConfig({
     build: {
         outDir: OUT_DIR,
         ssr: true,
-        target: "node20",
+        target: "node22",
         lib: {
             entry: path.resolve(__dirname, "src/index.ts"),
             formats: ["es"],

@@ -35,7 +35,7 @@
         "#io/*": "./src/io/*"
     },
     "engines": {
-        "node": ">=20.19.0"
+        "node": ">=22.12.0"
     },
     "scripts": {
         "build": "tsc --noEmit && tsup",
@@ -50,10 +50,10 @@
     },
     "devDependencies": {
         "@types/node": "24.10.1",
-        "@vitest/coverage-istanbul": "4.1.7",
-        "@vitest/coverage-v8": "4.1.7",
-        "tsup": "8.5.1",
+        "@vitest/coverage-istanbul": "5.1.1",
+        "@vitest/coverage-v8": "5.1.1",
+        "tsup": "9.0.0",
         "typescript": "5.9.3",
-        "vitest": "4.1.7"
+        "vitest": "5.1.1"
     }
 }
