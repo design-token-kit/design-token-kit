@@ -4,8 +4,8 @@ The document describes how to build a design system in Figma so that it exports
 to design tokens without losses or surprises.
 
 The rules follow the behaviour of the Design Token Kit plugin and are pinned by
-automated tests. The xref:figma-limits[] section matches the round-trip test in
-`figma-plugin/test/figma/token-round-trip.test.ts`.
+automated tests. The unsupported-type list in the xref:figma-limits[] section is
+checked by `core/test/core/figma-script/FigmaScriptTokenConverter.test.ts`.
 
 [[playground]]
 == The playground file

@@ -222,6 +222,26 @@ describe("FigmaScriptTokenConverter", () => {
                 duration: { fast: { $type: "duration", $value: { value: 100, unit: "ms" } } },
                 cubicBezier: { standard: { $type: "cubicBezier", $value: [0, 0, 1, 1] } },
                 strokeStyle: { solid: { $type: "strokeStyle", $value: "solid" } },
+                border: {
+                    default: {
+                        $type: "border",
+                        $value: {
+                            color: colorValue([0, 0, 0]),
+                            width: { value: 1, unit: "px" },
+                            style: "solid",
+                        },
+                    },
+                },
+                transition: {
+                    standard: {
+                        $type: "transition",
+                        $value: {
+                            duration: { value: 100, unit: "ms" },
+                            delay: { value: 0, unit: "ms" },
+                            timingFunction: [0, 0, 1, 1],
+                        },
+                    },
+                },
                 gradient: {
                     brand: {
                         $type: "gradient",
@@ -238,7 +258,8 @@ describe("FigmaScriptTokenConverter", () => {
         const types = new Set(skipped.map((entry) => entry.type));
 
         expect(types).toEqual(new Set([
-            "fontFamily", "fontWeight", "duration", "cubicBezier", "strokeStyle", "gradient",
+            "fontFamily", "fontWeight", "duration", "cubicBezier", "strokeStyle", "border",
+            "transition", "gradient",
         ]));
         for (const entry of skipped) {
             expect(entry.reason).not.toBe("");
