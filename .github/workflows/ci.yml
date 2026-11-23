@@ -56,7 +56,8 @@ jobs:
           fail_ci_if_error: true
 
   swift-compile:
-    runs-on: ubuntu-latest
+    # Swiftly used by setup-swift@v3 does not support ubuntu-26.04 yet.
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
 
