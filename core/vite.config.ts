@@ -17,7 +17,7 @@ const SCHEMAS_DIR = "schemas";
  * change here.
  */
 async function findSchemaDirs(): Promise<string[]> {
-    const rootPath = path.resolve(__dirname, FORMATS_DIR);
+    const rootPath = path.resolve(import.meta.dirname, FORMATS_DIR);
     const entries = await readdir(rootPath, { withFileTypes: true });
 
     const dirs: string[] = [];
@@ -42,7 +42,7 @@ function copySchemas(outDir: string): Plugin {
         name: "copy-schemas",
         apply: "build",
         async closeBundle() {
-            const destDir = path.resolve(__dirname, outDir, SCHEMAS_DIR);
+            const destDir = path.resolve(import.meta.dirname, outDir, SCHEMAS_DIR);
             const seen = new Map<string, string>();
 
             for (const dir of await findSchemaDirs()) {
@@ -70,7 +70,7 @@ export default defineConfig({
         ssr: true,
         target: "node22",
         lib: {
-            entry: path.resolve(__dirname, "src/index.ts"),
+            entry: path.resolve(import.meta.dirname, "src/index.ts"),
             formats: ["es"],
             fileName: () => "index.js",
         },

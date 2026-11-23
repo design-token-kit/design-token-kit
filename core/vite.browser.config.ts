@@ -1,32 +1,29 @@
 import path from "node:path";
-import { fileURLToPath } from "node:url";
 import { defineConfig } from "vite";
 import dts from "vite-plugin-dts";
-
-const currentDir = path.dirname(fileURLToPath(import.meta.url));
 
 export default defineConfig({
     resolve: {
         alias: [
             {
                 find: "#/core/io/DtcgListLoader",
-                replacement: path.resolve(currentDir, "src/browser/BrowserDtcgListLoader.ts"),
+                replacement: path.resolve(import.meta.dirname, "src/browser/BrowserDtcgListLoader.ts"),
             },
             {
                 find: "#/core/formats/dtcg/dtcgSchema",
-                replacement: path.resolve(currentDir, "src/browser/BrowserSchemaLoader.ts"),
+                replacement: path.resolve(import.meta.dirname, "src/browser/BrowserSchemaLoader.ts"),
             },
             {
                 find: "#/core/formats/design-md/designMdSchema",
-                replacement: path.resolve(currentDir, "src/browser/BrowserSchemaLoader.ts"),
+                replacement: path.resolve(import.meta.dirname, "src/browser/BrowserSchemaLoader.ts"),
             },
             {
                 find: "#/core/formats/hrdt/hrdtSchema",
-                replacement: path.resolve(currentDir, "src/browser/BrowserSchemaLoader.ts"),
+                replacement: path.resolve(import.meta.dirname, "src/browser/BrowserSchemaLoader.ts"),
             },
             {
                 find: /^#\/(.*)$/,
-                replacement: `${path.resolve(currentDir, "src")}/$1`,
+                replacement: `${path.resolve(import.meta.dirname, "src")}/$1`,
             },
         ],
     },
@@ -35,7 +32,7 @@ export default defineConfig({
         outDir: "lib",
         target: "es2022",
         lib: {
-            entry: path.resolve(currentDir, "src/browser.ts"),
+            entry: path.resolve(import.meta.dirname, "src/browser.ts"),
             formats: ["es"],
             fileName: () => "browser.js",
         },
@@ -46,13 +43,13 @@ export default defineConfig({
             // "types" field, which here is the main lib/index.d.ts. The
             // workspace root has none, so the entry falls back to the
             // library file name: lib/browser.d.ts.
-            root: path.resolve(currentDir, ".."),
-            tsconfigPath: path.resolve(currentDir, "tsconfig.json"),
-            outDirs: path.resolve(currentDir, "lib"),
-            entryRoot: path.resolve(currentDir, "src"),
-            include: [path.resolve(currentDir, "src/**/*.ts")],
+            root: path.resolve(import.meta.dirname, ".."),
+            tsconfigPath: path.resolve(import.meta.dirname, "tsconfig.json"),
+            outDirs: path.resolve(import.meta.dirname, "lib"),
+            entryRoot: path.resolve(import.meta.dirname, "src"),
+            include: [path.resolve(import.meta.dirname, "src/**/*.ts")],
             // src/index.ts would emit lib/index.d.ts over the main build types.
-            exclude: [path.resolve(currentDir, "src/**/*.test.ts"), path.resolve(currentDir, "src/index.ts")],
+            exclude: [path.resolve(import.meta.dirname, "src/**/*.test.ts"), path.resolve(import.meta.dirname, "src/index.ts")],
             bundleTypes: true,
         }),
     ],

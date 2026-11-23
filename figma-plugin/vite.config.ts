@@ -1,8 +1,5 @@
-import { dirname, resolve } from "node:path";
-import { fileURLToPath } from "node:url";
+import { resolve } from "node:path";
 import { defineConfig } from "vitest/config";
-
-const currentDir = dirname(fileURLToPath(import.meta.url));
 
 export default defineConfig(({ mode }) => {
     const analyticsEnvironment = mode === "production"
@@ -23,35 +20,35 @@ export default defineConfig(({ mode }) => {
                 // is replaced with a runtime adapter before package-import resolution.
                 {
                     find: "#/core/io/DtcgListLoader",
-                    replacement: resolve(currentDir, "src/core-adapter/DtcgListLoader.ts"),
+                    replacement: resolve(import.meta.dirname, "src/core-adapter/DtcgListLoader.ts"),
                 },
                 {
                     find: "#/core/formats/dtcg/dtcgSchema",
-                    replacement: resolve(currentDir, "../core/src/browser/BrowserSchemaLoader.ts"),
+                    replacement: resolve(import.meta.dirname, "../core/src/browser/BrowserSchemaLoader.ts"),
                 },
                 {
                     find: "#/core/formats/design-md/designMdSchema",
-                    replacement: resolve(currentDir, "../core/src/browser/BrowserSchemaLoader.ts"),
+                    replacement: resolve(import.meta.dirname, "../core/src/browser/BrowserSchemaLoader.ts"),
                 },
                 {
                     find: "#/core/formats/hrdt/hrdtSchema",
-                    replacement: resolve(currentDir, "../core/src/browser/BrowserSchemaLoader.ts"),
+                    replacement: resolve(import.meta.dirname, "../core/src/browser/BrowserSchemaLoader.ts"),
                 },
                 {
                     find: /^#\/figma-plugin\/(.*)$/,
-                    replacement: `${resolve(currentDir, "src")}/$1`,
+                    replacement: `${resolve(import.meta.dirname, "src")}/$1`,
                 },
                 {
                     find: /^@design-token-kit\/core\/(.*)$/,
-                    replacement: `${resolve(currentDir, "../core/src")}/$1`,
+                    replacement: `${resolve(import.meta.dirname, "../core/src")}/$1`,
                 },
                 {
                     find: "@design-token-kit/core",
-                    replacement: resolve(currentDir, "../core/src/index.ts"),
+                    replacement: resolve(import.meta.dirname, "../core/src/index.ts"),
                 },
                 {
                     find: /^#\/(.*)$/,
-                    replacement: `${resolve(currentDir, "../core/src")}/$1`,
+                    replacement: `${resolve(import.meta.dirname, "../core/src")}/$1`,
                 },
             ],
         },
@@ -59,7 +56,7 @@ export default defineConfig(({ mode }) => {
             emptyOutDir: false,
             outDir: ".figma-build",
             lib: {
-                entry: resolve(currentDir, "src/code.ts"),
+                entry: resolve(import.meta.dirname, "src/code.ts"),
                 formats: ["iife"],
                 name: "DesignTokenKitFigmaPlugin",
                 fileName: () => "code.js",
