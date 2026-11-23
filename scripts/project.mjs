@@ -65,6 +65,10 @@ class Project {
         }
     }
 
+    get version() {
+        return this._rootPkg.version;
+    }
+
     setVersion(version) {
         this._rootPkg.version = version;
         writeFileSync(path.join(this.#dir, "package.json"), `${JSON.stringify(this._rootPkg, null, 4)}\n`, "utf8");
@@ -228,6 +232,10 @@ export class Release {
     prepare(version) {
         if (!/^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?$/.test(version)) {
             throw new Error(`Invalid version "${version}". Expected semver, for example 0.1.0`);
+        }
+
+        if (version === this.#project.version) {
+            throw new Error(`Version ${version} is already set in package.json. Nothing to release.`);
         }
 
         this.#project.assertClean();
