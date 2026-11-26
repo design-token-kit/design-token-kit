@@ -1,0 +1,21 @@
+{
+    "name": "@design-token-kit/browser-extension",
+    "version": "4.0.0",
+    "private": true,
+    "description": "Chromium Side Panel for tracing page styles to design tokens.",
+    "type": "module",
+    "scripts": {
+        "build": "tsc --noEmit && vite build",
+        "test": "tsc --noEmit && vitest run"
+    },
+    "dependencies": {
+        "@design-token-kit/core": "4.0.0"
+    },
+    "devDependencies": {
+        "@types/chrome": "0.3.8",
+        "@types/node": "24.10.1",
+        "typescript": "5.9.3",
+        "vite": "8.3.8",
+        "vitest": "5.1.1"
+    }
+}

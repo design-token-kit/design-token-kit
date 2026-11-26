@@ -1,0 +1,385 @@
+{
+  "version": 1,
+  "customProperties": {
+    "--primitive-color-white": {
+      "path": "primitive.color.white",
+      "type": "color",
+      "source": "examples/app-min/src/styles/tokens/tokens.json"
+    },
+    "--primitive-color-slate-50": {
+      "path": "primitive.color.slate.50",
+      "type": "color",
+      "source": "examples/app-min/src/styles/tokens/tokens.json"
+    },
+    "--primitive-color-slate-100": {
+      "path": "primitive.color.slate.100",
+      "type": "color",
+      "source": "examples/app-min/src/styles/tokens/tokens.json"
+    },
+    "--primitive-color-slate-300": {
+      "path": "primitive.color.slate.300",
+      "type": "color",
+      "source": "examples/app-min/src/styles/tokens/tokens.json"
+    },
+    "--primitive-color-slate-600": {
+      "path": "primitive.color.slate.600",
+      "type": "color",
+      "source": "examples/app-min/src/styles/tokens/tokens.json"
+    },
+    "--primitive-color-slate-900": {
+      "path": "primitive.color.slate.900",
+      "type": "color",
+      "source": "examples/app-min/src/styles/tokens/tokens.json"
+    },
+    "--primitive-color-blue-500": {
+      "path": "primitive.color.blue.500",
+      "type": "color",
+      "source": "examples/app-min/src/styles/tokens/tokens.json"
+    },
+    "--primitive-color-blue-600": {
+      "path": "primitive.color.blue.600",
+      "type": "color",
+      "source": "examples/app-min/src/styles/tokens/tokens.json"
+    },
+    "--primitive-color-cyan-100": {
+      "path": "primitive.color.cyan.100",
+      "type": "color",
+      "source": "examples/app-min/src/styles/tokens/tokens.json"
+    },
+    "--primitive-color-cyan-700": {
+      "path": "primitive.color.cyan.700",
+      "type": "color",
+      "source": "examples/app-min/src/styles/tokens/tokens.json"
+    },
+    "--primitive-dimension-space-100": {
+      "path": "primitive.dimension.space-100",
+      "type": "dimension",
+      "source": "examples/app-min/src/styles/tokens/tokens.json"
+    },
+    "--primitive-dimension-space-200": {
+      "path": "primitive.dimension.space-200",
+      "type": "dimension",
+      "source": "examples/app-min/src/styles/tokens/tokens.json"
+    },
+    "--primitive-dimension-space-300": {
+      "path": "primitive.dimension.space-300",
+      "type": "dimension",
+      "source": "examples/app-min/src/styles/tokens/tokens.json"
+    },
+    "--primitive-dimension-space-400": {
+      "path": "primitive.dimension.space-400",
+      "type": "dimension",
+      "source": "examples/app-min/src/styles/tokens/tokens.json"
+    },
+    "--primitive-dimension-space-600": {
+      "path": "primitive.dimension.space-600",
+      "type": "dimension",
+      "source": "examples/app-min/src/styles/tokens/tokens.json"
+    },
+    "--primitive-dimension-space-800": {
+      "path": "primitive.dimension.space-800",
+      "type": "dimension",
+      "source": "examples/app-min/src/styles/tokens/tokens.json"
+    },
+    "--primitive-dimension-space-1200": {
+      "path": "primitive.dimension.space-1200",
+      "type": "dimension",
+      "source": "examples/app-min/src/styles/tokens/tokens.json"
+    },
+    "--primitive-dimension-radius-200": {
+      "path": "primitive.dimension.radius-200",
+      "type": "dimension",
+      "source": "examples/app-min/src/styles/tokens/tokens.json"
+    },
+    "--primitive-dimension-radius-300": {
+      "path": "primitive.dimension.radius-300",
+      "type": "dimension",
+      "source": "examples/app-min/src/styles/tokens/tokens.json"
+    },
+    "--primitive-dimension-radius-pill": {
+      "path": "primitive.dimension.radius-pill",
+      "type": "dimension",
+      "source": "examples/app-min/src/styles/tokens/tokens.json"
+    },
+    "--primitive-dimension-line-100": {
+      "path": "primitive.dimension.line-100",
+      "type": "dimension",
+      "source": "examples/app-min/src/styles/tokens/tokens.json"
+    },
+    "--primitive-dimension-measure-article": {
+      "path": "primitive.dimension.measure-article",
+      "type": "dimension",
+      "source": "examples/app-min/src/styles/tokens/tokens.json"
+    },
+    "--primitive-fontFamily-body": {
+      "path": "primitive.fontFamily.body",
+      "type": "fontFamily",
+      "source": "examples/app-min/src/styles/tokens/tokens.json"
+    },
+    "--primitive-fontWeight-regular": {
+      "path": "primitive.fontWeight.regular",
+      "type": "fontWeight",
+      "source": "examples/app-min/src/styles/tokens/tokens.json"
+    },
+    "--primitive-fontWeight-semibold": {
+      "path": "primitive.fontWeight.semibold",
+      "type": "fontWeight",
+      "source": "examples/app-min/src/styles/tokens/tokens.json"
+    },
+    "--primitive-fontWeight-bold": {
+      "path": "primitive.fontWeight.bold",
+      "type": "fontWeight",
+      "source": "examples/app-min/src/styles/tokens/tokens.json"
+    },
+    "--primitive-typography-body-md": {
+      "path": "primitive.typography.body-md",
+      "type": "typography",
+      "source": "examples/app-min/src/styles/tokens/tokens.json"
+    },
+    "--primitive-typography-body-lg": {
+      "path": "primitive.typography.body-lg",
+      "type": "typography",
+      "source": "examples/app-min/src/styles/tokens/tokens.json"
+    },
+    "--primitive-typography-title-xl": {
+      "path": "primitive.typography.title-xl",
+      "type": "typography",
+      "source": "examples/app-min/src/styles/tokens/tokens.json"
+    },
+    "--primitive-typography-title-md": {
+      "path": "primitive.typography.title-md",
+      "type": "typography",
+      "source": "examples/app-min/src/styles/tokens/tokens.json"
+    },
+    "--primitive-typography-label-sm": {
+      "path": "primitive.typography.label-sm",
+      "type": "typography",
+      "source": "examples/app-min/src/styles/tokens/tokens.json"
+    },
+    "--semantic-color-background-canvas": {
+      "path": "semantic.color.background.canvas",
+      "type": "color",
+      "source": "examples/app-min/src/styles/tokens/tokens.json"
+    },
+    "--semantic-color-background-surface": {
+      "path": "semantic.color.background.surface",
+      "type": "color",
+      "source": "examples/app-min/src/styles/tokens/tokens.json"
+    },
+    "--semantic-color-background-subtle": {
+      "path": "semantic.color.background.subtle",
+      "type": "color",
+      "source": "examples/app-min/src/styles/tokens/tokens.json"
+    },
+    "--semantic-color-text-primary": {
+      "path": "semantic.color.text.primary",
+      "type": "color",
+      "source": "examples/app-min/src/styles/tokens/tokens.json"
+    },
+    "--semantic-color-text-secondary": {
+      "path": "semantic.color.text.secondary",
+      "type": "color",
+      "source": "examples/app-min/src/styles/tokens/tokens.json"
+    },
+    "--semantic-color-text-inverse": {
+      "path": "semantic.color.text.inverse",
+      "type": "color",
+      "source": "examples/app-min/src/styles/tokens/tokens.json"
+    },
+    "--semantic-color-text-accent": {
+      "path": "semantic.color.text.accent",
+      "type": "color",
+      "source": "examples/app-min/src/styles/tokens/tokens.json"
+    },
+    "--semantic-color-action-primary": {
+      "path": "semantic.color.action.primary",
+      "type": "color",
+      "source": "examples/app-min/src/styles/tokens/tokens.json"
+    },
+    "--semantic-color-action-primary-hover": {
+      "path": "semantic.color.action.primary-hover",
+      "type": "color",
+      "source": "examples/app-min/src/styles/tokens/tokens.json"
+    },
+    "--semantic-color-border-muted": {
+      "path": "semantic.color.border.muted",
+      "type": "color",
+      "source": "examples/app-min/src/styles/tokens/tokens.json"
+    },
+    "--semantic-color-accent-surface": {
+      "path": "semantic.color.accent.surface",
+      "type": "color",
+      "source": "examples/app-min/src/styles/tokens/tokens.json"
+    },
+    "--semantic-dimension-space-xs": {
+      "path": "semantic.dimension.space.xs",
+      "type": "dimension",
+      "source": "examples/app-min/src/styles/tokens/tokens.json"
+    },
+    "--semantic-dimension-space-sm": {
+      "path": "semantic.dimension.space.sm",
+      "type": "dimension",
+      "source": "examples/app-min/src/styles/tokens/tokens.json"
+    },
+    "--semantic-dimension-space-md": {
+      "path": "semantic.dimension.space.md",
+      "type": "dimension",
+      "source": "examples/app-min/src/styles/tokens/tokens.json"
+    },
+    "--semantic-dimension-space-lg": {
+      "path": "semantic.dimension.space.lg",
+      "type": "dimension",
+      "source": "examples/app-min/src/styles/tokens/tokens.json"
+    },
+    "--semantic-dimension-space-xl": {
+      "path": "semantic.dimension.space.xl",
+      "type": "dimension",
+      "source": "examples/app-min/src/styles/tokens/tokens.json"
+    },
+    "--semantic-dimension-space-xxl": {
+      "path": "semantic.dimension.space.xxl",
+      "type": "dimension",
+      "source": "examples/app-min/src/styles/tokens/tokens.json"
+    },
+    "--semantic-dimension-radius-card": {
+      "path": "semantic.dimension.radius.card",
+      "type": "dimension",
+      "source": "examples/app-min/src/styles/tokens/tokens.json"
+    },
+    "--semantic-dimension-radius-control": {
+      "path": "semantic.dimension.radius.control",
+      "type": "dimension",
+      "source": "examples/app-min/src/styles/tokens/tokens.json"
+    },
+    "--semantic-dimension-radius-pill": {
+      "path": "semantic.dimension.radius.pill",
+      "type": "dimension",
+      "source": "examples/app-min/src/styles/tokens/tokens.json"
+    },
+    "--semantic-dimension-line-default": {
+      "path": "semantic.dimension.line.default",
+      "type": "dimension",
+      "source": "examples/app-min/src/styles/tokens/tokens.json"
+    },
+    "--semantic-dimension-measure-page": {
+      "path": "semantic.dimension.measure.page",
+      "type": "dimension",
+      "source": "examples/app-min/src/styles/tokens/tokens.json"
+    },
+    "--semantic-typography-body": {
+      "path": "semantic.typography.body",
+      "type": "typography",
+      "source": "examples/app-min/src/styles/tokens/tokens.json"
+    },
+    "--semantic-typography-lead": {
+      "path": "semantic.typography.lead",
+      "type": "typography",
+      "source": "examples/app-min/src/styles/tokens/tokens.json"
+    },
+    "--semantic-typography-title-lg": {
+      "path": "semantic.typography.title-lg",
+      "type": "typography",
+      "source": "examples/app-min/src/styles/tokens/tokens.json"
+    },
+    "--semantic-typography-title-md": {
+      "path": "semantic.typography.title-md",
+      "type": "typography",
+      "source": "examples/app-min/src/styles/tokens/tokens.json"
+    },
+    "--semantic-typography-label": {
+      "path": "semantic.typography.label",
+      "type": "typography",
+      "source": "examples/app-min/src/styles/tokens/tokens.json"
+    },
+    "--semantic-fontFamily-body": {
+      "path": "semantic.fontFamily.body",
+      "type": "fontFamily",
+      "source": "examples/app-min/src/styles/tokens/tokens.json"
+    },
+    "--semantic-fontWeight-strong": {
+      "path": "semantic.fontWeight.strong",
+      "type": "fontWeight",
+      "source": "examples/app-min/src/styles/tokens/tokens.json"
+    },
+    "--component-button-bg": {
+      "path": "component.button.bg",
+      "type": "color",
+      "source": "examples/app-min/src/styles/tokens/tokens.json"
+    },
+    "--component-button-bg-hover": {
+      "path": "component.button.bg-hover",
+      "type": "color",
+      "source": "examples/app-min/src/styles/tokens/tokens.json"
+    },
+    "--component-button-text": {
+      "path": "component.button.text",
+      "type": "color",
+      "source": "examples/app-min/src/styles/tokens/tokens.json"
+    },
+    "--component-button-border": {
+      "path": "component.button.border",
+      "type": "color",
+      "source": "examples/app-min/src/styles/tokens/tokens.json"
+    },
+    "--component-button-radius": {
+      "path": "component.button.radius",
+      "type": "dimension",
+      "source": "examples/app-min/src/styles/tokens/tokens.json"
+    },
+    "--component-button-padding-inline": {
+      "path": "component.button.padding-inline",
+      "type": "dimension",
+      "source": "examples/app-min/src/styles/tokens/tokens.json"
+    },
+    "--component-button-padding-block": {
+      "path": "component.button.padding-block",
+      "type": "dimension",
+      "source": "examples/app-min/src/styles/tokens/tokens.json"
+    },
+    "--component-card-bg": {
+      "path": "component.card.bg",
+      "type": "color",
+      "source": "examples/app-min/src/styles/tokens/tokens.json"
+    },
+    "--component-card-border": {
+      "path": "component.card.border",
+      "type": "color",
+      "source": "examples/app-min/src/styles/tokens/tokens.json"
+    },
+    "--component-card-radius": {
+      "path": "component.card.radius",
+      "type": "dimension",
+      "source": "examples/app-min/src/styles/tokens/tokens.json"
+    },
+    "--component-card-padding": {
+      "path": "component.card.padding",
+      "type": "dimension",
+      "source": "examples/app-min/src/styles/tokens/tokens.json"
+    },
+    "--component-badge-bg": {
+      "path": "component.badge.bg",
+      "type": "color",
+      "source": "examples/app-min/src/styles/tokens/tokens.json"
+    },
+    "--component-badge-text": {
+      "path": "component.badge.text",
+      "type": "color",
+      "source": "examples/app-min/src/styles/tokens/tokens.json"
+    },
+    "--component-badge-radius": {
+      "path": "component.badge.radius",
+      "type": "dimension",
+      "source": "examples/app-min/src/styles/tokens/tokens.json"
+    },
+    "--component-badge-padding-inline": {
+      "path": "component.badge.padding-inline",
+      "type": "dimension",
+      "source": "examples/app-min/src/styles/tokens/tokens.json"
+    },
+    "--component-badge-padding-block": {
+      "path": "component.badge.padding-block",
+      "type": "dimension",
+      "source": "examples/app-min/src/styles/tokens/tokens.json"
+    }
+  }
+}

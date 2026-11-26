@@ -1,0 +1,24 @@
+{
+    "manifest_version": 3,
+    "name": "Design Token Kit Inspector",
+    "version": "4.0.0",
+    "description": "Trace page styles back to Design Token Kit tokens.",
+    "permissions": [
+        "debugger",
+        "sidePanel",
+        "tabs"
+    ],
+    "host_permissions": [
+        "<all_urls>"
+    ],
+    "background": {
+        "service_worker": "assets/background.js",
+        "type": "module"
+    },
+    "action": {
+        "default_title": "Open Design Token Kit Inspector"
+    },
+    "side_panel": {
+        "default_path": "panel.html"
+    }
+}

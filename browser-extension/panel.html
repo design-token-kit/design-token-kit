@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Design Token Kit</title>
+    <script type="module" src="/src/panel.ts"></script>
+</head>
+<body>
+    <main class="token-panel">
+        <header class="panel-header">
+            <h1>Tokens</h1>
+            <p>Inspect how page styles are connected to design tokens.</p>
+        </header>
+        <section class="panel-section">
+            <h2>Token map</h2>
+            <form class="map-form" id="map-form">
+                <label for="map-url">Map URL (optional)</label>
+                <div class="map-actions">
+                    <input id="map-url" name="map-url" type="url" placeholder="https://example.com/tokens.css.map.json">
+                    <button type="submit">Load map</button>
+                </div>
+                <p class="help-text">The map is discovered automatically from generated CSS when possible.</p>
+            </form>
+        </section>
+        <section class="panel-section">
+            <h2>Element selection</h2>
+            <button id="pick-element" type="button">Pick element</button>
+        </section>
+        <section class="panel-section">
+            <h2>Display</h2>
+            <label class="literal-toggle">
+                <input id="show-literals" type="checkbox">
+                Show properties without token references
+            </label>
+        </section>
+        <p class="status-message" id="status-message" role="status">Pick an element to inspect its token usage.</p>
+        <section class="panel-section inspection-section" aria-live="polite">
+            <h2>Inspection result</h2>
+            <p class="inspected-element" id="inspected-element" hidden></p>
+            <p class="map-warning" id="map-warning" role="alert" hidden></p>
+            <div id="trace-results"></div>
+        </section>
+    </main>
+</body>
+</html>

@@ -1,0 +1,251 @@
+:root {
+    color-scheme: light dark;
+    font-family: system-ui, sans-serif;
+    color: #202124;
+    background: #ffffff;
+}
+
+body {
+    margin: 0;
+}
+
+button,
+input {
+    font: inherit;
+}
+
+.token-panel {
+    display: grid;
+    gap: 16px;
+    padding: 16px;
+}
+
+.panel-header h1 {
+    margin: 0;
+    font-size: 20px;
+}
+
+.panel-header p {
+    margin: 4px 0 0;
+    color: #5f6368;
+    font-size: 12px;
+}
+
+.panel-section {
+    display: grid;
+    gap: 8px;
+}
+
+.panel-section h2 {
+    margin: 0;
+    font-size: 13px;
+}
+
+.inspection-section {
+    gap: 12px;
+}
+
+.map-form {
+    display: grid;
+    gap: 8px;
+}
+
+.map-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.map-actions input {
+    min-width: 0;
+    flex: 1;
+}
+
+.picker-actions button,
+.map-actions button {
+    cursor: pointer;
+}
+
+.help-text {
+    margin: 0;
+    color: #5f6368;
+    font-size: 11px;
+}
+
+.literal-toggle {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+    font-size: 12px;
+}
+
+.status-message {
+    margin: 0;
+}
+
+.inspected-element,
+.map-warning {
+    margin: 0;
+    font-size: 12px;
+}
+
+.inspected-element {
+    color: #5f6368;
+}
+
+.map-warning {
+    padding: 8px;
+    border: 1px solid #f9ab00;
+    border-radius: 4px;
+    color: #7a3e00;
+    background: #fef7e0;
+}
+
+.trace-list {
+    display: grid;
+    gap: 8px;
+    margin: 0;
+    color: #202124;
+    font-family: inherit;
+    font-size: 12px;
+    line-height: 18px;
+}
+
+.trace-list dt,
+.trace-list dd {
+    font-family: inherit;
+    font-size: 12px;
+    line-height: 18px;
+}
+
+.trace-list dt {
+    display: grid;
+    gap: 2px;
+    margin-top: 12px;
+    font-weight: 400;
+}
+
+.trace-list dt:first-child {
+    margin-top: 0;
+}
+
+.field-label {
+    color: #5f6368;
+    font-weight: 700;
+}
+
+.labeled-value {
+    display: flex;
+    align-items: baseline;
+    gap: 4px;
+    font-weight: 400;
+}
+
+.property-heading {
+    display: flex;
+    align-items: baseline;
+    gap: 4px;
+    color: inherit;
+}
+
+.field-value {
+    color: inherit;
+    font-weight: 400;
+}
+
+.property-heading,
+.labeled-value,
+.chain-header,
+.token-path,
+.chain-end {
+    font-family: inherit;
+    font-size: 12px;
+    line-height: 18px;
+}
+
+.token-chain-list {
+    display: grid;
+    gap: 8px;
+    margin-top: 4px;
+}
+
+.token-chain {
+    display: grid;
+    gap: 2px;
+}
+
+.token-path-row,
+.chain-header {
+    display: flex;
+    position: relative;
+    width: 100%;
+    align-items: center;
+    gap: 6px;
+    justify-content: center;
+}
+
+.chain-header {
+    justify-content: flex-start;
+}
+
+.token-path-row .copy-button,
+.chain-header .copy-button {
+    position: absolute;
+    right: 0;
+}
+
+.token-path {
+    color: inherit;
+}
+
+.copy-button {
+    display: inline-grid;
+    width: 20px;
+    height: 20px;
+    padding: 3px;
+    border: 1px solid #c7c7c7;
+    border-radius: 3px;
+    color: #5f6368;
+    background: transparent;
+    cursor: pointer;
+    place-items: center;
+}
+
+.copy-button:hover {
+    background: #e8eaed;
+}
+
+.copy-button:active {
+    background: #dadce0;
+}
+
+.copy-button svg {
+    width: 14px;
+    height: 14px;
+    fill: currentColor;
+}
+
+.token-description {
+    color: #5f6368;
+}
+
+.trace-list dd {
+    margin: 0;
+    padding-bottom: 12px;
+    border-bottom: 1px solid #dadce0;
+}
+
+.token-link-list {
+    display: grid;
+    gap: 4px;
+    margin: 6px 0 0;
+}
+
+.token-link {
+    display: grid;
+    gap: 2px;
+}
+
+.chain-end {
+    display: block;
+    margin-top: 4px;
+}

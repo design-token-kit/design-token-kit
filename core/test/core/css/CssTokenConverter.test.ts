@@ -3,9 +3,12 @@ import { fileURLToPath } from "node:url";
 import { CssTokenConverter } from "#/core/platforms/css/CssTokenConverter";
 import { DtcgReader } from "#/core/formats/dtcg/DtcgReader";
 import { Dtcg } from "#/core/model/Dtcg";
+import { DtcgList } from "#/core/model/DtcgList";
+import { DtcgListLoader } from "#/core/io/DtcgListLoader";
 import { TokenGroup } from "#/core/model/TokenGroup";
 import { TokenNode } from "#/core/model/TokenNode";
 import { TokenReference } from "#/core/model/TokenReference";
+import { TokenPath } from "#/core/model/TokenPath";
 import { BorderToken } from "#/core/model/tokens/BorderToken";
 import { ColorToken } from "#/core/model/tokens/ColorToken";
 import { CubicBezierToken } from "#/core/model/tokens/CubicBezierToken";
@@ -163,6 +166,33 @@ describe("CssTokenConverter", () => {
     it("overrides dark theme values", () => {
         expect(css).toContain("--semantic-color-bg-surface: var(--primitive-color-white)");
         expect(css).toContain("--semantic-color-bg-surface: var(--primitive-color-slate-100)");
+    });
+
+    it("creates a map for the custom properties it emits", async () => {
+        const list = await new DtcgListLoader().load(sources);
+        const conversion = converter.convertListWithMap(list, "tokens.css.map.json");
+
+        expect(conversion.css).toContain('--dtokens-map: "tokens.css.map.json";');
+        expect(conversion.map.findByCustomProperty("--semantic-color-bg-surface")).toMatchObject({
+            path: TokenPath.of("semantic", "color", "bg", "surface"),
+            type: "color",
+            source: sources[0],
+        });
+        expect(conversion.map.toJson()).toContain('"version": 1');
+    });
+
+    it("rejects CSS custom property name collisions when creating a map", async () => {
+        const document = await readDtcg({
+            a: {
+                "b-c": { $type: "number", $value: 1 },
+            },
+            "a-b": {
+                c: { $type: "number", $value: 2 },
+            },
+        });
+
+        expect(() => converter.convertListWithMap(new DtcgList(document, new Map()), "tokens.map.json"))
+            .toThrow('CSS custom property "--a-b-c" maps to more than one token.');
     });
 
     it("ends with trailing newline", () => {

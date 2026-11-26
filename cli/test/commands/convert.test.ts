@@ -180,6 +180,79 @@ describe("convert", () => {
         }
     });
 
+    it("writes CSS and a default token map", async () => {
+        const outDir = resolve(tmpdir(), `dtokens-test-${randomUUID()}`);
+        const outFile = resolve(outDir, "tokens.css");
+        const mapFile = resolve(outDir, "tokens.css.map.json");
+        mkdirSync(outDir, { recursive: true });
+        try {
+            const result = await run(
+                convertCommand,
+                resolve(__dirname, "valid.json"),
+                "--outform",
+                "css",
+                "--out",
+                outFile,
+                "--css-token-map",
+            );
+
+            expect(result.status).toBe(0);
+            expect(readFileSync(outFile, "utf8")).toContain('--dtokens-map: "tokens.css.map.json";');
+            expect(readFileSync(mapFile, "utf8")).toContain('"--primitive-color-white"');
+        } finally {
+            rmSync(outDir, { recursive: true, force: true });
+        }
+    });
+
+    it("writes a token map to an explicit path when CSS uses stdout", async () => {
+        const outDir = resolve(tmpdir(), `dtokens-test-${randomUUID()}`);
+        const mapFile = resolve(outDir, "tokens.map.json");
+        mkdirSync(outDir, { recursive: true });
+        try {
+            const result = await run(
+                convertCommand,
+                resolve(__dirname, "valid.json"),
+                "--outform",
+                "css",
+                "--css-token-map",
+                mapFile,
+            );
+
+            expect(result.status).toBe(0);
+            expect(result.stdout).toContain(`--dtokens-map: "${mapFile.replace(/\\/g, "/")}";`);
+            expect(readFileSync(mapFile, "utf8")).toContain('"version": 1');
+        } finally {
+            rmSync(outDir, { recursive: true, force: true });
+        }
+    });
+
+    it("rejects a token map without an output or explicit map path", async () => {
+        const result = await run(
+            convertCommand,
+            resolve(__dirname, "valid.json"),
+            "--outform",
+            "css",
+            "--css-token-map",
+        );
+
+        expect(result.status).toBe(1);
+        expect(result.stderr).toContain("--css-token-map requires a file name when --out is omitted.");
+    });
+
+    it("rejects --css-token-map for other output formats", async () => {
+        const result = await run(
+            convertCommand,
+            resolve(__dirname, "valid.json"),
+            "--outform",
+            "scss",
+            "--css-token-map",
+            "tokens.map.json",
+        );
+
+        expect(result.status).toBe(1);
+        expect(result.stderr).toContain('--css-token-map is only valid for "css"; got "scss"');
+    });
+
     it("writes an Android resource tree when --out is a directory", async () => {
         const outDir = resolve(tmpdir(), `dtokens-test-${randomUUID()}`);
         mkdirSync(outDir, { recursive: true });

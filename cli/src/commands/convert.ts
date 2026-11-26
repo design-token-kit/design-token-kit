@@ -2,6 +2,7 @@ import { Command } from "commander";
 import {
     AndroidTokenConverter,
     type AndroidTokenOutput,
+    CssTokenConverter,
     TokenChecker,
     DtcgList,
     DtcgListLoader,
@@ -11,7 +12,7 @@ import {
     ScssTokenConverter,
 } from "@design-token-kit/core";
 import { mkdir, writeFile } from "node:fs/promises";
-import { dirname, extname, join, parse } from "node:path";
+import { dirname, extname, join, parse, relative, resolve, sep } from "node:path";
 import {
     type ConvertSettings,
     addFormatOptions,
@@ -30,6 +31,7 @@ type ConvertOptions = ConvertSettings & {
     outform?: string;
     out?: string;
     inform?: string;
+    cssTokenMap?: string | true;
 };
 
 export const convertCommand = new Command("convert")
@@ -37,7 +39,8 @@ export const convertCommand = new Command("convert")
     .argument("[files...]", "Paths or content:<tokens> (reads from stdin when omitted or '-')")
     .option("-i, --inform [format]", "Input format: dtcg, hrdt, design-md (default: auto-detect)")
     .option("-f, --outform [format]", "Output format: dtcg, hrdt, design-md, css, scss, tailwind-v4, swiftui, figma-script, android (default: css)")
-    .option("-o, --out [file]", "Output file (SCSS multi-theme and Android: omit for tar stdout, use .tar for archive, or a directory for separate files)");
+    .option("-o, --out [file]", "Output file (SCSS multi-theme and Android: omit for tar stdout, use .tar for archive, or a directory for separate files)")
+    .option("--css-token-map [file]", "CSS only: write a token map (default: <out>.map.json)");
 
 addFormatOptions(convertCommand);
 
@@ -47,6 +50,7 @@ convertCommand
         try {
             const outform = options.outform ?? PlatformFormat.CSS;
             validateFormatOptions(outform, options);
+            validateCssTokenMapOption(outform, options);
             const forcedFormat = options.inform !== undefined
                 ? toDocumentFormat(options.inform)
                 : undefined;
@@ -83,6 +87,11 @@ convertCommand
                 return;
             }
 
+            if (options.cssTokenMap !== undefined) {
+                await writeCssWithMap(list, options);
+                return;
+            }
+
             const output = convertList(list, outform, options);
             await writeOutput(output, options.out);
         } catch (error) {
@@ -94,6 +103,52 @@ convertCommand
 async function loadSources(files: string[], forcedFormat?: TokenFormat): Promise<DtcgList> {
     const sources = files.length > 0 ? files : ["-"];
     return new DtcgListLoader().load(sources, forcedFormat);
+}
+
+function validateCssTokenMapOption(outform: string, options: ConvertOptions): void {
+    if (options.cssTokenMap === undefined || outform === PlatformFormat.CSS) {
+        return;
+    }
+
+    throw new Error(`--css-token-map is only valid for "${PlatformFormat.CSS}"; got "${outform}"`);
+}
+
+async function writeCssWithMap(list: DtcgList, options: ConvertOptions): Promise<void> {
+    const mapPath = getCssTokenMapPath(options);
+    const mapUrl = toCssTokenMapUrl(options.out, mapPath);
+    const conversion = new CssTokenConverter().convertListWithMap(list, mapUrl);
+
+    await writeOutput(conversion.css, options.out);
+    await writeFile(mapPath, conversion.map.toJson());
+}
+
+function getCssTokenMapPath(options: ConvertOptions): string {
+    if (typeof options.cssTokenMap === "string") {
+        return options.cssTokenMap;
+    }
+    if (options.out === undefined) {
+        throw new Error("--css-token-map requires a file name when --out is omitted.");
+    }
+
+    return `${options.out}.map.json`;
+}
+
+function toCssTokenMapUrl(cssPath: string | undefined, mapPath: string): string {
+    if (cssPath === undefined) {
+        return toWebPath(mapPath);
+    }
+
+    const absoluteCssPath = resolve(cssPath);
+    const absoluteMapPath = resolve(mapPath);
+    if (absoluteCssPath === absoluteMapPath) {
+        throw new Error("CSS output and CSS token map must have different file paths.");
+    }
+
+    return toWebPath(relative(dirname(absoluteCssPath), absoluteMapPath));
+}
+
+function toWebPath(filePath: string): string {
+    return filePath.split(sep).join("/");
 }
 
 function convertList(list: DtcgList, outform: string, options: ConvertOptions): string {

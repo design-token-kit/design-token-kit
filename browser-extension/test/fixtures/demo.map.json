@@ -1,0 +1,47 @@
+{
+    "version": 1,
+    "customProperties": {
+        "--component-card-bg": {
+            "path": "component.card.bg",
+            "type": "color",
+            "description": "Card surface",
+            "source": "tokens.json"
+        },
+        "--semantic-color-background-surface": {
+            "path": "semantic.color.background.surface",
+            "type": "color",
+            "description": "Surface color",
+            "source": "tokens.json"
+        },
+        "--primitive-color-white": {
+            "path": "primitive.color.white",
+            "type": "color",
+            "description": "White",
+            "source": "tokens.json"
+        },
+        "--component-card-padding": {
+            "path": "component.card.padding",
+            "type": "dimension",
+            "description": "Card padding",
+            "source": "tokens.json"
+        },
+        "--primitive-dimension-space-800": {
+            "path": "primitive.dimension.space.800",
+            "type": "dimension",
+            "description": "32px spacing",
+            "source": "tokens.json"
+        },
+        "--semantic-color-text-primary": {
+            "path": "semantic.color.text.primary",
+            "type": "color",
+            "description": "Primary text",
+            "source": "tokens.json"
+        },
+        "--primitive-color-slate-900": {
+            "path": "primitive.color.slate.900",
+            "type": "color",
+            "description": "Slate 900",
+            "source": "tokens.json"
+        }
+    }
+}

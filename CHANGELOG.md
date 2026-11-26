@@ -74,7 +74,7 @@ This release drops support for Node.js 20, which reached its end of life on
   extension structure. Layer diagnostics also expose the resolved target path
   through the optional `CheckIssue.targetPath` field.
 
-- #10 Invalid font weights and generic font families in CSS output
+- #10 Invalid font weights and generic font families in CSS outputщзупосот
   - Made HRDT and DESIGN.md readers reject unknown font weight names with
     `invalid-font-weight`.
     They used to pass them through.

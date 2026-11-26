@@ -1,5 +1,22 @@
 export type { IssueSeverity, CheckIssue } from "#/core/check/CheckIssue";
 export type { CssColorValueConverterOptions } from "#/core/platforms/css/CssColorValueConverter";
+export type {
+    CssConversion,
+} from "#/core/platforms/css/CssTokenConverter";
+export type {
+    CssTokenMapEntry,
+    CssTokenMapReadResult,
+    CssTokenMapReadSuccess,
+    CssTokenMapReadFailure,
+} from "#/core/platforms/css/CssTokenMap";
+export type {
+    CssDeclaration,
+    CssElementStyles,
+    CssPropertyTrace,
+    CssTokenChain,
+    CssTokenChainEnd,
+    CssTokenLink,
+} from "#/core/platforms/css/CssTokenTracer";
 /**
  * @deprecated Use {@link CssColorValueConverterOptions}.
  */
@@ -45,6 +62,8 @@ export {
 } from "#/core/platforms/android/AndroidResourceLayout";
 export { CssTokenConverter } from "#/core/platforms/css/CssTokenConverter";
 export { CssColorValueConverter } from "#/core/platforms/css/CssColorValueConverter";
+export { CssTokenMap } from "#/core/platforms/css/CssTokenMap";
+export { CssTokenTracer } from "#/core/platforms/css/CssTokenTracer";
 /**
  * @deprecated Use {@link CssColorValueConverter}.
  */

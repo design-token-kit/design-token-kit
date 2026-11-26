@@ -20,6 +20,10 @@ import { FontFamilyToken } from "#/core/model/tokens/FontFamilyToken";
 import { FontWeightToken } from "#/core/model/tokens/FontWeightToken";
 import { CssColorValueConverter } from "#/core/platforms/css/CssColorValueConverter";
 import { fontFamilyToCss, fontFamilyTokenToCss, fontWeightToCss } from "#/core/platforms/css/CssFontValues";
+import {
+    CssTokenMap,
+    type CssTokenMapEntry,
+} from "#/core/platforms/css/CssTokenMap";
 import type { TokenConverter } from "#/core/platforms/TokenConverter";
 
 /**
@@ -45,18 +49,56 @@ export class CssTokenConverter implements TokenConverter {
 
     convertList(list: DtcgList): string {
         const materialized = materializePropertyReferences(list);
+        return this.convertMaterialized(materialized);
+    }
+
+    /**
+     * Converts tokens to CSS and creates a map for every emitted base custom
+     * property.
+     *
+     * The map URL is emitted in {@code :root} through
+     * {@link CssTokenMap.LOCATOR_PROPERTY}.
+     */
+    convertListWithMap(list: DtcgList, mapUrl: string): CssConversion {
+        if (!mapUrl.trim()) {
+            throw new Error("CSS token map URL must not be empty.");
+        }
+
+        const materialized = materializePropertyReferences(list);
+        const baseDeclarations = collectFromDoc(materialized.base);
+        const map = new CssTokenMap(baseDeclarations.map(toMapEntry));
+
+        return {
+            css: this.convertMaterialized(materialized, baseDeclarations, mapUrl),
+            map,
+        };
+    }
+
+    private convertMaterialized(
+        list: DtcgList,
+        baseDeclarations = collectFromDoc(list.base),
+        mapUrl?: string,
+    ): string {
         const blocks: string[] = [];
 
-        const baseBlock = renderBlock(":root", collectFromDoc(materialized.base));
+        const baseBlock = renderBlock(":root", baseDeclarations, mapUrl);
         if (baseBlock) blocks.push(baseBlock);
 
-        for (const [themeName, theme] of materialized.themes) {
-            const block = renderBlock(`:root[data-theme="${themeName}"]`, collectFromDoc(theme, materialized.base));
+        for (const [themeName, theme] of list.themes) {
+            const block = renderBlock(`:root[data-theme="${themeName}"]`, collectFromDoc(theme, list.base));
             if (block) blocks.push(block);
         }
 
         return blocks.join("\n\n") + (blocks.length > 0 ? "\n" : "");
     }
+}
+
+/**
+ * CSS and its token map created in the same conversion pass.
+ */
+export interface CssConversion {
+    readonly css: string;
+    readonly map: CssTokenMap;
 }
 
 function tokenPathToCssVar(path: string): string {
@@ -184,11 +226,16 @@ function tokenValueToCss(value: unknown, doc: Dtcg, base?: Dtcg): string | undef
     return undefined;
 }
 
-function collectDeclarations(group: TokenGroup, path: TokenPath, doc: Dtcg, base?: Dtcg): Array<[string, string]> {
-    const result: Array<[string, string]> = [];
+function collectDeclarations(
+    group: TokenGroup,
+    path: TokenPath,
+    doc: Dtcg,
+    base?: Dtcg,
+): CssCustomPropertyDeclaration[] {
+    const result: CssCustomPropertyDeclaration[] = [];
     if (group.root !== undefined && path.toString()) {
         const css = tokenToCss(group.root, doc, base);
-        if (css !== undefined) result.push([tokenPathToCssVar(path.toString()), css]);
+        if (css !== undefined) result.push(toDeclaration(path, group.root, css, doc.source));
     }
     for (const [key, child] of group.entries()) {
         const childPath = path.child(key);
@@ -197,21 +244,21 @@ function collectDeclarations(group: TokenGroup, path: TokenPath, doc: Dtcg, base
         } else if (child instanceof TokenNode) {
             const css = tokenToCss(child, doc, base);
             if (css !== undefined) {
-                result.push([tokenPathToCssVar(childPath.toString()), css]);
+                result.push(toDeclaration(childPath, child, css, doc.source));
             }
         }
     }
     return result;
 }
 
-function collectFromDoc(doc: Dtcg, base?: Dtcg): Array<[string, string]> {
-    const result: Array<[string, string]> = [];
+function collectFromDoc(doc: Dtcg, base?: Dtcg): CssCustomPropertyDeclaration[] {
+    const result: CssCustomPropertyDeclaration[] = [];
     for (const [key, child] of doc.entries()) {
         if (child instanceof TokenGroup) {
             result.push(...collectDeclarations(child, TokenPath.of(key), doc, base));
         } else if (child instanceof TokenNode) {
             const css = tokenToCss(child, doc, base);
-            if (css !== undefined) result.push([tokenPathToCssVar(TokenPath.of(key).toString()), css]);
+            if (css !== undefined) result.push(toDeclaration(TokenPath.of(key), child, css, doc.source));
         }
     }
     return result;
@@ -246,8 +293,50 @@ function resolveColorProperty(value: unknown, doc: Dtcg, base?: Dtcg): unknown {
     return doc.resolveReferenceValue(value, base);
 }
 
-function renderBlock(selector: string, declarations: Array<[string, string]>): string {
-    if (declarations.length === 0) return "";
-    const lines = declarations.map(([prop, val]) => `  ${prop}: ${val};`).join("\n");
-    return `${selector} {\n${lines}\n}`;
+function toDeclaration(
+    path: TokenPath,
+    token: TokenNode<unknown>,
+    value: string,
+    source: string | undefined,
+): CssCustomPropertyDeclaration {
+    return {
+        customProperty: tokenPathToCssVar(path.toString()),
+        path,
+        token,
+        value,
+        source,
+    };
+}
+
+function toMapEntry(declaration: CssCustomPropertyDeclaration): CssTokenMapEntry {
+    return {
+        customProperty: declaration.customProperty,
+        path: declaration.path,
+        type: declaration.token.type,
+        description: declaration.token.description,
+        source: declaration.source,
+    };
+}
+
+function renderBlock(
+    selector: string,
+    declarations: readonly CssCustomPropertyDeclaration[],
+    mapUrl?: string,
+): string {
+    if (declarations.length === 0 && mapUrl === undefined) return "";
+    const lines = declarations.map((declaration) =>
+        `  ${declaration.customProperty}: ${declaration.value};`,
+    );
+    if (mapUrl !== undefined) {
+        lines.push(`  ${CssTokenMap.LOCATOR_PROPERTY}: ${JSON.stringify(mapUrl)};`);
+    }
+    return `${selector} {\n${lines.join("\n")}\n}`;
+}
+
+interface CssCustomPropertyDeclaration {
+    readonly customProperty: string;
+    readonly path: TokenPath;
+    readonly token: TokenNode<unknown>;
+    readonly value: string;
+    readonly source: string | undefined;
 }

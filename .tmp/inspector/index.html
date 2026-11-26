@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Design Token Kit Inspector Demo</title>
+    <link rel="stylesheet" href="/tokens.css">
+    <style>
+        :root {
+            font-family: var(--semantic-typography-body);
+            background: var(--semantic-color-background-canvas);
+        }
+
+        body {
+            margin: 0;
+            padding: var(--component-card-padding);
+            color: var(--semantic-color-text-primary);
+        }
+
+        .demo-card {
+            max-width: 420px;
+            background: var(--component-card-bg);
+            border: 1px solid var(--component-card-border);
+            border-radius: var(--component-card-radius);
+            padding: var(--component-card-padding);
+        }
+
+        .demo-title {
+            margin: 0 0 var(--semantic-dimension-space-sm);
+            color: var(--semantic-color-text-primary);
+            font: var(--semantic-typography-title-md);
+        }
+
+        .demo-copy {
+            color: var(--semantic-color-text-secondary);
+        }
+
+        .demo-button {
+            background: var(--component-button-bg);
+            color: var(--component-button-text);
+            border: 0;
+            border-radius: var(--component-button-radius);
+            padding: var(--component-button-padding-block) var(--component-button-padding-inline);
+        }
+    </style>
+</head>
+<body>
+    <main class="demo-card">
+        <h1 class="demo-title">Token Inspector demo</h1>
+        <p class="demo-copy">Select this card or button to see the token chain.</p>
+        <button class="demo-button" type="button">Token-backed button</button>
+    </main>
+</body>
+</html>
